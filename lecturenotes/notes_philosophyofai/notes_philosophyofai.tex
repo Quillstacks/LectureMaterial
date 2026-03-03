@@ -1,0 +1,121 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% How to Write a Scientific Thesis
+% Author: Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+%\makeindex % disabled to avoid requiring makeindex/.ind during quick builds
+% \index{} entries are present throughout all chapters and are ready to use;
+% re-enable by uncommenting the line above and running makeindex.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+\title{Philosophy of Artificial Intelligence}
+\author[\defaultauthor]{\defaultauthor}
+\publisher[\defaultpublisher]{\defaultpublisher}
+
+% Load optional fonts
+\loadoptionalfonts
+
+% Additional packages
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{float}
+\usepackage{qrcode}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\begin{document}
+
+
+
+\makestandardfrontmatter
+% Dedication
+% Alternative quotes:
+\makededication{\openepigraph{“The Answer to the Great Question... Of Life, the Universe and Everything... Is... Forty-two,' said Deep Thought, with infinite majesty and calm.”}{The Hitchhiker's Guide to the Galaxy, Douglas Adams}}
+\tableofcontents
+
+
+% Introduction
+\makeintroduction{%
+  Artificial intelligence is no longer a future concern, it is a present societal,
+  political and above all one for human intelligence. Algorithms decide who receives credit, who is flagged at
+  a border, who gets a job interview, which cornflakes you buy and so increasingly every decision is touched by the invisible hand of prediction. Yet the concepts we use to govern these
+  systems, responsibility, personhood, consent, democratic legitimacy were built for a world of human actors and institutions. This course asks what happens when those concepts collide with machines
+  that appear to think, feel, and decide. 
+
+  \newthought{The course name} places Philosophy in front, reflecting our approach to the subject under the impression of the love of wisdom. 
+  We are not here to advocate for a particular position or policy outcome, but to equip ourselves with the tools of critical thinking, 
+  argumentation, and empathy that will allow us to navigate the complex landscape of AI and its futures. We approach the question not
+  through technical optimism or dystopian panic, but through the oldest
+  tools available to us: philosophy, fiction, and argument.
+
+
+  \newthought{The course} is structured around four themes. \textbf{Anthropomorphism}
+  asks why we make machines in our image, why we tend to anthropomorphize them, and what obligations that
+  creates. \textbf{Accountability} asks who answers when an autonomous
+  system causes harm, or for that matter is beneficial. \textbf{Embodiment} asks whether a physical
+  presence changes the ethical stakes and responsibilities. \textbf{Agency} asks
+  about the role and implications of autonomous decision-making, the concept of alignment and human oversight.
+
+  
+
+
+  \newthought{Each session} pairs a canonical literary text: Hoffmann, Kafka,
+  Kleist, \v{C}apek, Goethe, with a real contemporary question of AI policy and ideology. 
+  These texts are thought-experiments mendeled out over centuries of readership, and they surface
+  intuitions and a timeliness in their thought leadership that temporary texts barely can reach.
+  From these texts we draw out the philosophical questions and ethical dilemmas that are still relevant today, 
+  and we use them as a springboard for discussion and debate. The goal is not consensus. It is the capacity to establish a position, hold a position,
+  defend a position, give up a position, listen to opposing views, and update your views and positions accordingly. 
+  That is what a present with infinitely many futures demands and requires of its humans and humanity.
+
+  \newthought{Lecture Outline} 
+  \begin{itemize}
+    \item 40 minutes - Literature introduction and guided reading sheet 
+    \item 40 minutes - Debate with position exposure
+    \item 10 minutes - Reflection on the discussion and key-learnings
+    \item Teaser for next session.
+  \end{itemize}
+}
+
+
+
+
+
+\mainmatter
+
+\input{chapters/01_Anthropomorphism.tex}
+\newpage
+\input{chapters/02_Accountability.tex}
+\newpage
+\input{chapters/03_Embodiment.tex}
+\newpage
+\input{chapters/04_Agency.tex}
+\newpage
+
+% Appendix
+\appendix
+
+\input{chapters/aa_PreparationGuidance.tex} % → Appendix A
+\newpage
+\input{chapters/ac_DebateProtocol.tex}   % → Appendix B
+
+
+\bibliographystyle{abbrvnat}
+\bibliography{philosophyofai_references}
+
+
+
+% Hey Mark this is for you, when thinking about where to take this next.
+% Think Ethics for Nerds
+% Think Book on The Practice of Philosophy a handbook for beginners.
+% Think about inviting guest speakers to talk about their work and how it connects to the themes of the course.
+
+\end{document}

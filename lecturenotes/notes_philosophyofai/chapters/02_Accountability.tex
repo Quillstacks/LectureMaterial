@@ -1,0 +1,201 @@
+\chapter{Accountability}\index{Accountability}
+
+\newthought{The Responsibility Gap}
+
+\marginnote{%
+    \begin{flushright}
+    \newthought{In der Strafkolonie}\\
+    Franz Kafka (1919)\\
+    Full text via Wikisource:\\[4pt]
+    {\color{black}\qrcode[height=1.2cm]{https://de.wikisource.org/wiki/In_der_Strafkolonie}}
+    \end{flushright}%
+}
+
+\marginnote{\newthought{Case.}
+    \begin{enumerate}
+        \item 2014--2018: Amazon develops ML-based recruiting tool to automate
+              hiring for technical and managerial roles.
+        \item System trained on historical hiring data; penalised resumes
+              containing the word "women's" or female-coded language.
+        \item Tool systematically downranked female candidates; hired only
+              male managers in cohorts where bias was strongest.
+        \item October 2018: tool scrapped after internal audit. No individual
+              held accountable. The algorithm had no name.
+    \end{enumerate}
+}
+% As a leading group, you are required to moderate this session. Add margin notes in this script in case you want to add any additional questions or points to the discussion.
+
+\newthought{A visiting traveller} witnesses a penal machine execute a condemned man for a
+sentence no living person can read or explain, and is invited to endorse the system.\\
+
+\newthought{Algorithmic governance} and black-box AI in high-stakes domains highlight
+opacity and accountability gaps: audits, explainability requirements, and governance mechanisms
+all attempt to close the distance between automated decision and human answerability.
+
+\vspace{3.5em}
+
+\begin{tabular}{p{3.8cm} p{6.5cm}}
+    \textbf{Required reading} &
+        \textit{In der Strafkolonie}~\cite{kafka1919strafkolonie} by Franz Kafka
+        (1919; Reclam UB~9900) \\[3pt]
+    \textbf{Preparation}      &
+        Complete the Guided Reading Sheet individually before the session. \\
+\end{tabular}
+
+\vspace{3.5em}
+
+\section*{Guided Reading Sheet}
+
+\noindent Read \emph{In der Strafkolonie} before the session. Work through the
+questions below individually, then bring your notes to the discussion.
+
+\begin{enumerate}
+    \item The condemned man never learns what he is accused of or what
+    the machine will inscribe on his body. What does this tell us about
+    the relationship between legibility and legitimacy? Can a system be
+    just if it cannot explain itself to those it acts upon?
+
+    \item Three figures surround the machine: the officer who
+    understands and maintains it, the condemned man who cannot, and
+    the visiting traveller who is invited to endorse it. How does
+    responsibility shift across this triangle? Who, if anyone, is
+    morally culpable for what happens?
+
+    \item The story illustrates the idea of the \emph{responsibility
+    gap}: when a complex system causes harm, no single human actor is
+    clearly at fault. Can you name a contemporary case (in law,
+    medicine, finance, or infrastructure) where this gap has appeared?
+
+    \item The EU AI Act (2024) requires human oversight for high-risk
+    AI systems. What does "oversight" mean in practice if the system's
+    decisions are too fast, too complex, or too numerous for humans to
+    review individually?
+
+    \item Compare \emph{causal responsibility} (who caused the harm)
+    with \emph{moral responsibility} (who is blameworthy) and
+    \emph{legal liability} (who must compensate). Do these three always
+    converge? Give an example where they do not.\\
+\end{enumerate}
+
+
+
+% ---------------------------------------------------------------
+\section*{Opinion Landscape and Debate}
+
+\noindent \textbf{Format:} Surrounded-style debate. See
+Appendix~A for the full protocol, speaker's list rules, and
+moderator scripts.
+
+\medskip
+\noindent \textbf{Opening question:} If a system causes injustice at this
+scale, and every individual who used it acted within their authorised role,
+is anyone guilty of wrongdoing; and if not, what does that mean for the
+concept of accountability?
+\marginnote{\newthought{Responsibility Gap.} The structural absence of a single culpable actor in distributed
+sociotechnical systems. Closing it requires deliberate governance design, not post-hoc blame.}
+
+\newthought{Opinion~A, Accountability.}\quad Named human accountability
+is achievable and required: when an autonomous system causes harm, the
+architecture of governance must ensure that specific individuals remain
+legally and morally answerable for its outputs.
+\vspace{1.5em}
+
+
+\medskip
+\noindent\textbf{The Defence Lawyer} — argues the tool violated the
+    defendant's right to a fair trial and demands a named responsible party.
+    \begin{itemize}
+        \item \textit{My client cannot cross-examine a dataset. She cannot
+        see the features the model weighted. She cannot confront the humans
+        whose historical decisions trained it. That is not a fair trial;
+        it is a verdict delivered by an oracle.}
+        \item \textit{The right to a reasoned decision is foundational to
+        due process. The algorithm said so is not a reason. It is an
+        abdication.}
+        \item \textit{If a biased human expert testified in court, we could
+        challenge their credentials, their methods, their prior record. We
+        have no equivalent procedure for an algorithm. That asymmetry is a
+        constitutional problem.}
+    \end{itemize}
+
+\marginnote{\newthought{Explainability.} A system is explainable when it can account for its outputs in terms
+a human decision-maker can evaluate. A necessary but not sufficient condition for accountability.}
+\medskip
+\noindent\textbf{The Regulator} — proposes a new accountability
+    framework and must defend it against both sides.
+    \begin{itemize}
+        \item \textit{The existing categories (product liability,
+        professional negligence, criminal intent) were designed for
+        individual actors and single causal chains. None of them fit
+        distributed, automated decision systems. We need a new category:
+        algorithmic liability.}
+        \item \textit{Auditability must be a pre-condition for deployment in
+        high-stakes domains, not a post-incident investigation. If you cannot
+        explain why your system made a decision before harm occurs, you
+        should not be permitted to deploy it.}
+        \item \textit{The question is not who is liable for this specific
+        incident. It is what governance regime prevents the next thousand
+        incidents at scale.}
+    \end{itemize}
+
+
+
+\newthought{Opinion~B, Compliance.}\quad The existing system already
+provides accountable humans; the motion is either already met or
+unworkable: demanding named individual accountability for each algorithmic
+output ignores how distributed decision-making necessarily operates.
+\vspace{1.5em}
+
+
+\medskip
+\noindent\textbf{The Judge} — defends reliance on the tool as
+    consistent, evidence-based sentencing practice.
+    \begin{itemize}
+        \item \textit{Documented bias in human sentencing (based on time
+        of day, defendant ethnicity, and courtroom demeanour) is
+        well-established in the research literature. The tool reduces that
+        variance. Less variance is more equal treatment.}
+        \item \textit{I did not delegate my judgement to the tool. I
+        consulted it as one input among many, as I would a psychiatric
+        assessment or a victim impact statement. The tool is not the
+        verdict.}
+        \item \textit{If we ban algorithmic tools from courtrooms, we return
+        to a system where the most important variable in a sentencing outcome
+        is which judge you happened to draw. Is that preferable?}
+    \end{itemize}
+
+\marginnote{\newthought{Meaningful Human Control.} A regulatory concept requiring that humans retain the ability
+to understand, intervene in, and reverse AI decisions. What this means in practice is contested.}
+\medskip
+\noindent\textbf{The Software Vendor} — insists the tool performs
+    within documented parameters and liability rests with the deployer.
+    \begin{itemize}
+        \item \textit{Our documentation states in the executive summary that
+        human review is mandatory before any recommendation is acted upon.
+        The court chose to rely on the output without applying that review.
+        We cannot be held liable for misuse.}
+        \item \textit{The training data was provided by the court system
+        itself. If the historical sentencing record reflects bias, that is a
+        problem with the justice system, not with a model that learned from
+        it.}
+        \item \textit{Product liability law requires that a product fails to
+        perform as documented. Ours did not. Extending vendor liability to
+        downstream misuse would make the development of any decision-support
+        tool legally untenable.}
+    \end{itemize}
+
+
+% ---------------------------------------------------------------
+
+\newthought{Key Learnings}
+\marginnote{\newthought{Teaser.} Accountability assumes we can separate the system from its surroundings.
+But what happens when the AI is no longer a tool we hold, but a body that acts in the world
+alongside us?}
+The responsibility gap is not caused by negligence but by the architecture of distributed
+sociotechnical systems: standard categories of fault (criminal intent, professional negligence,
+product liability) apply only awkwardly when causation is diffuse. Explainability is a necessary
+but not sufficient condition for accountability; a system can be interpretable and still have no
+human willing to own its outputs. Meaningful human control is contested: it may mean the ability
+to intervene, to understand, to reverse, or merely to authorise, and these are different requirements
+with different institutional costs. The lessons of aviation safety culture, medical liability law,
+and financial auditing all offer partial models for algorithmic governance, but none transfers cleanly.
