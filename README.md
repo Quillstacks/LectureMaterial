@@ -12,7 +12,7 @@ Materials are organized by subject. Each folder may contain notes, code samples,
 
 ## Hosting
 
-This repository is published via GitHub Pages at **[pages.schutera.com](https://pages.schutera.com)**.
+This repository is published via GitHub Pages at **[pages.schutera.com](https://material.schutera.com)**.
 
 ---
 
