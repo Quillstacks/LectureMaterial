@@ -1,24 +1,10 @@
 # Lecture Materials
 
-A collection of lecture notes, code, and supplementary materials for courses taught by the instructor.
+Course materials hosted at [material.schutera.com](https://material.schutera.com).
 
-## Contents
+## Lecture Notes
 
-- `lecturenotes/` — Written lecture notes organized by topic/course
-
-## Structure
-
-Materials are organized by subject. Each folder may contain notes, code samples, slides, or other resources relevant to that topic.
-
-## Hosting
-
-This repository is published via GitHub Pages at **[material.schutera.com](https://material.schutera.com)**.
-
-### Available Materials
-
-| Course | Link |
-|--------|------|
-| Philosophy of AI — Lecture Notes | [material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf) |
+- **Philosophy of AI** — [PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf)
 
 ---
 
