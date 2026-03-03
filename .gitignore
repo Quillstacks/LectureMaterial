@@ -23,9 +23,6 @@
 *.vrb
 *.xdv
 
-# Compiled output (comment out if you want to track PDFs)
-*.pdf
-
 # OS files
 .DS_Store
 Thumbs.db
