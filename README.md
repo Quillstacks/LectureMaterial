@@ -12,7 +12,13 @@ Materials are organized by subject. Each folder may contain notes, code samples,
 
 ## Hosting
 
-This repository is published via GitHub Pages at **[pages.schutera.com](https://material.schutera.com)**.
+This repository is published via GitHub Pages at **[material.schutera.com](https://material.schutera.com)**.
+
+### Available Materials
+
+| Course | Link |
+|--------|------|
+| Philosophy of AI — Lecture Notes | [material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf) |
 
 ---
 
