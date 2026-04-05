@@ -1,0 +1,77 @@
+%% meta.tex -- Shared metadata and templates for lecture notes (German)
+%% Author: Dr.-Ing. Mark Schutera
+
+%%
+% Default author information
+%%
+\newcommand{\defaultauthor}{Prof. Dr.-Ing. Mark Schutera}
+\newcommand{\defaultpublisher}{Unfinished Lecture Notes}
+
+%%
+% Copyright page template
+%%
+\newcommand{\makecopyright}[1][]{%
+  \newpage
+  \begin{fullwidth}
+  ~\vfill
+  \thispagestyle{empty}
+  \setlength{\parindent}{0pt}
+  \setlength{\parskip}{\baselineskip}
+  Copyright \copyright\ \the\year\ \thanklessauthor
+
+  \par\smallcaps{Ver\"offentlicht von \thanklesspublisher}
+
+\par Lizenziert unter der Creative Commons Namensnennung-Nicht kommerziell 4.0 International Lizenz (``CC BY-NC-SA 4.0'').
+Sie d\"urfen dieses Werk nicht f\"ur kommerzielle Zwecke nutzen. Wenn Sie das Material remixen, ver\"andern oder darauf aufbauen, m\"ussen Sie Ihre Beitr\"age unter derselben Lizenz wie das Original verbreiten.
+F\"ur Nutzungen, die \"uber die durch diese Lizenz erlaubten hinausgehen, m\"ussen Sie die ausdr\"uckliche Genehmigung des Autors einholen.
+Um eine Kopie dieser Lizenz einzusehen, besuchen Sie \url{https://creativecommons.org/licenses/by-nc-sa/4.0/}.
+Sofern nicht durch geltendes Recht vorgeschrieben oder schriftlich vereinbart, wird das verteilte Material
+\smallcaps{``OHNE M\"ANGL- UND RECHTSGEWAHR''} zur Verf\"ugung gestellt.
+Siehe die Lizenz f\"ur weitere Einzelheiten.\index{Lizenz}
+
+  \par\textit{Zuletzt aktualisiert, \monthyear}
+  \end{fullwidth}
+}
+
+%%
+% Standard front matter structure
+%%
+\newcommand{\makestandardfrontmatter}{%
+  \frontmatter
+  \maketitle
+  \makecopyright
+}
+
+%%
+% Standard dedication page template
+%%
+\newcommand{\makededication}[1]{%
+  \cleardoublepage
+  ~\vfill
+  \begin{doublespace}
+  \noindent\fontsize{18}{22}\selectfont\itshape
+  \nohyphenation
+  #1
+  \end{doublespace}
+  \vfill
+  \vfill
+}
+
+%%
+% Standard introduction template
+%%
+\newcommand{\makeintroduction}[1]{%
+  \cleardoublepage
+  \chapter*{Einleitung}
+  #1
+}
+
+%%
+% Font options template
+%%
+\newcommand{\loadoptionalfonts}{%
+  % Font options (uncomment if available)
+  %\IfFileExists{bergamo.sty}{\usepackage[osf]{bergamo}}{}% Bembo
+  %\IfFileExists{chantill.sty}{\usepackage{chantill}}{}% Gill Sans
+  %\usepackage{microtype}
+}

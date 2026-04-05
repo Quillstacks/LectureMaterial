@@ -1,0 +1,116 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Missing Semester MIT Adaptation
+% Author: Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+
+% TODOs
+% - Sprinkle ideas on infinity all over the place (there is this book)
+% - Run index generation on the whole thing
+% - Check and add references where needed.
+% - Check chapters for NTH nices to haves and decide on whether to do them.
+
+\makeindex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+\title{Numerical Methods}
+\author[\defaultauthor]{\defaultauthor}
+\publisher[\defaultpublisher]{\defaultpublisher}
+
+% Load optional fonts
+\loadoptionalfonts
+
+% Additional packages
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\begin{document}
+
+
+
+\makestandardfrontmatter
+% Dedication
+% Alternative quotes:
+\makededication{\openepigraph{"An infinitely accurate approximation \\is no longer an approximation."}{Probably someone smart}}
+\tableofcontents
+
+
+% Introduction
+\makeintroduction{%
+    \newthought{Numerical Methods} are essential for solving mathematical problems that cannot be addressed analytically. 
+    This course will cover fundamental concepts, error analysis, problem conditioning, stability, and various numerical techniques to equip you with the 
+    skills needed to implement reliable and efficient algorithms in scientific computing and engineering applications.
+}
+     
+\newthought{This course will teach you} everything you need to know to become proficient with numerical methods, and how to put them to 
+good use in machine learning, data science, and engineering contexts.
+
+
+\iffalse
+\marginnote{\newthought{Contact} \\\url{blochinger@dhbw-ravensburg.de}\\
+\newthought{Source} \\ \url{https://www.economicon.de/repository/index.html}}
+His thoughts on Numerical Methods have been of great help and carry ideas which infused this lecture.
+\fi
+
+%\newthought{Acknowledgments} to Prof. Dr. Daniel Blochinger at DHBW Ravensburg, 
+%who handed over this course to me in my first Semester as a Professor.
+
+
+
+
+%% Start the main matter
+\mainmatter
+
+
+% ----------------------------------------------------------------------
+
+% Modulhandbuch:
+% - Fehleranalyse: Kondition, Rundungsfehler, Stabilität
+% - Numerische Integration
+% - Fixpunktiterationen
+% - Newton-Verfahren
+% - Optional: Interpolation & Approximation (Polynominterpolation, Splines):
+%             Polynominterpolation (Lagrange und Hermite), Splines (B-Splines), Fourierreihen
+
+
+
+\input{chapters/1_introduction.tex}
+%\input{chapters/2_floatingpointarithmetics.tex}
+%\input{chapters/3_erroranalysis.tex}
+%\input{chapters/4_newton_methods.tex}
+%\input{chapters/5_global_optimization.tex}
+%\input{chapters/6_integration_and_sgd.tex}
+%\input{chapters/7_numerical_stability.tex}
+%\input{chapters/8_quadrature.tex}             % extended: full Newton-Cotes, composite rules
+%\input{chapters/9_romberg_montecarlo.tex}     % extended: Richardson, Romberg, variance reduction
+%\input{chapters/10_interpolation.tex}
+%\input{chapters/11_splines.tex}
+%\input{chapters/12_fourier.tex}
+%\input{chapters/13_odes.tex}
+%\input{chapters/14_parallel_distributed.tex}
+%\input{chapters/15_sgd_extended.tex}          % extended SGD: momentum, Adam, LR schedules
+
+
+
+% Add index
+% Check the code
+% Think about printing this ones for myself. Learn how to make a bookcover. 
+% Add a Probeklausur but in a separate latex document.  
+
+
+\nocite{*}
+\makestandardbackmatter{numerischemethoden}
+
+\end{document}

@@ -1,0 +1,618 @@
+% !TEX root = ../notes_unsupervisedlearning.tex
+% Chapter 2: Centroid Clustering
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{Centroid Clustering}\index{K-Means}
+\chapter{Centroid Clustering}
+\newthought{From Points to Clusters}
+
+% ==============================================================================================
+% BLOCK 1: INTRODUCTION
+% ==============================================================================================
+
+\section{The Why}\index{centroid clustering}\index{K-Means}
+
+In the previous chapter, we established that distance is a choice\cite{Bishop2006}:
+it encodes what similar means in a given feature space.
+Given that means to encode similarity, we can ask a more complex question,
+one that goes beyond pairs of points: which points belong together?
+Or in other words, is there an overarching structure inherent in the data?
+
+\marginnote{\newthought{A partition} assigns every point to exactly one group, with no group left empty.
+K-Means produces a \emph{hard} partition: membership is binary, not graded.
+This is a strong assumption that later clustering methods will soften.}
+
+Raw pairwise distances do not yet tell us which observations belong together,
+nor how many groups exist.
+We need a procedure that assigns each point to a cluster; together, all clusters form a partition of the data.
+
+\newthought{Centroid-based clustering} offers one answer: represent each group by a single point, its centroid, and assign every observation to the nearest one.
+This is a methodologically important commitment.
+Rather than asking about every pairwise relationship, we compress each group into a single representative and reason from there.
+The method thereby makes an assumption explicit: a group is well-described by its mean.
+When that assumption holds, the algorithm is remarkably efficient; when it does not, the failure is instructive.
+
+\newthought{The procedure was formalized} as K-Means by MacQueen\cite{MacQueen1967}; its standard algorithmic form, alternating assignment and centroid update steps, was described by Lloyd\cite{Lloyd1982}.
+It remains one of the most cited algorithms in machine learning\cite{Jain2010}, in part because it is easy to implement, easy to interpret, and fast enough to run on large datasets.
+The main practical weakness, sensitivity to initialization, was addressed by Arthur and Vassilvitskii\cite{ArthurVassilvitskii2007} with K-Means++, which provides a probabilistic seeding strategy with provable guarantees on solution quality.
+
+\marginnote{\newthought{A centroid} is the mean position of all points assigned to a cluster.
+It need not be an actual data point; it is the center of mass of the group.
+For the update step to be well-defined, the centroid must exist in the same space as the data, which is why K-Means is tied to Euclidean geometry and arithmetic means.
+With a different distance, a different notion of center is needed.}
+
+\newthought{This chapter marks a conceptual turning point} in the course.
+In Chapter~1, the question was local and pairwise: given two points, how far apart are they?
+Here the question is global and combinatorial: given $n$ points, how do we partition them?
+The answer K-Means gives, a hard partition into $K$ spherical clusters, comes with two assumptions that later chapters will systematically relax.
+Hierarchical clustering will remove the requirement to fix $K$ in advance, revealing nested structure through a dendrogram.
+Density-based methods will remove the sphericity assumption, finding clusters of arbitrary shape.
+
+\newthought{Working through centroid clustering} requires us to,
+\begin{itemize}
+    \item define an objective that formalizes what a good partition means.
+    \item understand how the assignment-update cycle minimizes that objective and when it stops.
+    \item recognize the geometric assumptions behind K-Means and the failure modes they produce.
+\end{itemize}
+
+\newthought{The fundamental question} this chapter answers:
+given a distance measure, how do we find the clusters?
+
+\subsection{Hands On Experience}
+
+\newthought{Consider} twelve data points in two dimensions.
+Which points belong together? How many groups do you see?
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=1]
+    \begin{axis}[
+        xmin=0, xmax=10,
+        ymin=0, ymax=10,
+        width=0.5*\textwidth,
+        height=0.5*\textwidth,
+        axis line style={draw=none},
+        tick style={black, thick},
+        xtick={1,2,3,4,5,6,7,8,9},
+        ytick={1,2,3,4,5,6,7,8,9},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (1,2) (2,1) (2,3) (3,2)
+        (4,5) (5,4) (5,6) (6,5)
+        (7,8) (8,7) (8,9) (9,8)
+    };
+    \end{axis}
+\end{tikzpicture}
+\caption{Twelve points in 2D. How many groups do you see?}
+\label{fig:intro_points}
+\end{figure}
+
+\newthought{How many groups} do you see? Three seems natural, but could you argue for two?
+For six?
+
+\newthought{Where would you place} a representative point for each group?
+Notice that you already have an intuition for what that point should be.
+
+\newthought{If a new point} arrives at $(3.5, 3.5)$, which group does it join?
+How much does it change your picture of the groups?
+
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item Understand the K-Means objective and algorithm, including convergence.
+    \item Apply initialization strategies and K-selection methods.
+    \item Identify when K-Means fails and understand why.
+\end{itemize}
+
+
+% ==============================================================================================
+% BLOCK 2: MAIN THEORY
+% ==============================================================================================
+
+\newpage
+
+\section{The K-Means Algorithm}\index{K-Means}\index{inertia}
+
+\newthought{A data point}\index{data point} is a vector $x_i \in \mathbb{R}^d$, where $d$ is the number of features and $i = 1, \ldots, n$ indexes the observations.
+
+\newthought{A cluster}\index{cluster} is a non-empty subset $C_k \subseteq \{x_1, \ldots, x_n\}$.
+A \textbf{clustering}\index{clustering} of the data is a collection of $K$ clusters $\{C_1, \ldots, C_K\}$ that are disjoint and exhaustive:
+
+\begin{align*}
+    C_j \cap C_k &= \emptyset \quad \text{for } j \neq k \\
+    \bigcup_{k=1}^{K} C_k &= \{x_1, \ldots, x_n\}
+\end{align*}
+
+\marginnote{\newthought{Partition} is the mathematical synonym for clustering. A partition of a set is any division into non-overlapping, exhaustive subsets — every element in exactly one group, no element left out. Think of $K{=}3$: you get three clusters (one group each) and one clustering (all three together). The word partition emphasises the structural guarantee; clustering emphasises the process.
+
+\newthought{Each point belongs to exactly one cluster.} This is the hard assignment assumption. Soft variants (e.g.\ Gaussian mixture models) assign fractional membership probabilities instead.}
+
+\vspace{2.5em}
+\newthought{K-Means} finds a clustering of $n$ data points into $K$ clusters by minimizing the total squared distance from each point to its cluster's centroid.
+This quantity is called \textbf{inertia} or within-cluster sum of squares (WCSS):
+
+\begin{align}
+    J &= \sum_{k=1}^{K} \sum_{x_i \in C_k} \|x_i - \mu_k\|^2
+    \label{eq:inertia}
+\end{align}
+
+where $\mu_k = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i$ is the centroid of cluster $C_k$.
+
+\marginnote{\newthought{Minimizing $J$} is NP-hard in general. K-Means finds a local optimum, not necessarily the global one. The result depends on initialization.}
+
+\newthought{The algorithm alternates between two steps} until the assignments no longer change:
+
+\begin{align*}
+    \text{Assignment:} \quad c_i &\leftarrow \arg\min_k \|x_i - \mu_k\|^2 \quad \text{for each } x_i \\[6pt]
+    \text{Update:} \quad \mu_k &\leftarrow \frac{1}{|C_k|} \sum_{x_i:\, c_i = k} x_i \quad \text{for each } k
+\end{align*}
+
+The assignment step asks: which centroid is closest?
+The update step asks: given the current assignments, where is the best centroid?
+
+\newthought{A trace through the algorithm} on six coffee samples makes this concrete.
+With $K{=}3$ and initial centroids at $\mu_1{=}(1,2)$, $\mu_2{=}(4,5)$, $\mu_3{=}(8,9)$:
+
+\marginnote{Six exercise samples:\\
+$A=(1,2)$, $B=(2,1)$\\
+$C=(4,5)$, $D=(5,4)$\\
+$E=(8,9)$, $F=(9,8)$\\[4pt]
+acidity, bitterness (1--10)}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=1]
+    % Panel 1: Initialization
+    \begin{axis}[
+        name=init,
+        title={Initialization},
+        xlabel={acidity}, ylabel={bitterness},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=0.32\textwidth, height=0.32\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={2,5,8}, ytick={2,5,8},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside, tick pos=left,
+        title style={font=\small},
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black!30] coordinates {
+        (1,2)(2,1)(4,5)(5,4)(8,9)(9,8)
+    };
+    \addplot[only marks, mark=x, mark size=6pt, black, thick] coordinates {
+        (1,2)(4,5)(8,9)
+    };
+    \end{axis}
+
+    % Panel 2: After assignment
+    \begin{axis}[
+        name=assign,
+        at={(init.east)}, anchor=west, xshift=0.4cm,
+        title={After assignment},
+        xlabel={acidity},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=0.32\textwidth, height=0.32\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={2,5,8}, ytick={2,5,8},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside, tick pos=left,
+        title style={font=\small},
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,2)(2,1)};
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(4,5)(5,4)};
+    \addplot[only marks, mark=*, mark size=2pt, black!20] coordinates {(8,9)(9,8)};
+    \addplot[only marks, mark=x, mark size=6pt, black, thick] coordinates {(1,2)(4,5)(8,9)};
+    \end{axis}
+
+    % Panel 3: After update
+    \begin{axis}[
+        name=update,
+        at={(assign.east)}, anchor=west, xshift=0.4cm,
+        title={After update},
+        xlabel={acidity},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=0.32\textwidth, height=0.32\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={2,5,8}, ytick={2,5,8},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside, tick pos=left,
+        title style={font=\small},
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,2)(2,1)};
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(4,5)(5,4)};
+    \addplot[only marks, mark=*, mark size=2pt, black!20] coordinates {(8,9)(9,8)};
+    \addplot[only marks, mark=x, mark size=6pt, black, thick] coordinates {(1.5,1.5)(4.5,4.5)(8.5,8.5)};
+    \end{axis}
+\end{tikzpicture}
+\caption{One K-Means iteration. Centroids (crosses) are initialized on data points, assignments follow, then centroids move to cluster means. Assignments do not change in the next iteration: converged.}
+\label{fig:kmeans_trace}
+\end{figure}
+
+\newthought{Convergence} is guaranteed in finite steps.
+The argument rests on three observations:
+first, each assignment step can only decrease $J$, since every point moves to an equal or closer centroid;
+second, each update step can only decrease $J$, since the mean minimizes squared distance to its members;
+third, there are at most $K^n$ possible assignment configurations.
+Since $J$ is non-increasing and the number of states is finite, the algorithm must reach a fixed assignment and stop.
+
+\marginnote{\newthought{Local optimum.} Convergence does not mean the algorithm found the best clustering. It found \textit{a} clustering. A different initialization may yield a better one.}
+
+Typical convergence takes 10--100 iterations in practice.
+
+
+
+\vspace{2.5em}
+\newthought{Initialization Matters}\index{K-Means++}
+
+K-Means is sensitive to where centroids start.
+If two initial centroids fall inside the same natural cluster, one cluster gets split and another gets merged, and the algorithm may never recover.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=1]
+    % Good initialization result
+    \begin{axis}[
+        name=good,
+        title={Good initialization: $J=3$},
+        xlabel={acidity}, ylabel={bitterness},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=0.45\textwidth, height=0.45\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={2,5,8}, ytick={2,5,8},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside, tick pos=left,
+        title style={font=\small},
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,2)(2,1)};
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(4,5)(5,4)};
+    \addplot[only marks, mark=*, mark size=2pt, black!20] coordinates {(8,9)(9,8)};
+    \addplot[only marks, mark=x, mark size=6pt, black, thick] coordinates {(1.5,1.5)(4.5,4.5)(8.5,8.5)};
+    \end{axis}
+
+    % Bad initialization result
+    \begin{axis}[
+        name=bad,
+        at={(good.east)}, anchor=west, xshift=0.8cm,
+        title={Bad initialization: $J=34$},
+        xlabel={acidity},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=0.45\textwidth, height=0.45\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={2,5,8}, ytick={2,5,8},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside, tick pos=left,
+        title style={font=\small},
+    ]
+    % A is its own singleton cluster
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,2)};
+    % B is its own singleton cluster
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(2,1)};
+    % C, D, E, F all merged into one cluster
+    \addplot[only marks, mark=*, mark size=2pt, black!20] coordinates {(4,5)(5,4)(8,9)(9,8)};
+    \addplot[only marks, mark=x, mark size=6pt, black, thick] coordinates {(1,2)(2,1)(6.5,6.5)};
+    \end{axis}
+\end{tikzpicture}
+\caption{Same data, different initial centroids. Left: one centroid per natural cluster gives $J{=}3$. Right: two centroids inside the cold-brew cluster leave the drip and espresso groups merged, giving $J{=}34$.}
+\label{fig:kmeans_init}
+\end{figure}
+
+\marginnote{\newthought{Multiple restarts.} A practical fix: run K-Means $n$ times with different random initializations, keep the result with the lowest $J$. Typical default: $n{=}10$.}
+
+\newthought{K-Means++}\cite{ArthurVassilvitskii2007} gives a smarter starting point.
+The first centroid is chosen uniformly at random.
+Each subsequent centroid is chosen with probability proportional to its squared distance to the nearest already-chosen centroid:
+
+\begin{align*}
+    p(x_i) &= \frac{D(x_i)^2}{\sum_j D(x_j)^2}
+\end{align*}
+
+where $D(x_i) = \min_{j < k} \|x_i - \mu_j\|$.
+Points far from all current centroids are more likely to be chosen next, spreading the initial centroids across the data.
+This gives a theoretical guarantee on the expected inertia relative to the global optimum.
+
+
+
+\vspace{2.5em}
+\newthought{Choosing K}\index{elbow method}\index{silhouette score}
+
+K must be set by the practitioner.
+Two complementary heuristics help.
+
+\newthought{The elbow method} plots inertia $J$ against $K$ and looks for a kink: the point where adding one more cluster yields diminishing returns.
+For the coffee data, $J$ drops sharply from $K{=}1$ to $K{=}3$, then flattens.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=1]
+    \begin{axis}[
+        xlabel={$K$},
+        ylabel={inertia $J$},
+        xmin=0.5, xmax=6.5,
+        ymin=0, ymax=115,
+        width=0.5*\textwidth,
+        height=0.4*\textwidth,
+        axis line style={draw=none},
+        tick style={black, thick},
+        xtick={1,2,3,4,5,6},
+        ytick={0,20,40,60,80,100},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+    ]
+    \addplot[black, thick, mark=*, mark size=2pt] coordinates {
+        (1,102) (2,21) (3,3) (4,2) (5,1) (6,0)
+    };
+    \draw[black!40, dashed] (axis cs:3,3) -- (axis cs:3,0);
+    \node[font=\small] at (axis cs:3.6,15) {elbow at $K{=}3$};
+    \end{axis}
+\end{tikzpicture}
+\caption{Elbow plot for the coffee data. The kink at $K{=}3$ matches the three natural groups.}
+\label{fig:elbow}
+\end{figure}
+
+\marginnote{\newthought{The elbow is not always clear.} On real data, the curve may decrease smoothly with no obvious kink. The elbow is a heuristic, not a guarantee.}
+
+\newthought{The silhouette score}\index{silhouette score} measures how well each point fits its assigned cluster relative to the next-best cluster.
+For point $x_i$, let $a(i)$ be its mean distance to points in the same cluster and $b(i)$ its mean distance to points in the nearest other cluster:
+
+\begin{align*}
+    s(i) &= \frac{b(i) - a(i)}{\max\bigl(a(i),\, b(i)\bigr)}
+\end{align*}
+
+$s(i)$ ranges from $-1$ (point would fit better elsewhere) to $+1$ (point is well-placed).
+The mean silhouette over all points is a quality score for the full clustering.
+Choose $K$ that maximizes it.
+
+\marginnote{\newthought{For our coffee data} with $K{=}3$, every point has $a(i) {=} \sqrt{2} \approx 1.4$ and $b(i) \approx 4.4$, giving $s(i) \approx 0.68$. A clear, well-separated clustering.}
+
+
+
+\vspace{2.5em}
+\newthought{When K-Means Fails}\index{failure modes}
+
+K-Means assumes clusters are roughly spherical, equally sized, and equally dense.
+When the data violates these assumptions, the Voronoi partition imposed by Euclidean centroids cuts the data in the wrong places.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=1]
+    % Panel 1: Non-convex (rings)
+    \begin{axis}[
+        name=rings,
+        title={Non-convex},
+        xlabel={$x_1$}, ylabel={$x_2$},
+        xmin=-3.5, xmax=3.5,
+        ymin=-3.5, ymax=3.5,
+        width=0.32\textwidth, height=0.32\textwidth,
+        axis line style={draw=none},
+        tick style={draw=none},
+        xtick=\empty, ytick=\empty,
+        title style={font=\small},
+        axis equal,
+    ]
+    \addplot[only marks, mark=*, mark size=1.5pt, black,
+        domain=0:360, samples=30] ({0.9*cos(x)}, {0.9*sin(x)});
+    \addplot[only marks, mark=*, mark size=1.5pt, black!35,
+        domain=0:360, samples=45] ({2.5*cos(x)}, {2.5*sin(x)});
+    \end{axis}
+
+    % Panel 2: Different sizes
+    \begin{axis}[
+        name=sizes,
+        at={(rings.east)}, anchor=west, xshift=0.4cm,
+        title={Different sizes},
+        xlabel={$x_1$},
+        xmin=-2, xmax=12,
+        ymin=-3, ymax=3,
+        width=0.32\textwidth, height=0.32\textwidth,
+        axis line style={draw=none},
+        tick style={draw=none},
+        xtick=\empty, ytick=\empty,
+        title style={font=\small},
+    ]
+    \addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
+        (0,0)(0.2,0.3)(-0.1,0.2)(0.3,-0.1)(-0.2,-0.2)(0.1,0.4)
+    };
+    \addplot[only marks, mark=*, mark size=1.5pt, black!35] coordinates {
+        (6,0)(7.5,1)(8,0)(6,-1.5)(7,-2)(9,1)(5,0)(8,-1)(6,2)(9,-1)(7,2)(5,-1)
+    };
+    \end{axis}
+
+    % Panel 3: Different densities
+    \begin{axis}[
+        name=densities,
+        at={(sizes.east)}, anchor=west, xshift=0.4cm,
+        title={Different densities},
+        xlabel={$x_1$},
+        xmin=-2, xmax=12,
+        ymin=-2, ymax=4,
+        width=0.32\textwidth, height=0.32\textwidth,
+        axis line style={draw=none},
+        tick style={draw=none},
+        xtick=\empty, ytick=\empty,
+        title style={font=\small},
+    ]
+    \addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
+        (0,1)(0.1,0.9)(0,1.1)(0.05,0.95)(-0.05,1.05)(0.1,1.1)(-0.1,0.9)
+    };
+    \addplot[only marks, mark=*, mark size=1.5pt, black!35] coordinates {
+        (5,0)(8,3)(6,0)(9,1)(5,2)(8,0)(7,3)(6,2)
+    };
+    \end{axis}
+\end{tikzpicture}
+\caption{Three scenarios where K-Means fails. Left: concentric rings share a centroid and cannot be separated. Centre: a large and a small cluster pull the boundary toward the small one. Right: a dense and a sparse cluster of equal inertia look equivalent to K-Means.}
+\label{fig:kmeans_failures}
+\end{figure}
+
+\marginnote{\newthought{K-Medoids} uses actual data points as cluster centers instead of means, making it robust to outliers and compatible with non-Euclidean distances. \newthought{Mini-Batch K-Means} updates centroids on random subsets of the data, scaling to millions of points at the cost of a slightly noisier result.}
+
+\newthought{When K-Means struggles}, the underlying issue is always the same: the Euclidean distance to a centroid is the wrong measure of belonging for that data.
+The next chapters address this by changing the notion of neighborhood (hierarchical clustering) and of density (DBSCAN).
+
+
+
+% ==============================================================================================
+% BLOCK 3: STUDENT ACTIVATION
+% ==============================================================================================
+
+\newpage
+
+\section{Examples \& Exercises}\index{examples}\index{exercises}
+
+\marginnote{\newthought{Exercises} are for practice and reinforcing concepts. Try to solve them on your own first,
+try things, play with it, discuss; this is not a time trial. And there is no shame in not ending up at the right answer,
+in the same sense that uncovering great questions
+and tossing them around is usually pretty fruitful in the long run.}
+
+\newthought{Computing by hand} builds the intuition that no amount of library calls can replace.
+Step through the arithmetic slowly.
+
+\vspace{1em}
+
+\marginnote{$A=(1,2)$, $B=(2,1)$\\$C=(4,5)$, $D=(5,4)$\\$E=(8,9)$, $F=(9,8)$\\[4pt]acidity, bitterness (1--10)}
+\newthought{Given six coffee samples} $A$--$F$, run K-Means with $K{=}3$ and initial centroids $\mu_1{=}A$, $\mu_2{=}C$, $\mu_3{=}E$.
+Perform the assignment step, the update step, and compute the inertia after convergence.
+
+\vspace{0.5em}
+
+The assignment step computes the squared distance from each point to each centroid and assigns each point to the nearest one.
+The distances are symmetric by construction so we only check whether a point is closest to its natural cluster center:
+
+\begin{align*}
+    d(A,\mu_1)^2 &= 0, \quad d(A,\mu_2)^2 = 18, \quad d(A,\mu_3)^2 = 98 \;\to\; C_1 \\
+    d(B,\mu_1)^2 &= 2, \quad d(B,\mu_2)^2 = 20, \quad d(B,\mu_3)^2 = 100 \;\to\; C_1 \\
+    d(C,\mu_1)^2 &= 18, \quad d(C,\mu_2)^2 = 0, \quad d(C,\mu_3)^2 = 32 \;\to\; C_2 \\
+    d(D,\mu_1)^2 &= 20, \quad d(D,\mu_2)^2 = 2, \quad d(D,\mu_3)^2 = 34 \;\to\; C_2 \\
+    d(E,\mu_1)^2 &= 98, \quad d(E,\mu_2)^2 = 32, \quad d(E,\mu_3)^2 = 0 \;\to\; C_3 \\
+    d(F,\mu_1)^2 &= 100, \quad d(F,\mu_2)^2 = 34, \quad d(F,\mu_3)^2 = 2 \;\to\; C_3
+\end{align*}
+
+The update step recomputes each centroid as the mean of its assigned points:
+
+\begin{align*}
+    \mu_1' &= \tfrac{1}{2}\bigl((1,2)+(2,1)\bigr) = (1.5,\;1.5) \\
+    \mu_2' &= \tfrac{1}{2}\bigl((4,5)+(5,4)\bigr) = (4.5,\;4.5) \\
+    \mu_3' &= \tfrac{1}{2}\bigl((8,9)+(9,8)\bigr) = (8.5,\;8.5)
+\end{align*}
+
+Running the assignment step again with the new centroids yields the same clusters; the algorithm has converged.
+The inertia is:
+
+\begin{align*}
+    J &= \|A - \mu_1'\|^2 + \|B - \mu_1'\|^2
+       + \|C - \mu_2'\|^2 + \|D - \mu_2'\|^2
+       + \|E - \mu_3'\|^2 + \|F - \mu_3'\|^2 \\
+      &= 0.5 + 0.5 + 0.5 + 0.5 + 0.5 + 0.5 \\
+      &= 3
+\end{align*}
+
+Each pair contributes equally; the clustering is geometrically symmetric.
+
+
+\vspace{2.5em}
+\newthought{Now repeat} with bad initial centroids $\mu_1{=}A$, $\mu_2{=}B$, $\mu_3{=}C$ — two centroids inside the cold-brew cluster.
+
+\marginnote{\newthought{What goes wrong.} Both $\mu_1$ and $\mu_2$ compete for cold-brew samples. The algorithm optimizes what it is given; it has no way of knowing that $A$ and $B$ are in the same natural group.}
+
+Assignment step with $\mu_1{=}(1,2)$, $\mu_2{=}(2,1)$, $\mu_3{=}(4,5)$:
+
+\begin{align*}
+    A &\to C_1 \quad (\text{distance 0 to } \mu_1) \\
+    B &\to C_2 \quad (\text{distance 0 to } \mu_2) \\
+    C,\,D,\,E,\,F &\to C_3 \quad (\text{all closer to } \mu_3 \text{ than to } \mu_1 \text{ or } \mu_2)
+\end{align*}
+
+After the update: $\mu_1{=}(1,2)$ (singleton), $\mu_2{=}(2,1)$ (singleton), $\mu_3{=}(6.5,6.5)$ (four points merged).
+The assignments do not change in the next iteration.
+The inertia of this converged solution is:
+
+\begin{align*}
+    J_{\text{bad}} &= 0 + 0 + \|C - \mu_3\|^2 + \|D - \mu_3\|^2 + \|E - \mu_3\|^2 + \|F - \mu_3\|^2 \\
+                   &= 0 + 0 + 8.5 + 8.5 + 8.5 + 8.5 \;=\; 34
+\end{align*}
+
+The bad initialization found a solution more than ten times worse than the good one ($J{=}34$ vs $J{=}3$).
+This is why K-Means++ and multiple restarts matter.
+
+
+\vspace{2.5em}
+\newthought{For the elbow method}, run K-Means on the same six points for $K = 1, \ldots, 6$ and record the inertia.
+
+\marginnote{Inertia values:\\[4pt]
+\begin{tabular}{cc}
+$K$ & $J$ \\
+\hline
+1 & 102 \\
+2 & 21 \\
+3 & 3 \\
+4 & 2 \\
+5 & 1 \\
+6 & 0 \\
+\end{tabular}}
+
+The drop from $K{=}1$ to $K{=}3$ is large (102 to 3); from $K{=}3$ onward the curve is nearly flat.
+The elbow is at $K{=}3$, matching the three natural coffee varieties.
+Note that $K{=}6$ always achieves $J{=}0$ by placing one centroid per point; this is not useful.
+
+
+
+% ============================= CODE ===============================
+\marginnote{\newthought{Code} will be provided as a Python notebook. Use it as a starting point, break things, and observe what changes.}
+
+\marginnote{$n=20$ samples\\
+\textit{acidity} (1--10)\\
+\textit{bitterness} (1--10)\\[4pt]
+Varieties: cold brew, drip, espresso, latte.}
+\newthought{A coffee dataset to explore.} Load the dataset and scatter-plot acidity vs.\ bitterness.
+Run K-Means with $K{=}3$ on raw features and visualize the cluster assignments.
+Try different random seeds; how stable are the results?
+Then vary $K$ from 1 to 8, record the inertia and silhouette score for each, and plot both curves.
+Finally, deliberately give K-Means a bad initialization and compare the resulting inertia with the K-Means++ result.
+
+\newthought{What to observe.} With a good initialization and $K{=}3$, the three clear clusters emerge immediately.
+The elbow and the silhouette peak agree at $K{=}3$.
+With a bad initialization, inertia is higher and cluster boundaries shift; the silhouette score drops.
+With $K{=}4$ a natural cluster splits in two, and the silhouette score begins to fall.
+
+
+
+\section{Self-Reflection and Recap}\index{reflection}\index{recap}
+
+\newthought{Self-Reflection} questions to guide your thinking:
+\begin{itemize}
+    \item What does the K-Means objective actually minimize, and why is that a reasonable definition of a good clustering?
+    \item Why does K-Means always converge, and why does convergence not guarantee the best solution?
+    \item What does K-Means++ change about the initialization, and why does spreading centroids out help?
+    \item When would you trust the elbow method? When would you not?
+    \item How does the silhouette score measure something different from inertia?
+    \item What shape of cluster cannot K-Means find, and why?
+    \item How does the choice of distance metric interact with the K-Means update step?
+    \item Given a new dataset, what would be your first three steps before running K-Means?
+\end{itemize}
+
+\newthought{Recap} of Key Concepts:
+\begin{itemize}
+    \item K-Means minimizes inertia by alternating assignment (points to nearest centroid) and update (centroid to cluster mean)
+    \item Convergence is guaranteed; optimality is not, use K-Means++ or multiple restarts
+    \item The elbow and silhouette score are complementary heuristics for choosing $K$
+    \item K-Means assumes spherical, equally sized clusters; it fails on rings, elongated shapes, and density differences
+\end{itemize}
+
+\marginnote{\newthought{Teaser.} K-Means assigns every point to exactly one flat cluster. What if structure exists at multiple scales, or if some points genuinely belong between groups?}
+\newthought{So far, we found flat partitions} of the data into $K$ fixed groups.
+But natural structure is often hierarchical: coffee varieties cluster by roast, roasts cluster by origin, origins cluster by continent.
+And some points genuinely sit at the boundary of two groups, which a hard assignment hides.
+The next chapters address both: hierarchical clustering reveals nested structure through dendrograms, and density-based methods find clusters of arbitrary shape without requiring a fixed $K$.

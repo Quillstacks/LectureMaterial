@@ -1,0 +1,418 @@
+% !TEX root = ../notes_unsupervisedlearning.tex
+% Chapter 9: Zero-Shot, Few-Shot, and Transfer Learning
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Zero-Shot, Few-Shot, and Transfer Learning}\index{Zero-Shot}\index{CLIP}\index{Transfer Learning}
+\newthought{Good representations generalize without retraining.}
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 1: INTRODUCTION
+%═══════════════════════════════════════════════════════════════════════
+
+\section{The Why}
+
+\marginnote{What if your model could handle tasks it was never explicitly trained for?}
+
+Traditional ML assumes training and test distributions match. But in practice:
+\begin{itemize}
+    \item New classes appear that weren't in training data
+    \item Labeled data for a new domain is scarce
+    \item Collecting data for every possible task is infeasible
+\end{itemize}
+
+\textbf{Transfer learning} reuses knowledge from one task/domain for another. At the extreme:
+\begin{itemize}
+    \item \textbf{Zero-shot}: Classify without seeing any examples
+    \item \textbf{Few-shot}: Classify with only 1--5 examples per class
+\end{itemize}
+
+\textbf{Foundation models} (CLIP, GPT, SAM) achieve this by learning such rich representations that they generalize to unseen tasks.
+
+\subsection{Hands-On Experience}
+
+Imagine you have a CLIP model trained on image-caption pairs. You want to classify images as \{dog, cat, car\}:
+
+\begin{enumerate}
+    \item Create text prompts: "a photo of a dog", "a photo of a cat", "a photo of a car"
+    \item Encode image and all prompts
+    \item Classify image to the class with highest similarity
+\end{enumerate}
+
+\marginnote{No training on these specific classes---just similarity in a learned space.}
+
+This is \textbf{zero-shot classification}: the model was never trained to distinguish dogs from cats, but its representations are good enough to do so.
+
+\subsection{Learning Objectives}
+
+After this lecture, you will be able to:
+\begin{enumerate}
+    \item Apply pre-trained models for zero-shot classification and retrieval
+    \item Design effective prompts for vision-language models
+    \item Implement few-shot learning through fine-tuning and in-context learning
+    \item Apply domain adaptation techniques for distribution shift
+    \item Use foundation models (CLIP, SAM) as building blocks
+\end{enumerate}
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 2: MAIN THEORY
+%═══════════════════════════════════════════════════════════════════════
+
+\section{Transfer Learning Fundamentals}
+
+\marginnote{Pre-train once, fine-tune many times.}
+
+\subsection{Why Transfer Works}
+
+Deep networks learn hierarchical features:
+\begin{itemize}
+    \item Early layers: edges, textures (generic)
+    \item Middle layers: parts, patterns (semi-generic)
+    \item Late layers: objects, concepts (task-specific)
+\end{itemize}
+
+Early features transfer well; late features need adaptation.
+
+\subsection{Transfer Strategies}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.7]
+    % Feature extraction
+    \begin{scope}
+    \node at (2,3.5) {\textbf{Feature Extraction}};
+    \foreach \i in {1,2,3,4} {
+        \draw[fill=blue!20] (\i*0.8,0) rectangle (\i*0.8+0.6,2);
+    }
+    \draw[fill=green!40] (4.8,0) rectangle (5.4,2);
+    \node at (2.4,-0.5) {\small Frozen};
+    \node at (5.1,-0.5) {\small Train};
+    \end{scope}
+
+    % Fine-tuning
+    \begin{scope}[xshift=7cm]
+    \node at (2,3.5) {\textbf{Fine-tuning}};
+    \foreach \i in {1,2} {
+        \draw[fill=blue!20] (\i*0.8,0) rectangle (\i*0.8+0.6,2);
+    }
+    \foreach \i in {3,4} {
+        \draw[fill=green!40] (\i*0.8,0) rectangle (\i*0.8+0.6,2);
+    }
+    \draw[fill=green!40] (4.8,0) rectangle (5.4,2);
+    \node at (1.6,-0.5) {\small Frozen};
+    \node at (4.2,-0.5) {\small Train};
+    \end{scope}
+\end{tikzpicture}
+\caption{Left: freeze pre-trained layers, train only classifier. Right: fine-tune later layers too.}
+\end{figure}
+
+\begin{description}
+    \item[Feature extraction] Freeze pre-trained network, train only new classifier head
+    \item[Fine-tuning] Unfreeze some/all layers, train with small learning rate
+    \item[Full fine-tuning] Train entire network (risk of forgetting)
+\end{description}
+
+\subsection{When Transfer Fails}
+
+\textbf{Negative transfer}: Performance worse than training from scratch. Occurs when:
+\begin{itemize}
+    \item Source and target domains are very different
+    \item Pre-trained features are harmful for the target task
+\end{itemize}
+
+
+\section{Zero-Shot Learning}
+
+\marginnote{Zero-shot: classify without any training examples of that class.}
+
+\subsection{Approaches}
+
+\begin{enumerate}
+    \item \textbf{Attribute-based}: Map classes to attributes, classify via attribute prediction
+    \item \textbf{Embedding-based}: Map both images and class names to shared space
+    \item \textbf{Generative}: Generate features for unseen classes from descriptions
+\end{enumerate}
+
+\subsection{Vision-Language Alignment}
+
+Modern zero-shot learning uses vision-language models:
+
+\begin{equation}
+    p(y = k | x) = \frac{\exp(\text{sim}(f_{\text{image}}(x), f_{\text{text}}(t_k)) / \tau)}{\sum_j \exp(\text{sim}(f_{\text{image}}(x), f_{\text{text}}(t_j)) / \tau)}
+\end{equation}
+
+where $t_k$ is the text description for class $k$.
+
+
+\section{CLIP: Contrastive Language-Image Pre-training}
+
+\marginnote{CLIP: trained on 400M image-text pairs from the web.}
+
+\subsection{Architecture}
+
+\begin{itemize}
+    \item \textbf{Image encoder}: ResNet or Vision Transformer
+    \item \textbf{Text encoder}: Transformer
+    \item \textbf{Training}: Contrastive loss on (image, caption) pairs
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.8]
+    % Images
+    \node at (0,3) {Images};
+    \foreach \i in {0,1,2} {
+        \draw[fill=blue!20] (-0.5,2-\i*0.8) rectangle (0.5,2.5-\i*0.8);
+    }
+
+    % Image encoder
+    \draw[fill=gray!20] (1.5,0.5) rectangle (2.5,2.5);
+    \node[rotate=90] at (2,1.5) {\small Img Enc};
+
+    % Text
+    \node at (6,3) {Texts};
+    \foreach \i in {0,1,2} {
+        \draw[fill=green!20] (5.5,2-\i*0.8) rectangle (6.5,2.5-\i*0.8);
+    }
+
+    % Text encoder
+    \draw[fill=gray!20] (4.5,0.5) rectangle (5.5,2.5);
+    \node[rotate=90] at (5,1.5) {\small Txt Enc};
+
+    % Similarity matrix
+    \draw[fill=yellow!20] (3,0.5) rectangle (4,2.5);
+    \node at (3.5,1.5) {\small $S$};
+
+    % Arrows
+    \draw[->] (0.5,1.5) -- (1.5,1.5);
+    \draw[->] (5.5,1.5) -- (4.5,1.5);
+    \draw[->] (2.5,1.5) -- (3,1.5);
+    \draw[->] (4.5,1.5) -- (4,1.5);
+
+    % Diagonal
+    \node at (3.5,-0.2) {\small Maximize diagonal};
+\end{tikzpicture}
+\caption{CLIP training: maximize similarity between matching image-text pairs (diagonal).}
+\end{figure}
+
+\subsection{Zero-Shot Classification}
+
+\begin{algorithm}[H]
+\caption{CLIP Zero-Shot Classification}
+\begin{algorithmic}[1]
+\Require Image $x$, class names $\{c_1, \ldots, c_K\}$, prompt template $T$
+\For{each class $k$}
+    \State $t_k \gets T(c_k)$ \Comment{e.g., "a photo of a \{class\}"}
+    \State $e_k \gets f_{\text{text}}(t_k)$ \Comment{Text embedding}
+\EndFor
+\State $e_x \gets f_{\text{image}}(x)$ \Comment{Image embedding}
+\State $\hat{y} \gets \arg\max_k \cos(e_x, e_k)$
+\end{algorithmic}
+\end{algorithm}
+
+
+\section{Prompt Engineering}
+
+\marginnote{The prompt is the new hyperparameter.}
+
+The choice of text prompt significantly affects performance:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Prompt} & \textbf{Accuracy} \\
+\midrule
+"\{class\}" & 58.2\% \\
+"a photo of a \{class\}" & 63.5\% \\
+"a photo of a \{class\}, a type of pet" & 67.1\% \\
+Ensemble of 80 prompts & 76.2\% \\
+\bottomrule
+\end{tabular}
+\caption{Prompt engineering effects on ImageNet zero-shot accuracy}
+\end{table}
+
+\textbf{Prompt ensembling}: Average embeddings from multiple prompt templates.
+
+\textbf{CoOp}: Learn soft prompt tokens via gradient descent:
+\begin{equation}
+    t = [V_1][V_2]\ldots[V_M][\text{class}]
+\end{equation}
+where $V_i$ are learnable embeddings.
+
+
+\section{Few-Shot Learning}
+
+\marginnote{Few-shot: learn from 1--5 examples per class.}
+
+\subsection{Fine-tuning Approaches}
+
+\begin{itemize}
+    \item \textbf{Linear probe}: Freeze encoder, train linear classifier
+    \item \textbf{Full fine-tuning}: Update all parameters (risk of overfitting)
+    \item \textbf{Adapters}: Add small trainable modules, freeze rest
+\end{itemize}
+
+\subsection{In-Context Learning}
+
+Large language models can do few-shot via prompting:
+
+\begin{verbatim}
+Classify sentiment:
+"Great movie!" -> positive
+"Terrible acting." -> negative
+"Loved every minute." -> ?
+\end{verbatim}
+
+No gradient updates---the model "learns" from examples in the context.
+
+
+\section{Foundation Models}
+
+\marginnote{Foundation models: large pre-trained models that serve as building blocks.}
+
+\subsection{SAM: Segment Anything Model}
+
+\begin{itemize}
+    \item Trained on 1B masks from 11M images
+    \item Promptable: point, box, or text input
+    \item Zero-shot segmentation of arbitrary objects
+\end{itemize}
+
+\subsection{DINO: Self-Distillation with No Labels}
+
+\begin{itemize}
+    \item Self-supervised vision transformer
+    \item Learns semantic features without any labels
+    \item Attention maps highlight object parts
+\end{itemize}
+
+\subsection{Composing Foundation Models}
+
+Combine CLIP (understanding) + SAM (segmentation) + Stable Diffusion (generation) for complex pipelines without task-specific training.
+
+
+\section{Domain Adaptation}
+
+\marginnote{What if training and test data come from different distributions?}
+
+\subsection{Types of Shift}
+
+\begin{description}
+    \item[Covariate shift] $P(X)$ changes, $P(Y|X)$ stays same
+    \item[Label shift] $P(Y)$ changes, $P(X|Y)$ stays same
+    \item[Concept drift] $P(Y|X)$ changes over time
+\end{description}
+
+\subsection{Domain-Invariant Features}
+
+Learn features that are informative for the task but indistinguishable between domains:
+
+\begin{equation}
+    \min_f \mathcal{L}_{\text{task}}(f) + \lambda \mathcal{L}_{\text{domain}}(f)
+\end{equation}
+
+where $\mathcal{L}_{\text{domain}}$ penalizes features that reveal domain identity.
+
+\subsection{Adversarial Domain Adaptation}
+
+Train a domain discriminator; encoder tries to fool it:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.8]
+    \node[draw, rectangle] (enc) at (0,0) {Encoder $f$};
+    \node[draw, rectangle] (task) at (3,1) {Task classifier};
+    \node[draw, rectangle] (domain) at (3,-1) {Domain classifier};
+
+    \draw[->] (-2,0) -- (enc) node[midway, above] {$x$};
+    \draw[->] (enc) -- (task);
+    \draw[->] (enc) -- (domain);
+
+    \node at (5,1) {Maximize};
+    \node at (5,-1) {Confuse};
+\end{tikzpicture}
+\caption{Adversarial domain adaptation: features should help task but not reveal domain.}
+\end{figure}
+
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 3: STUDENT ACTIVATION
+%═══════════════════════════════════════════════════════════════════════
+
+\section{Examples \& Exercises}
+
+\subsection{Exercise 1: Zero-Shot with CLIP}
+
+You want to classify images into \{beach, mountain, city, forest\}.
+
+\begin{enumerate}
+    \item Write 3 different prompt templates
+    \item How would you ensemble them?
+    \item What if "forest" and "mountain" are often confused?
+\end{enumerate}
+
+\textbf{Solution}:
+\begin{enumerate}
+    \item "a photo of a \{class\}", "a scenic view of \{class\}", "\{class\} landscape photography"
+    \item Average the text embeddings across templates for each class
+    \item Use more specific prompts: "dense forest with trees", "rocky mountain peaks with snow"
+\end{enumerate}
+
+\subsection{Exercise 2: Few-Shot Fine-tuning}
+
+You have 5 examples per class for a 10-class problem (50 total).
+
+\begin{enumerate}
+    \item Why might full fine-tuning fail?
+    \item What regularization would you use?
+\end{enumerate}
+
+\textbf{Solution}:
+\begin{enumerate}
+    \item With 50 examples and millions of parameters, severe overfitting will occur
+    \item Freeze most layers, use dropout, weight decay, data augmentation, early stopping
+\end{enumerate}
+
+\subsection{Exercise 3: Domain Shift}
+
+Your model trained on ImageNet performs poorly on medical X-rays.
+
+\begin{enumerate}
+    \item What type of domain shift is this?
+    \item Propose two solutions
+\end{enumerate}
+
+\textbf{Solution}:
+\begin{enumerate}
+    \item Covariate shift (image appearance differs dramatically)
+    \item (a) Fine-tune on medical data, (b) Use domain adaptation with unlabeled X-rays
+\end{enumerate}
+
+
+\section{Self-Reflection \& Recap}
+
+\subsection{Reflection Questions}
+\begin{enumerate}
+    \item Why does CLIP generalize to unseen categories?
+    \begin{quote}
+        \textit{CLIP learns a joint image-text embedding space from diverse web data. Any concept describable in text can be compared to images, enabling zero-shot transfer.}
+    \end{quote}
+
+    \item When does fine-tuning outperform zero-shot?
+    \begin{quote}
+        \textit{When you have enough labeled data for the target task and the task differs significantly from pre-training. Also when the class names are ambiguous or technical.}
+    \end{quote}
+\end{enumerate}
+
+\subsection{Key Concepts}
+\begin{itemize}
+    \item \textbf{Transfer learning} reuses pre-trained knowledge
+    \item \textbf{Zero-shot} uses language as interface to classify without examples
+    \item \textbf{Prompts} are crucial for zero-shot performance
+    \item \textbf{Foundation models} (CLIP, SAM) serve as universal building blocks
+    \item \textbf{Domain adaptation} handles distribution shift
+\end{itemize}
+
+\subsection{Next Chapter Teaser}
+\marginnote{Teaser: From no labels to noisy labels}
+\newthought{We've seen models that work without labels.} But in practice, we often have labels---just imperfect ones. Noisy annotations, heuristic rules, and biased labelers are the reality. The next chapter explores how to learn from \textbf{weak and noisy supervision}.

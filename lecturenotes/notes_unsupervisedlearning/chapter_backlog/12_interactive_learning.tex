@@ -1,0 +1,375 @@
+% !TEX root = ../notes_unsupervisedlearning.tex
+% Chapter 12: Interactive and Imitation Learning
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Interactive and Imitation Learning}\index{Active Learning}\index{Imitation Learning}\index{Behavior Cloning}
+\newthought{Humans correct, query, and demonstrate.}
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 1: INTRODUCTION
+%═══════════════════════════════════════════════════════════════════════
+
+\section{The Why}
+
+\marginnote{Humans are expensive but informative---use them wisely.}
+
+Sometimes the model needs guidance that can't come from data alone:
+\begin{itemize}
+    \item \textbf{Active learning}: Query labels for the most informative examples
+    \item \textbf{Human-in-the-loop}: Continuous human correction during training
+    \item \textbf{Imitation learning}: Learn from human demonstrations
+\end{itemize}
+
+The goal: maximize learning per unit of human effort.
+
+\subsection{Hands-On Experience}
+
+\begin{marginfigure}
+\begin{tikzpicture}[scale=0.7]
+    \begin{axis}[
+        xlabel={$x_1$}, ylabel={$x_2$},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=\textwidth, height=\textwidth,
+    ]
+    % Decision boundary
+    \addplot[black, thick, domain=0:10] {5};
+    % Labeled points
+    \addplot[only marks, mark=*, mark size=3pt, blue] coordinates {(2,2) (3,1)};
+    \addplot[only marks, mark=*, mark size=3pt, red] coordinates {(8,8) (7,9)};
+    % Unlabeled near boundary
+    \addplot[only marks, mark=o, mark size=3pt, green!60!black, thick] coordinates {
+        (4,5.2) (5,4.8) (6,5.1)
+    };
+    % Unlabeled far from boundary
+    \addplot[only marks, mark=o, mark size=2pt, gray] coordinates {
+        (1,1) (9,9) (2,8) (8,2)
+    };
+    \node[green!60!black] at (axis cs:5,6.5) {\small Query these};
+    \end{axis}
+\end{tikzpicture}
+\caption{Active learning: query points near decision boundary (green).}
+\end{marginfigure}
+
+You have a budget to label 5 examples. Given the current decision boundary, which points would be most valuable to label?
+
+Points near the boundary are uncertain---labeling them helps refine the boundary. Points far from the boundary are already well-classified.
+
+\subsection{Learning Objectives}
+
+After this lecture, you will be able to:
+\begin{enumerate}
+    \item Implement active learning with uncertainty, disagreement, and diversity sampling
+    \item Design human-in-the-loop correction pipelines
+    \item Apply behavior cloning for learning from demonstrations
+    \item Explain inverse reinforcement learning and when to use it
+    \item Handle covariate shift in imitation learning (DAgger)
+\end{enumerate}
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 2: MAIN THEORY
+%═══════════════════════════════════════════════════════════════════════
+
+\section{Active Learning}
+
+\marginnote{Choose which examples to label for maximum information gain.}
+
+\subsection{Setting}
+
+\begin{itemize}
+    \item Pool $\mathcal{U}$ of unlabeled examples
+    \item Budget $B$ for labeling queries
+    \item Goal: maximize model performance with $B$ labels
+\end{itemize}
+
+\subsection{Query Strategies}
+
+\textbf{Uncertainty Sampling}
+
+Query examples where model is most uncertain:
+
+\begin{equation}
+    x^* = \arg\max_{x \in \mathcal{U}} U(f(x))
+\end{equation}
+
+Uncertainty measures:
+\begin{itemize}
+    \item \textbf{Entropy}: $H(p) = -\sum_k p_k \log p_k$
+    \item \textbf{Margin}: $1 - (p_1 - p_2)$ where $p_1 > p_2$ are top probabilities
+    \item \textbf{Least confidence}: $1 - \max_k p_k$
+\end{itemize}
+
+\textbf{Query-by-Committee}
+
+Train ensemble, query where members disagree:
+\begin{equation}
+    x^* = \arg\max_{x \in \mathcal{U}} \text{Disagreement}(\{f_1(x), \ldots, f_M(x)\})
+\end{equation}
+
+\textbf{Diversity Sampling}
+
+Ensure queried points cover the input space:
+\begin{equation}
+    x^* = \arg\max_{x \in \mathcal{U}} \min_{x' \in \mathcal{L}} d(x, x')
+\end{equation}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.65]
+    % Uncertainty
+    \begin{axis}[
+        name=unc,
+        title={Uncertainty},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=0.33\textwidth, ticks=none,
+    ]
+    \addplot[black, thick, domain=0:10] {5};
+    \addplot[only marks, mark=star, mark size=4pt, red] coordinates {(5,5)};
+    \node at (axis cs:5,7) {\small Near boundary};
+    \end{axis}
+
+    % Disagreement
+    \begin{axis}[
+        at={(unc.east)}, anchor=west, xshift=0.3cm,
+        name=dis,
+        title={Disagreement},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=0.33\textwidth, ticks=none,
+    ]
+    \addplot[blue, thick, domain=0:10] {4.5};
+    \addplot[red, thick, domain=0:10] {5.5};
+    \addplot[only marks, mark=star, mark size=4pt, red] coordinates {(5,5)};
+    \node at (axis cs:5,7) {\small Models disagree};
+    \end{axis}
+
+    % Diversity
+    \begin{axis}[
+        at={(dis.east)}, anchor=west, xshift=0.3cm,
+        title={Diversity},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=0.33\textwidth, ticks=none,
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, blue] coordinates {
+        (2,2) (3,3) (2,3)
+    };
+    \addplot[only marks, mark=star, mark size=4pt, red] coordinates {(8,8)};
+    \node at (axis cs:8,6.5) {\small Far from labeled};
+    \end{axis}
+\end{tikzpicture}
+\caption{Three query strategies select different points.}
+\end{figure}
+
+\subsection{Batch Active Learning}
+
+Query multiple points at once, avoiding redundancy:
+\begin{equation}
+    S^* = \arg\max_{S \subset \mathcal{U}, |S|=B} \text{BatchUtility}(S)
+\end{equation}
+
+Approaches: greedy selection with diversity constraint, core-set selection, BatchBALD.
+
+
+\section{Human-in-the-Loop Learning}
+
+\marginnote{Humans provide continuous feedback during training.}
+
+\subsection{Feedback Types}
+
+\begin{itemize}
+    \item \textbf{Labels}: Direct class annotation
+    \item \textbf{Corrections}: Fix model predictions
+    \item \textbf{Comparisons}: "A is better than B"
+    \item \textbf{Rankings}: Order examples by quality
+    \item \textbf{Demonstrations}: Show how to perform a task
+\end{itemize}
+
+\subsection{When to Query}
+
+\begin{itemize}
+    \item Low confidence predictions
+    \item High disagreement among models
+    \item Out-of-distribution inputs
+    \item Periodic sampling for monitoring
+\end{itemize}
+
+
+\section{Behavior Cloning}
+
+\marginnote{Supervised learning on (state, action) pairs from demonstrations.}
+
+\subsection{Setup}
+
+Expert provides demonstrations: $\mathcal{D} = \{(s_1, a_1), (s_2, a_2), \ldots\}$
+
+Train policy $\pi_\theta$ to predict actions:
+\begin{equation}
+    \theta^* = \arg\min_\theta \sum_{(s,a) \in \mathcal{D}} \mathcal{L}(\pi_\theta(s), a)
+\end{equation}
+
+\subsection{The Covariate Shift Problem}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.8]
+    \draw[->, thick] (0,0) -- (10,0) node[right] {time};
+    \draw[->, thick] (0,0) -- (0,4) node[above] {state};
+
+    % Expert trajectory
+    \draw[blue, thick] (0.5,1) .. controls (3,2) and (6,2) .. (9.5,3);
+    \node[blue] at (5,3) {Expert trajectory};
+
+    % Learned policy diverges
+    \draw[red, thick, dashed] (0.5,1) .. controls (2,1.8) and (4,1.5) .. (6,0.5);
+    \node[red] at (4,0) {Learned policy diverges};
+
+    % Error compounds
+    \draw[<->, gray] (4,1.8) -- (4,1) node[midway, right] {\small error};
+\end{tikzpicture}
+\caption{Behavior cloning: small errors compound, causing divergence from expert trajectory.}
+\end{figure}
+
+\textbf{Problem}: The policy makes small errors. These lead to states not seen in training. Performance degrades further. Errors compound exponentially.
+
+
+\section{DAgger: Dataset Aggregation}
+
+\marginnote{DAgger queries the expert on the learner's state distribution.}
+
+\begin{algorithm}[H]
+\caption{DAgger}
+\begin{algorithmic}[1]
+\State Initialize $\mathcal{D}$ with expert demonstrations
+\State Train $\pi_1$ on $\mathcal{D}$
+\For{$i = 1$ to $N$}
+    \State Run $\pi_i$ to collect trajectories
+    \State Query expert for actions at visited states
+    \State Aggregate: $\mathcal{D} \gets \mathcal{D} \cup \mathcal{D}_i$
+    \State Train $\pi_{i+1}$ on $\mathcal{D}$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Key insight}: Train on states the learner actually visits, not just expert states.
+
+
+\section{Inverse Reinforcement Learning}
+
+\marginnote{Learn the reward function that explains expert behavior.}
+
+\subsection{Motivation}
+
+Behavior cloning copies actions, but:
+\begin{itemize}
+    \item Doesn't capture the "why" behind actions
+    \item Can't generalize to new situations
+    \item Reward function is more transferable than policy
+\end{itemize}
+
+\subsection{Maximum Entropy IRL}
+
+Find reward $r$ that makes expert trajectory most likely:
+\begin{equation}
+    p(\tau | r) \propto \exp\left(\sum_t r(s_t, a_t)\right)
+\end{equation}
+
+Optimize:
+\begin{equation}
+    r^* = \arg\max_r \sum_{\tau \in \mathcal{D}_{\text{expert}}} \log p(\tau | r)
+\end{equation}
+
+\subsection{GAIL: Generative Adversarial Imitation Learning}
+
+\marginnote{GAIL: imitation as adversarial learning.}
+
+Like GANs but for trajectories:
+\begin{itemize}
+    \item Discriminator distinguishes expert vs. learner trajectories
+    \item Policy (generator) tries to fool discriminator
+    \item No explicit reward learning needed
+\end{itemize}
+
+
+\section{Reinforcement from Human Feedback (RLHF)}
+
+\marginnote{RLHF: How ChatGPT learns from human preferences.}
+
+\begin{enumerate}
+    \item \textbf{Supervised fine-tuning}: Train on high-quality demonstrations
+    \item \textbf{Reward modeling}: Train reward model on human comparisons
+    \item \textbf{RL fine-tuning}: Optimize policy with PPO against reward model
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=2cm]
+    \node[draw, rectangle, fill=blue!20] (sft) {SFT Model};
+    \node[draw, rectangle, right of=sft, xshift=1.5cm, fill=green!20] (rm) {Reward Model};
+    \node[draw, rectangle, right of=rm, xshift=1.5cm, fill=orange!20] (rlhf) {RLHF Model};
+
+    \draw[->] (sft) -- node[above] {\small comparisons} (rm);
+    \draw[->] (rm) -- node[above] {\small PPO} (rlhf);
+\end{tikzpicture}
+\caption{RLHF pipeline: SFT $\to$ Reward Model $\to$ RL Fine-tuning}
+\end{figure}
+
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 3: STUDENT ACTIVATION
+%═══════════════════════════════════════════════════════════════════════
+
+\section{Examples \& Exercises}
+
+\subsection{Exercise 1: Active Learning Query}
+
+Model outputs for 4 unlabeled points:
+\begin{itemize}
+    \item A: $p = [0.9, 0.1]$
+    \item B: $p = [0.5, 0.5]$
+    \item C: $p = [0.7, 0.3]$
+    \item D: $p = [0.99, 0.01]$
+\end{itemize}
+
+Rank by uncertainty (entropy). Which would you query first?
+
+\textbf{Solution}: Entropy: A=0.47, B=1.0, C=0.88, D=0.08. Query order: B, C, A, D.
+
+\subsection{Exercise 2: Covariate Shift}
+
+A self-driving car trained via behavior cloning veers slightly right. Why does this get worse over time?
+
+\textbf{Solution}: The slight rightward bias puts the car in states not seen during training (closer to right edge). The policy has no good action for these states, likely veering more right. This compounds until the car leaves the road.
+
+\subsection{Exercise 3: IRL vs. Behavior Cloning}
+
+When would you prefer IRL over behavior cloning?
+
+\textbf{Solution}: When the environment or goals might change. IRL learns the underlying reward, which transfers to new situations. Behavior cloning only copies actions for specific situations.
+
+
+\section{Self-Reflection \& Recap}
+
+\subsection{Reflection Questions}
+\begin{enumerate}
+    \item When does active learning provide the most benefit?
+    \begin{quote}
+        \textit{When labeling is expensive, data is abundant, and the model can identify informative examples. Less benefit when all examples are equally informative.}
+    \end{quote}
+
+    \item Why does behavior cloning suffer from compounding errors?
+    \begin{quote}
+        \textit{Training distribution (expert states) differs from test distribution (learner states). Small errors cause state drift, leading to unseen states where the policy fails.}
+    \end{quote}
+\end{enumerate}
+
+\subsection{Key Concepts}
+\begin{itemize}
+    \item \textbf{Active learning} maximizes information per label
+    \item \textbf{Behavior cloning} is supervised learning on demonstrations
+    \item \textbf{Covariate shift} causes compounding errors
+    \item \textbf{DAgger} addresses shift by querying on learner states
+    \item \textbf{IRL} learns underlying reward functions
+    \item \textbf{RLHF} aligns models with human preferences
+\end{itemize}
+
+\subsection{Next Chapter Teaser}
+\marginnote{Teaser: From demonstrations to rewards}
+\newthought{We've learned from human demonstrations and corrections.} But what if feedback comes as sparse rewards rather than dense supervision? The next chapter introduces \textbf{reinforcement learning}---learning to act through trial, error, and reward.

@@ -1,0 +1,179 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lecture Notes: Unsupervised Learning
+% Author: Prof. Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+\makeindex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+\title{~\_Supervised \\Learning}
+\author[\defaultauthor]{\defaultauthor}
+\publisher[\defaultpublisher]{\defaultpublisher}
+
+
+% Load optional fonts
+\loadoptionalfonts
+
+% Additional packages
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\begin{document}
+
+
+
+\makestandardfrontmatter
+% Dedication
+% Alternative quotes:
+\makededication{\openepigraph{"In my defense, I was left unsupervised".}{Der Zauberlehrling}}
+\tableofcontents
+
+
+% Introduction
+\makeintroduction{%
+  \newthought{Supervised learning} is limited to tasks where we have labeled data and clear objectives. 
+  Beyond this limited context of learning, we fall back to the pattern in the data itself.
+
+  \newthought{We explore how pattern emerges,} from other sources of information beyond explicit labels. 
+  We will see how pattern can be discovered in data,
+  represented, leveraged and utilized.
+  In that sense this course is about any form of learning that is not supervised learning.
+
+  \newthought{Each lecture follows a consistent pattern.} To start of the contents of the lecture will be motivated by a narrative, a theoretical primer,
+  and some sort of hands-on experience to build intuition. Then we will dive into the, theory and algorithms, 
+  then reflection. Theory sessions are ~45 minutes, followed by ~45 minutes of coding practice to enforce reflection and deepen understanding of the concepts.
+}
+
+%═══════════════════════════════════════════════════════════════════════
+% LECTURE pattern TEMPLATE
+%═══════════════════════════════════════════════════════════════════════
+% Each chapter follows this pattern:
+%
+% ┌─────────────────────────────────────────┐
+% │  CHAPTER TITLE                          │
+% │  \newthought{Subtitle}                  │
+% ├─────────────────────────────────────────┤
+% │  BLOCK 1: INTRODUCTION                  │
+% │  ├── \section{The Why}                  │
+% │  │   └── Motivation, ML/DL connection   │
+% │  ├── \subsection{Hands-On Experience}   │
+% │  │   └── Concrete example by hand       │
+% │  └── Learning Objectives                │
+% ├─────────────────────────────────────────┤
+% │  BLOCK 2: MAIN THEORY                   │
+% │  ├── \section{Topic 1}                  │
+% │  │   ├── Derivations, algorithms        │
+% │  │   └── Figures, tables                │
+% │  └── \section{Topic 2}                  │
+% │      └── ...                            │
+% ├─────────────────────────────────────────┤
+% │  BLOCK 3: STUDENT ACTIVATION            │
+% │  ├── \section{Examples & Exercises}     │
+% │  │   └── 3-4 exercises with solutions   │
+% │  └── \section{Self-Reflection & Recap}  │
+% │      ├── Reflection questions           │
+% │      ├── Key concepts recap             │
+% │      └── TEASER → next chapter          │
+% └─────────────────────────────────────────┘
+
+
+%% Start the main matter
+\mainmatter
+
+
+% ======================================================================
+% ACT I: DISCOVERING pattern IN DATA
+% ======================================================================
+
+\part{Geometry of Pattern}
+
+% Lecture 1: Foundations
+\input{chapters/01_foundations}
+
+% Lecture 2: Centroid Clustering
+% \input{chapters/02_centroid_clustering}
+
+% Lecture 3: Hierarchical Clustering
+%\input{chapters/03_hierarchical_clustering}
+
+% Lecture 4: Density and Graph-Based Clustering
+%\input{chapters/04_density_graph_clustering}
+
+
+% ======================================================================
+% ACT II: LEARNING TO REPRESENT Pattern
+% ======================================================================
+
+%\part{Representing Pattern}
+
+% Lecture 5: Dimensionality Reduction
+%\input{chapters/05_dimensionality_reduction}
+
+% Lecture 6: Variational Inference
+%\input{chapters/06_variational_inference}
+
+% Lecture 7: Anomaly Detection (Uncertainty) and Evaluation
+%\input{chapters/07_anomaly_evaluation}
+
+
+% ======================================================================
+% ACT III: Pattern FROM SELF-SUPERVISION
+% ======================================================================
+
+%\part{Epistemic Pattern}
+
+% Lecture 8: Self-Supervised Learning
+%\input{chapters/08_self_supervised_learning}
+
+% Lecture 9: Zero-Shot, Few-Shot, and Transfer Learning
+%\input{chapters/09_zero_few_shot_transfer}
+
+
+% ======================================================================
+% ACT IV: Pattern FROM IMPERFECT SUPERVISION
+% ======================================================================
+
+%\part{Aleatoric Pattern}
+
+% Lecture 10: Weak Supervision and Labeling Functions .. GANs? 
+%\input{chapters/10_weak_supervision}
+
+
+% Lecture 11: Self-Training and Ensemble Methods (maybe this needs to be at self-supervised learning)
+%\input{chapters/11_self_training_ensembles}
+
+% Lecture 12: Interactive and Imitation Learning
+%\input{chapters/12_interactive_learning}
+
+
+% ======================================================================
+% ACT V: Pattern FROM INTERACTION
+% ======================================================================
+
+%\part{World Pattern}
+
+% Lecture 13: Reinforcement Learning Fundamentals
+%\input{chapters/13_reinforcement_learning}
+
+% Lecture 14: World Models and Vision-Language-Action Models
+%\input{chapters/14_world_models_vla}
+
+
+
+
+\makestandardbackmatter{unsupervisedlearning}
+
+\end{document}

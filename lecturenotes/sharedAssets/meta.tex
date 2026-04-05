@@ -67,6 +67,16 @@ See the license for details.\index{license}
 }
 
 %%
+% Page header: show author name on even (verso) pages.
+% Must patch \mainmatter because tufte-book resets \fancyhead inside it.
+%%
+\let\tufte@orig@mainmatter\mainmatter
+\renewcommand{\mainmatter}{%
+  \tufte@orig@mainmatter
+  \fancyhead[LE]{\thepage\quad\smallcaps{\newlinetospace{\plaintitle}}\quad\smallcaps{\defaultauthor}}%
+}
+
+%%
 % Font options template
 %%
 \newcommand{\loadoptionalfonts}{%

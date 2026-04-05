@@ -1,0 +1,338 @@
+% !TEX root = ../notes_unsupervisedlearning.tex
+% Chapter 11: Self-Training and Ensemble Methods
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Self-Training and Ensemble Methods}\index{Self-Training}\index{Pseudo-Labeling}\index{FixMatch}
+\newthought{The model becomes the teacher.}
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 1: INTRODUCTION
+%═══════════════════════════════════════════════════════════════════════
+
+\section{The Why}
+
+\marginnote{Conditional independence plus agreement suggests truth.}
+
+You have a small labeled dataset and a large unlabeled one. Can the model leverage the unlabeled data to improve?
+
+\textbf{Self-training} uses the model's own predictions on unlabeled data as additional training signal. The key insight: if the model is confident about an unlabeled example, that prediction is likely correct.
+
+\textbf{Semi-supervised learning} combines labeled and unlabeled data:
+\begin{itemize}
+    \item Labeled data provides ground truth
+    \item Unlabeled data reveals data structure
+    \item Self-training bridges the two
+\end{itemize}
+
+\subsection{Hands-On Experience}
+
+\begin{marginfigure}
+\begin{tikzpicture}[scale=0.7]
+    \begin{axis}[
+        xlabel={$x_1$}, ylabel={$x_2$},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=\textwidth, height=\textwidth,
+    ]
+    % Labeled points
+    \addplot[only marks, mark=*, mark size=4pt, blue] coordinates {(2,2) (3,3)};
+    \addplot[only marks, mark=*, mark size=4pt, red] coordinates {(7,7) (8,8)};
+    % Unlabeled points
+    \addplot[only marks, mark=o, mark size=3pt, gray] coordinates {
+        (2.5,2.5) (1.5,2) (3,2) (2,3)
+        (7.5,7.5) (6.5,7) (8,7) (7,8)
+        (5,5)
+    };
+    \node at (axis cs:2.5,1) {\small Labeled};
+    \node at (axis cs:7.5,6) {\small Labeled};
+    \node[gray] at (axis cs:5,4) {\small Unlabeled};
+    \end{axis}
+\end{tikzpicture}
+\caption{Few labeled points (filled), many unlabeled (hollow). Self-training expands labels.}
+\end{marginfigure}
+
+Start with 2 labeled points per class. Train a classifier. Which unlabeled points would you confidently label? Add them to training set and repeat.
+
+\subsection{Learning Objectives}
+
+After this lecture, you will be able to:
+\begin{enumerate}
+    \item Implement pseudo-labeling with confidence thresholding
+    \item Apply consistency regularization for semi-supervised learning
+    \item Design multi-view learning with co-training
+    \item Combine FixMatch components: pseudo-labels + consistency + augmentation
+    \item Understand when self-training helps vs. hurts
+\end{enumerate}
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 2: MAIN THEORY
+%═══════════════════════════════════════════════════════════════════════
+
+\section{Pseudo-Labeling}
+
+\marginnote{Use confident predictions as if they were ground truth.}
+
+\begin{algorithm}[H]
+\caption{Basic Pseudo-Labeling}
+\begin{algorithmic}[1]
+\Require Labeled set $\mathcal{L}$, unlabeled set $\mathcal{U}$, threshold $\tau$
+\State Train model $f$ on $\mathcal{L}$
+\Repeat
+    \For{each $x \in \mathcal{U}$}
+        \State $\hat{p} \gets f(x)$, $\hat{y} \gets \arg\max \hat{p}$
+        \If{$\max(\hat{p}) > \tau$}
+            \State Add $(x, \hat{y})$ to $\mathcal{L}$
+            \State Remove $x$ from $\mathcal{U}$
+        \EndIf
+    \EndFor
+    \State Retrain $f$ on expanded $\mathcal{L}$
+\Until{convergence or $\mathcal{U}$ empty}
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Key design choices}:
+\begin{itemize}
+    \item \textbf{Threshold $\tau$}: Higher $\to$ fewer but more accurate pseudo-labels
+    \item \textbf{Curriculum}: Start with high threshold, gradually lower
+    \item \textbf{Soft vs. hard}: Use soft labels $\hat{p}$ or hard labels $\hat{y}$
+\end{itemize}
+
+
+\section{Confidence Thresholding}
+
+\marginnote{High confidence $\neq$ correct. But it's correlated.}
+
+\subsection{The Problem}
+
+Neural networks are often overconfident, especially:
+\begin{itemize}
+    \item On out-of-distribution data
+    \item When trained on small datasets
+    \item Near decision boundaries
+\end{itemize}
+
+\subsection{Calibration}
+
+A well-calibrated model has: $P(\hat{y} = y | \hat{p} = p) = p$
+
+\textbf{Temperature scaling}: $\hat{p}_{\text{calibrated}} = \text{softmax}(z / T)$ with $T > 1$ typically.
+
+\subsection{Confirmation Bias}
+
+\marginnote{Errors in pseudo-labels get reinforced---a dangerous feedback loop.}
+
+Self-training can amplify mistakes:
+\begin{enumerate}
+    \item Model makes error on unlabeled point
+    \item Error becomes pseudo-label
+    \item Model trains on wrong label
+    \item Model becomes more confident in error
+\end{enumerate}
+
+\textbf{Mitigation}: High thresholds, curriculum, multiple models.
+
+
+\section{Consistency Regularization}
+
+\marginnote{Predictions should be stable under perturbation.}
+
+\textbf{Key assumption}: Small perturbations shouldn't change the class.
+
+\begin{equation}
+    \mathcal{L}_{\text{consistency}} = \sum_{x \in \mathcal{U}} d(f(x), f(\text{aug}(x)))
+\end{equation}
+
+where $\text{aug}$ applies data augmentation and $d$ is a distance (MSE, KL).
+
+\subsection{Mean Teacher}
+
+Use exponential moving average (EMA) of model parameters as teacher:
+
+\begin{equation}
+    \theta_{\text{teacher}} \gets \alpha \theta_{\text{teacher}} + (1 - \alpha) \theta_{\text{student}}
+\end{equation}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.8]
+    \node[draw, rectangle] (x) at (0,0) {$x$};
+    \node[draw, rectangle] (aug1) at (2,1) {weak aug};
+    \node[draw, rectangle] (aug2) at (2,-1) {strong aug};
+    \node[draw, rectangle] (teacher) at (5,1) {Teacher (EMA)};
+    \node[draw, rectangle] (student) at (5,-1) {Student};
+    \node[draw, circle] (loss) at (7,0) {$\mathcal{L}$};
+
+    \draw[->] (x) -- (aug1);
+    \draw[->] (x) -- (aug2);
+    \draw[->] (aug1) -- (teacher);
+    \draw[->] (aug2) -- (student);
+    \draw[->] (teacher) -- (loss);
+    \draw[->] (student) -- (loss);
+    \draw[->, dashed] (student.north) to[bend right] node[right] {\small EMA} (teacher.south);
+\end{tikzpicture}
+\caption{Mean Teacher: student learns to match EMA teacher's predictions.}
+\end{figure}
+
+
+\section{Co-Training and Multi-View Learning}
+
+\marginnote{Multiple views provide independent supervision.}
+
+\subsection{Co-Training}
+
+\textbf{Assumption}: Features split into two conditionally independent views given the label.
+
+\begin{algorithm}[H]
+\caption{Co-Training}
+\begin{algorithmic}[1]
+\State Train classifier $f_1$ on view 1 features
+\State Train classifier $f_2$ on view 2 features
+\Repeat
+    \State $f_1$ labels high-confidence unlabeled points
+    \State Add to $f_2$'s training set
+    \State $f_2$ labels high-confidence unlabeled points
+    \State Add to $f_1$'s training set
+    \State Retrain both classifiers
+\Until{convergence}
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Example views}: For web pages, view 1 = page content, view 2 = anchor text from links.
+
+\subsection{Tri-Training}
+
+Use three classifiers; label point if two agree:
+\begin{equation}
+    \text{Pseudo-label } x \text{ for } f_3 \text{ if } f_1(x) = f_2(x)
+\end{equation}
+
+
+\section{FixMatch}
+
+\marginnote{FixMatch: state-of-the-art semi-supervised learning (2020)}
+
+\textbf{FixMatch} combines pseudo-labeling and consistency:
+
+\begin{enumerate}
+    \item Apply \textbf{weak augmentation} (flip, crop)
+    \item Generate pseudo-label if confidence $> \tau$
+    \item Apply \textbf{strong augmentation} (RandAugment, CTAugment)
+    \item Train to match pseudo-label on strongly augmented view
+\end{enumerate}
+
+\begin{equation}
+    \mathcal{L} = \mathcal{L}_{\text{supervised}} + \lambda \sum_{x \in \mathcal{U}} \mathbf{1}[\max(\hat{p}) > \tau] \cdot H(\hat{y}, f(x_{\text{strong}}))
+\end{equation}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.7]
+    \node[draw, rectangle] (x) at (0,0) {Unlabeled $x$};
+    \node[draw, rectangle, fill=green!20] (weak) at (3,1.5) {Weak aug};
+    \node[draw, rectangle, fill=orange!20] (strong) at (3,-1.5) {Strong aug};
+    \node[draw, rectangle] (model1) at (6,1.5) {Model};
+    \node[draw, rectangle] (model2) at (6,-1.5) {Model};
+    \node[draw, diamond, aspect=2] (check) at (9,1.5) {$> \tau$?};
+    \node[draw, rectangle] (pseudo) at (9,0) {Pseudo-label};
+    \node[draw, circle] (loss) at (9,-1.5) {CE Loss};
+
+    \draw[->] (x) -- (weak);
+    \draw[->] (x) -- (strong);
+    \draw[->] (weak) -- (model1);
+    \draw[->] (strong) -- (model2);
+    \draw[->] (model1) -- (check);
+    \draw[->] (check) -- node[right] {yes} (pseudo);
+    \draw[->] (pseudo) -- (loss);
+    \draw[->] (model2) -- (loss);
+\end{tikzpicture}
+\caption{FixMatch: pseudo-labels from weak augmentation train predictions on strong augmentation.}
+\end{figure}
+
+
+\section{Model-in-the-Loop Labeling}
+
+\marginnote{Large models generate candidates; humans verify.}
+
+\textbf{Key insight}: It's easier to verify than to create.
+
+\begin{enumerate}
+    \item LLM/foundation model generates candidate labels
+    \item Human reviews and corrects
+    \item Much faster than labeling from scratch
+\end{enumerate}
+
+\textbf{Applications}:
+\begin{itemize}
+    \item GPT generates NER annotations for review
+    \item SAM proposes segmentation masks for correction
+    \item CLIP classifies images; human fixes errors
+\end{itemize}
+
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 3: STUDENT ACTIVATION
+%═══════════════════════════════════════════════════════════════════════
+
+\section{Examples \& Exercises}
+
+\subsection{Exercise 1: Pseudo-Labeling Threshold}
+
+You have 100 unlabeled points. Model confidence distribution:
+\begin{itemize}
+    \item 20 points with confidence $> 0.95$ (18 correct)
+    \item 30 points with confidence $0.8$--$0.95$ (21 correct)
+    \item 50 points with confidence $< 0.8$ (25 correct)
+\end{itemize}
+
+\begin{enumerate}
+    \item What's the pseudo-label accuracy at $\tau = 0.95$?
+    \item At $\tau = 0.8$?
+    \item What threshold would you choose?
+\end{enumerate}
+
+\textbf{Solution}:
+\begin{enumerate}
+    \item 18/20 = 90\% accuracy, but only 20 pseudo-labels
+    \item 39/50 = 78\% accuracy, 50 pseudo-labels
+    \item Depends on goal: higher accuracy (0.95) for early iterations, lower (0.8) later when model is better
+\end{enumerate}
+
+\subsection{Exercise 2: Confirmation Bias}
+
+A model repeatedly misclassifies "ironic positive reviews" as negative. Explain how self-training makes this worse.
+
+\textbf{Solution}: The model confidently labels ironic reviews as negative. These become pseudo-labels. Training on them reinforces the pattern. The model becomes even more confident on ironic reviews, labeling more of them incorrectly. The problem compounds.
+
+\subsection{Exercise 3: FixMatch Design}
+
+Why use weak augmentation for pseudo-labels but strong augmentation for training?
+
+\textbf{Solution}: Weak augmentation preserves class identity, so pseudo-labels are reliable. Strong augmentation forces the model to learn robust features that generalize. The combination ensures accurate supervision and good generalization.
+
+
+\section{Self-Reflection \& Recap}
+
+\subsection{Reflection Questions}
+\begin{enumerate}
+    \item Why might pseudo-labeling fail on imbalanced data?
+    \begin{quote}
+        \textit{The model is more confident on majority classes, so pseudo-labels skew even more toward majority. Minority classes get fewer pseudo-labels, worsening imbalance.}
+    \end{quote}
+
+    \item How does FixMatch prevent confirmation bias?
+    \begin{quote}
+        \textit{High threshold (0.95) ensures only very confident predictions become pseudo-labels. Strong augmentation prevents memorization of pseudo-labeled examples.}
+    \end{quote}
+\end{enumerate}
+
+\subsection{Key Concepts}
+\begin{itemize}
+    \item \textbf{Pseudo-labeling} uses confident predictions as training signal
+    \item \textbf{Confidence thresholding} filters unreliable pseudo-labels
+    \item \textbf{Consistency regularization} enforces prediction stability
+    \item \textbf{FixMatch} combines these techniques for state-of-the-art semi-supervised learning
+    \item \textbf{Confirmation bias} is the main failure mode
+\end{itemize}
+
+\subsection{Next Chapter Teaser}
+\marginnote{Teaser: From model feedback to human feedback}
+\newthought{Self-training uses the model's predictions,} but sometimes we need human guidance. What if humans could correct, query, or demonstrate? The next chapter explores \textbf{interactive learning}---bringing humans into the training loop.

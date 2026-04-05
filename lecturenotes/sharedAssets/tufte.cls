@@ -56,7 +56,9 @@
   \renewcommand{\chapter}[1]{}% Hide bibliography chapter title
   \renewcommand{\section}[1]{}% Hide bibliography section title  
   \setlength{\bibsep}{0pt}% Remove spacing between entries
-  \renewenvironment{thebibliography}[1]{\setbox0=\vbox\bgroup}{\egroup}% Hide bibliography content
+  \renewenvironment{thebibliography}[1]{\setbox0=\vbox\bgroup\begin{list}{}{}}{\end{list}\egroup}% Hide bibliography content
+  \let\hyper@anchorstart\@gobble% Suppress duplicate PDF destinations
+  \let\hyper@anchorend\relax%
   \bibliography{#1}
   \bibliographystyle{abbrvnat}
   \endgroup
