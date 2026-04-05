@@ -1,5 +1,6 @@
 # Claude Code
 .claude/
+notesskill.md
 
 # LaTeX build artifacts
 *.aux
