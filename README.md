@@ -1,6 +1,4 @@
-# Lecture Materials
-
-Course materials hosted at [material.schutera.com](https://material.schutera.com).
+Combobulated by Prof. Dr.-Ing. Mark Schutera
 
 ## Lecture Notes
 
