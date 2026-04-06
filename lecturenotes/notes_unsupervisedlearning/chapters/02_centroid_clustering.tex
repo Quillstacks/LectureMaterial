@@ -4,7 +4,7 @@
 
 \index{Centroid Clustering}\index{K-Means}
 \chapter{Centroid Clustering}
-\newthought{From Points to Clusters}
+\newthought{From Similar to of the Same}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -12,56 +12,44 @@
 
 \section{The Why}\index{centroid clustering}\index{K-Means}
 
-In the previous chapter, we established that distance is a choice\cite{Bishop2006}:
-it encodes what similar means in a given feature space.
-Given that means to encode similarity, we can ask a more complex question,
-one that goes beyond pairs of points: which points belong together?
-Or in other words, is there an overarching structure inherent in the data?
+In the previous chapter, we established that distance is a choice that is to be engineered\cite{Bishop2006}:
+it encodes what similar means in a given feature space. 
+But similarity is a local, pairwise concept so far. 
 
-\marginnote{\newthought{A partition} assigns every point to exactly one group, with no group left empty.
-K-Means produces a \emph{hard} partition: membership is binary, not graded.
-This is a strong assumption that later clustering methods will soften.}
+As a human looking at data, we immediately see clusters of points that belong together,
+and we have an intuition for which new points would fit into which cluster.
+The process of finding them is called clustering.
 
-Raw pairwise distances do not yet tell us which observations belong together,
-nor how many groups exist.
-We need a procedure that assigns each point to a cluster; together, all clusters form a partition of the data.
+\newthought{A partition or a clustering} assigns every point to exactly one cluster, with no cluster left empty.
+In this lecture we will learn about K-Means\cite{MacQueen1967}, which produces a \emph{hard} partition: 
+membership is binary, not graded.
 
-\newthought{Centroid-based clustering} offers one answer: represent each group by a single point, its centroid, and assign every observation to the nearest one.
-This is a methodologically important commitment.
-Rather than asking about every pairwise relationship, we compress each group into a single representative and reason from there.
-The method thereby makes an assumption explicit: a group is well-described by its mean.
-When that assumption holds, the algorithm is remarkably efficient; when it does not, the failure is instructive.
+\marginnote{\newthought{Binary membership} is a strong assumption that later clustering methods will soften.}
 
-\newthought{The procedure was formalized} as K-Means by MacQueen\cite{MacQueen1967}; its standard algorithmic form, alternating assignment and centroid update steps, was described by Lloyd\cite{Lloyd1982}.
-It remains one of the most cited algorithms in machine learning\cite{Jain2010}, in part because it is easy to implement, easy to interpret, and fast enough to run on large datasets.
-The main practical weakness, sensitivity to initialization, was addressed by Arthur and Vassilvitskii\cite{ArthurVassilvitskii2007} with K-Means++, which provides a probabilistic seeding strategy with provable guarantees on solution quality.
+\newthought{Given that means to encode similarity} over whole sets of samples, we can ask a more complex question,
+one that goes beyond pairs of points. Being able to answer which point belongs 
+to which cluster is a predictive power that allows us to generalize from observed data 
+to new instances. 
 
-\marginnote{\newthought{A centroid} is the mean position of all points assigned to a cluster.
-It need not be an actual data point; it is the center of mass of the group.
-For the update step to be well-defined, the centroid must exist in the same space as the data, which is why K-Means is tied to Euclidean geometry and arithmetic means.
-With a different distance, a different notion of center is needed.}
+\begin{marginfigure}
+    \centering
+    \includegraphics[width=\marginparwidth]{./figures/banana.jpg}
+    \caption{Clustering allows us to move from a) and b) are similar to a) and b) are of the same. \textit{Image is generated with NanoBanana.}}
+\end{marginfigure}
 
-\newthought{This chapter marks a conceptual turning point} in the course.
-In Chapter~1, the question was local and pairwise: given two points, how far apart are they?
-Here the question is global and combinatorial: given $n$ points, how do we partition them?
-The answer K-Means gives, a hard partition into $K$ spherical clusters, comes with two assumptions that later chapters will systematically relax.
-Hierarchical clustering will remove the requirement to fix $K$ in advance, revealing nested structure through a dendrogram.
-Density-based methods will remove the sphericity assumption, finding clusters of arbitrary shape.
-
-\newthought{Working through centroid clustering} requires us to,
+\newthought{In order to move from representation to leveraging pattern} we have good reason to find ways to,
 \begin{itemize}
-    \item define an objective that formalizes what a good partition means.
-    \item understand how the assignment-update cycle minimizes that objective and when it stops.
-    \item recognize the geometric assumptions behind K-Means and the failure modes they produce.
+    \item compute partitions, of the data, given a distance measure.
+    \item formalize what makes a well-defined partition by specifying an appropriate objective.
+    \item recognize the geometric assumptions and finding ways to represent cluster characteristics.
 \end{itemize}
 
-\newthought{The fundamental question} this chapter answers:
-given a distance measure, how do we find the clusters?
+
 
 \subsection{Hands On Experience}
 
 \newthought{Consider} twelve data points in two dimensions.
-Which points belong together? How many groups do you see?
+Which points belong together? How many clusters do you see?
 
 \begin{figure}
 \centering
@@ -87,18 +75,32 @@ Which points belong together? How many groups do you see?
     };
     \end{axis}
 \end{tikzpicture}
-\caption{Twelve points in 2D. How many groups do you see?}
+\caption{Twelve points in 2D. How many clusters do you see?}
 \label{fig:intro_points}
 \end{figure}
 
-\newthought{How many groups} do you see? Three seems natural, but could you argue for two?
-For six?
+\newthought{How many clusters} do you see? Three seems natural, but could you argue for two?
+For six? For 12?
 
-\newthought{Where would you place} a representative point for each group?
-Notice that you already have an intuition for what that point should be.
+\vspace{2.5em}
+\newthought{Without ground truth}, there is no single right answer, as a context for any answer could be engineered. However, some answers are better than others, 
+and it does not come as a surprise when I tell you that most people see three clusters in this data.
 
-\newthought{If a new point} arrives at $(3.5, 3.5)$, which group does it join?
-How much does it change your picture of the groups?
+
+\newthought{The fundamental question} this chapter answers is how do we find the clusters mathematically? 
+We will see how K-Means assigns each point to a cluster; and how cluster centroids function as representative points for each cluster.
+
+\marginnote{\newthought{A centroid} is the mean position of all points assigned to a cluster.
+It need not be an actual data point; it is the center of mass of the cluster.
+The centroid exists in the same space as the data.
+With a different distance, a different notion of center is needed.
+For sake of simplicity and interpretability, we tie ourselves to Euclidean distance and arithmetic means.
+But it is worth getting an intuition for other distances as well.}
+
+
+\newthought{Where would you place} a representative point for each cluster?
+Could you think of other measures to characterize and represent clusters, beyond a single point?
+
 
 \newthought{The Learning Objectives} of this lecture:
 \begin{itemize}
@@ -106,6 +108,12 @@ How much does it change your picture of the groups?
     \item Apply initialization strategies and K-selection methods.
     \item Identify when K-Means fails and understand why.
 \end{itemize}
+
+
+
+
+
+
 
 
 % ==============================================================================================
@@ -118,123 +126,217 @@ How much does it change your picture of the groups?
 
 \newthought{A data point}\index{data point} is a vector $x_i \in \mathbb{R}^d$, where $d$ is the number of features and $i = 1, \ldots, n$ indexes the observations.
 
+\begin{marginfigure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            xmin=0, xmax=5,
+            ymin=0, ymax=5,
+            width=\marginparwidth,
+            height=\marginparwidth,
+            axis line style={draw=none},
+            tick style={black, thin},
+            xtick={1,2,3,4},
+            ytick={1,2,3,4},
+            xticklabel style={font=\tiny},
+            yticklabel style={font=\tiny},
+            tick align=outside,
+            tick pos=left,
+            xlabel={$x^{(1)}$},
+            ylabel={$x^{(2)}$},
+        ]
+        \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(3,2)};
+        \node[font=\small, anchor=south west] at (axis cs:3.2,2.1) {$x_i$};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{A single data point $x_i$ in $\mathbb{R}^2$.}
+\end{marginfigure}
+
 \newthought{A cluster}\index{cluster} is a non-empty subset $C_k \subseteq \{x_1, \ldots, x_n\}$.
-A \textbf{clustering}\index{clustering} of the data is a collection of $K$ clusters $\{C_1, \ldots, C_K\}$ that are disjoint and exhaustive:
+Each point belongs to exactly one cluster; this is the hard assignment assumption, meaning clusters are disjoint:
 
 \begin{align*}
-    C_j \cap C_k &= \emptyset \quad \text{for } j \neq k \\
+    C_j \cap C_k &= \emptyset \quad \text{for } j \neq k
+\end{align*}
+
+A clustering\index{clustering} of the data is a collection of $K$ clusters $\{C_1, \ldots, C_K\}$ that is exhaustive, every point is accounted for:
+
+\begin{align*}
     \bigcup_{k=1}^{K} C_k &= \{x_1, \ldots, x_n\}
 \end{align*}
 
-\marginnote{\newthought{Partition} is the mathematical synonym for clustering. A partition of a set is any division into non-overlapping, exhaustive subsets — every element in exactly one group, no element left out. Think of $K{=}3$: you get three clusters (one group each) and one clustering (all three together). The word partition emphasises the structural guarantee; clustering emphasises the process.
 
-\newthought{Each point belongs to exactly one cluster.} This is the hard assignment assumption. Soft variants (e.g.\ Gaussian mixture models) assign fractional membership probabilities instead.}
-
-\vspace{2.5em}
+\vspace{1.5em}
+\marginnote{\newthought{Minimizing $J$} is NP-hard (effort exponential in $n$ and $K$) in general. K-Means finds a local optimum, not necessarily the global one. The result depends on initialization, and is thus non-deterministic. Shout out numerical methods.}
 \newthought{K-Means} finds a clustering of $n$ data points into $K$ clusters by minimizing the total squared distance from each point to its cluster's centroid.
-This quantity is called \textbf{inertia} or within-cluster sum of squares (WCSS):
+This quantity is called inertia or within-cluster sum of squares (WCSS):
 
 \begin{align}
     J &= \sum_{k=1}^{K} \sum_{x_i \in C_k} \|x_i - \mu_k\|^2
     \label{eq:inertia}
 \end{align}
 
-where $\mu_k = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i$ is the centroid of cluster $C_k$.
+where the mean $\mu_k = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i$ is the centroid of cluster $C_k$.
 
-\marginnote{\newthought{Minimizing $J$} is NP-hard in general. K-Means finds a local optimum, not necessarily the global one. The result depends on initialization.}
+\begin{marginfigure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            xmin=0, xmax=5,
+            ymin=0, ymax=5,
+            width=\marginparwidth,
+            height=\marginparwidth,
+            axis line style={draw=none},
+            tick style={black, thin},
+            xtick={1,2,3,4},
+            ytick={1,2,3,4},
+            xticklabel style={font=\tiny},
+            yticklabel style={font=\tiny},
+            tick align=outside,
+            tick pos=left,
+            xlabel={$x^{(1)}$},
+            ylabel={$x^{(2)}$},
+        ]
+        \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,3) (3,2) (4,3)};
+        \node[font=\tiny, anchor=south east] at (axis cs:0.9,3.1) {$x_1$};
+        \node[font=\tiny, anchor=north] at (axis cs:3,1.8) {$x_2$};
+        \node[font=\tiny, anchor=south west] at (axis cs:4.1,3.1) {$x_3$};
+        \draw[black!50, dotted, thick] (axis cs:1,3) -- (axis cs:2.67,2.67);
+        \draw[black!50, dotted, thick] (axis cs:3,2) -- (axis cs:2.67,2.67);
+        \draw[black!50, dotted, thick] (axis cs:4,3) -- (axis cs:2.67,2.67);
+        \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {(2.67,2.67)};
+        \node[font=\tiny, anchor=south west] at (axis cs:2.87,2.8) {$\mu_k$};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Cluster $C_k = \{x_1, x_2, x_3\}$ with centroid $\mu_k$. Dotted lines show the distances whose squares sum to $J$.}
+    \label{fig:centroid}
+\end{marginfigure}
 
-\newthought{The algorithm alternates between two steps} until the assignments no longer change:
 
-\begin{align*}
-    \text{Assignment:} \quad c_i &\leftarrow \arg\min_k \|x_i - \mu_k\|^2 \quad \text{for each } x_i \\[6pt]
-    \text{Update:} \quad \mu_k &\leftarrow \frac{1}{|C_k|} \sum_{x_i:\, c_i = k} x_i \quad \text{for each } k
-\end{align*}
+\vspace{1.5em}
+\newthought{The algorithm alternates between two steps} until the assignments no longer change. 
+\marginnote{\newthought{Standard Algorithmic Form} was described by Lloyd\cite{Lloyd1982}}
+It remains one of the most cited algorithms in machine learning, in part because it is easy to implement, easy to interpret, and fast enough to run on large datasets.
 
-The assignment step asks: which centroid is closest?
-The update step asks: given the current assignments, where is the best centroid?
 
-\newthought{A trace through the algorithm} on six coffee samples makes this concrete.
-With $K{=}3$ and initial centroids at $\mu_1{=}(1,2)$, $\mu_2{=}(4,5)$, $\mu_3{=}(8,9)$:
 
-\marginnote{Six exercise samples:\\
-$A=(1,2)$, $B=(2,1)$\\
-$C=(4,5)$, $D=(5,4)$\\
-$E=(8,9)$, $F=(9,8)$\\[4pt]
-acidity, bitterness (1--10)}
+\begin{algorithm}[H]
+\caption{K-Means}
+\begin{algorithmic}[1]
+\Require Data $X = \{x_1, \ldots, x_n\}$, number of clusters $K$, initial centroids $\mu_1, \ldots, \mu_K$
+\Ensure Clustering $\{C_1, \ldots, C_K\}$, centroids $\{\mu_1, \ldots, \mu_K\}$
+\Repeat
+    \State \textbf{Assignment:} $c_i \leftarrow \arg\min_k \|x_i - \mu_k\|^2$ for each $x_i$
+    \State \textbf{Update:} $\mu_k \leftarrow \frac{1}{|C_k|} \sum_{x_i:\, c_i = k} x_i$ for each $k$
+\Until{assignments no longer change}
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\newthought{A trace through the algorithm} on three points with $K{=}2$ makes this concrete.
+With initial centroids at $\mu_1{=}x_1{=}(1,3)$ and $\mu_2{=}x_3{=}(4,3)$:
+
+\begin{itemize}
+    \item For each point, the assignment step asks: which centroid is closest?
+    \item For each cluster, the update step asks: given the current assignments, where is the new centroid?
+\end{itemize}
+
+
+\newthought{Step 1: Initialization.} We place two centroids at $\mu_1 = (1,4)$ and $\mu_2 = (4,1)$, away from any data point.
 
 \begin{figure}
 \centering
-\begin{tikzpicture}[scale=1]
-    % Panel 1: Initialization
+\begin{tikzpicture}
     \begin{axis}[
-        name=init,
-        title={Initialization},
-        xlabel={acidity}, ylabel={bitterness},
-        xmin=0, xmax=10, ymin=0, ymax=10,
-        width=0.32\textwidth, height=0.32\textwidth,
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
+        xmin=0, xmax=5, ymin=0, ymax=5,
+        width=0.5\textwidth, height=0.5\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick={2,5,8}, ytick={2,5,8},
-        xticklabel style={font=\tiny},
-        yticklabel style={font=\tiny},
+        xtick={1,2,3,4}, ytick={1,2,3,4},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
         tick align=outside, tick pos=left,
-        title style={font=\small},
     ]
-    \addplot[only marks, mark=*, mark size=2pt, black!30] coordinates {
-        (1,2)(2,1)(4,5)(5,4)(8,9)(9,8)
-    };
-    \addplot[only marks, mark=x, mark size=6pt, black, thick] coordinates {
-        (1,2)(4,5)(8,9)
-    };
-    \end{axis}
-
-    % Panel 2: After assignment
-    \begin{axis}[
-        name=assign,
-        at={(init.east)}, anchor=west, xshift=0.4cm,
-        title={After assignment},
-        xlabel={acidity},
-        xmin=0, xmax=10, ymin=0, ymax=10,
-        width=0.32\textwidth, height=0.32\textwidth,
-        axis line style={draw=none},
-        tick style={black, thin},
-        xtick={2,5,8}, ytick={2,5,8},
-        xticklabel style={font=\tiny},
-        yticklabel style={font=\tiny},
-        tick align=outside, tick pos=left,
-        title style={font=\small},
-    ]
-    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,2)(2,1)};
-    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(4,5)(5,4)};
-    \addplot[only marks, mark=*, mark size=2pt, black!20] coordinates {(8,9)(9,8)};
-    \addplot[only marks, mark=x, mark size=6pt, black, thick] coordinates {(1,2)(4,5)(8,9)};
-    \end{axis}
-
-    % Panel 3: After update
-    \begin{axis}[
-        name=update,
-        at={(assign.east)}, anchor=west, xshift=0.4cm,
-        title={After update},
-        xlabel={acidity},
-        xmin=0, xmax=10, ymin=0, ymax=10,
-        width=0.32\textwidth, height=0.32\textwidth,
-        axis line style={draw=none},
-        tick style={black, thin},
-        xtick={2,5,8}, ytick={2,5,8},
-        xticklabel style={font=\tiny},
-        yticklabel style={font=\tiny},
-        tick align=outside, tick pos=left,
-        title style={font=\small},
-    ]
-    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,2)(2,1)};
-    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(4,5)(5,4)};
-    \addplot[only marks, mark=*, mark size=2pt, black!20] coordinates {(8,9)(9,8)};
-    \addplot[only marks, mark=x, mark size=6pt, black, thick] coordinates {(1.5,1.5)(4.5,4.5)(8.5,8.5)};
+    \addplot[only marks, mark=*, mark size=2pt, black!30] coordinates {(1,3)(3,2)(4,3)};
+    \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {(1,4)(4,1)};
+    \node[font=\small, anchor=south east] at (axis cs:0.8,4.2) {$\mu_1$};
+    \node[font=\small, anchor=north west] at (axis cs:4.2,0.8) {$\mu_2$};
     \end{axis}
 \end{tikzpicture}
-\caption{One K-Means iteration. Centroids (crosses) are initialized on data points, assignments follow, then centroids move to cluster means. Assignments do not change in the next iteration: converged.}
-\label{fig:kmeans_trace}
+\caption{Initialization: two centroids placed away from the data. All points are unassigned.}
+\label{fig:trace_init}
 \end{figure}
+
+\newthought{Step 2: Assignment.} Each point joins the cluster of its nearest centroid.
+\begin{align*}
+    x_1{=}(1,3)\!: \quad d^2(\mu_1) &= 0 + 1 = 1, \quad d^2(\mu_2) = 9 + 4 = 13 \;\to\; C_1 \\
+    x_2{=}(3,2)\!: \quad d^2(\mu_1) &= 4 + 4 = 8, \quad d^2(\mu_2) = 1 + 1 = 2 \;\to\; C_2 \\
+    x_3{=}(4,3)\!: \quad d^2(\mu_1) &= 9 + 1 = 10, \quad d^2(\mu_2) = 0 + 4 = 4 \;\to\; C_2
+\end{align*}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
+        xmin=0, xmax=5, ymin=0, ymax=5,
+        width=0.5\textwidth, height=0.5\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={1,2,3,4}, ytick={1,2,3,4},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside, tick pos=left,
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,3)};
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(3,2)(4,3)};
+    \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {(1,4)(4,1)};
+    \node[font=\small, anchor=south east] at (axis cs:0.8,4.2) {$\mu_1$};
+    \node[font=\small, anchor=north west] at (axis cs:4.2,0.8) {$\mu_2$};
+    \node[font=\small, anchor=north] at (axis cs:1,2.7) {$C_1$};
+    \node[font=\small, anchor=north] at (axis cs:3.5,1.7) {$C_2$};
+    \end{axis}
+\end{tikzpicture}
+\caption{Assignment: $x_1 \to C_1$ (dark), $x_2$ and $x_3 \to C_2$ (grey).}
+\label{fig:trace_assign}
+\end{figure}
+
+\newthought{Step 3: Update.} Each centroid moves to the mean of its cluster.
+\begin{align*}
+    \mu_1' &= x_1 = (1,\; 3) \\
+    \mu_2' &= \tfrac{1}{2}\bigl((3,2) + (4,3)\bigr) = (3.5,\; 2.5)
+\end{align*}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
+        xmin=0, xmax=5, ymin=0, ymax=5,
+        width=0.5\textwidth, height=0.5\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={1,2,3,4}, ytick={1,2,3,4},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside, tick pos=left,
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,3)};
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(3,2)(4,3)};
+    \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {(1,3)(3.5,2.5)};
+    % Arrows showing centroid movement
+    \draw[->, black!40, thick] (axis cs:1,3.9) -- (axis cs:1,3.15);
+    \draw[->, black!40, thick] (axis cs:4,1.1) -- (axis cs:3.6,2.4);
+    \node[font=\small, anchor=south east] at (axis cs:0.8,3.2) {$\mu_1'$};
+    \node[font=\small, anchor=south west] at (axis cs:3.7,2.6) {$\mu_2'$};
+    \end{axis}
+\end{tikzpicture}
+\caption{Update: both centroids move (arrows). $\mu_1$ drops from $(1,4)$ to $(1,3)$; $\mu_2$ jumps from $(4,1)$ to $(3.5, 2.5)$. Re-running assignment yields the same clusters: converged.}
+\label{fig:trace_update}
+\end{figure}
+
 
 \newthought{Convergence} is guaranteed in finite steps.
 The argument rests on three observations:
@@ -243,8 +345,7 @@ second, each update step can only decrease $J$, since the mean minimizes squared
 third, there are at most $K^n$ possible assignment configurations.
 Since $J$ is non-increasing and the number of states is finite, the algorithm must reach a fixed assignment and stop.
 
-\marginnote{\newthought{Local optimum.} Convergence does not mean the algorithm found the best clustering. It found \textit{a} clustering. A different initialization may yield a better one.}
-
+\marginnote{\newthought{Local optimum.} Convergence does not mean the algorithm found the best clustering. It found a clustering. A different initialization may yield a better one.}
 Typical convergence takes 10--100 iterations in practice.
 
 
@@ -262,7 +363,7 @@ If two initial centroids fall inside the same natural cluster, one cluster gets 
     \begin{axis}[
         name=good,
         title={Good initialization: $J=3$},
-        xlabel={acidity}, ylabel={bitterness},
+        xlabel={$x_1$}, ylabel={$x_2$},
         xmin=0, xmax=10, ymin=0, ymax=10,
         width=0.45\textwidth, height=0.45\textwidth,
         axis line style={draw=none},
@@ -284,7 +385,7 @@ If two initial centroids fall inside the same natural cluster, one cluster gets 
         name=bad,
         at={(good.east)}, anchor=west, xshift=0.8cm,
         title={Bad initialization: $J=34$},
-        xlabel={acidity},
+        xlabel={$x_1$},
         xmin=0, xmax=10, ymin=0, ymax=10,
         width=0.45\textwidth, height=0.45\textwidth,
         axis line style={draw=none},
@@ -304,7 +405,7 @@ If two initial centroids fall inside the same natural cluster, one cluster gets 
     \addplot[only marks, mark=x, mark size=6pt, black, thick] coordinates {(1,2)(2,1)(6.5,6.5)};
     \end{axis}
 \end{tikzpicture}
-\caption{Same data, different initial centroids. Left: one centroid per natural cluster gives $J{=}3$. Right: two centroids inside the cold-brew cluster leave the drip and espresso groups merged, giving $J{=}34$.}
+\caption{Same data, different initial centroids. Left: one centroid per natural cluster gives $J{=}3$. Right: two centroids inside the same cluster leave the other two clusters merged, giving $J{=}34$.}
 \label{fig:kmeans_init}
 \end{figure}
 
@@ -331,7 +432,7 @@ K must be set by the practitioner.
 Two complementary heuristics help.
 
 \newthought{The elbow method} plots inertia $J$ against $K$ and looks for a kink: the point where adding one more cluster yields diminishing returns.
-For the coffee data, $J$ drops sharply from $K{=}1$ to $K{=}3$, then flattens.
+For our six points, $J$ drops sharply from $K{=}1$ to $K{=}3$, then flattens.
 
 \begin{figure}
 \centering
@@ -352,14 +453,21 @@ For the coffee data, $J$ drops sharply from $K{=}1$ to $K{=}3$, then flattens.
         tick align=outside,
         tick pos=left,
     ]
-    \addplot[black, thick, mark=*, mark size=2pt] coordinates {
+    % Dots only
+    \addplot[only marks, mark=*, mark size=2.5pt, black] coordinates {
         (1,102) (2,21) (3,3) (4,2) (5,1) (6,0)
     };
+    % Line segments with gaps near each dot (Tufte style)
+    \draw[black, thick] (axis cs:1.08,99.3) -- (axis cs:1.92,23.7);
+    \draw[black, thick] (axis cs:2.08,19.6) -- (axis cs:2.92,4.4);
+    \draw[black, thick] (axis cs:3.08,2.9) -- (axis cs:3.92,2.1);
+    \draw[black, thick] (axis cs:4.08,1.9) -- (axis cs:4.92,1.1);
+    \draw[black, thick] (axis cs:5.08,0.9) -- (axis cs:5.92,0.1);
     \draw[black!40, dashed] (axis cs:3,3) -- (axis cs:3,0);
     \node[font=\small] at (axis cs:3.6,15) {elbow at $K{=}3$};
     \end{axis}
 \end{tikzpicture}
-\caption{Elbow plot for the coffee data. The kink at $K{=}3$ matches the three natural groups.}
+\caption{Elbow plot for the six sample points. The kink at $K{=}3$ matches the three natural clusters.}
 \label{fig:elbow}
 \end{figure}
 
@@ -376,7 +484,7 @@ $s(i)$ ranges from $-1$ (point would fit better elsewhere) to $+1$ (point is wel
 The mean silhouette over all points is a quality score for the full clustering.
 Choose $K$ that maximizes it.
 
-\marginnote{\newthought{For our coffee data} with $K{=}3$, every point has $a(i) {=} \sqrt{2} \approx 1.4$ and $b(i) \approx 4.4$, giving $s(i) \approx 0.68$. A clear, well-separated clustering.}
+\marginnote{\newthought{For our six points} with $K{=}3$, every point has $a(i) {=} \sqrt{2} \approx 1.4$ and $b(i) \approx 4.4$, giving $s(i) \approx 0.68$. A clear, well-separated clustering.}
 
 
 
@@ -525,7 +633,7 @@ Each pair contributes equally; the clustering is geometrically symmetric.
 \vspace{2.5em}
 \newthought{Now repeat} with bad initial centroids $\mu_1{=}A$, $\mu_2{=}B$, $\mu_3{=}C$ — two centroids inside the cold-brew cluster.
 
-\marginnote{\newthought{What goes wrong.} Both $\mu_1$ and $\mu_2$ compete for cold-brew samples. The algorithm optimizes what it is given; it has no way of knowing that $A$ and $B$ are in the same natural group.}
+\marginnote{\newthought{What goes wrong.} Both $\mu_1$ and $\mu_2$ compete for cold-brew samples. The algorithm optimizes what it is given; it has no way of knowing that $A$ and $B$ are in the same natural cluster.}
 
 Assignment step with $\mu_1{=}(1,2)$, $\mu_2{=}(2,1)$, $\mu_3{=}(4,5)$:
 
@@ -611,8 +719,8 @@ With $K{=}4$ a natural cluster splits in two, and the silhouette score begins to
     \item K-Means assumes spherical, equally sized clusters; it fails on rings, elongated shapes, and density differences
 \end{itemize}
 
-\marginnote{\newthought{Teaser.} K-Means assigns every point to exactly one flat cluster. What if structure exists at multiple scales, or if some points genuinely belong between groups?}
-\newthought{So far, we found flat partitions} of the data into $K$ fixed groups.
+\marginnote{\newthought{Teaser.} K-Means assigns every point to exactly one flat cluster. What if structure exists at multiple scales, or if some points genuinely belong between clusters?}
+\newthought{So far, we found flat partitions} of the data into $K$ fixed clusters.
 But natural structure is often hierarchical: coffee varieties cluster by roast, roasts cluster by origin, origins cluster by continent.
-And some points genuinely sit at the boundary of two groups, which a hard assignment hides.
+And some points genuinely sit at the boundary of two clusters, which a hard assignment hides.
 The next chapters address both: hierarchical clustering reveals nested structure through dendrograms, and density-based methods find clusters of arbitrary shape without requiring a fixed $K$.
