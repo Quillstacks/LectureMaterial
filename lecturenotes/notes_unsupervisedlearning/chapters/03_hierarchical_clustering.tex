@@ -2,468 +2,553 @@
 % Chapter 3: Hierarchical Clustering
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Hierarchical Clustering}\index{Hierarchical Clustering}\index{Dendrogram}
-\newthought{Structure exists at multiple scales.}
+\chapter{Hierarchical Clustering}\index{hierarchical clustering}\index{dendrogram}
+\newthought{All scales at once.}
 
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 % BLOCK 1: INTRODUCTION
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 
-\section{The Why}
+\section{The Why}\index{centroid clustering!limitations}
 
-\marginnote{Hierarchies are everywhere: taxonomies, organizational charts, file systems, evolutionary trees.}
+K-Means must commit to one value of $K$ before seeing the data.
+With $K{=}2$ you recover two broad groups; with $K{=}10$ you recover ten fine subgroups.
+You cannot see both at once, and the elbow heuristic only helps you pick one level and discard the rest.
 
-K-Means asks: "What are the $K$ groups?" But often we don't know $K$, and structure exists at multiple resolutions. Consider:
+\newthought{Hierarchy is the natural answer.} Structure in real data rarely lives at a single scale.
+Biological taxonomy nests species inside genera inside families inside orders.
+A document corpus organizes words into topics and topics into domains.
+File systems nest folders inside folders.
+In each case, the right question is not ``how many clusters?'' but ``at which scale do I look?''
 
-\begin{itemize}
-    \item \textbf{Biology}: Species $\subset$ Genus $\subset$ Family $\subset$ Order $\subset$ Class $\subset$ Phylum $\subset$ Kingdom
-    \item \textbf{Geography}: Neighborhood $\subset$ District $\subset$ City $\subset$ Region $\subset$ Country
-    \item \textbf{Documents}: Sentences $\subset$ Paragraphs $\subset$ Sections $\subset$ Chapters $\subset$ Books
-\end{itemize}
+\marginnote{\newthought{The same distance matrix} that K-Means uses to assign points to centroids can be used to build an entire tree of clusterings. The tree is built in one pass; every value of $K$ is then available for free.}
 
-\textbf{Hierarchical clustering} produces a tree structure (dendrogram) that captures all levels of grouping simultaneously. You can cut the tree at any height to get a flat clustering.
+\newthought{Hierarchical clustering} produces a \textbf{dendrogram}\index{dendrogram}: a binary tree in which leaves are individual data points and each internal node records the distance at which two sub-trees were merged.
+A horizontal cut at any chosen height yields a flat partition.
+The full range of partitions, from $K{=}1$ to $K{=}n$, lives in this one structure.
+
 
 \subsection{Hands-On Experience}
 
-\begin{marginfigure}
-\begin{tikzpicture}[scale=0.6]
+\newthought{Consider} the same six points from the previous chapter.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=1]
     \begin{axis}[
-        xlabel={$x_1$},
-        ylabel={$x_2$},
         xmin=0, xmax=10,
-        ymin=0, ymax=4,
-        width=\textwidth,
-        height=0.6\textwidth,
+        ymin=0, ymax=10,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis line style={draw=none},
+        tick style={black, thick},
+        xtick={1,2,3,4,5,6,7,8,9},
+        ytick={1,2,3,4,5,6,7,8,9},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
     ]
-    \addplot[only marks, mark=*, mark size=3pt, blue] coordinates {
-        (1,1) (2,1) (3,1) (6,2) (7,2) (9,3)
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (1,2) (2,3) (3,1)
     };
-    \node[anchor=north] at (axis cs:1,1) {A};
-    \node[anchor=north] at (axis cs:2,1) {B};
-    \node[anchor=north] at (axis cs:3,1) {C};
-    \node[anchor=north] at (axis cs:6,2) {D};
-    \node[anchor=north] at (axis cs:7,2) {E};
-    \node[anchor=north] at (axis cs:9,3) {F};
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (6,8) (8,7) (8,9)
+    };
+    \node[font=\small, anchor=south east] at (axis cs:1,2) {$x_1$};
+    \node[font=\small, anchor=south east] at (axis cs:2,3) {$x_2$};
+    \node[font=\small, anchor=north]      at (axis cs:3,1) {$x_3$};
+    \node[font=\small, anchor=south west] at (axis cs:6,8) {$x_4$};
+    \node[font=\small, anchor=north west] at (axis cs:8,7) {$x_5$};
+    \node[font=\small, anchor=south west] at (axis cs:8,9) {$x_6$};
     \end{axis}
 \end{tikzpicture}
-\caption{Six points for hierarchical clustering.}
-\end{marginfigure}
+\caption{The canonical six points. Which two are closest? Start connecting them one by one, nearest pair first.}
+\label{fig:hc_intro_scatter}
+\end{figure}
 
-Consider six points: $A=(1,1)$, $B=(2,1)$, $C=(3,1)$, $D=(6,2)$, $E=(7,2)$, $F=(9,3)$.
+\newthought{Which two points} are closest to each other?
+Connect them with a line.
+Now find the next closest pair and connect them.
+Keep going until all six points are linked into a tree.
+At what level of distance would you cut that tree to recover two groups?
 
-\textbf{Build a dendrogram by hand} using single linkage (minimum distance):
+\vspace{2.5em}
 
-\begin{enumerate}
-    \item Initial distances: $d(A,B)=1$, $d(B,C)=1$, $d(D,E)=1$ (smallest)
-    \item Merge A-B at height 1
-    \item Merge D-E at height 1 (tie)
-    \item Now $d(\{A,B\}, C) = \min(d(A,C), d(B,C)) = 1$
-    \item Merge \{A,B\}-C at height 1
-    \item Continue until all points are merged...
-\end{enumerate}
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item Understand how agglomerative clustering builds a dendrogram through successive minimum-distance merges.
+    \item Apply single, complete, and Ward's linkage and explain how each criterion shapes the resulting hierarchy.
+    \item Identify when hierarchical clustering succeeds where K-Means fails and recognise its own failure modes.
+\end{itemize}
 
-The result is a tree showing nested structure: $\{A,B,C\}$ and $\{D,E\}$ form tight groups, with $F$ joining later.
 
-\subsection{Learning Objectives}
-
-After this lecture, you will be able to:
-\begin{enumerate}
-    \item Distinguish between agglomerative and divisive hierarchical clustering
-    \item Apply different linkage criteria (single, complete, average, Ward's)
-    \item Construct and interpret dendrograms
-    \item Choose appropriate cutting strategies to extract flat clusterings
-    \item Analyze computational complexity trade-offs
-\end{enumerate}
-
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 % BLOCK 2: MAIN THEORY
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 
-\section{Agglomerative Clustering}
+\newpage
 
-\marginnote{Bottom-up: start with each point as its own cluster, merge closest pairs.}
+\section{The Hierarchical Clustering Algorithm}\index{agglomerative clustering}
 
-\textbf{Agglomerative} (bottom-up) clustering is the most common approach:
+\newthought{The agglomerative strategy}\index{agglomerative clustering} is bottom-up: start with $n$ singleton clusters, one per point, and greedily merge the two closest clusters at each step.
+Every merge is recorded as an internal node labeled with the distance at which it occurred.
 
 \begin{algorithm}[H]
 \caption{Agglomerative Hierarchical Clustering}
 \begin{algorithmic}[1]
 \Require Data $X = \{x_1, \ldots, x_n\}$, linkage criterion $L$
 \Ensure Dendrogram $T$
-\State Initialize: each point is its own cluster $C_i = \{x_i\}$
-\State Compute pairwise distances $D[i,j] = d(C_i, C_j)$
-\While{more than one cluster remains}
-    \State Find $(i^*, j^*) = \arg\min_{i \neq j} D[i,j]$
-    \State Record merge: $(C_{i^*}, C_{j^*})$ at height $D[i^*, j^*]$
-    \State Create new cluster $C_{\text{new}} = C_{i^*} \cup C_{j^*}$
-    \State Update distances to $C_{\text{new}}$ using linkage $L$
-    \State Remove $C_{i^*}$ and $C_{j^*}$ from active clusters
+\State Initialize: $C_i \gets \{x_i\}$ for $i = 1,\ldots,n$; active $\gets \{C_1,\ldots,C_n\}$
+\State Compute $D[i,j] \gets d(x_i, x_j)$ for all $i \neq j$
+\While{$\lvert\mathrm{active}\rvert > 1$}
+    \State $(i^*,\;j^*) \gets \arg\min_{i \neq j}\; D[i,j]$
+    \State \textbf{Record merge:} $\bigl(C_{i^*},\, C_{j^*}\bigr)$ at height $D[i^*,j^*]$ in $T$
+    \State $C_{\mathrm{new}} \gets C_{i^*} \cup C_{j^*}$
+    \State Update $D[\mathrm{new},\,k] \gets L(C_{\mathrm{new}},\,C_k)$ for each active $C_k \neq C_{i^*},C_{j^*}$
+    \State Remove $C_{i^*}$ and $C_{j^*}$ from active; add $C_{\mathrm{new}}$
 \EndWhile
 \end{algorithmic}
 \end{algorithm}
 
-The key choice is the \textbf{linkage criterion}: how do we measure distance between clusters?
+\marginnote{\newthought{Divisive clustering}\index{divisive clustering} (top-down) starts with all points in one cluster and recursively splits the cluster with the largest diameter. It is rarely used in practice: splitting is more expensive than merging, and early splits made with global information can be noisier than local merges.}
+
+\newthought{The result} is a binary tree.
+Every valid flat partition from $K{=}1$ to $K{=}n$ can be read off by making a horizontal cut at the desired height.
+The $n-1$ merge heights span the full range from the smallest pairwise distance to the diameter of the data.
 
 
-\section{Linkage Criteria}
+\vspace{2.5em}
 
-\marginnote{Different linkages produce very different dendrograms.}
+\newthought{Linkage criteria}\index{linkage criterion} determine how the distance between two clusters is computed from the distances between their individual members.
+The choice of linkage profoundly shapes the dendrogram.
 
-Let $C_i$ and $C_j$ be two clusters. The distance $D(C_i, C_j)$ depends on linkage:
+\subsection{Single Linkage}\index{single linkage}
 
-\subsection{Single Linkage (Minimum)}
+\begin{align*}
+    D_{\mathrm{single}}(C_i,\, C_j) &= \min_{x \in C_i,\; y \in C_j} d(x,\, y)
+\end{align*}
 
-\begin{equation}
-    D_{\text{single}}(C_i, C_j) = \min_{x \in C_i, y \in C_j} d(x, y)
-\end{equation}
+The distance between two clusters is the distance between their nearest members.
+Single linkage is fast and can detect elongated, non-convex clusters.
+Its notorious weakness is \textbf{chaining}\index{chaining}: a single close pair of points can bridge two otherwise distant clusters, pulling them into one.
 
-\textbf{Properties}:
-\begin{itemize}
-    \item Can find non-convex, elongated clusters
-    \item Suffers from \textbf{chaining}: single close points can bridge distant clusters
-    \item Sensitive to noise and outliers
-\end{itemize}
+\subsection{Complete Linkage}\index{complete linkage}
 
-\subsection{Complete Linkage (Maximum)}
+\begin{align*}
+    D_{\mathrm{complete}}(C_i,\, C_j) &= \max_{x \in C_i,\; y \in C_j} d(x,\, y)
+\end{align*}
 
-\begin{equation}
-    D_{\text{complete}}(C_i, C_j) = \max_{x \in C_i, y \in C_j} d(x, y)
-\end{equation}
+The distance between two clusters is the distance between their furthest members.
+Complete linkage tends to produce compact, roughly equal-diameter clusters and is robust to chaining.
+It may, however, split naturally elongated shapes.
 
-\textbf{Properties}:
-\begin{itemize}
-    \item Produces compact, roughly equal-diameter clusters
-    \item Robust to chaining
-    \item May break apart natural elongated clusters
-\end{itemize}
+\subsection{Average Linkage}\index{average linkage}
 
-\subsection{Average Linkage (UPGMA)}
+\begin{align*}
+    D_{\mathrm{average}}(C_i,\, C_j) &= \frac{1}{|C_i|\,|C_j|} \sum_{x \in C_i} \sum_{y \in C_j} d(x,\, y)
+\end{align*}
 
-\begin{equation}
-    D_{\text{average}}(C_i, C_j) = \frac{1}{|C_i| |C_j|} \sum_{x \in C_i} \sum_{y \in C_j} d(x, y)
-\end{equation}
+\marginnote{\newthought{UPGMA.} Average linkage is also known as the Unweighted Pair Group Method with Arithmetic Mean. It is a compromise: less prone to chaining than single linkage, less aggressive at squashing elongated clusters than complete linkage.}
 
-\marginnote{UPGMA: Unweighted Pair Group Method with Arithmetic Mean}
+Average linkage averages all cross-cluster pairwise distances.
+It is a middle ground between single and complete linkage.
 
-\textbf{Properties}: Compromise between single and complete linkage.
+\subsection{Ward's Method}\index{Ward's method}
 
-\subsection{Ward's Method}
+Ward's criterion merges the two clusters whose union minimises the increase in total within-cluster variance:
 
-Merge clusters that minimize the increase in total within-cluster variance:
+\begin{align*}
+    D_{\mathrm{Ward}}(C_i,\, C_j) &= \frac{|C_i|\,|C_j|}{|C_i| + |C_j|} \left\|\mu_i - \mu_j\right\|^2
+\end{align*}
 
-\begin{equation}
-    D_{\text{Ward}}(C_i, C_j) = \frac{|C_i| |C_j|}{|C_i| + |C_j|} \|\mu_i - \mu_j\|^2
-\end{equation}
+where $\mu_i$ and $\mu_j$ are the centroids of $C_i$ and $C_j$.
+Ward's method produces compact, spherical clusters and is closely related to K-Means: both minimise within-cluster variance.
 
-where $\mu_i$ and $\mu_j$ are cluster centroids.
+\marginnote{\newthought{Only Euclidean.} Ward's formula requires Euclidean distances and cluster centroids. Single, complete, and average linkage work with any distance or dissimilarity matrix, including non-Euclidean ones.}
 
-\marginnote{Ward's method is equivalent to K-Means in some sense---it minimizes variance.}
 
-\textbf{Properties}:
-\begin{itemize}
-    \item Produces compact, spherical clusters (like K-Means)
-    \item Often gives the most "intuitive" results for Euclidean data
-    \item Only works with Euclidean distance
-\end{itemize}
+\vspace{2.5em}
+\newthought{The dendrogram}\index{dendrogram!reading} for the canonical six points under single linkage is shown below.
+Reading it from bottom to top: leaves are the six data points; horizontal bars mark merges; the height of each bar is the distance at which that merge occurred.
 
-\begin{figure}[h]
+\begin{figure}
 \centering
-\begin{tikzpicture}[scale=0.55]
-    % Single linkage
-    \begin{axis}[
-        name=single,
-        title={Single linkage},
-        xlabel={$x_1$}, ylabel={$x_2$},
-        xmin=-3, xmax=3, ymin=-2, ymax=2,
-        width=0.33\textwidth,
-        axis equal,
-    ]
-    % Chain-like data
-    \addplot[only marks, mark=*, mark size=2pt, blue] coordinates {
-        (-2,0) (-1.5,0.2) (-1,0) (-0.5,-0.2) (0,0)
-        (0.5,0.2) (1,0) (1.5,-0.2) (2,0)
-    };
-    \draw[blue, thick] (axis cs:-2,0) -- (axis cs:2,0);
-    \end{axis}
+\begin{tikzpicture}
+    % Schematic layout: heights are spread for visual clarity.
+    % Drawn y values -> actual Euclidean heights:
+    %   y = 1.5  ->  h = 1.41  (sqrt(2),  merge x_1-x_2)
+    %   y = 2.5  ->  h = 2.00  (merge x_5-x_6)
+    %   y = 3.5  ->  h = 2.24  (sqrt(5),  merge {x_1,x_2}-x_3 and x_4-{x_5,x_6})
+    %   y = 7.0  ->  h = 6.40  (sqrt(41), final merge)
 
-    % Complete linkage
-    \begin{axis}[
-        at={(single.east)}, anchor=west, xshift=0.3cm,
-        name=complete,
-        title={Complete linkage},
-        xlabel={$x_1$},
-        xmin=-3, xmax=3, ymin=-2, ymax=2,
-        width=0.33\textwidth,
-        axis equal,
-    ]
-    \addplot[only marks, mark=*, mark size=2pt, blue] coordinates {
-        (-2,0) (-1.5,0.2) (-1,0) (-0.5,-0.2)
-    };
-    \addplot[only marks, mark=*, mark size=2pt, red] coordinates {
-        (0.5,0.2) (1,0) (1.5,-0.2) (2,0)
-    };
-    \addplot[only marks, mark=*, mark size=2pt, gray] coordinates {(0,0)};
-    \end{axis}
+    % Merge 1: x_1 (pos 0), x_2 (pos 1)  at y=1.5
+    \draw[thick] (0,0) -- (0,1.5);
+    \draw[thick] (1,0) -- (1,1.5);
+    \draw[thick] (0,1.5) -- (1,1.5);
+    % root of {x_1,x_2} at (0.5, 1.5)
 
-    % Ward's linkage
-    \begin{axis}[
-        at={(complete.east)}, anchor=west, xshift=0.3cm,
-        title={Ward's linkage},
-        xlabel={$x_1$},
-        xmin=-3, xmax=3, ymin=-2, ymax=2,
-        width=0.33\textwidth,
-        axis equal,
-    ]
-    \addplot[only marks, mark=*, mark size=2pt, blue] coordinates {
-        (-2,0) (-1.5,0.2) (-1,0)
-    };
-    \addplot[only marks, mark=*, mark size=2pt, red] coordinates {
-        (0,0) (0.5,0.2)
-    };
-    \addplot[only marks, mark=*, mark size=2pt, green!50!black] coordinates {
-        (1,0) (1.5,-0.2) (2,0)
-    };
-    \draw[gray, dashed] (axis cs:-0.75,-1.5) -- (axis cs:-0.75,1.5);
-    \draw[gray, dashed] (axis cs:0.75,-1.5) -- (axis cs:0.75,1.5);
-    \end{axis}
-\end{tikzpicture}
-\caption{Same data, different linkages, different clusters. Single linkage chains; complete/Ward split into compact groups.}
-\end{figure}
+    % Merge 2: x_5 (pos 4), x_6 (pos 5)  at y=2.5
+    \draw[thick] (4,0) -- (4,2.5);
+    \draw[thick] (5,0) -- (5,2.5);
+    \draw[thick] (4,2.5) -- (5,2.5);
+    % root of {x_5,x_6} at (4.5, 2.5)
 
+    % Merge 3: {x_1,x_2} and x_3 (pos 2)  at y=3.5
+    \draw[thick] (0.5,1.5) -- (0.5,3.5);
+    \draw[thick] (2,0) -- (2,3.5);
+    \draw[thick] (0.5,3.5) -- (2,3.5);
+    % root of {x_1,x_2,x_3} at (1.25, 3.5)
 
-\section{The Dendrogram}
+    % Merge 4: x_4 (pos 3) and {x_5,x_6}  at y=3.5
+    \draw[thick] (3,0) -- (3,3.5);
+    \draw[thick] (4.5,2.5) -- (4.5,3.5);
+    \draw[thick] (3,3.5) -- (4.5,3.5);
+    % root of {x_4,x_5,x_6} at (3.75, 3.5)
 
-\marginnote{A dendrogram is a tree diagram showing hierarchical relationships.}
+    % Merge 5: {x_1,x_2,x_3} and {x_4,x_5,x_6}  at y=7.0
+    \draw[thick] (1.25,3.5) -- (1.25,7.0);
+    \draw[thick] (3.75,3.5) -- (3.75,7.0);
+    \draw[thick] (1.25,7.0) -- (3.75,7.0);
 
-The \textbf{dendrogram} visualizes the entire clustering hierarchy:
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=0.9]
-    % Dendrogram
-    \draw[thick] (0,0) -- (0,1) -- (1,1) -- (1,0);
-    \draw[thick] (0.5,1) -- (0.5,2);
-    \draw[thick] (2,0) -- (2,1.5) -- (0.5,1.5) -- (0.5,2);
-    \draw[thick] (1.25,2) -- (1.25,3);
-    \draw[thick] (3,0) -- (3,2) -- (4,2) -- (4,0);
-    \draw[thick] (3.5,2) -- (3.5,2.5);
-    \draw[thick] (1.25,3) -- (2.375,3) -- (2.375,2.5) -- (3.5,2.5);
-    \draw[thick] (5,0) -- (5,3.5) -- (2.375,3.5);
-    \draw[thick] (2.375,3) -- (2.375,3.5);
-
-    % Labels
-    \node[anchor=north] at (0,0) {A};
-    \node[anchor=north] at (1,0) {B};
-    \node[anchor=north] at (2,0) {C};
-    \node[anchor=north] at (3,0) {D};
-    \node[anchor=north] at (4,0) {E};
-    \node[anchor=north] at (5,0) {F};
+    % Leaf labels
+    \node[anchor=north, font=\small] at (0,0) {$x_1$};
+    \node[anchor=north, font=\small] at (1,0) {$x_2$};
+    \node[anchor=north, font=\small] at (2,0) {$x_3$};
+    \node[anchor=north, font=\small] at (3,0) {$x_4$};
+    \node[anchor=north, font=\small] at (4,0) {$x_5$};
+    \node[anchor=north, font=\small] at (5,0) {$x_6$};
 
     % Height axis
-    \draw[->] (-0.5,0) -- (-0.5,4) node[anchor=south] {Height};
-    \foreach \y in {1,2,3} {
-        \draw (-0.6,\y) -- (-0.4,\y) node[anchor=east, xshift=-3pt] {\y};
+    \draw[->] (-0.85,0) -- (-0.85,8.0) node[anchor=south, font=\small] {height};
+    \foreach \y/\val in {1.5/1.41, 2.5/2.00, 3.5/2.24, 7.0/6.40} {
+        \draw (-1.0,\y) -- (-0.7,\y);
+        \node[anchor=east, font=\small] at (-1.0,\y) {\val};
     }
 
-    % Cut line
-    \draw[red, dashed, thick] (-0.3,2.25) -- (5.5,2.25);
-    \node[red, anchor=west] at (5.5,2.25) {Cut $\to$ 3 clusters};
+    % Cut line between heights 2.24 and 6.40
+    \draw[dashed, thick] (-0.5,5.5) -- (5.5,5.5);
+    \node[anchor=west, font=\small] at (5.5,5.5) {cut $\to$ $C_1,\,C_2$};
 \end{tikzpicture}
-\caption{Dendrogram showing hierarchical structure. Cutting at height 2.25 yields 3 clusters: $\{A,B,C\}$, $\{D,E\}$, $\{F\}$.}
-\label{fig:dendrogram}
+\caption{Single-linkage dendrogram for $x_1,\ldots,x_6$. Merge heights are Euclidean distances. Steps 3 and 4 both occur at height $\sqrt{5}{\approx}2.24$. The large gap between 2.24 and 6.40 signals that cutting here yields the two natural clusters $C_1{=}\{x_1,x_2,x_3\}$ and $C_2{=}\{x_4,x_5,x_6\}$.}
+\label{fig:dendrogram_canonical}
 \end{figure}
 
-\textbf{Reading a dendrogram}:
-\begin{itemize}
-    \item \textbf{Leaves}: Individual data points (bottom)
-    \item \textbf{Internal nodes}: Cluster merges
-    \item \textbf{Height}: Distance at which clusters merged
-    \item \textbf{Horizontal cut}: Produces a flat clustering (more clusters at lower cuts)
-\end{itemize}
-
-\subsection{Cophenetic Correlation}
-
-\marginnote{Cophenetic correlation measures how well the dendrogram preserves original distances.}
-
-The \textbf{cophenetic distance} $c(i,j)$ is the height at which points $i$ and $j$ first merge. The cophenetic correlation:
-\begin{equation}
-    r_{\text{coph}} = \text{corr}(d(i,j), c(i,j))
-\end{equation}
-measures how faithfully the dendrogram represents the original distance matrix. Higher is better (max = 1).
+\newthought{Reading a dendrogram} requires only one rule: a horizontal cut at height $h$ partitions the data into as many clusters as there are vertical stems crossing that line.
+Cutting above 6.40 gives one cluster; cutting between 2.24 and 6.40 gives two; cutting between 2.00 and 2.24 gives three; cutting just above zero gives $n$ singletons.
+A large gap between consecutive merge heights is the dendrogram equivalent of the elbow: it suggests a natural number of clusters.
 
 
-\section{Cutting the Dendrogram}
+\vspace{2.5em}
 
-To get a flat clustering, we must \textbf{cut} the dendrogram. Several strategies:
+\section{Failure Modes of Hierarchical Clustering}\index{failure modes!hierarchical clustering}
 
-\subsection{Cut at Fixed Height}
+\newthought{Hierarchical clustering has its own pathologies.}
+Understanding them is essential before choosing a linkage criterion or trusting a dendrogram.
 
-Choose a distance threshold $h$; all merges above $h$ are cut:
-\begin{equation}
-    K = \#\{\text{branches crossing height } h\}
-\end{equation}
+\vspace{2.5em}
+\marginnote{\newthought{Chaining}}
 
-\subsection{Cut for Fixed Number of Clusters}
-
-Find the height $h$ that gives exactly $K$ clusters.
-
-\subsection{Dynamic Cutting}
-
-\marginnote{Dynamic cutting adapts to local tree structure.}
-
-The \textbf{inconsistency} coefficient compares a merge height to its subtree:
-\begin{equation}
-    I(m) = \frac{h(m) - \bar{h}_{\text{sub}}}{\sigma_{h,\text{sub}}}
-\end{equation}
-
-Cut where inconsistency exceeds a threshold (default: 0.7--0.9).
-
-
-\section{Divisive Clustering}
-
-\marginnote{Top-down: start with all points, recursively split.}
-
-\textbf{Divisive} (top-down) clustering works in reverse:
-
-\begin{algorithm}[H]
-\caption{Divisive Hierarchical Clustering (DIANA)}
-\begin{algorithmic}[1]
-\State Start with all points in one cluster
-\While{not all points are singletons}
-    \State Select cluster with largest diameter/variance
-    \State Split it into two sub-clusters (e.g., using K-Means with $K=2$)
-\EndWhile
-\end{algorithmic}
-\end{algorithm}
-
-\textbf{Comparison}:
-\begin{itemize}
-    \item Agglomerative: $O(n^2)$ to $O(n^3)$ time, focuses on local similarities
-    \item Divisive: More expensive, but can use global information for splits
-\end{itemize}
-
-
-\section{Computational Complexity}
-
-\marginnote{Naive hierarchical clustering is $O(n^3)$---prohibitive for large datasets.}
-
-\begin{table}[h]
+\begin{figure}
 \centering
-\begin{tabular}{lcc}
-\toprule
-\textbf{Algorithm} & \textbf{Time} & \textbf{Space} \\
-\midrule
-Naive agglomerative & $O(n^3)$ & $O(n^2)$ \\
-Single linkage (SLINK) & $O(n^2)$ & $O(n)$ \\
-Complete/Average & $O(n^2 \log n)$ & $O(n^2)$ \\
-BIRCH (approximate) & $O(n)$ & $O(n)$ \\
-\bottomrule
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
+        xmin=-1, xmax=11, ymin=-1, ymax=6,
+        width=0.5\textwidth, height=0.4\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={0,5,10}, ytick={0,3},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside, tick pos=left,
+    ]
+    % Left cluster
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (0,4)(1,3)(0.5,4.5)(1.5,3.5)
+    };
+    % Bridge points
+    \addplot[only marks, mark=*, mark size=2pt, black!30] coordinates {
+        (3,2)(5,1)(7,2)
+    };
+    % Right cluster
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (9,4)(10,3)(9.5,4.5)(10.5,3.5)
+    };
+    \end{axis}
+\end{tikzpicture}
+\caption{Single-linkage chaining. Three bridge points (light grey) connect two otherwise separate dense clusters. Single linkage merges all nine points into one cluster; complete or Ward's linkage keeps the two groups separate because no individual merge is small enough to bridge the full cluster diameter.}
+\label{fig:hc_chaining}
+\end{figure}
+
+\marginnote{\newthought{Outlier sensitivity}}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
+        xmin=0, xmax=11, ymin=0, ymax=6,
+        width=0.5\textwidth, height=0.4\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={0,5,10}, ytick={0,3},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside, tick pos=left,
+    ]
+    % Left cluster
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (1,3)(1.5,4)(2,3)(1.5,2.5)(2.5,3.5)
+    };
+    % Right cluster
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (7,3)(7.5,4)(8,3)(7.5,2.5)(8.5,3.5)
+    };
+    % Outlier
+    \addplot[only marks, mark=*, mark size=2pt, black!30] coordinates {(5,0.5)};
+    \node[font=\small, anchor=north] at (axis cs:5,0.5) {$x_{\mathrm{out}}$};
+    \end{axis}
+\end{tikzpicture}
+\caption{Outlier sensitivity. The outlier $x_{\mathrm{out}}$ sits between the two clusters. It is absorbed into one of them at an intermediate merge height, inflating that merge height and obscuring the true gap between the two clusters in the dendrogram.}
+\label{fig:hc_outlier}
+\end{figure}
+
+\newthought{When hierarchical clustering struggles,} the shared root cause is that every point, no matter how isolated, must eventually merge into a cluster.
+There is no concept of noise: outliers and bridge points create spurious merges that distort the dendrogram and make merge heights unreliable as signals of natural structure.
+
+
+\vspace{2.5em}
+
+\section{Computational Complexity}\index{computational complexity!hierarchical clustering}
+
+\marginnote{\newthought{Scalability.} For $n > 10{,}000$ consider BIRCH\index{BIRCH}, which builds a compact CF-tree over the data first and then applies hierarchical clustering to the tree nodes rather than to individual points.}
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.30\textwidth}p{0.12\textwidth}p{0.12\textwidth}p{0.28\textwidth}}
+    \toprule
+    \textbf{Algorithm} & \textbf{Time} & \textbf{Space} & \textbf{Notes} \\
+    \midrule
+    Naive agglomerative        & $O(n^3)$         & $O(n^2)$ & Recomputes all distances each step \\
+    Single linkage (SLINK)     & $O(n^2)$         & $O(n)$   & Optimal algorithm for single linkage \\
+    Complete / average linkage & $O(n^2 \log n)$  & $O(n^2)$ & Priority-queue acceleration \\
+    BIRCH (approximate)        & $O(n)$           & $O(n)$   & Approximate; clusters a CF-tree \\
+    \bottomrule
 \end{tabular}
-\caption{Computational complexity of hierarchical clustering algorithms}
-\end{table}
+\vspace{2em}
+\caption{Computational complexity of hierarchical clustering variants. Naive agglomerative is $O(n^3)$ because it rescans the full distance matrix at each of the $n-1$ merge steps.}
+\label{tab:hc_complexity}
+\end{table*}
 
-For large datasets ($n > 10,000$), consider:
-\begin{itemize}
-    \item \textbf{BIRCH}: Build a CF-tree, then cluster the tree nodes
-    \item \textbf{Sampling}: Cluster a sample, assign remaining points
-    \item \textbf{Approximate methods}: HDBSCAN, etc.
-\end{itemize}
+\newthought{The quadratic distance matrix} is the fundamental bottleneck.
+Storing all $\tfrac{n(n-1)}{2}$ pairwise distances requires $O(n^2)$ memory.
+For $n{=}10{,}000$ that is already 400 million floats; for $n{=}100{,}000$ it is infeasible without approximation.
 
 
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 % BLOCK 3: STUDENT ACTIVATION
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 
-\section{Examples \& Exercises}
+\newpage
 
-\subsection{Exercise 1: Dendrogram Construction}
+\section{Examples \& Exercises}\index{examples}\index{exercises}
 
-Given the distance matrix:
+\newthought{Computing by hand} builds the intuition that no library call can replace.
+Step through each merge slowly; feel when the algorithm connects the right pair and when it is about to build a chain.
 
-\begin{table}[h]
+\vspace{1em}
+
+\begin{marginfigure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            xmin=0, xmax=10,
+            ymin=0, ymax=10,
+            width=\marginparwidth,
+            height=\marginparwidth,
+            axis line style={draw=none},
+            tick style={black, thin},
+            xtick={0,3,6,9},
+            ytick={0,3,6,9},
+            xticklabel style={font=\tiny},
+            yticklabel style={font=\tiny},
+            tick align=outside,
+            tick pos=left,
+            xlabel={$x^{(1)}$},
+            ylabel={$x^{(2)}$},
+        ]
+        \addplot[only marks, mark=*, mark size=2pt, black]    coordinates {(1,2)(2,3)(3,1)};
+        \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(6,8)(8,7)(8,9)};
+        \node[font=\tiny, anchor=south east] at (axis cs:1,2) {$x_1$};
+        \node[font=\tiny, anchor=south east] at (axis cs:2,3) {$x_2$};
+        \node[font=\tiny, anchor=north]      at (axis cs:3,1) {$x_3$};
+        \node[font=\tiny, anchor=south west] at (axis cs:6,8) {$x_4$};
+        \node[font=\tiny, anchor=north west] at (axis cs:8,7) {$x_5$};
+        \node[font=\tiny, anchor=south west] at (axis cs:8,9) {$x_6$};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Six points for the by-hand trace.}
+    \label{fig:hc_exercise_scatter}
+\end{marginfigure}
+
+\newthought{Given six points} $x_1{=}(1,2)$, $x_2{=}(2,3)$, $x_3{=}(3,1)$, $x_4{=}(6,8)$, $x_5{=}(8,7)$, $x_6{=}(8,9)$, run single-linkage agglomerative clustering step by step.
+Your tasks: fill in the initial pairwise distance table, identify the minimum pair at each step, record each merge, update distances using single linkage, and construct the dendrogram.
+
+\vspace{0.5em}
+
+\newthought{Initial distances.} For each pair $(x_i,\,x_j)$ compute $d(x_i,\,x_j) = \sqrt{\sum_k (x_i^{(k)} - x_j^{(k)})^2}$.
+Here is the full calculation for $d(x_1,\,x_2)$:
+
+\begin{align*}
+    d(x_1,\,x_2) &= \sqrt{(2-1)^2 + (3-2)^2} \\
+                 &= \sqrt{1 + 1} \\
+                 &= \sqrt{2} \\
+                 &\approx 1.41
+\end{align*}
+
+Compute the remaining distances yourself, then verify against the table below.
+
+\vspace{2.5em}
+
+\begin{table*}[ht]
 \centering
-\begin{tabular}{c|cccc}
- & A & B & C & D \\
-\hline
-A & 0 & 2 & 6 & 10 \\
-B & 2 & 0 & 5 & 9 \\
-C & 6 & 5 & 0 & 4 \\
-D & 10 & 9 & 4 & 0 \\
+\begin{tabular}{p{0.07\textwidth}p{0.10\textwidth}p{0.10\textwidth}p{0.10\textwidth}p{0.10\textwidth}p{0.10\textwidth}p{0.10\textwidth}}
+    \toprule
+    & \textbf{$x_1$} & \textbf{$x_2$} & \textbf{$x_3$} & \textbf{$x_4$} & \textbf{$x_5$} & \textbf{$x_6$} \\
+    \midrule
+    $x_1$ & $-$    & $\mathbf{1.41}$ & $2.24$ & $7.81$ & $8.60$ & $9.90$ \\
+    $x_2$ & $1.41$ & $-$    & $2.24$ & $6.40$ & $7.21$ & $8.49$ \\
+    $x_3$ & $2.24$ & $2.24$ & $-$    & $7.62$ & $7.81$ & $9.43$ \\
+    $x_4$ & $7.81$ & $6.40$ & $7.62$ & $-$    & $2.24$ & $2.24$ \\
+    $x_5$ & $8.60$ & $7.21$ & $7.81$ & $2.24$ & $-$    & $\mathbf{2.00}$ \\
+    $x_6$ & $9.90$ & $8.49$ & $9.43$ & $2.24$ & $2.00$ & $-$    \\
+    \bottomrule
 \end{tabular}
-\end{table}
+\vspace{2em}
+\caption{Initial pairwise Euclidean distances. The global minimum $d(x_1,x_2){=}1.41$ (bold) triggers the first merge. The next smallest, $d(x_5,x_6){=}2.00$ (bold), triggers the second.}
+\label{tab:hc_distances}
+\end{table*}
 
-Build a dendrogram using single linkage.
+\newthought{First merge.}
+The minimum entry is $d(x_1,\,x_2){=}1.41$.
+Merge $x_1$ and $x_2$ into cluster $\{x_1,x_2\}$ at height 1.41.
+Update distances using single linkage: replace the two rows and columns for $x_1$ and $x_2$ with one new row and column, taking the minimum of the two old distances:
 
-\textbf{Solution}:
-\begin{enumerate}
-    \item Smallest distance: $d(A,B) = 2$. Merge A-B at height 2.
-    \item Update distances: $d(\{A,B\}, C) = \min(6,5) = 5$, $d(\{A,B\}, D) = \min(10,9) = 9$
-    \item Smallest: $d(C,D) = 4$. Merge C-D at height 4.
-    \item Remaining: $d(\{A,B\}, \{C,D\}) = \min(5,9,6,4) = 4$... wait, we need to recalculate.
-    \item $d(\{A,B\}, \{C,D\}) = \min(d(A,C), d(A,D), d(B,C), d(B,D)) = \min(6,10,5,9) = 5$
-    \item Merge \{A,B\}-\{C,D\} at height 5.
-\end{enumerate}
+\begin{align*}
+    d\!\left(\{x_1,x_2\},\; x_3\right) &= \min\!\left(d(x_1,x_3),\; d(x_2,x_3)\right) \\
+                                        &= \min(2.24,\; 2.24) \\
+                                        &= 2.24 \\[4pt]
+    d\!\left(\{x_1,x_2\},\; x_4\right) &= \min\!\left(d(x_1,x_4),\; d(x_2,x_4)\right) \\
+                                        &= \min(7.81,\; 6.40) \\
+                                        &= 6.40
+\end{align*}
 
-Dendrogram: A-B merge at 2, C-D merge at 4, then merge at 5.
+Derive the updates for $\{x_1,x_2\}$ vs.\ $x_5$ and $x_6$ yourself, then trace the remaining merges and verify against the solution table.
 
-\subsection{Exercise 2: Linkage Comparison}
+\newpage
 
-Using the same distance matrix, build dendrograms with complete linkage and compare.
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.05\textwidth}p{0.24\textwidth}p{0.12\textwidth}p{0.40\textwidth}}
+    \toprule
+    \textbf{Step} & \textbf{Clusters merged} & \textbf{Height} & \textbf{Updated distances (single linkage)} \\
+    \midrule
+    1 & $x_1,\; x_2$
+      & $1.41$
+      & $d(\{x_1,x_2\},x_3){=}2.24$;\quad $d(\{x_1,x_2\},x_4){=}6.40$;\quad $d(\{x_1,x_2\},x_5){=}7.21$;\quad $d(\{x_1,x_2\},x_6){=}8.49$ \\
+    2 & $x_5,\; x_6$
+      & $2.00$
+      & $d(x_4,\{x_5,x_6\}){=}2.24$;\quad $d(\{x_1,x_2\},\{x_5,x_6\}){=}7.21$;\quad $d(x_3,\{x_5,x_6\}){=}7.81$ \\
+    3 & $\{x_1,x_2\},\; x_3$
+      & $2.24$
+      & $d(\{x_1,x_2,x_3\},x_4){=}6.40$;\quad $d(\{x_1,x_2,x_3\},\{x_5,x_6\}){=}7.21$ \\
+    4 & $x_4,\; \{x_5,x_6\}$
+      & $2.24$
+      & $d(\{x_1,x_2,x_3\},\{x_4,x_5,x_6\}){=}6.40$ \\
+    5 & $\{x_1,x_2,x_3\},\;\{x_4,x_5,x_6\}$
+      & $6.40$
+      & Final merge; algorithm complete \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Single-linkage merge history for $x_1,\ldots,x_6$. Steps 3 and 4 both occur at height $\sqrt{5}{\approx}2.24$; ties are broken arbitrarily. The large gap between 2.24 and 6.40 confirms the two natural clusters.}
+\label{tab:hc_merges}
+\end{table*}
 
-\textbf{Solution}:
-\begin{enumerate}
-    \item Merge A-B at height 2 (same)
-    \item $d_{\text{complete}}(\{A,B\}, C) = \max(6,5) = 6$
-    \item $d_{\text{complete}}(C,D) = 4$ (smallest). Merge C-D at height 4.
-    \item $d_{\text{complete}}(\{A,B\}, \{C,D\}) = \max(6,10,5,9) = 10$
-    \item Final merge at height 10.
-\end{enumerate}
+\newthought{Convergence check.}
+Using the merge history, sketch the dendrogram on paper.
+Mark the horizontal cut that recovers exactly two clusters.
+Why does the large gap between heights 2.24 and 6.40 make this cut easy to identify, and what would happen if the two natural clusters were less well separated?
 
-Complete linkage merges the two groups much later (height 10 vs 5), reflecting the maximum inter-cluster distance.
+\vspace{2.5em}
+\newthought{Linkage comparison.}
+Repeat steps 1 and 2 using complete linkage: replace each $\min$ in the update rule with $\max$.
 
-\subsection{Exercise 3: Cutting Strategies}
+\marginnote{Complete-linkage update for step 1:\\[4pt]
+$d_{\mathrm{comp}}(\{x_1,x_2\}, x_3) = \max(2.24,\; 2.24) = 2.24$\\[2pt]
+$d_{\mathrm{comp}}(\{x_1,x_2\}, x_4) = \max(7.81,\; 6.40) = 7.81$\\[4pt]
+Does the second merge still happen at height 2.00 under complete linkage?}
 
-For the dendrogram from Exercise 1, determine:
-\begin{enumerate}
-    \item The clustering if we cut at height 3
-    \item The clustering if we want exactly 2 clusters
-\end{enumerate}
+Note that for this dataset the merge order does not change: the two natural clusters are so well separated that no linkage criterion alters the dendrogram topology.
+Now repeat on a dataset with a bridge point added at $(4,\,4)$ and observe how single and complete linkage diverge.
 
-\textbf{Solution}:
-\begin{enumerate}
-    \item At height 3: \{A,B\} is formed (merged at 2), but C-D not yet merged (height 4). Result: \{A,B\}, \{C\}, \{D\} = 3 clusters.
-    \item For 2 clusters: cut between heights 4 and 5. Result: \{A,B\}, \{C,D\}.
-\end{enumerate}
+\vspace{2.5em}
+\newthought{Cophenetic correlation} (optional).
+The cophenetic distance $c(i,j)$ is the height at which $x_i$ and $x_j$ first share a common ancestor in the dendrogram.
+Read $c(x_1,x_3)$, $c(x_1,x_4)$, and $c(x_2,x_5)$ from the merge table.
+Compute the Pearson correlation between the three original Euclidean distances and the corresponding cophenetic distances.
+A value near 1 confirms the dendrogram faithfully preserves the distance structure.
 
 
-\section{Self-Reflection \& Recap}
+\vspace{2.5em}
+\marginnote{\newthought{Code} will be provided as a Python notebook.
+Use it as a starting point, break things, and observe what changes.}
 
-\subsection{Reflection Questions}
-\begin{enumerate}
-    \item Why does single linkage tend to produce "chaining"?
-    \begin{quote}
-        \textit{Single linkage only requires one close pair to merge clusters. A chain of nearby points can progressively connect distant groups, even if most points in the groups are far apart.}
-    \end{quote}
+\newthought{A city-climate dataset to explore.}
+Load the dataset of 50 European cities with two climate features: mean July temperature and mean annual precipitation.
+Apply single-linkage, complete-linkage, and Ward's linkage hierarchical clustering and plot all three dendrograms side by side.
 
-    \item When would you prefer Ward's linkage over complete linkage?
-    \begin{quote}
-        \textit{Ward's method produces more balanced, spherical clusters and works well when clusters have similar sizes. It's the default choice for Euclidean data when you expect compact clusters.}
-    \end{quote}
+Cut each dendrogram at $K{=}3$ and compare which cities fall into the same cluster under each linkage.
+Compute the cophenetic correlation for all three to quantify which linkage best preserves the original distance structure.
 
-    \item How do you decide where to cut a dendrogram?
-    \begin{quote}
-        \textit{Look for large gaps (long vertical lines without branches), use domain knowledge about expected number of clusters, or use metrics like silhouette score at different cuts.}
-    \end{quote}
-\end{enumerate}
+\newthought{What to observe.}
+Single linkage typically produces one large chain-cluster and several singletons for this data; Ward's and complete linkage yield more balanced partitions.
+The cophenetic correlation is highest for average or complete linkage on most Euclidean datasets, confirming the visual impression of faithfulness.
+Notice also which cities appear as singletons under single linkage and whether those same cities appear as outliers in the scatter plot.
 
-\subsection{Key Concepts}
+
+\section{Self-Reflection and Recap}\index{reflection}\index{recap}
+
+\newthought{Self-Reflection} questions to guide your thinking:
 \begin{itemize}
-    \item \textbf{Hierarchical clustering} reveals structure at all scales via a dendrogram
-    \item \textbf{Linkage choice} dramatically affects results: single (chaining), complete (compact), Ward (spherical)
-    \item \textbf{Dendrograms} provide rich, interpretable visualizations
-    \item \textbf{Computational cost} ($O(n^2)$ to $O(n^3)$) limits scalability
+    \item What does the merge height in a dendrogram represent, and why does a large gap between consecutive heights signal a natural number of clusters?
+    \item Why does single linkage produce chaining while complete linkage does not? What property of each formula causes this difference?
+    \item In what situations would you prefer Ward's linkage over single or complete linkage? When would Ward's fail?
+    \item K-Means assigns every point to a cluster and never leaves any unassigned. How does hierarchical clustering behave with respect to outliers, and how is this different from how you would handle them in practice?
+    \item You compute a dendrogram and find that the top-level merge height is only marginally larger than the second-to-top merge height. What does this tell you about the cluster structure?
+    \item How does the choice of linkage criterion interact with the choice of distance metric? Can you think of a combination that would yield meaningless results?
+    \item What is the computational bottleneck of hierarchical clustering, and what approximate methods exist to overcome it at scale?
+    \item A colleague argues that hierarchical clustering is always better than K-Means because it does not require specifying $K$ upfront. Under what conditions is this argument wrong?
 \end{itemize}
 
-\subsection{Next Chapter Teaser}
-\marginnote{Teaser: From trees to shapes}
-\newthought{Hierarchical methods still rely on pairwise distances,} but what if clusters have arbitrary shapes? What if some points are "noise" rather than belonging to any cluster? The next chapter explores \textbf{density-based methods}---algorithms that find clusters as dense regions separated by sparse regions, naturally handling noise and non-convex shapes.
+\newthought{Recap} of Key Concepts:
+\begin{itemize}
+    \item Agglomerative clustering greedily merges the two closest clusters at each step, producing a dendrogram that encodes all flat partitions from $K{=}1$ to $K{=}n$ in a single structure
+    \item Single linkage detects elongated clusters but suffers from chaining; complete and Ward's linkage produce compact clusters and are more robust to sparse bridge points
+    \item A large gap between consecutive merge heights is the dendrogram signal for a natural number of clusters, analogous to the elbow in K-Means inertia curves
+    \item The $O(n^2)$ distance matrix and $O(n^2)$--$O(n^3)$ merge loop limit hierarchical clustering to moderate-sized datasets without approximation methods such as BIRCH
+    \item Outliers and bridge points are never labelled as noise: they are absorbed into some cluster at a finite merge height, distorting the dendrogram
+\end{itemize}
+
+
+\marginnote{\newthought{The root of hierarchical failure.} Every linkage criterion measures distance between points or boundaries. No criterion has a concept of empty space or of a region too sparse to be a cluster.}
+
+\newthought{Hierarchical clustering has no notion of empty space.} No matter how isolated a point is from every other point, it will be absorbed into a cluster at the last merge.
+A long, isolated branch in the dendrogram means ``last to join,'' not ``does not belong.''
+The chaining failure reveals the same blindspot from the other side: a sparse bridge of points is enough to merge two genuinely separate clusters, because the algorithm sees only pairwise distances, not the density of the surrounding region.
+With $K{=}2$ you might recover the two natural groups, but an outlier joins one of them silently, without warning and without any measure of how ill-fitting that assignment is.
+
+\newthought{Density-based methods} redefine cluster membership entirely: a cluster is a maximal region of space that is dense enough, and any point in a sparse region is declared noise outright.
+This eliminates chaining and handles outliers naturally, without any choice of $K$ or linkage criterion.
+The next chapter derives DBSCAN\index{DBSCAN}, the canonical density-based algorithm, starting from the single question that hierarchical clustering cannot answer: what does it mean for a region to be empty?
