@@ -480,8 +480,10 @@ The z-score of each feature is computed as:
 \begin{align*}
     \mu &= (4.67,\; 5.00) \\
     \sigma &= (3.08,\; 3.41) \\[4pt]
-    z_x &= \frac{3 - 4.67}{3.08} = -0.54 \\
-    z_y &= \frac{1 - 5.00}{3.41} = -1.17 \\[4pt]
+    z_x &= \frac{3 - 4.67}{3.08} \\
+        &= -0.54 \\
+    z_y &= \frac{1 - 5.00}{3.41} \\
+        &= -1.17 \\[4pt]
     A' &= (-0.54,\; -1.17)
 \end{align*}}
 
@@ -533,8 +535,11 @@ However, this is sensitive to outliers, as they influence $\mu$ and $\sigma$.
 
 \marginnote{Scaling point $A=(3,1)$ with $x \in [1,8]$, $y \in [1,9]$:
 \begin{align*}
-    x' &= \frac{3-1}{8-1} = \frac{2}{7} \approx 0.29 \\
-    y' &= \frac{1-1}{9-1} = 0 \\
+    x' &= \frac{3-1}{8-1} \\
+       &= \frac{2}{7} \\
+       &\approx 0.29 \\
+    y' &= \frac{1-1}{9-1} \\
+       &= 0 \\
     A' &= (0.29,\; 0)
 \end{align*}}
 \begin{equation}
@@ -635,7 +640,7 @@ Zoom-in so you can not see the margin notes, and try to solve it on your own fir
 \newthought{A delivery company} plans routes through Manhattan's grid. Pickup locations are given as (street, avenue) coordinates.
 
 \marginnote{\newthought{Mahalanobis distance.} The features live on different scales and are correlated. Mahalanobis accounts for both by using the covariance matrix, producing ellipsoidal contours that align with the data's spread.}
-\newthought{A coffee quality lab} measures sourness (0--200) and bitterness (0--500) 
+\newthought{A coffee quality lab} measures sourness (0 to 200) and bitterness (0 to 500)
 for each batch.
 
 
@@ -678,7 +683,8 @@ Swap the diagonal, negate the off-diagonal, divide by the determinant.
 
 \newthought{Intuitively,} $A^{-1}$ undoes the transformation $A$: if $A$ stretches and rotates space, $A^{-1}$ maps everything back, with $A A^{-1} = I$. For $\Sigma$, the inverse rescales each dimension by its variance and removes correlations, so distances are measured in standard-deviation units.}
 \begin{align*}
-    \det(\Sigma) &= 3900 \cdot 15600 - 6600^2 = 17{,}280{,}000 \\[6pt]
+    \det(\Sigma) &= 3900 \cdot 15600 - 6600^2 \\[4pt]
+                 &= 17{,}280{,}000 \\[6pt]
     \Sigma^{-1}  &= \frac{1}{17{,}280{,}000}\begin{pmatrix} 15600 & 6600 \\ 6600 & 3900 \end{pmatrix}
 \end{align*}
 
@@ -694,8 +700,10 @@ Taking the dot product with $\delta$ gives the squared distance:
 \begin{align*}
     d_M^2 &= \delta^T(\Sigma^{-1}\delta) \\[4pt]
           &= \frac{1}{17{,}280{,}000}(30,\;{-}180)\begin{pmatrix}-720{,}000\\-504{,}000\end{pmatrix} \\[4pt]
-          &= \frac{69{,}120{,}000}{17{,}280{,}000} = 4 \\[4pt]
-    d_M   &= \sqrt{4} = 2
+          &= \frac{69{,}120{,}000}{17{,}280{,}000} \\[4pt]
+          &= 4 \\[4pt]
+    d_M   &= \sqrt{4} \\
+          &= 2
 \end{align*} 
 
 Compare with the Euclidean distance, which does not account for the different scales and correlation. The raw displacement of 30 sourness units and 180 bitterness units yields an overall distance of 182.5, making $P_3$ seem very far from $P_1$, driven almost entirely by the bitterness difference:
@@ -711,14 +719,18 @@ The bitterness axis has a much larger spread ($\sigma^2{=}15600$ vs $\sigma^2{=}
 \vspace{2.5em}
 \newthought{Standardization} does not change the data, it changes the expanse and spread of the space you measure it in. Units disappear; and make way for a more abstract notion of distance, in terms of how many standard deviations apart the data points are.
 
-\marginnote{$C_1 = (300,\;7)$\\$C_2 = (500,\;6)$\\$C_3 = (700,\;3)$\\[4pt]daily cups sold, customer rating (1--10)}
+\marginnote{$C_1 = (300,\;7)$\\$C_2 = (500,\;6)$\\$C_3 = (700,\;3)$\\[4pt]daily cups sold, customer rating (1 to 10)}
 \newthought{The effect of Standardization} on café data.
 Three cafés $C_1$, $C_2$, $C_3$ recorded as daily cups sold and customer rating.
 
 Compute the Euclidean distance on raw features, standardize all three points, and recompute. On raw features, daily sales dominate completely; the two pairs involving $C_2$ look equally close:
 \begin{align*}
-    d_E(C_1, C_2) &= \sqrt{(500{-}300)^2 + (6{-}7)^2} = \sqrt{40\,000 + 1} \approx 200.0 \\
-    d_E(C_2, C_3) &= \sqrt{(700{-}500)^2 + (3{-}6)^2} = \sqrt{40\,000 + 9} \approx 200.0
+    d_E(C_1, C_2) &= \sqrt{(500{-}300)^2 + (6{-}7)^2} \\
+    &= \sqrt{40\,000 + 1} \\
+    &\approx 200.0 \\
+    d_E(C_2, C_3) &= \sqrt{(700{-}500)^2 + (3{-}6)^2} \\
+    &= \sqrt{40\,000 + 9} \\
+    &\approx 200.0
 \end{align*}
 
 The rating differences ($1$ and $9$) are drowned out by the cup counts ($40{,}000$ each). The means and standard deviations are:
@@ -735,8 +747,12 @@ After z-score normalization the cafés map to:
 
 Recomputing the distances:
 \begin{align*}
-    d(C_1', C_2') &= \sqrt{(0{-}({-}1))^2 + (0.32{-}0.80)^2} = \sqrt{1 + 0.23} \approx 1.11 \\
-    d(C_2', C_3') &= \sqrt{(1{-}0)^2 + ({-}1.12{-}0.32)^2} = \sqrt{1 + 2.07} \approx 1.75
+    d(C_1', C_2') &= \sqrt{(0{-}({-}1))^2 + (0.32{-}0.80)^2} \\
+                  &= \sqrt{1 + 0.23} \\
+                  &\approx 1.11 \\
+    d(C_2', C_3') &= \sqrt{(1{-}0)^2 + ({-}1.12{-}0.32)^2} \\
+                  &= \sqrt{1 + 2.07} \\
+                  &\approx 1.75
 \end{align*}
 
 $C_2$ is now clearly closer to $C_1$ than to $C_3$. In raw space, sales made both pairs look identical; after standardization, the similar reviews of $C_1$ and $C_2$ pull them together while $C_3$'s low rating pushes it away.
@@ -749,15 +765,16 @@ $C_2$ is now clearly closer to $C_1$ than to $C_3$. In raw space, sales made bot
 
 % ============================= CODE ===============================
 
-\marginnote{\newthought{Code} will be provided as a Python notebook. Use it as a starting point, break things, and observe what changes.}
-\marginnote{20 coffee samples\\acidity (pH, 4.0--7.0)\\bitterness (1--10)\\brew strength (mg/mL, 5--25)\\[4pt]four varieties: cold brew, drip, espresso, latte}
+\marginnote{\newthought{Code} will be provided as a Python notebook. 
+Use it as a starting point, break things, and observe what changes.}
+\marginnote{20 coffee samples\\acidity (pH, 4.0 to 7.0)\\bitterness (1 to 10)\\brew strength (mg/mL, 5 to 25)\\[4pt]four varieties: cold brew, drip, espresso, latte}
 
 \newthought{A toy dataset to explore.} You are given measurements of 20 coffee samples with three features:
-\textit{acidity} (pH, 4.0--7.0), \textit{bitterness} (1--10), and \textit{brew strength} (mg/mL, 5--25).
+\textit{acidity} (pH, 4.0 to 7.0), \textit{bitterness} (1 to 10), and \textit{brew strength} (mg/mL, 5 to 25).
 The samples belong to four varieties: cold brew, drip, espresso, and latte.
 Load the dataset and scatter-plot acidity vs.\ bitterness. Then compute the Euclidean distance matrix and identify the most similar pair, is the result plausible? Apply z-score normalization, recompute the distance matrix, and observe how the nearest neighbors shift. Compute cosine similarity between all pairs and compare it to the Euclidean grouping. Finally, compute the sample covariance matrix of the normalized data and check whether any features are correlated.
 
-\newthought{What to observe.} Without normalization, brew strength dominates similarity because its scale (5--25\,mg/mL) dwarfs the others.
+\newthought{What to observe.} Without normalization, brew strength dominates similarity because its scale (5 to 25\,mg/mL) dwarfs the others.
 A latte and an espresso with similar strength appear closer than two espressos with the same acidity and bitterness profile.
 After normalization, all three features contribute equally and the four natural clusters become visible.
 Cosine similarity groups samples by the \textit{ratio} of their features, which may merge varieties with similar flavor profiles but very different intensities.
