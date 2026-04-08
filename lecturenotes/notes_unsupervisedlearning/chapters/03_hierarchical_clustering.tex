@@ -11,7 +11,7 @@
 
 \section{The Why}\index{centroid clustering!limitations}
 
-K-Means must commit to one value of $K$ before seeing the data.
+K-Means must commit to one value of $K$ before seeing the data\cite{Jain2010}.
 With $K{=}2$ you recover two broad groups; with $K{=}10$ you recover ten fine subgroups.
 You cannot see both at once, and the elbow heuristic only helps you pick one level and discard the rest.
 
@@ -26,6 +26,13 @@ In each case, the right question is not ``how many clusters?'' but ``at which sc
 \newthought{Hierarchical clustering} produces a \textbf{dendrogram}\index{dendrogram}: a binary tree in which leaves are individual data points and each internal node records the distance at which two sub-trees were merged.
 A horizontal cut at any chosen height yields a flat partition.
 The full range of partitions, from $K{=}1$ to $K{=}n$, lives in this one structure.
+
+\newthought{In order to move from a flat partition to a full hierarchy of clusterings,} we have good reason to find ways to,
+\begin{itemize}
+    \item extend pairwise point distances to cluster distances, making the notion of closest pair well-defined at every scale.
+    \item record each merge in a tree structure that makes every partition from $K{=}1$ to $K{=}n$ readable in a single pass.
+    \item understand how the choice of cluster distance shapes the resulting hierarchy and where it fails.
+\end{itemize}
 
 
 \subsection{Hands-On Experience}
@@ -75,6 +82,9 @@ At what level of distance would you cut that tree to recover two groups?
 
 \vspace{2.5em}
 
+\newthought{The fundamental question} this chapter answers is how do we formalize the bottom-up merging process?
+We will see how agglomerative clustering builds a dendrogram from pairwise distances; and how different linkage criteria encode different assumptions about what makes two clusters close.
+
 \newthought{The Learning Objectives} of this lecture:
 \begin{itemize}
     \item Understand how agglomerative clustering builds a dendrogram through successive minimum-distance merges.
@@ -91,7 +101,7 @@ At what level of distance would you cut that tree to recover two groups?
 
 \section{The Hierarchical Clustering Algorithm}\index{agglomerative clustering}
 
-\newthought{The agglomerative strategy}\index{agglomerative clustering} is bottom-up: start with $n$ singleton clusters, one per point, and greedily merge the two closest clusters at each step.
+\newthought{The agglomerative strategy}\index{agglomerative clustering}\cite{Ward1963} is bottom-up: start with $n$ singleton clusters, one per point, and greedily merge the two closest clusters at each step.
 Every merge is recorded as an internal node labeled with the distance at which it occurred.
 
 \begin{algorithm}[H]
@@ -156,7 +166,7 @@ It is a middle ground between single and complete linkage.
 
 \subsection{Ward's Method}\index{Ward's method}
 
-Ward's criterion merges the two clusters whose union minimises the increase in total within-cluster variance:
+Ward's criterion\cite{Ward1963} merges the two clusters whose union minimises the increase in total within-cluster variance:
 
 \begin{align*}
     D_{\mathrm{Ward}}(C_i,\, C_j) &= \frac{|C_i|\,|C_j|}{|C_i| + |C_j|} \left\|\mu_i - \mu_j\right\|^2
@@ -322,7 +332,7 @@ There is no concept of noise: outliers and bridge points create spurious merges 
 
 \section{Computational Complexity}\index{computational complexity!hierarchical clustering}
 
-\marginnote{\newthought{Scalability.} For $n > 10{,}000$ consider BIRCH\index{BIRCH}, which builds a compact CF-tree over the data first and then applies hierarchical clustering to the tree nodes rather than to individual points.}
+\marginnote{\newthought{Scalability.} For $n > 10{,}000$ consider BIRCH\index{BIRCH}\cite{Zhang1996}, which builds a compact CF-tree over the data first and then applies hierarchical clustering to the tree nodes rather than to individual points.}
 
 \begin{table*}[ht]
 \centering
@@ -331,7 +341,7 @@ There is no concept of noise: outliers and bridge points create spurious merges 
     \textbf{Algorithm} & \textbf{Time} & \textbf{Space} & \textbf{Notes} \\
     \midrule
     Naive agglomerative        & $O(n^3)$         & $O(n^2)$ & Recomputes all distances each step \\
-    Single linkage (SLINK)     & $O(n^2)$         & $O(n)$   & Optimal algorithm for single linkage \\
+    Single linkage (SLINK)\cite{Sibson1973} & $O(n^2)$ & $O(n)$ & Optimal algorithm for single linkage \\
     Complete / average linkage & $O(n^2 \log n)$  & $O(n^2)$ & Priority-queue acceleration \\
     BIRCH (approximate)        & $O(n)$           & $O(n)$   & Approximate; clusters a CF-tree \\
     \bottomrule
@@ -552,3 +562,7 @@ With $K{=}2$ you might recover the two natural groups, but an outlier joins one 
 \newthought{Density-based methods} redefine cluster membership entirely: a cluster is a maximal region of space that is dense enough, and any point in a sparse region is declared noise outright.
 This eliminates chaining and handles outliers naturally, without any choice of $K$ or linkage criterion.
 The next chapter derives DBSCAN\index{DBSCAN}, the canonical density-based algorithm, starting from the single question that hierarchical clustering cannot answer: what does it mean for a region to be empty?
+
+\marginnote{\newthought{Teaser} How can we define a cluster without any centroid, any linkage criterion, or any choice of $K$, label outliers as noise automatically, and still recover clusters of arbitrary shape?}
+
+\marginnote{\newthought{feedback}}

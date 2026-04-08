@@ -2,505 +2,526 @@
 % Chapter 5: Dimensionality Reduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Dimensionality Reduction}\index{PCA}\index{t-SNE}\index{UMAP}
-\newthought{High dimensions hide structure---compress to reveal it.}
+\chapter{Dimensionality Reduction}\index{dimensionality reduction}\index{PCA}\index{t-SNE}\index{UMAP}
+\newthought{High dimensions hide structure, compress to reveal it.}
 
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 % BLOCK 1: INTRODUCTION
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 
-\section{The Why}
+\section{The Why}\index{curse of dimensionality}\index{intrinsic dimensionality}
 
-\marginnote{The manifold hypothesis: high-dimensional data often lies on a low-dimensional manifold.}
+Real-world data is often high-dimensional: images have millions of pixels, genomes have billions of base pairs, text embeddings have hundreds of dimensions.
+Yet the \textbf{intrinsic dimensionality}, the number of degrees of freedom that actually vary, is often much lower.
 
-Real-world data is often high-dimensional: images have millions of pixels, genomes have billions of base pairs, text embeddings have hundreds of dimensions. Yet the \textbf{intrinsic dimensionality}---the number of degrees of freedom---is often much lower.
+\marginnote{\newthought{The manifold hypothesis} holds that high-dimensional data lies on a low-dimensional manifold embedded in the ambient space. The goal of dimensionality reduction is to find that manifold.}
 
-\textbf{Why reduce dimensions?}
+\newthought{Why reduce dimensions?}
 \begin{itemize}
-    \item \textbf{Visualization}: We can only see 2D or 3D
-    \item \textbf{Noise reduction}: Remove irrelevant variation
-    \item \textbf{Computational efficiency}: Faster downstream algorithms
-    \item \textbf{Feature extraction}: Discover underlying factors
-    \item \textbf{Combat curse of dimensionality}: Make distances meaningful
+    \item \textbf{Visualization}: we can only see 2D or 3D directly.
+    \item \textbf{Noise reduction}: irrelevant variation is filtered away.
+    \item \textbf{Computational efficiency}: downstream algorithms run faster and generalize better.
+    \item \textbf{Feature extraction}: latent factors of variation are made explicit.
+    \item \textbf{Combating the curse of dimensionality}: distances become meaningful again.
 \end{itemize}
 
-\textbf{Example}: Faces live in a space with millions of pixels, but vary along a few factors: pose, lighting, expression, identity. Dimensionality reduction finds these factors.
+\newthought{Faces, for example,} live in a space with millions of pixels, but vary along a handful of factors: pose, lighting, expression, identity.
+Dimensionality reduction finds those factors and discards the rest.
 
 
 \subsection{Hands-On Experience}
 
+\newthought{Consider} the following 2D data that lies approximately along the line $y{=}x$.
+
 \begin{marginfigure}
-\begin{tikzpicture}[scale=0.7]
+\centering
+\begin{tikzpicture}
     \begin{axis}[
-        xlabel={$x_1$},
-        ylabel={$x_2$},
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
         xmin=-2, xmax=6,
         ymin=-1, ymax=5,
-        width=\textwidth,
-        height=\textwidth,
+        width=\marginparwidth,
+        height=\marginparwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={0,2,4},
+        ytick={0,2,4},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside,
+        tick pos=left,
     ]
-    % Points along a line with noise
-    \addplot[only marks, mark=*, mark size=2pt, blue] coordinates {
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
         (0,0.1) (1,1.2) (2,1.9) (3,3.1) (4,4.0) (5,4.8)
         (0.5,0.4) (1.5,1.6) (2.5,2.4) (3.5,3.6) (4.5,4.3)
     };
-    % Principal component direction
-    \addplot[red, thick, domain=-0.5:5.5] {x};
-    \node[red, anchor=south] at (axis cs:4,3.5) {PC1};
+    \addplot[black, thin, domain=-0.5:5.5] {x};
+    \node[font=\small, anchor=south] at (axis cs:4,3.5) {PC1};
     \end{axis}
 \end{tikzpicture}
-\caption{Data lies along a 1D subspace (line). PCA finds this direction.}
+\caption{Data lies along a 1D subspace. The direction of maximum variance is the first principal component.}
+\label{fig:pca_intro}
 \end{marginfigure}
 
-Consider 2D data that lies approximately along a line $y = x$:
-\begin{enumerate}
-    \item What is the direction of maximum variance?
-    \item If you project onto this direction, how much information is lost?
-    \item What is the second principal component?
-\end{enumerate}
+\newthought{Which direction} captures the most variance?
+If you project onto that direction, how much information is lost?
+What would the second principal component look like, and what does it capture?
 
-The direction $(1,1)/\sqrt{2}$ captures most variance. The perpendicular direction captures only noise. This is the essence of PCA.
+\vspace{2.5em}
 
-\subsection{Learning Objectives}
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item Understand the PCA objective and its connection to variance maximization and the singular value decomposition.
+    \item Apply t-SNE and UMAP for visualization and avoid common misinterpretations of their output.
+    \item Choose appropriate dimensionality reduction methods based on linearity, dataset scale, and whether the goal is preprocessing or visualization.
+\end{itemize}
 
-After this lecture, you will be able to:
-\begin{enumerate}
-    \item Derive PCA from variance maximization and reconstruction minimization
-    \item Apply SVD for dimensionality reduction and understand its relationship to PCA
-    \item Distinguish linear (PCA, ICA) from non-linear (t-SNE, UMAP) methods
-    \item Interpret t-SNE and UMAP embeddings correctly (and avoid common pitfalls)
-    \item Choose appropriate methods based on goals (visualization vs. preprocessing)
-\end{enumerate}
 
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 % BLOCK 2: MAIN THEORY
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 
+\newpage
 
+\section{The Curse of Dimensionality}\index{curse of dimensionality}
 
-\subsection{The Curse of Dimensionality}
+\marginnote{\newthought{Richard Bellman} coined the term ``curse of dimensionality'' in 1961 while studying dynamic programming. The insight carries over directly to machine learning.}
 
-\marginnote{Richard Bellman coined "curse of dimensionality" in 1961.}
+High-dimensional spaces behave counterintuitively.
+As the number of dimensions $d$ grows, three problems compound.
 
-High-dimensional spaces behave counterintuitively. As dimensions increase:
+\newthought{Volume concentrates in corners.}
+Consider a hypercube $[-1,1]^d$.
+The inscribed hypersphere has radius 1.
+As $d$ increases, the ratio of their volumes vanishes:
 
-\paragraph{1. Volume concentrates in corners.}
-Consider a hypercube $[-1, 1]^d$. The inscribed hypersphere has radius 1. The ratio of volumes:
-\begin{equation}
-    \frac{V_{\text{sphere}}}{V_{\text{cube}}} = \frac{\pi^{d/2} / \Gamma(d/2 + 1)}{2^d} \xrightarrow{d \to \infty} 0
-\end{equation}
+\begin{align*}
+    \frac{V_{\text{sphere}}}{V_{\text{cube}}} &= \frac{\pi^{d/2} / \Gamma(d/2 + 1)}{2^d} \xrightarrow{d \to \infty} 0
+\end{align*}
+
+Almost all volume lives in the corners, far from the centre.
 
 \begin{marginfigure}
-\begin{tikzpicture}[scale=0.7]
+\centering
+\begin{tikzpicture}
     \begin{axis}[
         xlabel={Dimension $d$},
         ylabel={Volume ratio},
         xmin=1, xmax=20,
         ymin=0, ymax=1,
-        grid=major,
-        width=\textwidth,
-        height=0.8\textwidth,
+        width=\marginparwidth,
+        height=\marginparwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={1,5,10,15,20},
+        ytick={0,0.5,1},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside,
+        tick pos=left,
     ]
-    \addplot[blue, thick, domain=1:20, samples=20]
+    \addplot[black, thin, domain=1:20, samples=20]
         {pi^(x/2) / (2^x * gamma(x/2 + 1))};
     \end{axis}
 \end{tikzpicture}
 \caption{Sphere-to-cube volume ratio vanishes as dimension increases.}
+\label{fig:volume_ratio}
 \end{marginfigure}
 
-\paragraph{2. Distances concentrate.}
+\newthought{Distances concentrate.}
 For random points uniformly distributed in a hypercube, as $d \to \infty$:
-\begin{equation}
-    \frac{d_{\max} - d_{\min}}{d_{\min}} \to 0
-\end{equation}
-All points become approximately equidistant! This is devastating for nearest-neighbor methods.
 
-\paragraph{3. Data becomes sparse.}
-To maintain the same density of points, you need exponentially more data:
-\begin{itemize}
-    \item 10 points per dimension in 2D: $10^2 = 100$ points
-    \item 10 points per dimension in 10D: $10^{10} = 10$ billion points
-\end{itemize}
+\begin{align*}
+    \frac{d_{\max} - d_{\min}}{d_{\min}} &\to 0
+\end{align*}
 
-\marginnote{\textbf{The blessing of dimensionality}: The Johnson-Lindenstrauss lemma shows that $n$ points in high dimensions can be projected to $O(\log n / \epsilon^2)$ dimensions while preserving pairwise distances within $(1 \pm \epsilon)$.}
+All points become approximately equidistant.
+This is devastating for nearest-neighbour methods and for K-Means.
 
-\paragraph{Implications for machine learning:}
-\begin{itemize}
-    \item K-nearest neighbors degrades in high dimensions
-    \item Clustering becomes harder as distances concentrate
-    \item Dimensionality reduction is essential before many algorithms
-\end{itemize}
+\newthought{Data becomes sparse.}
+To maintain the same density of points you need exponentially more data: 10 points per unit in 2D requires 100 points; in 10D, 10 billion.
+
+\marginnote{\newthought{The blessing of dimensionality.} The Johnson-Lindenstrauss lemma shows that $n$ points in high dimensions can be projected to $O(\log n / \epsilon^2)$ dimensions while preserving pairwise distances within $(1{\pm}\epsilon)$. Random projections are cheap and surprisingly powerful.}
+
+\newthought{Implications for machine learning:} K-nearest neighbours degrades; clustering becomes harder; distances lose meaning.
+Dimensionality reduction is often essential before any other algorithm.
 
 
+\section{Principal Component Analysis}\index{PCA}\index{covariance matrix}
 
-\section{Principal Component Analysis (PCA)}
+\marginnote{\newthought{PCA} finds orthogonal directions of maximum variance in the data.}
 
-\marginnote{PCA finds orthogonal directions of maximum variance.}
+\newthought{Given centred data} $X \in \mathbb{R}^{n \times d}$ (rows are samples), PCA finds a $k$-dimensional subspace ($k < d$) that best represents the data.
 
-\subsection{Problem Setup}
+\newthought{The variance maximization view.}
+Find the direction $w_1 \in \mathbb{R}^d$ with $\|w_1\|{=}1$ that maximises the variance of projected data:
 
-Given centered data $X \in \mathbb{R}^{n \times d}$ (rows are samples), find a $k$-dimensional subspace ($k < d$) that best represents the data.
+\begin{align*}
+    w_1 &= \arg\max_{\|w\|=1} \text{Var}(Xw) \\
+        &= \arg\max_{\|w\|=1} w^T \Sigma\, w
+\end{align*}
 
-\subsection{Variance Maximization View}
+where $\Sigma = X^T X / n$ is the covariance matrix.
 
-Find the direction $w_1 \in \mathbb{R}^d$ ($\|w_1\| = 1$) that maximizes the variance of projected data:
-\begin{equation}
-    w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T \underbrace{(X^T X / n)}_{\Sigma} w
-\end{equation}
-where $\Sigma$ is the covariance matrix.
+\marginnote{\newthought{Lagrange multipliers.} Setting $\mathcal{L} = w^T \Sigma w - \lambda(w^T w - 1)$ and differentiating gives $\Sigma w = \lambda w$, so $w_1$ is the eigenvector of $\Sigma$ with the largest eigenvalue $\lambda_1$.}
 
-\marginnote{Lagrange multiplier: $\mathcal{L} = w^T \Sigma w - \lambda(w^T w - 1)$}
+\newthought{The solution:} $w_1$ is the eigenvector of $\Sigma$ corresponding to the largest eigenvalue $\lambda_1$.
+The second principal component is the eigenvector with the second-largest eigenvalue, orthogonal to the first, and so on.
+The first $k$ principal components together define the optimal $k$-dimensional subspace.
 
-Using Lagrange multipliers:
-\begin{equation}
-    \nabla_w \mathcal{L} = 2\Sigma w - 2\lambda w = 0 \implies \Sigma w = \lambda w
-\end{equation}
+\newthought{The reconstruction error view.}
+Equivalently, PCA minimises the squared reconstruction error:
 
-So $w_1$ is the \textbf{eigenvector} of $\Sigma$ with largest \textbf{eigenvalue} $\lambda_1$.
+\begin{align*}
+    \min_{W \in \mathbb{R}^{d \times k},\; W^T W = I_k} \sum_{i=1}^n \|x_i - WW^T x_i\|^2
+\end{align*}
 
-The second principal component is the eigenvector with second-largest eigenvalue, orthogonal to the first, and so on.
+Both views yield the same solution: the first $k$ eigenvectors of the covariance matrix.
 
-\begin{theorem}[PCA Solution]
-The first $k$ principal components are the eigenvectors of $\Sigma = X^T X / n$ corresponding to the $k$ largest eigenvalues.
-\end{theorem}
-
-\subsection{Reconstruction Error View}
-
-Equivalently, PCA minimizes reconstruction error:
-\begin{equation}
-    \min_{W \in \mathbb{R}^{d \times k}} \sum_{i=1}^n \|x_i - WW^T x_i\|^2
-\end{equation}
-subject to $W^T W = I_k$.
-
-\begin{figure}[h]
+\begin{figure}
 \centering
-\begin{tikzpicture}[scale=0.8]
+\begin{tikzpicture}
     \begin{axis}[
-        xlabel={$x_1$},
-        ylabel={$x_2$},
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
         xmin=-1, xmax=5,
         ymin=-1, ymax=4,
-        width=0.6\textwidth,
-        axis equal,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={0,2,4},
+        ytick={0,2},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
     ]
-    % Original point
-    \addplot[only marks, mark=*, mark size=3pt, blue] coordinates {(3,2.5)};
-    % PC direction
-    \addplot[red, thick, domain=0:4] {0.8*x};
-    % Projection
-    \addplot[only marks, mark=*, mark size=3pt, red] coordinates {(2.73,2.18)};
-    % Error line
-    \addplot[gray, dashed] coordinates {(3,2.5) (2.73,2.18)};
-    % Labels
-    \node[blue, anchor=west] at (axis cs:3.1,2.5) {$x$};
-    \node[red, anchor=north] at (axis cs:2.73,2.1) {$\hat{x}$};
-    \node[gray, anchor=west] at (axis cs:2.9,2.3) {error};
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(3,2.5)};
+    \addplot[black, thin, domain=0:4] {0.8*x};
+    \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {(2.73,2.18)};
+    \addplot[black, thin, dashed] coordinates {(3,2.5) (2.73,2.18)};
+    \node[font=\small, anchor=west] at (axis cs:3.1,2.5) {$x$};
+    \node[font=\small, anchor=north] at (axis cs:2.73,2.1) {$\hat{x}$};
+    \node[font=\small, anchor=west] at (axis cs:2.9,2.3) {error};
     \end{axis}
 \end{tikzpicture}
-\caption{PCA projects data onto subspace, minimizing reconstruction error (gray dashed lines).}
+\caption{PCA projects $x$ onto the principal subspace (line), minimising the reconstruction error (dashed line to $\hat{x}$).}
+\label{fig:pca_reconstruction}
 \end{figure}
 
-\subsection{Algorithm}
 
 \begin{algorithm}[H]
 \caption{PCA via Eigendecomposition}
 \begin{algorithmic}[1]
-\Require Centered data $X \in \mathbb{R}^{n \times d}$, target dimension $k$
+\Require Centred data $X \in \mathbb{R}^{n \times d}$, target dimension $k$
 \Ensure Principal components $W \in \mathbb{R}^{d \times k}$, projected data $Z \in \mathbb{R}^{n \times k}$
 \State Compute covariance matrix $\Sigma = X^T X / n$
 \State Compute eigendecomposition $\Sigma = V \Lambda V^T$
 \State $W \gets$ first $k$ columns of $V$ (sorted by decreasing eigenvalue)
-\State $Z \gets X W$ \Comment{Project data}
+\State $Z \gets X W$ \Comment{Project data onto $k$-dimensional subspace}
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Explained Variance}
+\newthought{Explained variance.}
+The fraction of total variance explained by the first $k$ components is:
 
-The fraction of variance explained by $k$ components:
-\begin{equation}
-    \text{Explained variance ratio} = \frac{\sum_{i=1}^k \lambda_i}{\sum_{i=1}^d \lambda_i}
-\end{equation}
+\begin{align*}
+    \text{explained variance ratio} &= \frac{\sum_{i=1}^k \lambda_i}{\sum_{i=1}^d \lambda_i}
+\end{align*}
+
+Choose $k$ so that the cumulative explained variance exceeds a threshold (commonly 95\%).
 
 \begin{marginfigure}
-\begin{tikzpicture}[scale=0.7]
+\centering
+\begin{tikzpicture}
     \begin{axis}[
         xlabel={Components},
         ylabel={Cumulative variance},
         xmin=0, xmax=10,
         ymin=0, ymax=1.1,
-        width=\textwidth,
-        height=0.8\textwidth,
-        ytick={0,0.5,0.8,0.95,1},
+        width=\marginparwidth,
+        height=\marginparwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={0,5,10},
+        ytick={0,0.5,0.95,1},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside,
+        tick pos=left,
     ]
-    \addplot[blue, thick, mark=*] coordinates {
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
         (1,0.6) (2,0.75) (3,0.85) (4,0.9) (5,0.93)
         (6,0.95) (7,0.97) (8,0.98) (9,0.99) (10,1.0)
     };
-    \draw[red, dashed] (axis cs:0,0.95) -- (axis cs:10,0.95);
-    \draw[red, dashed] (axis cs:6,0) -- (axis cs:6,0.95);
+    \addplot[black, thin, dashed, domain=0:10] {0.95};
     \end{axis}
 \end{tikzpicture}
-\caption{Cumulative explained variance. Choose $k$ to explain 95\% of variance.}
+\caption{Cumulative explained variance. The dashed line marks the 95\% threshold; six components suffice here.}
+\label{fig:explained_variance}
 \end{marginfigure}
 
 
-\section{Singular Value Decomposition (SVD)}
+\section{Singular Value Decomposition}\index{SVD}
 
-\marginnote{SVD is the workhorse of numerical linear algebra.}
+\marginnote{\newthought{SVD} is the workhorse of numerical linear algebra and the computationally preferred route to PCA.}
 
 Any matrix $X \in \mathbb{R}^{n \times d}$ has an SVD:
-\begin{equation}
-    X = U \Sigma V^T
-\end{equation}
-where:
-\begin{itemize}
-    \item $U \in \mathbb{R}^{n \times r}$: left singular vectors (orthonormal)
-    \item $\Sigma \in \mathbb{R}^{r \times r}$: diagonal matrix of singular values $\sigma_1 \geq \sigma_2 \geq \ldots$
-    \item $V \in \mathbb{R}^{d \times r}$: right singular vectors (orthonormal)
-    \item $r = \text{rank}(X)$
-\end{itemize}
 
-\textbf{Connection to PCA}: The columns of $V$ are eigenvectors of $X^T X$, and $\lambda_i = \sigma_i^2 / n$.
+\begin{align*}
+    X &= U \Sigma V^T
+\end{align*}
 
-\textbf{Truncated SVD}: Keep only top $k$ singular values:
-\begin{equation}
-    X_k = U_k \Sigma_k V_k^T
-\end{equation}
+where $U \in \mathbb{R}^{n \times r}$ holds left singular vectors (orthonormal), $\Sigma \in \mathbb{R}^{r \times r}$ is diagonal with singular values $\sigma_1 \geq \sigma_2 \geq \ldots$, $V \in \mathbb{R}^{d \times r}$ holds right singular vectors (orthonormal), and $r{=}\text{rank}(X)$.
 
-\begin{theorem}[Eckart-Young-Mirsky]
-$X_k$ is the best rank-$k$ approximation to $X$ in both Frobenius and spectral norms.
-\end{theorem}
+\newthought{Connection to PCA.} The columns of $V$ are the eigenvectors of $X^T X$, with $\lambda_i = \sigma_i^2 / n$.
+In practice, always compute PCA via the SVD: it is numerically stable and avoids forming $X^T X$ explicitly.
+
+\newthought{Truncated SVD} keeps only the top $k$ singular values: $X_k = U_k \Sigma_k V_k^T$.
+By the Eckart-Young-Mirsky theorem, $X_k$ is the best rank-$k$ approximation to $X$ in both Frobenius and spectral norms.
 
 
-\section{Independent Component Analysis (ICA)}
+\section{Independent Component Analysis}\index{ICA}
 
-\marginnote{ICA seeks statistically independent sources, not just uncorrelated.}
+\marginnote{\newthought{ICA} seeks statistically independent sources, not just uncorrelated directions.}
 
-PCA finds uncorrelated components. \textbf{ICA} finds \textbf{independent} components.
+\newthought{PCA finds uncorrelated components.}
+ICA goes further and finds \textbf{independent} components.
 
-\textbf{The cocktail party problem}: Multiple microphones record a mixture of speakers. Can we separate the original voices?
+\newthought{The cocktail party problem.} Multiple microphones record a mixture of speakers.
+Model: $X = AS$, where $A$ is a mixing matrix and $S$ contains independent source signals.
+ICA estimates $W{=}A^{-1}$ to recover $S{=}WX$.
 
-Model: $X = AS$ where $A$ is a mixing matrix and $S$ contains independent source signals. ICA finds $W = A^{-1}$ to recover $S = WX$.
-
-\textbf{Key insight}: Independent non-Gaussian signals become more Gaussian when mixed (Central Limit Theorem). ICA maximizes non-Gaussianity.
-
-\textbf{FastICA algorithm} uses kurtosis or negentropy as a measure of non-Gaussianity.
+\newthought{The key insight:} independent non-Gaussian signals become more Gaussian when mixed (central limit theorem).
+ICA maximises non-Gaussianity, measured via kurtosis or negentropy, to separate sources.
+The FastICA algorithm implements this efficiently.
 
 
-\section{t-SNE}
+\section{t-SNE}\index{t-SNE}
 
-\marginnote{t-SNE: t-distributed Stochastic Neighbor Embedding (van der Maaten \& Hinton, 2008)}
+\marginnote{\newthought{t-SNE} stands for t-distributed Stochastic Neighbour Embedding (van der Maaten \& Hinton, 2008). It is optimised for two- or three-dimensional visualization.}
 
-\textbf{t-SNE} is a non-linear method optimized for \textbf{visualization}. It preserves local structure: nearby points stay nearby.
+\newthought{t-SNE preserves local structure}: nearby points in high dimensions stay nearby in the 2D embedding.
+It does this in four steps.
 
-\subsection{Algorithm}
+\begin{algorithm}[H]
+\caption{t-SNE}
+\begin{algorithmic}[1]
+\Require High-dimensional data $X$, perplexity, target dimension $k$
+\State Compute pairwise similarities in high-D (Gaussian kernel): $p_{j|i} = \exp(-\|x_i - x_j\|^2 / 2\sigma_i^2) / \sum_{l \neq i} \exp(-\|x_i - x_l\|^2 / 2\sigma_i^2)$; symmetrize: $p_{ij} = (p_{j|i} + p_{i|j}) / 2n$
+\State Initialize low-D embedding $Y$
+\Repeat
+    \State Compute low-D similarities with Student-$t$ kernel: $q_{ij} = (1 + \|y_i - y_j\|^2)^{-1} / \sum_{k \neq l} (1 + \|y_k - y_l\|^2)^{-1}$
+    \State Gradient step: minimise $\text{KL}(P \| Q) = \sum_{ij} p_{ij} \log (p_{ij} / q_{ij})$
+\Until{convergence}
+\end{algorithmic}
+\end{algorithm}
 
-\begin{enumerate}
-    \item Compute pairwise similarities in high-D (Gaussian kernel):
-    \begin{equation}
-        p_{j|i} = \frac{\exp(-\|x_i - x_j\|^2 / 2\sigma_i^2)}{\sum_{k \neq i} \exp(-\|x_i - x_k\|^2 / 2\sigma_i^2)}
-    \end{equation}
+\newthought{Perplexity} controls the effective number of neighbours each point considers.
+It sets the bandwidth $\sigma_i$ of the Gaussian kernel.
+Typical values: 5--50.
+Higher perplexity means more global structure is considered.
 
-    \item Symmetrize: $p_{ij} = (p_{j|i} + p_{i|j}) / 2n$
+\marginnote{\newthought{Perplexity} is defined as $2^{H(P_i)}$ where $H$ is the Shannon entropy of the conditional distribution over neighbours. Think of it as the effective number of neighbours.}
 
-    \item Compute pairwise similarities in low-D (t-distribution with 1 df):
-    \begin{equation}
-        q_{ij} = \frac{(1 + \|y_i - y_j\|^2)^{-1}}{\sum_{k \neq l} (1 + \|y_k - y_l\|^2)^{-1}}
-    \end{equation}
+\newthought{Interpreting t-SNE output} requires caution.
 
-    \item Minimize KL divergence via gradient descent:
-    \begin{equation}
-        \min_{y_1, \ldots, y_n} KL(P \| Q) = \sum_{ij} p_{ij} \log \frac{p_{ij}}{q_{ij}}
-    \end{equation}
-\end{enumerate}
-
-\subsection{Perplexity}
-
-\marginnote{Perplexity $\approx$ effective number of neighbors.}
-
-The \textbf{perplexity} parameter controls $\sigma_i$:
-\begin{equation}
-    \text{Perplexity} = 2^{H(P_i)} = 2^{-\sum_j p_{j|i} \log_2 p_{j|i}}
-\end{equation}
-
-Typical values: 5--50. Higher perplexity $\to$ consider more neighbors $\to$ more global structure.
-
-\subsection{Interpreting t-SNE}
-
-\begin{figure}[h]
+\begin{figure}
 \centering
-\begin{tikzpicture}[scale=0.7]
-    % Low perplexity
+\begin{tikzpicture}
     \begin{axis}[
         name=low,
-        title={Perplexity = 5},
+        title={Perplexity $= 5$},
         xmin=-30, xmax=30, ymin=-30, ymax=30,
         width=0.4\textwidth,
-        ticks=none,
+        height=0.4\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick=\empty, ytick=\empty,
+        tick align=outside,
+        tick pos=left,
     ]
-    \addplot[only marks, mark=*, mark size=1.5pt, blue] coordinates {
+    \addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
         (-20,-15) (-18,-14) (-19,-16) (-21,-15)
         (0,0) (1,2) (-1,1) (2,-1)
         (15,20) (16,18) (14,19) (17,21)
     };
     \end{axis}
-
-    % High perplexity
     \begin{axis}[
         at={(low.east)}, anchor=west, xshift=0.5cm,
-        title={Perplexity = 50},
+        title={Perplexity $= 50$},
         xmin=-30, xmax=30, ymin=-30, ymax=30,
         width=0.4\textwidth,
-        ticks=none,
+        height=0.4\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick=\empty, ytick=\empty,
+        tick align=outside,
+        tick pos=left,
     ]
-    \addplot[only marks, mark=*, mark size=1.5pt, blue] coordinates {
+    \addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
         (-15,-10) (-13,-8) (-14,-12) (-16,-9)
         (0,5) (2,7) (-2,6) (3,4)
         (12,15) (14,13) (11,14) (15,16)
     };
     \end{axis}
 \end{tikzpicture}
-\caption{Same data, different perplexity. Cluster shapes and distances change.}
+\caption{Same data at two perplexity values. Cluster shapes, sizes, and between-cluster distances all change, neither reflects original geometry.}
+\label{fig:tsne_perplexity}
 \end{figure}
 
-\textbf{Pitfalls}:
+\newthought{Common pitfalls:}
 \begin{itemize}
-    \item Cluster \textbf{sizes} are meaningless (t-SNE equalizes densities)
-    \item \textbf{Distances} between clusters are meaningless
-    \item Run multiple times---results vary with initialization
-    \item Global structure may not be preserved
+    \item Cluster \textbf{sizes} are meaningless: t-SNE equalises local densities.
+    \item \textbf{Distances between clusters} are meaningless: the embedding preserves local, not global, structure.
+    \item Results vary with random initialisation; run multiple times.
+    \item t-SNE is for visualization only, not for preprocessing or downstream tasks.
 \end{itemize}
 
 
-\section{UMAP}
+\section{UMAP}\index{UMAP}
 
-\marginnote{UMAP: Uniform Manifold Approximation and Projection (McInnes et al., 2018)}
+\marginnote{\newthought{UMAP} stands for Uniform Manifold Approximation and Projection (McInnes et al., 2018). It has theoretical foundations in Riemannian geometry and algebraic topology.}
 
-\textbf{UMAP} is a newer non-linear method that often:
-\begin{itemize}
-    \item Preserves more global structure than t-SNE
-    \item Runs faster (especially on large datasets)
-    \item Has theoretical foundations in topology
-\end{itemize}
+\newthought{UMAP is a newer non-linear method} that typically preserves more global structure than t-SNE, runs faster on large datasets, and has a theoretical foundation in manifold learning.
 
-\textbf{Key ideas}:
+\newthought{Key ideas.}
 \begin{enumerate}
-    \item Build a weighted $k$-NN graph in high-D
-    \item Find a low-D embedding that preserves the graph structure
-    \item Use cross-entropy loss (not KL divergence)
+    \item Build a weighted $k$-nearest-neighbour graph in high dimensions.
+    \item Find a low-dimensional embedding that preserves the graph structure.
+    \item Use cross-entropy loss (not KL divergence) to match fuzzy simplicial sets.
 \end{enumerate}
 
-\textbf{Key parameters}:
-\begin{itemize}
-    \item \texttt{n\_neighbors}: Similar to perplexity (typically 15--200)
-    \item \texttt{min\_dist}: How tightly points cluster (typically 0.1--0.5)
-\end{itemize}
+\newthought{Key parameters.} \texttt{n\_neighbors} (similar to perplexity, typically 15--200) controls how much local versus global structure is preserved.
+\texttt{min\_dist} (typically 0.1--0.5) controls how tightly points cluster in the embedding.
 
+\vspace{2.5em}
 
-\section{Choosing a Method}
+\newthought{Choosing a method} depends on what you want to preserve and what comes next.
 
-\begin{table}[h]
+\begin{table*}[ht]
 \centering
-\begin{tabular}{lcccc}
-\toprule
-\textbf{Method} & \textbf{Linear} & \textbf{Scalable} & \textbf{Use for} \\
-\midrule
-PCA & Yes & Yes & Preprocessing, denoising \\
-ICA & Yes & Yes & Source separation \\
-t-SNE & No & Medium & Visualization (small data) \\
-UMAP & No & Yes & Visualization (large data) \\
-\bottomrule
+\begin{tabular}{p{0.12\textwidth}p{0.1\textwidth}p{0.12\textwidth}p{0.45\textwidth}}
+    \toprule
+    \textbf{Method} & \textbf{Linear} & \textbf{Scalable} & \textbf{Best use} \\
+    \midrule
+    PCA   & Yes & Yes    & Preprocessing, denoising, linear structure \\
+    ICA   & Yes & Yes    & Source separation, statistical independence \\
+    t-SNE & No  & Medium & Visualization of small datasets ($n < 10\,000$) \\
+    UMAP  & No  & Yes    & Visualization of large datasets, more global structure \\
+    \bottomrule
 \end{tabular}
-\caption{Comparison of dimensionality reduction methods}
-\end{table}
+\vspace{2em}
+\caption{Comparison of dimensionality reduction methods. None of the non-linear methods are appropriate for preprocessing features for downstream learning.}
+\label{tab:dim_reduction_methods}
+\end{table*}
 
 
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 % BLOCK 3: STUDENT ACTIVATION
-%═══════════════════════════════════════════════════════════════════════
+% ==============================================================================================
 
-\section{Examples \& Exercises}
+\newpage
 
-\subsection{Exercise 1: PCA by Hand}
+\section{Examples \& Exercises}\index{examples}\index{exercises}
 
-Given centered data:
-$X = \begin{pmatrix} 2 & 1 \\ 1 & 2 \\ -1 & -2 \\ -2 & -1 \end{pmatrix}$
+\newthought{Computing by hand} builds the geometric intuition that plotting the output never can.
+Step through the arithmetic slowly.
 
-\begin{enumerate}
-    \item Compute the covariance matrix $\Sigma$
-    \item Find eigenvalues and eigenvectors
-    \item What fraction of variance is explained by PC1?
-\end{enumerate}
+\vspace{1em}
 
-\textbf{Solution}:
-\begin{enumerate}
-    \item $\Sigma = \frac{1}{4} X^T X = \frac{1}{4} \begin{pmatrix} 10 & 8 \\ 8 & 10 \end{pmatrix} = \begin{pmatrix} 2.5 & 2 \\ 2 & 2.5 \end{pmatrix}$
+\newthought{Given centred data}
+$X = \begin{pmatrix} 2 & 1 \\ 1 & 2 \\ -1 & -2 \\ -2 & -1 \end{pmatrix}$,
+compute the covariance matrix $\Sigma$, find its eigenvalues and eigenvectors, and determine what fraction of variance PC1 explains.
 
-    \item Eigenvalues: $\det(\Sigma - \lambda I) = (2.5-\lambda)^2 - 4 = 0 \implies \lambda_1 = 4.5, \lambda_2 = 0.5$
+The covariance matrix:
+\begin{align*}
+    \Sigma &= \frac{1}{4} X^T X \\
+           &= \frac{1}{4} \begin{pmatrix} 10 & 8 \\ 8 & 10 \end{pmatrix} \\
+           &= \begin{pmatrix} 2.5 & 2 \\ 2 & 2.5 \end{pmatrix}
+\end{align*}
 
-    Eigenvectors: $v_1 = (1,1)/\sqrt{2}$, $v_2 = (1,-1)/\sqrt{2}$
+Eigenvalues from $\det(\Sigma - \lambda I) = 0$:
+\begin{align*}
+    (2.5 - \lambda)^2 - 4 &= 0 \\
+    \lambda_1 &= 4.5, \quad \lambda_2 = 0.5
+\end{align*}
 
-    \item Explained variance by PC1: $4.5 / (4.5 + 0.5) = 90\%$
-\end{enumerate}
+Eigenvectors: $v_1 = (1,1)/\sqrt{2}$, $v_2 = (1,-1)/\sqrt{2}$.
+Explained variance by PC1:
+\begin{align*}
+    \frac{\lambda_1}{\lambda_1 + \lambda_2} &= \frac{4.5}{5} \\
+                                             &= 90\%
+\end{align*}
 
-\subsection{Exercise 2: Explained Variance Threshold}
+Now derive the projection of each data point onto PC1 yourself, then verify that the projected points have variance $4.5$.
 
-A dataset has eigenvalues: 100, 50, 20, 10, 5, 3, 2, 1, 0.5, 0.5.
+\vspace{2.5em}
 
-\begin{enumerate}
-    \item How many components to explain 90\% variance?
-    \item How many for 99\%?
-\end{enumerate}
+\newthought{Choosing a threshold.} A dataset has eigenvalues: 100, 50, 20, 10, 5, 3, 2, 1, 0.5, 0.5 (total ${=}192$).
+How many components explain 90\% of the variance?
+How many for 99\%?
+Sketch the cumulative explained variance curve and identify the elbow.
 
-\textbf{Solution}: Total = 192. Cumulative: 100, 150, 170, 180, 185, 188, 190, 191, 191.5, 192.
-\begin{enumerate}
-    \item 90\%: need $\geq 172.8$, so 3 components (170) is close, 4 components (180) exceeds.
-    \item 99\%: need $\geq 190.08$, so 7 components.
-\end{enumerate}
+\marginnote{Cumulative sums: 100, 150, 170, 180, 185, 188, 190, 191, 191.5, 192.\\[4pt]90\% threshold: $\geq 172.8$, so 3 components.\\99\% threshold: $\geq 190.1$, so 7 components.}
 
-\subsection{Exercise 3: t-SNE Interpretation}
+\vspace{2.5em}
 
-You run t-SNE on a dataset and observe:
-\begin{itemize}
-    \item Cluster A has diameter 10 units
-    \item Cluster B has diameter 5 units
-    \item Distance between clusters is 20 units
-\end{itemize}
-
+\newthought{t-SNE interpretation trap.} You run t-SNE on a dataset and observe: cluster A has diameter 10 units, cluster B has diameter 5 units, and the distance between clusters is 20 units.
 What can you conclude?
+What can you not conclude?
 
-\textbf{Solution}: Almost nothing! t-SNE does not preserve cluster sizes or between-cluster distances. You can only conclude that A and B are distinct clusters. You cannot say A is "more spread out" or that they are "far apart" in the original space.
+Think carefully: t-SNE preserves local neighbourhood, not global geometry.
+Cluster sizes and between-cluster distances in the 2D plot tell you nothing about the original space.
 
 
-\section{Self-Reflection \& Recap}
+% ============================= CODE ===============================
 
-\subsection{Reflection Questions}
-\begin{enumerate}
-    \item Why does PCA fail on non-linear manifolds?
-    \begin{quote}
-        \textit{PCA finds linear subspaces. A curved manifold (e.g., Swiss roll) cannot be unrolled by linear projection---it would collapse or distort.}
-    \end{quote}
+\marginnote{\newthought{Code} will be provided as a Python notebook.
+Use it as a starting point, break things, and observe what changes.}
 
-    \item What does perplexity control in t-SNE?
-    \begin{quote}
-        \textit{Perplexity controls the effective number of neighbors. Low perplexity focuses on local structure; high perplexity considers more global structure.}
-    \end{quote}
+\newthought{A coffee aroma dataset to explore.}
+You are given 200 aroma fingerprints in 50 dimensions, four brewing varieties.
+Apply PCA, retaining enough components to explain 95\% of variance.
+Scatter-plot the first two principal components, colour-coded by variety.
+Run t-SNE and UMAP on the same data and compare the three embeddings.
 
-    \item When should you use UMAP vs. t-SNE vs. PCA?
-    \begin{quote}
-        \textit{PCA: preprocessing, denoising, when linearity is appropriate. t-SNE: visualization of small datasets. UMAP: visualization of larger datasets, when global structure matters.}
-    \end{quote}
-\end{enumerate}
+\newthought{What to observe.}
+PCA preserves global structure: the four varieties form elongated regions that reflect their actual distances in the original space.
+t-SNE compresses each variety into a tight ball; distances between balls are arbitrary.
+UMAP may show clearer cluster separation than t-SNE while better preserving global topology.
+Reconstruction error from PCA tells you whether 50 dimensions were truly needed.
 
-\subsection{Key Concepts}
+
+\section{Self-Reflection and Recap}\index{reflection}\index{recap}
+
+\newthought{Self-Reflection} questions to guide your thinking:
 \begin{itemize}
-    \item \textbf{PCA} finds orthogonal directions of maximum variance
-    \item \textbf{SVD} provides the computational basis for PCA
-    \item \textbf{Non-linear methods} (t-SNE, UMAP) can capture complex manifolds
-    \item \textbf{t-SNE/UMAP} are for visualization, not preprocessing
-    \item Always consider what structure you want to preserve
+    \item What does it mean for data to have low intrinsic dimensionality?
+    \item Why does PCA correspond to an eigenvector decomposition of the covariance matrix?
+    \item What is the difference between an uncorrelated and an independent component?
+    \item Why does t-SNE use a Student-$t$ kernel in the low-dimensional space but a Gaussian in the high-dimensional space?
+    \item When would you prefer UMAP over t-SNE, and when would you use PCA instead of either?
+    \item What does the perplexity parameter actually control, and what happens when it is too low or too high?
+    \item Why should you never use t-SNE or UMAP embeddings as features for a downstream classifier?
+    \item How does the curse of dimensionality motivate dimensionality reduction before running K-Means?
 \end{itemize}
 
-\subsection{Next Chapter Teaser}
-\marginnote{Teaser: From compression to probability}
-\newthought{PCA compresses deterministically,} but data is inherently uncertain. What if we want to model the underlying probability distribution? What if we want to generate new samples? The next chapter introduces \textbf{Variational Autoencoders}---neural networks that learn to encode distributions, not just points.
+\newthought{Recap} of Key Concepts:
+\begin{itemize}
+    \item PCA finds the orthogonal directions of maximum variance via eigendecomposition of the covariance matrix; SVD is the numerically preferred implementation.
+    \item The explained-variance ratio guides the choice of $k$; retain enough components to exceed a threshold such as 95\%.
+    \item t-SNE and UMAP preserve local neighbourhood structure for visualization; cluster sizes and between-cluster distances in their output are not interpretable.
+    \item ICA finds statistically independent sources by maximising non-Gaussianity, going beyond the uncorrelated directions found by PCA.
+    \item No non-linear method should be used as a preprocessing step for downstream learning; use PCA or SVD for that purpose.
+\end{itemize}
+
+\marginnote{\newthought{The fundamental limit} of every method in this chapter: each input is mapped to a single point. There is no way to say how uncertain that mapping is, or to generate new plausible inputs by sampling from the compressed space.}
+
+\newthought{PCA compresses each input to a single point.}
+Given two coffee aroma profiles that differ only in a small measurement noise, their PCA projections land at two nearby points with no indication of how reliably they were placed there.
+There is no principled way to generate a new profile by sampling from the compressed space, and no way to interpolate smoothly between two known profiles.
+
+\newthought{Variational Autoencoders} replace the single point with a distribution.
+The encoder no longer outputs coordinates but outputs a mean and a variance, turning compression into probabilistic inference.
+Every point in the latent space corresponds to something meaningful, and sampling from it generates new, plausible data.
