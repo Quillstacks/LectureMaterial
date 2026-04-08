@@ -1,6 +1,12 @@
 %% meta.tex -- Shared metadata and templates for lecture notes
 %% Author: Dr.-Ing. Mark Schutera
 
+\InputIfFileExists{version.tex}{}{}
+\providecommand{\docversionmajor}{0}
+\providecommand{\docversionminor}{0}
+\providecommand{\docversionpatch}{0}
+\newcommand{\docversion}{\docversionmajor.\docversionminor.\docversionpatch}
+
 %%
 % Default author information
 %%
@@ -29,7 +35,7 @@ Unless required by applicable law or agreed to in writing, distributed material 
 \smallcaps{``AS IS'' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND}, either express or implied. 
 See the license for details.\index{license}
 
-  \par\textit{Last updated, \monthyear}
+  \par\textit{Last updated, \monthyear\ --- v\docversion}
   \end{fullwidth}
 }
 
