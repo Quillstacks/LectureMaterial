@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Hierarchical Clustering}\index{hierarchical clustering}\index{dendrogram}
-\newthought{Ich spring von Level zu Level zu Level.}
+\newthought{Ich springe von Level zu Level zu Level.}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -1081,7 +1081,7 @@ making cluster number selection more pronounced.
 is a static structure built on the original data; it does not directly provide 
 a way to assign new points to clusters. But, given a cut of the dendrogram into $K$ clusters, 
 we can assign a new point $x_{\mathrm{new}}$ to the cluster whose centroid is closest 
-under the same distance metric used for clustering. 
+under the same distance metric used for clustering.
 Or we assign it to a cluster based on the closest leaf or a k-nearest neighbor approach.
 
 
@@ -1106,7 +1106,7 @@ It maintains a set $S$ of visited nodes and, for every unvisited node $v$, a val
 
 Step 2 costs $O(n)$ per iteration (linear scan of $\delta$); step 3 costs $O(n)$ per iteration.
 Over $n-1$ iterations the total is $O(n^2)$ time and $O(n)$ space since only the array $\delta$ and a parent pointer per node are needed.
-This matches SLINK\index{SLINK}, the classical optimal algorithm for single linkage, which encodes the same MST structure via a pointer representation without building the full distance matrix.
+This matches SLINK\index{SLINK}\cite{Sibson1973}, the classical optimal algorithm for single linkage, which encodes the same MST structure via a pointer representation without building the full distance matrix.
 \fi
 
 % \vspace{2.5em}
@@ -1513,6 +1513,7 @@ One hierarchical run gives you every $K$ from 1 to $n$.
     \item Single linkage is uniquely fast ($O(n^2)$ via SLINK) because its update rule reduces to a single $\min$ over existing table entries, equivalent to a minimum spanning tree
     \item A large gap between consecutive merge heights is the dendrogram signal for a natural number of clusters, analogous to the elbow in K-Means inertia curves
     \item Leaf adjacency in a dendrogram does not imply similarity; only the merge height matters
+    \item The $O(n^2)$ distance matrix limits hierarchical clustering to moderate-sized datasets without approximation methods such as BIRCH
 \end{itemize}
 
 
@@ -1522,7 +1523,7 @@ and still recover clusters of arbitrary shape?}
 
 \newthought{The root of hierarchical failure.} Every linkage criterion measures
 distance between points or boundaries locally. No criterion has a concept of
-sparsity or of low-density regions. In the next Chapter we will introduce and leverage the concept 
+sparsity or of low-density regions. In the next Chapter we will introduce and leverage the concept
 of density. Starting from the single question that hierarchical clustering cannot answer; 
 what are the characteristics of a space or neighbourhood?
 
