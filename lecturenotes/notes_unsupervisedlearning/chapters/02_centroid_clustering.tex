@@ -2,6 +2,13 @@
 % Chapter 2: Centroid Clustering
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+
+% POST IMPROVEMENTS 2026:
+% 1. Silhouette skizze showing a and b
+% 2. Introduce Bengio paper in random initialization
+% 3. 
+
 \index{Centroid Clustering}\index{K-Means}
 \chapter{Centroid Clustering}
 \newthought{From Similar to of the Same}
@@ -45,7 +52,7 @@ to new instances.
 \end{itemize}
 
 
-
+\newpage
 \subsection{Hands On Experience}
 
 \newthought{Consider} twelve data points in two dimensions.
@@ -651,11 +658,11 @@ it will split the data along a straight boundary through the centre instead.}
 \begin{tikzpicture}
     \begin{axis}[
         xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
-        xmin=-2, xmax=12, ymin=-3, ymax=3,
+        xmin=-2, xmax=20, ymin=-3, ymax=3,
         width=0.5\textwidth, height=0.4\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick={0,5,10}, ytick={-2,0,2},
+        xtick={0,5,10,15}, ytick={-2,0,2},
         xticklabel style={font=\small},
         yticklabel style={font=\small},
         tick align=outside, tick pos=left,
@@ -664,19 +671,20 @@ it will split the data along a straight boundary through the centre instead.}
         (0.8,0.2)(1.1,-0.1)(0.9,0.3)(1.2,-0.2)
     };
     \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
-        (5,-2)(6,1.5)(7.5,-1.5)(8,2)(9,-1)(10,1.5)(11,0)(8.5,-2)
+        (5,-2)(6,1.5)(7.5,-1.5)(8,2)(9,-1)(10,1.5)(11,0)(8.5,-2)(13,1)(14,-2)(15,-1)(16,2)(17,0.5)
     };
-    % misassigned point: visually near C2 but assigned to C1
+    % misassigned point: visually near C2's left edge but assigned to C1
     \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(4.5,0)};
     \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {(1.0,0.05)};
-    \addplot[only marks, mark=o, mark size=2pt, black!55, thick] coordinates {(8.1,-0.2)};
+    \addplot[only marks, mark=o, mark size=2pt, black!55, thick] coordinates {(10.8,-0.1)};
     \node[font=\small, anchor=south west] at (axis cs:1.0,0.05) {$C_1$};
-    \node[font=\small, anchor=south west] at (axis cs:8.1,-0.2) {$C_2$};
+    \node[font=\small, anchor=south west] at (axis cs:10.8,-0.1) {$C_2$};
     \end{axis}
 \end{tikzpicture}
-\caption{$C_1$ has four tightly packed points, $C_2$ has eight spread over a large area. 
-K-Means minimises total inertia, so the decision boundary is pulled toward the small cluster, 
-risking misassignment of nearby points.}
+\caption{$C_1$ has four tightly packed points near $x=1$; $C_2$ has thirteen points spread from $x=5$ to $x=17$,
+pulling its centroid to $x\approx10.8$. The decision boundary falls near $x\approx6$, so the point at $x=4.5$
+is assigned to $C_1$ even though it sits at $C_2$'s left edge---a direct consequence of K-Means optimising
+inertia rather than visual proximity.}
 \label{fig:kmeans_fail_sizes}
 \end{figure}
 
