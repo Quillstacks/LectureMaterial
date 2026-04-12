@@ -13,22 +13,18 @@
 
 \marginnote{Labels are random variables, not ground truth facts.}
 
-The assumption of clean labels is a fiction:
+The assumption of clean labels is a fiction: crowd workers make mistakes with 5--20\% error rates, experts disagree on ambiguous cases, heuristics provide cheap but noisy labels, and legacy data carries inconsistent labelling standards.
+
+\newthought{Rather than pretend labels are perfect,} weak supervision\index{weak supervision} embraces noise by modelling label uncertainty explicitly, combining multiple noisy sources, and learning despite imperfect supervision.
+
+\newthought{In order to move from the fiction of perfect labels to principled learning under noise} we have good reason to find ways to,
 \begin{itemize}
-    \item \textbf{Crowd workers} make mistakes (5--20\% error rates common)
-    \item \textbf{Experts disagree} on ambiguous cases
-    \item \textbf{Heuristics} provide cheap but noisy labels
-    \item \textbf{Legacy data} has inconsistent labeling standards
+    \item encode domain knowledge as programmatic labelling functions that trade coverage for precision.
+    \item aggregate multiple noisy label sources into a single probabilistic label, accounting for accuracy and correlation.
+    \item train discriminative models on probabilistic labels so they generalise beyond the rules that produced them.
 \end{itemize}
 
-Rather than pretend labels are perfect, \textbf{weak supervision} embraces noise:
-\begin{itemize}
-    \item Model label uncertainty explicitly
-    \item Combine multiple noisy sources
-    \item Learn despite imperfect supervision
-\end{itemize}
-
-\subsection{Hands-On Experience}
+\subsection{Hands On Experience}
 
 \begin{marginfigure}
 \begin{tikzpicture}[scale=0.7]
@@ -43,50 +39,48 @@ Rather than pretend labels are perfect, \textbf{weak supervision} embraces noise
         height=0.8\textwidth,
         bar width=0.4cm,
     ]
-    \addplot[fill=blue!50] coordinates {(1,7) (2,5) (3,8)};
-    \addplot[fill=red!50] coordinates {(1,3) (2,5) (3,2)};
+    \addplot[fill=black!30] coordinates {(1,7) (2,5) (3,8)};
+    \addplot[fill=black!60] coordinates {(1,3) (2,5) (3,2)};
     \legend{Positive, Negative}
     \end{axis}
 \end{tikzpicture}
-\caption{Three labeling functions voting on examples. They disagree!}
+\caption{Three labelling functions voting on examples. They disagree.}
+\label{fig:lf_votes}
 \end{marginfigure}
 
-You want to classify emails as spam/not-spam. You write three rules:
+You want to classify emails as spam or not-spam. You write three rules:
 \begin{enumerate}
-    \item LF1: Contains "free money" $\to$ spam
+    \item LF1: Contains ``free money'' $\to$ spam
     \item LF2: From known contact $\to$ not spam
     \item LF3: Contains link + urgency words $\to$ spam
 \end{enumerate}
 
-For an email from a known contact about a "free trial offer":
+For an email from a known contact about a ``free trial offer'':
 \begin{itemize}
-    \item LF1 votes: spam (matches "free")
-    \item LF2 votes: not spam (known contact)
-    \item LF3 votes: abstain (no link)
+    \item LF1 votes: spam, matches ``free''
+    \item LF2 votes: not spam, known contact
+    \item LF3 votes: abstain, no link
 \end{itemize}
 
 How do you combine these conflicting votes?
 
-\subsection{Learning Objectives}
-
-After this lecture, you will be able to:
-\begin{enumerate}
-    \item Design labeling functions that encode domain knowledge
-    \item Model labeler accuracy and correlation in a label model
-    \item Apply the Snorkel framework for programmatic labeling
-    \item Handle label noise through loss correction and sample weighting
-    \item Combine multiple weak supervision sources
-\end{enumerate}
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item Design labelling functions that encode domain knowledge and characterise their coverage-accuracy trade-off.
+    \item Apply the Snorkel framework to aggregate noisy label sources into probabilistic training labels via a learned label model.
+    \item Handle remaining label noise through loss correction, sample weighting, and co-teaching.
+\end{itemize}
 
 %═══════════════════════════════════════════════════════════════════════
 % BLOCK 2: MAIN THEORY
 %═══════════════════════════════════════════════════════════════════════
 
-\section{Sources of Weak Labels}
+\newpage
+\section{Sources of Weak Labels}\index{weak labels}
 
 \marginnote{Weak labels come from many sources, each with different characteristics.}
 
-\begin{table}[h]
+\begin{table}
 \centering
 \begin{tabular}{lcc}
 \toprule
@@ -99,29 +93,22 @@ Distant supervision & High & Low--Medium \\
 Pre-trained models & High & Medium--High \\
 \bottomrule
 \end{tabular}
-\caption{Common weak supervision sources}
+\caption{Common weak supervision sources.}
+\label{tab:weak_sources}
 \end{table}
 
-\begin{description}
-    \item[Noisy crowd labels] Multiple annotators with varying quality
-    \item[Distant supervision] Labels from knowledge bases (e.g., all sentences mentioning two entities in a relation $\to$ express that relation)
-    \item[Heuristic rules] Domain knowledge encoded as functions
-    \item[Data augmentation] Transformed examples inherit parent labels
-    \item[Auxiliary signals] Metadata, user behavior, sensor data
-\end{description}
+\newthought{Noisy crowd labels} come from multiple annotators with varying quality. Distant supervision\index{distant supervision} derives labels from knowledge bases, for example labelling all sentences mentioning two entities in a relation as expressing that relation. Heuristic rules encode domain knowledge as functions. Data augmentation lets transformed examples inherit parent labels. Auxiliary signals such as metadata, user behaviour, and sensor data provide additional evidence.
 
 
-\section{Labeling Functions}
+\section{Labeling Functions}\index{labeling function}
 
-\marginnote{A labeling function is a noisy voter that may abstain.}
+\marginnote{A labelling function is a noisy voter that may abstain.}
 
-\begin{definition}[Labeling Function]
-A labeling function $\lambda: X \to Y \cup \{\emptyset\}$ maps inputs to a label or abstention ($\emptyset$).
-\end{definition}
+\newthought{A labelling function} $\lambda: X \to Y \cup \{\emptyset\}$ maps inputs to a label or abstention $\emptyset$.
 
-\textbf{Examples for text classification}:
+\newthought{Examples for text classification:}
 \begin{itemize}
-    \item Keyword matching: contains("urgent") $\to$ spam
+    \item Keyword matching: contains(``urgent'') $\to$ spam
     \item Pattern matching: regex for phone numbers $\to$ contact info
     \item External models: sentiment classifier output
     \item Heuristics: short emails $\to$ not spam
@@ -129,14 +116,9 @@ A labeling function $\lambda: X \to Y \cup \{\emptyset\}$ maps inputs to a label
 
 \subsection{Properties of Good Labeling Functions}
 
-\begin{itemize}
-    \item \textbf{High precision}: When it votes, it's usually right
-    \item \textbf{Reasonable coverage}: Votes on enough examples
-    \item \textbf{Diverse}: Different LFs capture different patterns
-    \item \textbf{Low correlation}: Errors are independent
-\end{itemize}
+\newthought{Good labelling functions} have high precision, so that when they vote they are usually right; reasonable coverage, so that they vote on enough examples; diversity, so that different LFs capture different patterns; and low correlation, so that their errors are independent.
 
-\begin{figure}[h]
+\begin{figure}
 \centering
 \begin{tikzpicture}[scale=0.8]
     \begin{axis}[
@@ -145,75 +127,79 @@ A labeling function $\lambda: X \to Y \cup \{\emptyset\}$ maps inputs to a label
         xmin=0, xmax=1,
         ymin=0.5, ymax=1,
         width=0.6\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        tick align=outside, tick pos=left,
     ]
     \addplot[only marks, mark=*, mark size=4pt] coordinates {
         (0.1, 0.95) (0.3, 0.85) (0.5, 0.75) (0.8, 0.65)
     };
-    \node at (axis cs:0.1, 0.9) {\small LF1};
-    \node at (axis cs:0.3, 0.8) {\small LF2};
-    \node at (axis cs:0.5, 0.7) {\small LF3};
-    \node at (axis cs:0.8, 0.6) {\small LF4};
-    \draw[dashed, gray] (axis cs:0,0.8) -- (axis cs:1,0.8);
-    \node[gray] at (axis cs:0.9, 0.82) {\small threshold};
+    \node at (axis cs:0.15, 0.91) {\small LF1};
+    \node at (axis cs:0.35, 0.81) {\small LF2};
+    \node at (axis cs:0.55, 0.71) {\small LF3};
+    \node at (axis cs:0.85, 0.61) {\small LF4};
+    \draw[dashed, black!40] (axis cs:0,0.8) -- (axis cs:1,0.8);
+    \node[black!55] at (axis cs:0.9, 0.82) {\small threshold};
     \end{axis}
 \end{tikzpicture}
-\caption{Labeling functions trade off coverage and accuracy.}
+\caption{Labelling functions trade off coverage and accuracy.}
+\label{fig:lf_tradeoff}
 \end{figure}
 
 
-\section{Label Modeling}
+\section{Label Modeling}\index{label model}
 
 \marginnote{The label model estimates true labels from noisy votes.}
 
-\subsection{Majority Vote (Baseline)}
+\subsection{Majority Vote}
 
-Simple aggregation:
+\newthought{The simplest aggregation} is majority vote:
 \begin{equation}
     \hat{y} = \text{mode}(\{\lambda_i(x) : \lambda_i(x) \neq \emptyset\})
 \end{equation}
 
-\textbf{Problems}: Assumes equal accuracy, ignores correlations.
+This assumes equal accuracy and ignores correlations.
 
 \subsection{Modeling Labeler Accuracy}
 
-Treat each LF as having accuracy $\alpha_i = P(\lambda_i(x) = y | \lambda_i(x) \neq \emptyset)$.
+\newthought{Treating each LF} as having accuracy $\alpha_i = P(\lambda_i(x) = y | \lambda_i(x) \neq \emptyset)$ gives a weighted vote:
 
-Weighted vote:
 \begin{equation}
     P(y | \lambda_1, \ldots, \lambda_m) \propto P(y) \prod_{i: \lambda_i \neq \emptyset} P(\lambda_i | y)
 \end{equation}
 
 \subsection{Modeling Correlations}
 
-Labeling functions may have correlated errors (e.g., two keyword-based LFs fail on the same examples).
+\newthought{Labelling functions may have correlated errors,} for example two keyword-based LFs that fail on the same examples.
 
-Factor graph model:
+A factor graph model captures pairwise correlations:
 \begin{equation}
     P(y, \lambda_1, \ldots, \lambda_m) = \frac{1}{Z} \phi_Y(y) \prod_i \phi_i(y, \lambda_i) \prod_{i,j} \phi_{ij}(\lambda_i, \lambda_j)
 \end{equation}
 
-where $\phi_{ij}$ captures pairwise correlations.
+where $\phi_{ij}$ captures the pairwise dependency structure.
 
 
-\section{The Snorkel Framework}
+\section{The Snorkel Framework}\index{Snorkel}
 
-\marginnote{Snorkel: end-to-end weak supervision system (Ratner et al., 2017)}
+\marginnote{\newthought{Snorkel.} End-to-end weak supervision system~\cite{Ratner2017Snorkel}.}
 
-\begin{figure}[h]
+\begin{figure}
 \centering
 \begin{tikzpicture}[node distance=1.5cm]
-    \node[draw, rectangle, fill=blue!20] (data) {Unlabeled Data};
-    \node[draw, rectangle, right of=data, xshift=1.5cm, fill=green!20] (lfs) {Labeling Functions};
-    \node[draw, rectangle, right of=lfs, xshift=1.5cm, fill=yellow!20] (lm) {Label Model};
-    \node[draw, rectangle, right of=lm, xshift=1.5cm, fill=orange!20] (prob) {Probabilistic Labels};
-    \node[draw, rectangle, right of=prob, xshift=1.5cm, fill=red!20] (dm) {Discriminative Model};
+    \node[draw, rectangle] (data) {Unlabeled Data};
+    \node[draw, rectangle, right of=data, xshift=1.5cm] (lfs) {Labeling Functions};
+    \node[draw, rectangle, right of=lfs, xshift=1.5cm] (lm) {Label Model};
+    \node[draw, rectangle, right of=lm, xshift=1.5cm] (prob) {Probabilistic Labels};
+    \node[draw, rectangle, right of=prob, xshift=1.5cm] (dm) {Discriminative Model};
 
     \draw[->] (data) -- (lfs);
     \draw[->] (lfs) -- (lm);
     \draw[->] (lm) -- (prob);
     \draw[->] (prob) -- (dm);
 \end{tikzpicture}
-\caption{Snorkel pipeline: LFs $\to$ Label Model $\to$ Probabilistic Labels $\to$ Train End Model}
+\caption{Snorkel pipeline: LFs $\to$ Label Model $\to$ Probabilistic Labels $\to$ Train End Model.}
+\label{fig:snorkel_pipeline}
 \end{figure}
 
 \begin{algorithm}[H]
@@ -221,67 +207,63 @@ where $\phi_{ij}$ captures pairwise correlations.
 \begin{algorithmic}[1]
 \State \textbf{Write} labeling functions encoding domain knowledge
 \State \textbf{Apply} LFs to unlabeled data $\to$ label matrix $\Lambda$
-\State \textbf{Train} label model on $\Lambda$ to estimate LF accuracies/correlations
+\State \textbf{Train} label model on $\Lambda$ to estimate LF accuracies and correlations
 \State \textbf{Generate} probabilistic labels $\tilde{y} = P(y | \Lambda)$
 \State \textbf{Train} discriminative model on $(X, \tilde{y})$
 \end{algorithmic}
 \end{algorithm}
 
-\textbf{Key insight}: The discriminative model generalizes beyond the labeling functions---it learns features, not just rules.
+\newthought{The key insight} is that the discriminative model generalises beyond the labelling functions; it learns features, not just rules.
 
 
-\section{Learning with Label Noise}
+\section{Learning with Label Noise}\index{label noise}
 
 \marginnote{Even with probabilistic labels, training can be noisy.}
 
-\subsection{Forward/Backward Loss Correction}
+\subsection{Forward and Backward Loss Correction}
 
-If noise is class-conditional with known transition matrix $T$ where $T_{ij} = P(\tilde{y} = j | y = i)$:
+\newthought{If noise is class-conditional} with known transition matrix $T$ where $T_{ij} = P(\tilde{y} = j | y = i)$:
 
-\textbf{Forward correction}:
+Forward correction:
 \begin{equation}
     \tilde{\ell}(f(x), \tilde{y}) = \ell(f(x), T^T f(x))
 \end{equation}
 
-\textbf{Backward correction}:
+Backward correction:
 \begin{equation}
     \tilde{\ell}(f(x), \tilde{y}) = T^{-1} \ell(f(x), \tilde{y})
 \end{equation}
 
 \subsection{Sample Weighting}
 
-Down-weight likely-mislabeled examples:
+\newthought{Down-weighting likely-mislabelled examples} gives:
 \begin{equation}
     \mathcal{L} = \sum_i w_i \ell(f(x_i), \tilde{y}_i)
 \end{equation}
 
 where $w_i$ is based on loss value, prediction confidence, or label model confidence.
 
-\subsection{Co-Teaching}
+\subsection{Co-Teaching}\index{co-teaching}
 
-Train two networks; each selects small-loss samples for the other:
+\newthought{Co-teaching} trains two networks~\cite{Han2018CoTeaching}; each selects small-loss samples for the other:
 \begin{itemize}
     \item Network A selects clean samples for Network B
     \item Network B selects clean samples for Network A
-    \item Both avoid memorizing the same noisy labels
+    \item Both avoid memorising the same noisy labels
 \end{itemize}
 
 
-\section{Association Rules as Labeling Functions}
+\section{Association Rules as Labeling Functions}\index{association rules}
 
-\marginnote{From Apriori to labeling: mine rules from data structure.}
+\marginnote{From Apriori to labelling: mine rules from data structure.}
 
-\textbf{Connection to association rule learning}:
-\begin{itemize}
-    \item Association rules: $\{A, B\} \to \{C\}$ with support and confidence
-    \item Labeling functions: $\text{condition}(x) \to \text{label}$
-\end{itemize}
+\newthought{Association rule learning} and labelling functions share a common structure: association rules $\{A, B\} \to \{C\}$ are scored by support and confidence, while labelling functions map $\text{condition}(x) \to \text{label}$.
 
-Mining frequent patterns can automatically generate labeling functions:
+Mining frequent patterns can automatically generate labelling functions:
 \begin{enumerate}
     \item Find frequent itemsets in feature space
     \item Convert to rules with confidence threshold
-    \item Use as labeling functions
+    \item Use as labelling functions
 \end{enumerate}
 
 
@@ -289,71 +271,60 @@ Mining frequent patterns can automatically generate labeling functions:
 % BLOCK 3: STUDENT ACTIVATION
 %═══════════════════════════════════════════════════════════════════════
 
+\newpage
 \section{Examples \& Exercises}
 
 \subsection{Exercise 1: Write Labeling Functions}
 
-Design 5 labeling functions for classifying product reviews as positive/negative:
-
-\textbf{Solution}:
-\begin{enumerate}
-    \item Contains "love", "amazing", "great" $\to$ positive
-    \item Contains "hate", "terrible", "awful" $\to$ negative
-    \item Rating $\geq$ 4 stars (if available) $\to$ positive
-    \item Review length $<$ 10 words + exclamation $\to$ positive
-    \item Contains "return", "refund", "broken" $\to$ negative
-\end{enumerate}
+Design 5 labelling functions for classifying product reviews as positive or negative.
 
 \subsection{Exercise 2: Label Aggregation}
 
 Three LFs vote on an example:
 \begin{itemize}
-    \item LF1: positive (accuracy 0.9)
-    \item LF2: negative (accuracy 0.8)
-    \item LF3: positive (accuracy 0.7)
+    \item LF1: positive, accuracy 0.9
+    \item LF2: negative, accuracy 0.8
+    \item LF3: positive, accuracy 0.7
 \end{itemize}
 
 Assuming independent LFs and uniform prior, compute $P(y = \text{positive})$.
-
-\textbf{Solution}:
-\begin{align*}
-    P(+|\lambda) &\propto P(+) \cdot P(\lambda_1=+|+) \cdot P(\lambda_2=-|+) \cdot P(\lambda_3=+|+) \\
-    &\propto 0.5 \cdot 0.9 \cdot 0.2 \cdot 0.7 = 0.063 \\
-    P(-|\lambda) &\propto 0.5 \cdot 0.1 \cdot 0.8 \cdot 0.3 = 0.012 \\
-    P(+|\lambda) &= 0.063 / (0.063 + 0.012) = 0.84
-\end{align*}
 
 \subsection{Exercise 3: LF Correlation}
 
 Two LFs both use keyword matching. Why might their errors be correlated? How does this affect the label model?
 
-\textbf{Solution}: Both fail on sarcasm, negation, or domain-specific language. If the label model assumes independence, it overestimates combined accuracy. Modeling correlation prevents double-counting evidence.
 
+\section{Self-Reflection and Recap}
 
-\section{Self-Reflection \& Recap}
+\newthought{Self-Reflection.}
 
-\subsection{Reflection Questions}
 \begin{enumerate}
     \item When is weak supervision preferable to collecting clean labels?
-    \begin{quote}
-        \textit{When labeling is expensive/slow, domain expertise is scarce, or you need to iterate quickly. Also when the task is well-defined by rules.}
-    \end{quote}
-
-    \item How do you know if your labeling functions are good enough?
-    \begin{quote}
-        \textit{Check coverage, estimated accuracy, and conflicts. Validate on a small held-out labeled set. Monitor end model performance.}
-    \end{quote}
+    \item How do you know if your labelling functions are good enough?
+    \item What happens to the label model when all labelling functions are correlated?
+    \item Why does the discriminative model in Snorkel generalise beyond the labelling functions themselves?
+    \item How does co-teaching avoid the confirmation bias that a single network would accumulate?
+    \item What are the risks of distant supervision, and how would you mitigate them?
+    \item Could you combine weak supervision with active learning, and if so, how?
 \end{enumerate}
 
-\subsection{Key Concepts}
+\vspace{1.5em}
+
+\newthought{Recap.}
+
 \begin{itemize}
-    \item \textbf{Weak supervision} scales labeling through programmatic approaches
-    \item \textbf{Labeling functions} encode domain knowledge as noisy voters
-    \item \textbf{Label models} aggregate noisy sources into probabilistic labels
-    \item \textbf{Snorkel} provides an end-to-end framework
-    \item \textbf{Noise-robust training} handles remaining label errors
+    \item Weak supervision embraces label noise by modelling labeller accuracy and correlation rather than treating annotations as ground truth.
+    \item Labelling functions encode domain knowledge as noisy voters; the coverage-accuracy trade-off determines their utility in the label model.
+    \item Snorkel aggregates multiple noisy sources into probabilistic labels and trains a discriminative model that generalises beyond the rules.
+    \item Noise-robust training via loss correction, sample weighting, and co-teaching handles residual label errors after aggregation.
 \end{itemize}
 
-\subsection{Next Chapter Teaser}
-\marginnote{Teaser: From external labels to self-labels}
-\newthought{We've used heuristics and noisy sources for labels.} But what if the model itself becomes the labeler? The next chapter explores \textbf{self-training}: using the model's own predictions as training signal.
+\vspace{2.5em}
+
+\marginnote{\newthought{Teaser.} What if the model itself becomes the labeller, using its own confident predictions as training signal?}
+
+\newthought{We have used heuristics and noisy external sources for labels.} But labelling functions must be written by hand, and their coverage is inherently limited. A natural next step is to let the model label the data it is most confident about, then retrain on those self-generated labels.
+
+\newthought{The next chapter explores self-training,} where the model's own predictions become pseudo-labels, and consistency regularisation forces stable predictions under augmentation.
+
+\marginnote{\newthought{feedback}}

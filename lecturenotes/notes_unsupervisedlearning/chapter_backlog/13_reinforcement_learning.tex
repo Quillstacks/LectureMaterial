@@ -5,7 +5,7 @@
 \chapter{Reinforcement Learning Fundamentals}\index{Reinforcement Learning}\index{DQN}\index{PPO}
 \newthought{Learning from rewards, not labels.}
 
-%═══════════════════════════════════════════════════════════════════════
+%═══���═══════════════════════════════════════════════════════════════════
 % BLOCK 1: INTRODUCTION
 %═══════════════════════════════════════════════════════════════════════
 
@@ -13,110 +13,86 @@
 
 \marginnote{Many tasks provide rewards, not labels: games, robotics, trading.}
 
-Supervised learning needs labeled data. But many important tasks only provide sparse feedback:
+Supervised learning needs labelled data. But many important tasks only provide sparse feedback: games give a win or loss after many moves, robotics reports task success after many actions, dialogue systems receive user satisfaction at conversation end, and trading yields profit after many trades.
+
+\newthought{Reinforcement learning}\index{reinforcement learning} learns from rewards, scalar feedback indicating how good an action was. The agent must explore to discover good actions, exploit known good actions for reward, and handle delayed rewards through credit assignment\index{credit assignment}.
+
+\newthought{In order to move from dense supervision to learning from sparse, delayed rewards} we have good reason to find ways to,
 \begin{itemize}
-    \item \textbf{Games}: Win or lose after many moves
-    \item \textbf{Robotics}: Task success after many actions
-    \item \textbf{Dialogue}: User satisfaction at conversation end
-    \item \textbf{Trading}: Profit after many trades
+    \item formalise sequential decision problems as Markov Decision Processes and derive optimal policies from value functions.
+    \item learn action values from experience via temporal-difference updates, and scale these to large state spaces with neural networks.
+    \item optimise policies directly via gradient ascent on expected return, with variance reduction and clipping for stability.
 \end{itemize}
 
-\textbf{Reinforcement learning} learns from \textbf{rewards}: scalar feedback indicating how good an action was. The agent must:
-\begin{itemize}
-    \item Explore to discover good actions
-    \item Exploit known good actions for reward
-    \item Handle delayed rewards (credit assignment)
-\end{itemize}
-
-\subsection{Hands-On Experience}
+\subsection{Hands On Experience}
 
 \begin{marginfigure}
 \begin{tikzpicture}[scale=0.5]
     % Grid
-    \draw[step=1.5cm, gray, thin] (0,0) grid (6,6);
+    \draw[step=1.5cm, black!30, thin] (0,0) grid (6,6);
     % Start
-    \fill[green!50] (0,4.5) rectangle (1.5,6);
+    \fill[black!15] (0,4.5) rectangle (1.5,6);
     \node at (0.75,5.25) {S};
     % Goal
-    \fill[yellow!50] (4.5,0) rectangle (6,1.5);
+    \fill[black!25] (4.5,0) rectangle (6,1.5);
     \node at (5.25,0.75) {G};
     % Obstacle
-    \fill[red!30] (1.5,1.5) rectangle (3,3);
-    \fill[red!30] (3,3) rectangle (4.5,4.5);
+    \fill[black!40] (1.5,1.5) rectangle (3,3);
+    \fill[black!40] (3,3) rectangle (4.5,4.5);
     % Agent
-    \fill[blue] (0.75,5.25) circle (0.4);
+    \fill[black] (0.75,5.25) circle (0.4);
 \end{tikzpicture}
 \caption{Gridworld: navigate from S to G, avoiding obstacles.}
+\label{fig:gridworld}
 \end{marginfigure}
 
-Consider a 4×4 gridworld:
+Consider a 4$\times$4 gridworld:
 \begin{itemize}
     \item Start at top-left, goal at bottom-right
     \item Actions: up, down, left, right
     \item Reward: $+1$ at goal, $-1$ for hitting obstacle, $0$ otherwise
 \end{itemize}
 
-\textbf{Questions}:
-\begin{enumerate}
-    \item What's the optimal policy?
-    \item How would you estimate the value of each state?
-    \item What if you didn't know the transition probabilities?
-\end{enumerate}
+What is the optimal policy? How would you estimate the value of each state? What if you did not know the transition probabilities?
 
-\subsection{Learning Objectives}
-
-After this lecture, you will be able to:
-\begin{enumerate}
-    \item Formalize problems as Markov Decision Processes (MDPs)
-    \item Derive and implement Q-learning and DQN
-    \item Explain policy gradient methods and their variance reduction
-    \item Apply PPO for stable policy optimization
-    \item Choose between value-based and policy-based methods
-\end{enumerate}
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item Formalise problems as Markov Decision Processes, derive Bellman equations, and implement Q-learning by hand and with neural networks.
+    \item Derive the policy gradient theorem, implement REINFORCE with a baseline, and explain the advantage function.
+    \item Apply PPO for stable policy optimisation and compare value-based and policy-based methods for a given problem.
+\end{itemize}
 
 %═══════════════════════════════════════════════════════════════════════
 % BLOCK 2: MAIN THEORY
 %═══════════════════════════════════════════════════════════════════════
 
-\section{Markov Decision Processes}
+\newpage
+\section{Markov Decision Processes}\index{Markov Decision Process}\index{MDP}
 
-\marginnote{MDPs formalize sequential decision making under uncertainty.}
+\marginnote{MDPs formalise sequential decision making under uncertainty.}
 
-\begin{definition}[MDP]
-A Markov Decision Process is a tuple $(S, A, P, R, \gamma)$:
-\begin{itemize}
-    \item $S$: State space
-    \item $A$: Action space
-    \item $P(s'|s,a)$: Transition probability
-    \item $R(s,a,s')$: Reward function
-    \item $\gamma \in [0,1]$: Discount factor
-\end{itemize}
-\end{definition}
+\newthought{A Markov Decision Process} is a tuple $(S, A, P, R, \gamma)$ where $S$ is the state space, $A$ is the action space, $P(s'|s,a)$ is the transition probability, $R(s,a,s')$ is the reward function, and $\gamma \in [0,1]$ is the discount factor.
 
-\textbf{Markov property}: Future depends only on current state, not history:
+\newthought{The Markov property:} the future depends only on the current state, not the history:
 \begin{equation}
     P(s_{t+1} | s_t, a_t, s_{t-1}, a_{t-1}, \ldots) = P(s_{t+1} | s_t, a_t)
 \end{equation}
 
 \subsection{Policies and Value Functions}
 
-\begin{definition}[Policy]
-A policy $\pi: S \to \Delta(A)$ maps states to action distributions.
-\end{definition}
+\newthought{A policy}\index{policy} $\pi: S \to \Delta(A)$ maps states to action distributions.
 
-\begin{definition}[State Value]
+\newthought{The state value function}\index{value function}:
 \begin{equation}
     V^\pi(s) = \mathbb{E}_\pi \left[ \sum_{t=0}^\infty \gamma^t R_t \mid s_0 = s \right]
 \end{equation}
-\end{definition}
 
-\begin{definition}[Action Value (Q-function)]
+\newthought{The action value function}\index{Q-function}:
 \begin{equation}
     Q^\pi(s,a) = \mathbb{E}_\pi \left[ \sum_{t=0}^\infty \gamma^t R_t \mid s_0 = s, a_0 = a \right]
 \end{equation}
-\end{definition}
 
-\subsection{Bellman Equations}
+\subsection{Bellman Equations}\index{Bellman equation}
 
 \marginnote{Bellman equations: the foundation of RL algorithms.}
 
@@ -128,19 +104,19 @@ A policy $\pi: S \to \Delta(A)$ maps states to action distributions.
     Q^\pi(s,a) = \sum_{s'} P(s'|s,a) [R(s,a,s') + \gamma \sum_{a'} \pi(a'|s') Q^\pi(s',a')]
 \end{equation}
 
-\textbf{Optimal} value functions satisfy:
+\newthought{The optimal} value function satisfies:
 \begin{equation}
     Q^*(s,a) = \sum_{s'} P(s'|s,a) [R(s,a,s') + \gamma \max_{a'} Q^*(s',a')]
 \end{equation}
 
 
-\section{Value-Based Methods}
+\section{Value-Based Methods}\index{value-based methods}
 
 \marginnote{Learn the Q-function, then act greedily.}
 
-\subsection{Q-Learning}
+\subsection{Q-Learning}\index{Q-learning}
 
-Update Q-values toward the TD target:
+\newthought{Q-learning} updates Q-values toward the TD target~\cite{Watkins1992QLearning}:
 \begin{equation}
     Q(s,a) \gets Q(s,a) + \alpha \left[ r + \gamma \max_{a'} Q(s',a') - Q(s,a) \right]
 \end{equation}
@@ -152,7 +128,7 @@ Update Q-values toward the TD target:
 \For{each episode}
     \State Initialize $s$
     \While{$s$ is not terminal}
-        \State Choose $a$ using policy derived from $Q$ (e.g., $\varepsilon$-greedy)
+        \State Choose $a$ using policy derived from $Q$ (e.g.\ $\varepsilon$-greedy)
         \State Take action $a$, observe $r$, $s'$
         \State $Q(s,a) \gets Q(s,a) + \alpha [r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$
         \State $s \gets s'$
@@ -161,31 +137,26 @@ Update Q-values toward the TD target:
 \end{algorithmic}
 \end{algorithm}
 
-\textbf{Properties}:
-\begin{itemize}
-    \item \textbf{Off-policy}: Can learn from any behavior policy
-    \item \textbf{Tabular}: Requires enumerable state-action space
-    \item \textbf{Convergent}: Under mild conditions, converges to $Q^*$
-\end{itemize}
+\newthought{Properties:} Q-learning is off-policy, so it can learn from any behaviour policy. It is tabular, requiring an enumerable state-action space. Under mild conditions it converges to $Q^*$.
 
 
-\section{Deep Q-Networks (DQN)}
+\section{Deep Q-Networks}\index{DQN}
 
-\marginnote{DQN: Q-learning with neural network function approximation.}
+\marginnote{\newthought{DQN.} Q-learning with neural network function approximation~\cite{Mnih2015DQN}.}
 
-For large/continuous state spaces, use a neural network $Q_\theta(s,a)$:
+\newthought{For large or continuous state spaces,} use a neural network $Q_\theta(s,a)$:
 
 \begin{equation}
     \mathcal{L}(\theta) = \mathbb{E}_{(s,a,r,s') \sim \mathcal{D}} \left[ (r + \gamma \max_{a'} Q_{\theta^-}(s',a') - Q_\theta(s,a))^2 \right]
 \end{equation}
 
-\textbf{Key innovations}:
+\newthought{Two key innovations} stabilise training:
 \begin{enumerate}
-    \item \textbf{Experience replay}: Store transitions in buffer $\mathcal{D}$, sample randomly
-    \item \textbf{Target network}: Use old parameters $\theta^-$ for target, update periodically
+    \item Experience replay\index{experience replay}: store transitions in buffer $\mathcal{D}$, sample randomly to break correlation
+    \item Target network\index{target network}: use old parameters $\theta^-$ for the target, update periodically to prevent oscillation
 \end{enumerate}
 
-\begin{figure}[h]
+\begin{figure}
 \centering
 \begin{tikzpicture}[scale=0.8]
     \node[draw, rectangle] (state) at (0,0) {State $s$};
@@ -198,18 +169,17 @@ For large/continuous state spaces, use a neural network $Q_\theta(s,a)$:
     \draw[->] (fc) -- (out);
 \end{tikzpicture}
 \caption{DQN architecture: CNN processes pixels, outputs Q-value for each action.}
+\label{fig:dqn}
 \end{figure}
 
 
-\section{Policy Gradient Methods}
+\section{Policy Gradient Methods}\index{policy gradient}
 
-\marginnote{Directly optimize the policy, not the value function.}
+\marginnote{Directly optimise the policy, not the value function~\cite{Sutton1999PolicyGradient}.}
 
-\subsection{Policy Parameterization}
+\subsection{Policy Parameterisation}
 
-Policy $\pi_\theta(a|s)$ is a neural network outputting action probabilities.
-
-\textbf{Objective}: Maximize expected return:
+\newthought{The policy} $\pi_\theta(a|s)$ is a neural network outputting action probabilities. The objective is to maximise expected return:
 \begin{equation}
     J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_t \gamma^t r_t \right]
 \end{equation}
@@ -220,9 +190,9 @@ Policy $\pi_\theta(a|s)$ is a neural network outputting action probabilities.
     \nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a|s) \cdot Q^{\pi_\theta}(s,a) \right]
 \end{equation}
 
-\subsection{REINFORCE}
+\subsection{REINFORCE}\index{REINFORCE}
 
-Use Monte Carlo estimate of $Q$:
+\newthought{REINFORCE} uses a Monte Carlo estimate of $Q$~\cite{Williams1992REINFORCE}:
 
 \begin{algorithm}[H]
 \caption{REINFORCE}
@@ -237,35 +207,30 @@ Use Monte Carlo estimate of $Q$:
 \end{algorithmic}
 \end{algorithm}
 
-\textbf{Problem}: High variance due to Monte Carlo estimation.
+\newthought{The problem:} high variance due to Monte Carlo estimation.
 
-\subsection{Baseline Subtraction}
+\subsection{Baseline Subtraction}\index{baseline}
 
-Reduce variance by subtracting a baseline $b(s)$:
+\newthought{Reduce variance} by subtracting a baseline $b(s)$:
 \begin{equation}
     \nabla_\theta J(\theta) = \mathbb{E} \left[ \nabla_\theta \log \pi_\theta(a|s) \cdot (Q(s,a) - b(s)) \right]
 \end{equation}
 
-Using $b(s) = V(s)$ gives the \textbf{advantage}: $A(s,a) = Q(s,a) - V(s)$.
+Using $b(s) = V(s)$ gives the advantage\index{advantage function}: $A(s,a) = Q(s,a) - V(s)$.
 
 
-\section{Actor-Critic Methods}
+\section{Actor-Critic Methods}\index{actor-critic}
 
-\marginnote{Actor-Critic: combine policy gradient (actor) with value estimation (critic).}
+\marginnote{Actor-Critic: combine policy gradient with value estimation.}
 
-\begin{itemize}
-    \item \textbf{Actor}: Policy $\pi_\theta(a|s)$
-    \item \textbf{Critic}: Value function $V_\phi(s)$ or $Q_\phi(s,a)$
-\end{itemize}
-
-Critic estimates advantage for actor updates:
+\newthought{The actor} is the policy $\pi_\theta(a|s)$ and the critic is the value function $V_\phi(s)$ or $Q_\phi(s,a)$. The critic estimates the advantage for actor updates:
 \begin{equation}
     A(s,a) \approx r + \gamma V_\phi(s') - V_\phi(s)
 \end{equation}
 
-\subsection{Generalized Advantage Estimation (GAE)}
+\subsection{Generalised Advantage Estimation}\index{GAE}
 
-\marginnote{GAE balances bias and variance in advantage estimation.}
+\marginnote{\newthought{GAE.} Balances bias and variance in advantage estimation~\cite{Schulman2016GAE}.}
 
 \begin{equation}
     A_t^{\text{GAE}} = \sum_{l=0}^\infty (\gamma \lambda)^l \delta_{t+l}
@@ -274,13 +239,13 @@ Critic estimates advantage for actor updates:
 where $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ is the TD error.
 
 
-\section{Proximal Policy Optimization (PPO)}
+\section{Proximal Policy Optimization}\index{PPO}
 
-\marginnote{PPO: stable, sample-efficient, widely used.}
+\marginnote{\newthought{PPO.} Stable, sample-efficient, widely used~\cite{Schulman2017PPO}.}
 
-\textbf{Problem with vanilla policy gradient}: Large updates can destroy policy.
+\newthought{The problem with vanilla policy gradient:} large updates can destroy the policy.
 
-\textbf{PPO solution}: Clip the objective to limit update size.
+\newthought{PPO's solution:} clip the objective to limit update size:
 
 \begin{equation}
     \mathcal{L}^{\text{CLIP}}(\theta) = \mathbb{E} \left[ \min\left( r_t(\theta) A_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) A_t \right) \right]
@@ -288,7 +253,7 @@ where $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ is the TD error.
 
 where $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}$ is the probability ratio.
 
-\begin{figure}[h]
+\begin{figure}
 \centering
 \begin{tikzpicture}[scale=0.8]
     \begin{axis}[
@@ -297,21 +262,25 @@ where $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_
         xmin=0, xmax=2,
         ymin=-0.5, ymax=1.5,
         width=0.6\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        tick align=outside, tick pos=left,
         legend pos=north west,
     ]
     % Unclipped (A > 0)
-    \addplot[blue, thick, domain=0:2] {x};
+    \addplot[black, thick, domain=0:2] {x};
     % Clipped (A > 0)
-    \addplot[red, thick] coordinates {
+    \addplot[black!55, thick] coordinates {
         (0,0) (0.8,0.8) (0.8,0.8) (1.2,0.8) (1.2,1.2) (2,1.2)
     };
-    \draw[dashed, gray] (axis cs:0.8,-0.5) -- (axis cs:0.8,1.5);
-    \draw[dashed, gray] (axis cs:1.2,-0.5) -- (axis cs:1.2,1.5);
+    \draw[dashed, black!30] (axis cs:0.8,-0.5) -- (axis cs:0.8,1.5);
+    \draw[dashed, black!30] (axis cs:1.2,-0.5) -- (axis cs:1.2,1.5);
     \node at (axis cs:1,0.3) {\small $1\pm\epsilon$};
     \legend{Unclipped, Clipped}
     \end{axis}
 \end{tikzpicture}
 \caption{PPO clipping: prevents too-large policy updates.}
+\label{fig:ppo_clipping}
 \end{figure}
 
 
@@ -319,63 +288,55 @@ where $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_
 % BLOCK 3: STUDENT ACTIVATION
 %═══════════════════════════════════════════════════════════════════════
 
+\newpage
 \section{Examples \& Exercises}
 
 \subsection{Exercise 1: Q-Learning by Hand}
 
-Gridworld: 3 states (A, B, C). A $\to$ B (r=0), B $\to$ C (r=0), C terminal (r=1). $\gamma = 0.9$, $\alpha = 0.1$.
+Gridworld: 3 states (A, B, C). A $\to$ B with $r{=}0$, B $\to$ C with $r{=}0$, C is terminal with $r{=}1$. $\gamma = 0.9$, $\alpha = 0.1$.
 
 Initial $Q = 0$ everywhere. Update $Q(B, \text{right})$ after transition $B \to C$.
-
-\textbf{Solution}:
-\begin{align*}
-    Q(B, \text{right}) &\gets 0 + 0.1 \cdot [0 + 0.9 \cdot \max Q(C, \cdot) - 0] \\
-    &= 0.1 \cdot [0 + 0.9 \cdot 0] = 0
-\end{align*}
-
-But at terminal $C$, $Q(C, \cdot) = R = 1$! After one more iteration, $Q(B, \text{right}) = 0.09$.
 
 \subsection{Exercise 2: DQN Stability}
 
 Why does DQN need both experience replay and target networks?
 
-\textbf{Solution}:
-\begin{itemize}
-    \item \textbf{Experience replay}: Breaks correlation between consecutive samples, stabilizes learning
-    \item \textbf{Target network}: Prevents moving target problem---without it, both $Q_\theta$ and target change together, causing oscillation
-\end{itemize}
-
 \subsection{Exercise 3: Policy Gradient Variance}
 
 REINFORCE has high variance. Why does subtracting a baseline help?
 
-\textbf{Solution}: The gradient $\nabla \log \pi \cdot G$ can be positive or negative depending on $G$. If $G$ is always positive (common in positive-reward environments), all actions get reinforced. Subtracting baseline $V(s)$ centers the signal: good actions (above average) get positive updates, bad actions get negative updates.
 
+\section{Self-Reflection and Recap}
 
-\section{Self-Reflection \& Recap}
+\newthought{Self-Reflection.}
 
-\subsection{Reflection Questions}
 \begin{enumerate}
-    \item Why does DQN need experience replay and target networks?
-    \begin{quote}
-        \textit{Experience replay breaks correlation in training data. Target networks stabilize the bootstrapping target.}
-    \end{quote}
-
+    \item Why does Q-learning converge to the optimal policy even when the agent follows a suboptimal behaviour policy?
+    \item Why does DQN need experience replay and target networks for stable training?
     \item When would you prefer policy gradients over Q-learning?
-    \begin{quote}
-        \textit{Continuous action spaces, stochastic policies, when the optimal policy is simpler than the optimal Q-function.}
-    \end{quote}
+    \item How does the advantage function reduce variance compared to using raw returns?
+    \item What happens if the clipping range $\epsilon$ in PPO is too large or too small?
+    \item Why is credit assignment harder when rewards are delayed?
+    \item How does the discount factor $\gamma$ trade off short-term and long-term rewards?
 \end{enumerate}
 
-\subsection{Key Concepts}
+\vspace{1.5em}
+
+\newthought{Recap.}
+
 \begin{itemize}
-    \item \textbf{MDPs} formalize sequential decision problems
-    \item \textbf{Q-learning} learns action values via TD updates
-    \item \textbf{DQN} scales Q-learning with neural networks
-    \item \textbf{Policy gradients} optimize policies directly
-    \item \textbf{PPO} provides stable policy optimization via clipping
+    \item MDPs formalise sequential decision problems via states, actions, transitions, rewards, and a discount factor; the Bellman equations decompose value into immediate reward plus discounted future value.
+    \item Q-learning learns action values via off-policy TD updates; DQN scales this with neural networks, experience replay, and target networks.
+    \item Policy gradients optimise the policy directly; REINFORCE uses Monte Carlo returns, and variance is reduced via baseline subtraction and the advantage function.
+    \item PPO clips the probability ratio to prevent destructive policy updates, providing stable and sample-efficient optimisation.
 \end{itemize}
 
-\subsection{Next Chapter Teaser}
-\marginnote{Teaser: From trial-and-error to imagination}
-\newthought{RL is sample-hungry---learning requires millions of interactions.} What if we could learn a model of the world and plan in imagination? The next chapter explores \textbf{world models} and \textbf{Vision-Language-Action models}---the frontier of embodied AI.
+\vspace{2.5em}
+
+\marginnote{\newthought{Teaser.} RL is sample-hungry; learning requires millions of interactions. What if we could learn a model of the world and plan in imagination?}
+
+\newthought{Reinforcement learning learns from trial and error.} But this is sample-inefficient: millions of environment interactions are needed, and mistakes in the real world can be costly or dangerous.
+
+\newthought{The next chapter explores world models and Vision-Language-Action models,} where an agent learns a dynamics model of its environment, plans in imagination, and acts in the real world with far fewer interactions.
+
+\marginnote{\newthought{feedback}}
