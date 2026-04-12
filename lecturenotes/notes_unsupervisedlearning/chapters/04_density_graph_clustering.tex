@@ -49,9 +49,9 @@ survey responses that are genuine outliers.
     \caption{Each point carries its own dashed $\varepsilon$-neighbourhood; the small grey digit next to a point gives the number of points inside that circle, itself included. In the dense cluster at the lower left the four neighbourhoods overlap and chain the points together; the isolated $p_n$ at the upper right has no companions within $\varepsilon$. Density, not distance to a centre, determines membership.}
 \end{marginfigure}
 
-\newthought{No centroid required.} A density-based cluster is a space, not a mean and not a link. 
-Its shape is implicit in the data, seeded by the points themselves; nothing forces it to be convex or spherical;
-detects noise, outliers and sparse bridges naturally, and avoids committing to $K$ in advance. 
+\newthought{No centroid required.} A density-based cluster is a space, not a mean and not a link.
+Its shape is implicit in the data\index{cluster shape}\index{non-convex clusters}, seeded by the points themselves; nothing forces it to be convex or spherical\index{geometric assumptions};
+detects noise\index{noise}, outliers\index{outliers} and sparse bridges naturally, and avoids committing to $K$ in advance. 
 This geometric-assumption-free view is both the strength of density-based methods and, as we will see, 
 the source of their own limitations.
 
@@ -209,7 +209,7 @@ the minimum number of points required to form a dense region.
 \begin{align*}
     \tilde{y}: X \;\longrightarrow\; \{1,\,2,\,\ldots,\,K,\;p_n\}
 \end{align*}
-where $K$ is determined by the data rather than fixed in advance. The output is a flat partition plus a $p_n$ set $N$.
+where $K$ is determined by the data rather than fixed in advance. The output is a flat partition\index{partition} plus a $p_n$ set $N$.
 
 \begin{marginfigure}[1em]
 \centering
@@ -232,7 +232,7 @@ Four companions sit inside its dashed $\varepsilon$-neighbourhood. The small gre
 
 
 \newthought{Every point is classified} into one of three roles before any cluster is formed.
-The $\varepsilon$-neighbourhood of a point $p$ is the set of all points within distance $\varepsilon$:
+The $\varepsilon$-neighbourhood\index{epsilon-neighborhood} of a point $p$ is the set of all points within distance $\varepsilon$:
 \begin{align*}
     N_\varepsilon(p) &= \{q \in X : d(p,\,q) \leq \varepsilon\}.
 \end{align*}
@@ -296,8 +296,8 @@ Two points $p,\,q$ are density-connected\index{density connectivity} if there ex
 \newthought{Trace through our seven points.} Dashed circles are $\varepsilon{=}2.5$ neighbourhoods; 
 dark points belong to $C_1$, grey to $C_2$, and an open circle marks $p_n$.
 
-\newthought{Initialization} is trivial as the set of clusters 
-and their core-memberships is the same regardless of the order in which points are processed. 
+\newthought{Initialization}\index{initialization!DBSCAN}\index{determinism} is trivial as the set of clusters
+and their core-memberships is the same regardless of the order in which points are processed.\index{convergence} 
 Any unvisited $p_c$ triggers a new cluster; absorbing surrounding $p_b$'s immediately; and growing the cluster by absorbing 
 other $p_c$'s and then their $p_b$'s. Only $p_b$'s that happen to lie in the $\varepsilon$-neighbourhood of several $p_c$'s 
 can be assigned to different clusters depending on visit order, but keeping their point class $p_c$, $p_b$, or $p_n$.
@@ -330,7 +330,7 @@ can be assigned to different clusters depending on visit order, but keeping thei
 \end{algorithm}
 \vspace{1.5em}
 
-\marginnote{\newthought{Complexity.} Each of the $n$ points triggers one $\varepsilon$-neighbourhood query costing $O(n)$, giving $O(n^2)$ overall. A spatial index (k-d or ball tree) reduces each query to $O(\log n)$, yielding $O(n \log n)$ in low dimensions.}
+\marginnote{\newthought{Complexity.}\index{computational complexity!DBSCAN} Each of the $n$ points triggers one $\varepsilon$-neighbourhood query costing $O(n)$, giving $O(n^2)$ overall. A spatial index (k-d or ball tree) reduces each query to $O(\log n)$, yielding $O(n \log n)$ in low dimensions.}
 
 \newthought{Termination and determinism.} The outer loop visits every point at most once and the inner 
 loop only grows by adding previously unvisited points, so the algorithm halts after $O(n)$ neighbourhood queries. 
@@ -597,7 +597,7 @@ All points visited. Final result: $C_1{=}\{x_1,x_2,x_3\}$, $C_2{=}\{x_4,x_5,x_6\
 
 
 
-\subsection{Hyperparameter Selection}\index{DBSCAN!parameter selection}
+\subsection{Hyperparameter Selection}\index{DBSCAN!parameter selection}\index{hyperparameter selection}
 
 \newthought{Choosing $n_{\min}$} follows a practical rule of thumb: set $n_{\min} \geq d{+}1$ where $d$ 
 is the dimension of the feature space.
@@ -820,7 +820,7 @@ merges everything on the left into one blob, loosing expressiveness of the clust
 \label{fig:dbscan_fail_density}
 \end{figure}
 
-\marginnote{\newthought{Bridging and Chaining}}
+\marginnote{\newthought{Bridging and Chaining}}\index{chaining!DBSCAN}\index{bridging}
 
 \begin{figure}
 \centering
@@ -924,8 +924,8 @@ The density language and the hierarchical-clustering language describe the same 
 \vspace{3.5em}
 
 
-\newthought{The curse of dimensionality}: All distance-based methods share a deeper vulnerability as the number of features $d$ grows,
-the volume of the space increases so fast that a fixed number of points $N$ becomes sparse everywhere.
+\newthought{The curse of dimensionality}\index{curse of dimensionality}: All distance-based methods share a deeper vulnerability as the number of features $d$ grows,
+the volume of the space increases so fast that a fixed number of points $N$ becomes sparse everywhere.\index{high dimensionality}
 
 \begin{marginfigure}
 \centering
@@ -1343,8 +1343,8 @@ In next steps, learn about sensitivity sweeps and HDBSCAN to address this.
     \item Failure modes: varying density, where no global $\varepsilon$ fits two scales, and high dimensionality, where distances concentrate
     \item Bridging fuses clusters through chains of $p_c$'s, the density dual of single-linkage chaining
     \item OPTICS exposes all density scales via a reachability plot; HDBSCAN extracts the most persistent clusters from a full density hierarchy
-    \item DB Scan is connected components on the $\varepsilon$-graph; spectral clustering replaces hard connectivity with the NCut objective, solved through the eigenvectors of $L_{\mathrm{sym}}$ followed by K-Means
-    \item The eigengap heuristic picks $K$ at the largest jump between consecutive Laplacian eigenvalues
+    \item DB Scan is connected components on the $\varepsilon$-graph; spectral clustering\index{spectral clustering} replaces hard connectivity with the NCut objective, solved through the eigenvectors of $L_{\mathrm{sym}}$\index{Laplacian} followed by K-Means
+    \item The eigengap heuristic\index{eigengap heuristic} picks $K$ at the largest jump between consecutive Laplacian eigenvalues
 \end{itemize}
 
 \newthought{Two ways out of the curse of dimensionality.} Either we collect exponentially more data~\cite{Halevy2009}, which is rarely possible, or we reduce the dimension so that the samples we already have sit densely in the space we actually care about.

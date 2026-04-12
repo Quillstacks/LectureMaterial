@@ -27,8 +27,8 @@ As a human looking at data, we immediately see clusters $C$ of points that belon
 and we have an intuition for which new points would fit into which cluster.
 The process of finding them is called clustering.
 
-\newthought{A partition or a clustering} assigns every point to exactly one cluster, with no cluster left empty.
-In this lecture we will learn about K-Means\cite{MacQueen1967}, which produces a \emph{hard} partition: 
+\newthought{A partition or a clustering}\index{partition} assigns every point to exactly one cluster, with no cluster left empty.
+In this lecture we will learn about K-Means\cite{MacQueen1967}, which produces a \emph{hard} partition\index{hard assignment}:
 membership is binary, not graded.
 
 \marginnote{\newthought{Binary membership} is a strong assumption that later clustering methods will soften.}
@@ -173,9 +173,9 @@ A clustering\index{clustering} of the data is a collection of $K$ clusters $\{C_
 
 
 \vspace{1.5em}
-\marginnote{\newthought{Minimizing $J$} is NP-hard (effort exponential in $n$ and $K$) in general. K-Means finds a local optimum, not necessarily the global one. The result depends on initialization, and is thus non-deterministic. Shout out numerical methods.}
+\marginnote{\newthought{Minimizing $J$} is NP-hard\index{NP-hard} (effort exponential in $n$ and $K$) in general. K-Means finds a local optimum\index{local optimum}, not necessarily the global one. The result depends on initialization, and is thus non-deterministic\index{non-determinism}. Shout out numerical methods.}
 \newthought{K-Means} finds a clustering of $n$ data points into $K$ clusters by minimizing the total squared distance from each point to its cluster's centroid.
-This quantity is called inertia or within-cluster sum of squares (WCSS):
+This quantity is called inertia\index{objective function} or within-cluster sum of squares\index{WCSS} (WCSS):
 
 \begin{align}
     J &= \sum_{k=1}^{K} \sum_{x_i \in C_k} \|x_i - \mu_k\|^2
@@ -222,7 +222,7 @@ where the mean $\mu_k = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i$ is the centroid 
 \vspace{1.5em}
 \newthought{The algorithm alternates between two steps} until the assignments no longer change. 
 \marginnote{\newthought{Standard Algorithmic Form} was described by Lloyd\cite{Lloyd1982}}
-It remains one of the most cited algorithms in machine learning, in part because it is easy to implement, easy to interpret, and fast enough to run on large datasets.
+It remains one of the most cited algorithms in machine learning, in part because it is easy to implement, easy to interpret, and fast enough to run on large datasets.\index{computational complexity!K-Means}
 
 
 
@@ -271,12 +271,11 @@ meaningful.
     \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {(1,4)(4,1)};
     \node[font=\small, anchor=south east] at (axis cs:0.8,4.2) {$\mu_1$};
     \node[font=\small, anchor=north west] at (axis cs:4.2,0.8) {$\mu_2$};
-    \end{axis}‚
+    \end{axis}
 \end{tikzpicture}
 \caption{Initialization: two centroids placed away from the data. All points are unassigned.}
 \label{fig:trace_init}
 \end{figure}
-
 \marginnote[-8em]{%
 \begin{align*}
     d^2(x_1,\mu_1) &= 0 + 1 = 1 \\
@@ -365,7 +364,7 @@ Re-running assignment yields the same clusters: converged at $J{=}1$.}
 
 \marginnote{\newthought{Local optimum.} Convergence does not mean the algorithm found the best clustering. It found a clustering. A different initialization may yield a better one.}
 
-\newthought{Convergence} is guaranteed in finite steps.
+\newthought{Convergence}\index{convergence} is guaranteed in finite steps.
 The argument rests on three observations:
 first, each assignment step can only decrease $J$, since every point moves to an equal or closer centroid;
 second, each update step can only decrease $J$, since the mean minimizes squared distance to its members;
@@ -376,7 +375,7 @@ Since $J$ is non-increasing and the number of states is finite, the algorithm mu
 
 
 \vspace{0.5em}
-\newthought{Initialization Matters}
+\newthought{Initialization Matters}\index{initialization}
 
 \marginnote{\newthought{Educated Initialization\index{K-Means++}}K-Means++\cite{ArthurVassilvitskii2007} 
 for instance features educated initialization.
@@ -495,7 +494,7 @@ converged at $J{=}2.5$, worse than the earlier trace ($J{=}1$).}
 
 
 \newpage
-\newthought{Choosing K}\index{elbow method}\index{silhouette score}
+\newthought{Choosing K}\index{elbow method}\index{silhouette score}\index{hyperparameter selection}
 
 In 2D the number of clusters is often obvious, but in higher dimensions and with more data, 
 or when facing fuzzy clusters or cluster borders, it is not. While the choice for K is often guided by domain knowledge, it is not uncommon to have no such guidance.
@@ -592,7 +591,7 @@ And even more simplifications are possible, when only calculating the silhouette
         \end{axis}
     \end{tikzpicture}
     \caption{Silhouette scores for $K{=}2$. Box plot (left): median ${\approx}0.37$, mean ${\approx}0.30$, IQR $[0.18,\,0.45]$. Individual scores per point (right, coloured by cluster).}
-    \label{fig:silhouette_boxplot}
+        \label{fig:silhouette_boxplot}
     \end{marginfigure}
 
 A well-placed point has small $a(i)$ and large $b(i)$.
@@ -617,7 +616,7 @@ Choose $K$ that maximizes it.
 \vspace{2.5em}
 \newthought{When K-Means Fails}\index{failure modes}
 
-K-Means assumes clusters are roughly spherical, equally sized, and equally dense. 
+K-Means assumes clusters are roughly spherical\index{geometric assumptions}\index{cluster shape}, equally sized, and equally dense.
 Remember that distances measures are a choice.
 
 \vspace{2.5em}
@@ -646,7 +645,7 @@ Remember that distances measures are a choice.
     \node[font=\small, anchor=south west] at (axis cs:0,0) {$C$};
     \end{axis}
 \end{tikzpicture}
-\caption{The natural clusters are concentric rings. 
+\caption{The natural clusters are concentric rings.\index{non-convex clusters}
 Both share the same centroid at the origin, so K-Means cannot separate them;
 it will split the data along a straight boundary through the centre instead.}
 \label{fig:kmeans_fail_rings}
@@ -716,14 +715,16 @@ inertia rather than visual proximity.}
     \node[font=\small, anchor=north] at (axis cs:3.8,1.0) {$\mu$};
     \end{axis}
 \end{tikzpicture}
-\caption{Sensitivity to outliers: four tight points form a natural cluster near $(2,1)$, but a single outlier ($\times$) pulls the centroid $\mu$ to $(3.8,1)$, well outside the dense group. K-Means uses the mean, which is not robust to extreme points.}
+\caption{Sensitivity to outliers\index{outliers}: four tight points form a natural cluster near $(2,1)$, 
+but a single outlier ($\times$) pulls the centroid $\mu$ to $(3.8,1)$, well outside the dense group. K-Means uses the mean, 
+which is not robust to extreme points.}
 \label{fig:kmeans_fail_densities}
 \end{figure}
 
-\marginnote{\newthought{K-Medoids} uses actual data points as cluster centers instead of means, 
-making it robust to outliers and compatible with non-Euclidean distances. 
+\marginnote{\newthought{K-Medoids}\index{K-Medoids} uses actual data points as cluster centers instead of means,
+making it robust to outliers and compatible with non-Euclidean distances.
 
-\newthought{Mini-Batch K-Means} updates centroids on random subsets of the data only, allowing us to scale
+\newthought{Mini-Batch K-Means}\index{Mini-Batch K-Means} updates centroids on random subsets of the data only, allowing us to scale\index{scalability!K-Means}
 to millions of points at the cost of a slightly noisier result.}
 
 \newthought{When K-Means struggles}, the underlying issue is always the same: 

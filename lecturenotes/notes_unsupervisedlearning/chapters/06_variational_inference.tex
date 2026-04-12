@@ -1,0 +1,409 @@
+% !TEX root = ../notes_unsupervisedlearning.tex
+% Chapter 6: Variational Inference and VAEs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Variational Inference}\index{VAE}\index{Variational Autoencoder}\index{ELBO}
+\newthought{Model data as distributions, not points.}
+
+% ==============================================================================================
+% BLOCK 1: INTRODUCTION
+% ==============================================================================================
+
+\section{The Why}\index{variational inference}\index{latent variable model}
+
+\marginnote{\newthought{Autoencoders compress,} but VAEs generate---and quantify uncertainty.}
+
+Standard autoencoders learn a deterministic mapping: input $\to$ latent code $\to$ reconstruction.
+The latent space may be irregular, with holes where no training data maps.
+Sampling a random point from that space and decoding it may produce nonsense.
+
+\newthought{Three questions arise naturally} once we have compressed representations:
+\begin{itemize}
+    \item Can we generate new samples by sampling from the latent space?
+    \item Can we interpolate smoothly between data points?
+    \item Can we quantify how uncertain a representation is?
+\end{itemize}
+
+\newthought{Variational Autoencoders}\index{VAE} answer all three by replacing the deterministic bottleneck with a probabilistic one.
+Instead of encoding each input to a single point, the encoder outputs a distribution.
+The decoder then samples from that distribution, and a regularisation term ensures the latent space is well-structured.
+
+
+\subsection{Hands On Experience}
+
+\begin{marginfigure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$z_1$},
+        ylabel={$z_2$},
+        xmin=-3, xmax=3,
+        ymin=-3, ymax=3,
+        width=\marginparwidth,
+        height=\marginparwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-2,0,2},
+        ytick={-2,0,2},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside,
+        tick pos=left,
+    ]
+    % Standard normal prior
+    \draw[black!40, thin] (axis cs:0,0) circle[radius=1];
+    \draw[black!40, thin] (axis cs:0,0) circle[radius=2];
+    % Encoded distributions
+    \draw[black, thick] (axis cs:-1,1) ellipse[x radius=0.3, y radius=0.5];
+    \draw[black, thick] (axis cs:1,-0.5) ellipse[x radius=0.4, y radius=0.3];
+    \draw[black, thick] (axis cs:0.5,1.5) ellipse[x radius=0.35, y radius=0.4];
+    % Labels
+    \node[font=\tiny, black!55] at (axis cs:2.3,2.3) {$p(z)$};
+    \node[font=\tiny] at (axis cs:-1.8,0.5) {$q(z|x)$};
+    \end{axis}
+\end{tikzpicture}
+\caption{VAE latent space: each input encodes to a distribution (ellipses), regularised toward the prior (circles).}
+\label{fig:vae_latent_intro}
+\end{marginfigure}
+
+\newthought{Imagine} you have a 2D latent space with a standard normal prior $p(z) = \mathcal{N}(0, I)$.
+
+Sample $z_1 = (1, 0)$ and $z_2 = (-1, 0)$.
+Interpolate: $z_t = (1{-}t)\, z_1 + t\, z_2$ for $t \in [0, 1]$.
+Decode each $z_t$.
+
+What do you expect the decoded outputs to look like along this path?
+Why might a standard autoencoder fail to produce a meaningful interpolation?
+
+\vspace{2.5em}
+
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item Derive the Evidence Lower Bound and explain how its two terms trade off reconstruction against regularisation.
+    \item Implement the reparameterisation trick to enable gradient-based training through a stochastic bottleneck.
+    \item Distinguish VAE variants, $\beta$-VAE, VQ-VAE, and conditional VAE, by the structural assumption each changes.
+\end{itemize}
+
+
+% ==============================================================================================
+% BLOCK 2: MAIN THEORY
+% ==============================================================================================
+
+\newpage
+
+\section{From Autoencoders to VAEs}\index{autoencoder}
+
+\marginnote{\newthought{Standard autoencoders} learn $x \to z \to \hat{x}$, minimising $\|x - \hat{x}\|^2$.}
+
+\newthought{A standard autoencoder} consists of an encoder $f_\phi\colon x \mapsto z$, a decoder $g_\theta\colon z \mapsto \hat{x}$, and a reconstruction loss $\mathcal{L} = \|x - g_\theta(f_\phi(x))\|^2$.
+
+\newthought{Three problems emerge} once we look beyond reconstruction.
+The latent space may contain holes---points $z$ that do not decode to valid data.
+There is no principled way to sample new data from the latent space.
+And there is no measure of how uncertain a given representation is.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+    % Autoencoder latent space
+    \begin{axis}[
+        name=ae,
+        title={Autoencoder},
+        xlabel={$z_1$}, ylabel={$z_2$},
+        xmin=-3, xmax=3, ymin=-3, ymax=3,
+        width=0.4\textwidth,
+        height=0.4\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick=\empty, ytick=\empty,
+        tick align=outside,
+        tick pos=left,
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (-2,2) (-1.8,1.5) (2,-1) (1.5,-0.5) (0,2.5) (-2,-2)
+    };
+    \node[font=\small] at (axis cs:0,0) {?};
+    \end{axis}
+
+    % VAE latent space
+    \begin{axis}[
+        at={(ae.east)}, anchor=west, xshift=1cm,
+        title={VAE},
+        xlabel={$z_1$}, ylabel={$z_2$},
+        xmin=-3, xmax=3, ymin=-3, ymax=3,
+        width=0.4\textwidth,
+        height=0.4\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick=\empty, ytick=\empty,
+        tick align=outside,
+        tick pos=left,
+    ]
+    \draw[black!15, fill=black!5] (axis cs:0,0) circle[radius=2];
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (-1,1) (-0.5,0.8) (1,-0.5) (0.8,-0.3) (0,1.2) (-1,-1)
+        (0.3,0.5) (-0.7,-0.3) (0.5,0) (-0.2,0.7)
+    };
+    \end{axis}
+\end{tikzpicture}
+\caption{Autoencoder: sparse, irregular latent space with holes between encodings. VAE: regularised, filled latent space where every region decodes to something meaningful.}
+\label{fig:ae_vs_vae}
+\end{figure}
+
+
+\section{The Evidence Lower Bound}\index{ELBO}\index{evidence lower bound}
+
+\marginnote{\newthought{The goal} is to maximise $\log p(x)$, but marginalising over $z$ is intractable.}
+
+\newthought{We want to model data with latent variables.}
+The marginal likelihood of an observation $x$ requires integrating over all possible latent codes:
+
+\begin{align*}
+    p_\theta(x) &= \int p_\theta(x|z)\, p(z) \, dz
+\end{align*}
+
+This integral is intractable for complex decoders.
+The posterior $p_\theta(z|x)$ is equally intractable.
+
+\newthought{Variational inference}\index{variational inference} sidesteps the intractable posterior by introducing a tractable approximation $q_\phi(z|x)$, parameterised by an encoder network.
+
+\begin{align*}
+    \log p_\theta(x) &= \log \int p_\theta(x|z)\, p(z) \, dz \\
+    &= \log \int \frac{q_\phi(z|x)}{q_\phi(z|x)}\, p_\theta(x|z)\, p(z) \, dz \\
+    &= \log \mathbb{E}_{q_\phi(z|x)} \left[ \frac{p_\theta(x|z)\, p(z)}{q_\phi(z|x)} \right]
+\end{align*}
+
+\newthought{Applying Jensen's inequality,} $\log \mathbb{E}[X] \geq \mathbb{E}[\log X]$, yields a lower bound on the log-evidence:
+
+\begin{align*}
+    \log p_\theta(x) &\geq \mathbb{E}_{q_\phi(z|x)} \left[ \log p_\theta(x|z) + \log p(z) - \log q_\phi(z|x) \right]
+\end{align*}
+
+\newthought{Rearranging gives the ELBO:}
+
+\begin{align*}
+    \text{ELBO}(\theta, \phi;\, x) &= \underbrace{\mathbb{E}_{q_\phi(z|x)}[\log p_\theta(x|z)]}_{\text{Reconstruction}} - \underbrace{D_{\text{KL}}\!\bigl(q_\phi(z|x) \,\|\, p(z)\bigr)}_{\text{Regularisation}}
+\end{align*}
+
+\marginnote{\newthought{ELBO} stands for Evidence Lower BOund. Maximising the ELBO approximately maximises $\log p(x)$.}
+
+\newthought{The two terms trade off against each other.}
+The reconstruction term rewards an encoder--decoder pair that faithfully reconstructs $x$ from a sampled $z$.
+The KL term penalises encoder distributions that stray far from the prior $p(z) = \mathcal{N}(0, I)$, ensuring the latent space remains regular.
+
+
+\section{The Reparameterisation Trick}\index{reparameterisation trick}
+
+\marginnote{\newthought{Sampling is not differentiable.} The reparameterisation trick moves the stochasticity outside the computational graph.}
+
+\newthought{To optimise the ELBO} we need gradients through the expectation $\mathbb{E}_{q_\phi(z|x)}[\cdot]$.
+Sampling from $q_\phi(z|x)$ blocks gradient flow because the sample operation has no derivative with respect to $\phi$.
+
+\newthought{The fix:} instead of sampling $z \sim \mathcal{N}(\mu_\phi(x),\, \sigma_\phi^2(x))$ directly, reparameterise as
+
+\begin{align*}
+    z &= \mu_\phi(x) + \sigma_\phi(x) \odot \epsilon, \quad \epsilon \sim \mathcal{N}(0, I)
+\end{align*}
+
+Now the randomness lives in $\epsilon$, which does not depend on $\phi$.
+Gradients flow through $\mu$ and $\sigma$ as usual.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[node distance=1.5cm, auto]
+    \node[draw, rectangle, minimum width=1.5cm] (x) {$x$};
+    \node[draw, rectangle, right of=x, xshift=1cm, minimum width=1.5cm] (enc) {Encoder};
+    \node[draw, rectangle, above right of=enc, yshift=0.3cm, minimum width=1cm] (mu) {$\mu$};
+    \node[draw, rectangle, below right of=enc, yshift=-0.3cm, minimum width=1cm] (sigma) {$\sigma$};
+    \node[draw, circle, right of=mu, xshift=1.5cm, yshift=-0.7cm] (times) {$\times$};
+    \node[draw, circle, above of=times, yshift=-0.5cm] (plus) {$+$};
+    \node[right of=times, xshift=0.5cm] (eps) {$\epsilon \sim \mathcal{N}(0,I)$};
+    \node[draw, rectangle, right of=plus, xshift=1.5cm, minimum width=1cm] (z) {$z$};
+    \node[draw, rectangle, right of=z, xshift=1cm, minimum width=1.5cm] (dec) {Decoder};
+    \node[draw, rectangle, right of=dec, xshift=1cm, minimum width=1.5cm] (xhat) {$\hat{x}$};
+    \draw[->] (x) -- (enc);
+    \draw[->] (enc) -- (mu);
+    \draw[->] (enc) -- (sigma);
+    \draw[->] (mu) -- (plus);
+    \draw[->] (sigma) -- (times);
+    \draw[->] (eps) -- (times);
+    \draw[->] (times) -- (plus);
+    \draw[->] (plus) -- (z);
+    \draw[->] (z) -- (dec);
+    \draw[->] (dec) -- (xhat);
+\end{tikzpicture}
+\caption{VAE architecture with reparameterisation trick: $z = \mu + \sigma \odot \epsilon$. The stochasticity enters through $\epsilon$; all other arrows carry deterministic, differentiable operations.}
+\label{fig:vae_reparam}
+\end{figure}
+
+
+\section{VAE Training}\index{VAE!training}
+
+\marginnote{\newthought{The encoder} outputs $\mu_\phi(x)$ and $\log \sigma^2_\phi(x)$; the decoder outputs reconstruction parameters; the prior is $p(z) = \mathcal{N}(0, I)$.}
+
+\newthought{For a Gaussian decoder with fixed variance,} the ELBO simplifies to a concrete loss:
+
+\begin{align*}
+    \mathcal{L}(\theta, \phi;\, x) &= \|x - \hat{x}\|^2 + D_{\text{KL}}\!\bigl(q_\phi(z|x) \,\|\, p(z)\bigr)
+\end{align*}
+
+\newthought{The KL term has a closed form} when both distributions are Gaussian:
+
+\begin{align*}
+    D_{\text{KL}}\!\bigl(\mathcal{N}(\mu, \sigma^2) \,\|\, \mathcal{N}(0, 1)\bigr) &= \tfrac{1}{2} \sum_j \bigl( \mu_j^2 + \sigma_j^2 - \log \sigma_j^2 - 1 \bigr)
+\end{align*}
+
+\marginnote{\newthought{Numerical stability.} In practice the encoder outputs $\log \sigma^2$ rather than $\sigma$ directly, avoiding negative-variance issues and improving gradient behaviour.}
+
+
+\section{Exploring the Latent Space}\index{latent interpolation}\index{generation}
+
+\newthought{Latent interpolation} reveals the structure that the VAE has learned.
+Given two data points $x_1$ and $x_2$, encode them to $z_1 = \mu_\phi(x_1)$ and $z_2 = \mu_\phi(x_2)$, interpolate as $z_t = (1{-}t)\,z_1 + t\,z_2$, and decode each $z_t$ to obtain $\hat{x}_t = g_\theta(z_t)$.
+Because the latent space is regularised, the decoded path transitions smoothly between the two inputs.
+
+\newthought{Generation} is equally straightforward: sample $z \sim \mathcal{N}(0, I)$ and decode $\hat{x} = g_\theta(z)$.
+The regularisation ensures that every region of the prior generates plausible data.
+
+
+\section{VAE Variants}\index{beta-VAE@$\beta$-VAE}\index{VQ-VAE}\index{conditional VAE}
+
+\marginnote{\newthought{$\beta$-VAE} trades reconstruction fidelity for disentanglement by scaling the KL term.}
+
+\newthought{$\beta$-VAE} increases the weight on the KL term:
+
+\begin{align*}
+    \mathcal{L}_\beta &= \text{Reconstruction} + \beta \cdot D_{\text{KL}}
+\end{align*}
+
+With $\beta > 1$ the model is pressured to use the latent space efficiently, often leading to disentangled\index{disentanglement} representations where each latent dimension corresponds to a single factor of variation.
+
+\newthought{VQ-VAE}\index{VQ-VAE} replaces continuous latents with discrete codes from a learned codebook.
+Each encoder output $z_e$ is snapped to the nearest codebook entry:
+
+\begin{align*}
+    z_q &= \arg\min_{e_k \in \text{codebook}} \|z_e - e_k\|
+\end{align*}
+
+\marginnote{\newthought{VQ-VAE} enables powerful autoregressive priors, such as PixelCNN, over the discrete codes.}
+
+Discrete codes sidestep posterior collapse entirely and enable autoregressive priors that capture complex dependencies between code positions.
+
+\newthought{Conditional VAE} adds a conditioning variable $c$, such as a class label, to both encoder $q_\phi(z|x, c)$ and decoder $p_\theta(x|z, c)$.
+This enables controlled generation: sample $z$, specify $c$, and decode.
+
+
+\section{Brief: Knowledge Distillation}\index{knowledge distillation}
+
+\marginnote{\newthought{Distillation} transfers knowledge from a large teacher to a small student.}
+
+\newthought{Knowledge distillation} compresses a large teacher model into a smaller student by training the student to match the teacher's soft output distributions rather than hard labels.
+
+\newthought{Soft labels} are produced by scaling the teacher's logits with a temperature $T$:
+
+\begin{align*}
+    p_i^{(T)} &= \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}
+\end{align*}
+
+Higher $T$ yields a softer distribution that reveals more about the teacher's learned structure.
+
+\newthought{The connection to VAEs} is conceptual: both methods learn compressed representations that preserve essential information, one in the latent space, the other in the student's weights.
+
+
+% ==============================================================================================
+% BLOCK 3: STUDENT ACTIVATION
+% ==============================================================================================
+
+\newpage
+
+\section{Examples \& Exercises}\index{examples}\index{exercises}
+
+\newthought{Computing by hand} builds intuition for what the ELBO actually measures.
+Step through the arithmetic slowly.
+
+\vspace{1em}
+
+\newthought{ELBO derivation.} Starting from $\log p(x) = \log \int p(x,z)\, dz$, derive the ELBO by introducing $q(z|x)$ via importance sampling, applying Jensen's inequality, and simplifying to reconstruction + KL form.
+
+\vspace{2.5em}
+
+\newthought{KL divergence by hand.}
+Compute $D_{\text{KL}}\!\bigl(\mathcal{N}(\mu, \sigma^2) \,\|\, \mathcal{N}(0, 1)\bigr)$ for three settings: first $\mu{=}0,\, \sigma{=}1$; then $\mu{=}1,\, \sigma{=}1$; then $\mu{=}0,\, \sigma{=}2$.
+
+\marginnote{Using $D_{\text{KL}} = \tfrac{1}{2}(\mu^2 + \sigma^2 - \log \sigma^2 - 1)$:%
+\begin{align*}
+    \text{(i)}\quad & \tfrac{1}{2}(0 + 1 - 0 - 1) \\
+                    &= 0 \\[4pt]
+    \text{(ii)}\quad & \tfrac{1}{2}(1 + 1 - 0 - 1) \\
+                     &= 0.5 \\[4pt]
+    \text{(iii)}\quad & \tfrac{1}{2}(0 + 4 - \log 4 - 1) \\
+                      &\approx 0.81
+\end{align*}%
+}
+
+Verify that the first setting gives zero, as expected when the approximate posterior matches the prior exactly.
+What does each non-zero value tell you about how the approximate posterior deviates from the prior?
+
+\vspace{2.5em}
+
+\newthought{Reparameterisation.} Why can we not directly backpropagate through $z \sim \mathcal{N}(\mu, \sigma^2)$?
+Write out the reparameterised form, then verify that $\partial z / \partial \mu = 1$ and $\partial z / \partial \sigma = \epsilon$.
+
+\marginnote{Sampling is a stochastic operation with no gradient. The reparameterisation $z = \mu + \sigma\, \epsilon$ moves the randomness to $\epsilon$, which is independent of the parameters.}
+
+\vspace{2.5em}
+
+\newthought{Posterior collapse.} Consider a VAE trained with $\beta{=}10$.
+The KL term goes to zero for every input, and the reconstructions are blurry.
+Diagnose what has happened and propose two remedies.
+
+\vspace{2.5em}
+
+% ============================= CODE ===============================
+
+\marginnote{\newthought{Code} will be provided as a Python notebook.
+Use it as a starting point, break things, and observe what changes.}
+
+\newthought{An MNIST digit dataset to explore.}
+Train a VAE with a 2D latent space on MNIST.
+Scatter-plot the latent encodings colour-coded by digit class.
+Sample a grid of points from the latent space, decode them, and display the resulting digits.
+Interpolate between two digits in latent space and display the decoded path.
+
+\newthought{What to observe.}
+Digit classes should form overlapping but distinguishable clusters in the 2D latent space.
+The grid of decoded samples should show smooth transitions between digit types.
+Increasing $\beta$ should sharpen the cluster boundaries but blur the reconstructions.
+
+
+\section{Self-Reflection and Recap}\index{reflection}\index{recap}
+
+\newthought{Self-Reflection} questions to guide your thinking:
+\begin{itemize}
+    \item Why does the ELBO contain two terms, and what does each one enforce?
+    \item What happens if you remove the KL term entirely and train with reconstruction loss alone?
+    \item Why does the reparameterisation trick work---what mathematical property of the Gaussian does it exploit?
+    \item What is posterior collapse, and under what conditions does it occur?
+    \item How does $\beta$-VAE encourage disentanglement, and what is sacrificed in return?
+    \item Why does VQ-VAE avoid posterior collapse, and what new challenge does discrete quantisation introduce?
+    \item When would you choose a conditional VAE over an unconditional one?
+    \item How does the VAE latent space differ from the PCA subspace of the previous chapter, and what does the difference buy you?
+\end{itemize}
+
+\newthought{Recap} of Key Concepts:
+\begin{itemize}
+    \item VAEs learn probabilistic latent representations by maximising the ELBO, which trades off reconstruction fidelity against regularisation toward the prior.
+    \item The reparameterisation trick enables gradient-based training by expressing the stochastic sample as a deterministic function of the parameters plus independent noise.
+    \item The closed-form KL for Gaussians makes training efficient; in practice the encoder outputs $\log \sigma^2$ for numerical stability.
+    \item $\beta$-VAE increases the KL weight to encourage disentanglement at the cost of reconstruction quality; VQ-VAE replaces continuous latents with discrete codes to enable autoregressive priors.
+    \item Knowledge distillation is a complementary compression strategy: it transfers a teacher's soft predictions into a smaller student network.
+\end{itemize}
+
+\marginnote{\newthought{The fundamental limit} of a generative model: it can tell you what the data looks like, but not how much to trust what it says about data it has never seen.}
+
+\newthought{A VAE trained on coffee aroma profiles} will reconstruct familiar profiles faithfully and assign them high ELBO.
+A contaminated sample, one the model has never seen, will reconstruct poorly and land in a low-density region of the latent space.
+The model knows something is wrong, but it cannot quantify how uncertain it is, or decide what to do about it.
+
+\newthought{Uncertainty estimation} fills this gap.
+The next chapter develops tools for quantifying what a model does and does not know---distinguishing irreducible noise from reducible ignorance---and shows how uncertainty estimates enable anomaly detection, out-of-distribution detection, and graceful degradation in deployed systems.
