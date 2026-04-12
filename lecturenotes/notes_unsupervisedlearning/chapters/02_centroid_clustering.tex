@@ -7,11 +7,11 @@
 % POST IMPROVEMENTS 2026:
 % 1. Silhouette skizze showing a and b
 % 2. Introduce Bengio paper in random initialization
-% 3. 
+% 3. Make it also an audio document, with a voiceover reading the text, and audio cues for the figures and exercises.
 
 \index{Centroid Clustering}\index{K-Means}
 \chapter{Centroid Clustering}
-\newthought{From Similar to of the Same}
+\newthought{Same Same but Different.}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -629,10 +629,11 @@ Remember that distances measures are a choice.
     \begin{axis}[
         xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
         xmin=-3.5, xmax=3.5, ymin=-2.8, ymax=2.8,
-        width=0.5\textwidth, height=0.4\textwidth,
+        width=0.4\textwidth, height=0.3\textwidth,
+        scale only axis,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick={-3, 0, 3}, ytick={-2.8,0,2.8},
+        xtick={-3, 0, 3}, ytick={-2,0,2},
         xticklabel style={font=\small},
         yticklabel style={font=\small},
         tick align=outside, tick pos=left,
@@ -659,7 +660,8 @@ it will split the data along a straight boundary through the centre instead.}
     \begin{axis}[
         xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
         xmin=-2, xmax=20, ymin=-3, ymax=3,
-        width=0.5\textwidth, height=0.4\textwidth,
+        width=0.4\textwidth, height=0.3\textwidth,
+        scale only axis,
         axis line style={draw=none},
         tick style={black, thin},
         xtick={0,5,10,15}, ytick={-2,0,2},
@@ -696,7 +698,8 @@ inertia rather than visual proximity.}
     \begin{axis}[
         xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
         xmin=0, xmax=12, ymin=0, ymax=2,
-        width=0.5\textwidth, height=0.4\textwidth,
+        width=0.4\textwidth, height=0.3\textwidth,
+        scale only axis,
         axis line style={draw=none},
         tick style={black, thin},
         xtick={0,5,10}, ytick={0,1,2},
