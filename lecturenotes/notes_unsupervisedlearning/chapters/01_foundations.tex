@@ -21,7 +21,7 @@
 
 \section{The Why}\index{unsupervised learning}
 
-In supervised learning\cite{DeepLearningBook}, the learning process relies on data samples $x$ paired with their ground truth labels $\tilde{y}$, which allows a 
+In supervised learning\index{supervised learning}\cite{DeepLearningBook}, the learning process relies on data samples $x$ paired with their ground truth labels $\tilde{y}$, which allows a
 model $\theta$ to learn a mapping,
 
 \marginnote{\newthought{On the concept of truth}, $\tilde{y}$, while being called ground truth, 
@@ -43,7 +43,7 @@ The loss then guides the learning process, enabling the model to adjust its para
 
 \newthought{Facing the absence of labels}, we are left with only the data samples\cite{DIKWpyramid} $x$ and no explicit signal to guide learning.
 The methods we will explore in this course are designed to discover and leverage the inherent structure and patterns\cite{Bishop2006} in the data itself, 
-without relying on external supervision, thus mostly referred to as unsupervised learning.
+without relying on external supervision, thus mostly referred to as unsupervised learning.\index{pattern recognition}
 
 \marginnote{\newthought{Knowledge Pyramid}\\
 Data ($1$) raw signal\\
@@ -165,8 +165,8 @@ make you take action, then don't waste your time measuring it in the first place
 \newthought{Quite intuitively}, you already connected points and formed groups in terms of a similarity which was 
 based on the closeness between data points. This concept will carry you very far.\\
 
-\newthought{A distance function} $d: X \times X \to \mathbb{R}_{\geq 0}$, which means taking two samples out of the set $X$, 
-mapping them to a non-negative real number, must satisfy:
+\newthought{A distance function}\index{distance function} $d: X \times X \to \mathbb{R}_{\geq 0}$, which means taking two samples out of the set $X$,
+mapping them to a non-negative real number, must satisfy:\index{metric properties}
 \begin{align}
     &\text{Non-negativity:} && d(x, y) \geq 0 \label{eq:nonnegativity} \\
     &\text{Identity:}       && d(x, y) = 0 \iff x = y \label{eq:identity} \\
@@ -174,7 +174,7 @@ mapping them to a non-negative real number, must satisfy:
     &\text{Triangle inequality:} && d(x, z) \leq d(x, y) + d(y, z) \label{eq:triangle}
 \end{align}
 
-\newthought{Euclidean Distance}\index{Euclidean distance} is probably the most familiar distance metric, measuring the straight-line distance between two points in space.
+\newthought{Euclidean Distance}\index{Euclidean distance}\index{L2 distance} is probably the most familiar distance metric, measuring the straight-line distance between two points in space.
 
 
 \begin{figure}
@@ -228,9 +228,9 @@ And it was probably the one you implicitly used to connect the points in the pre
 
 \marginnote{\newthought{Features} can be thought of as dimensions in a vector space. Each data point is a vector in this space.}
 
-\newthought{Euclidean distance} assumes all dimensions are equally important and measured in the same units. It also assumes a continuous, smooth space.
-It is trivial to think of scenarios where these assumptions do not hold, such as when features have different scales (e.g. age vs. income) 
-or when the features are not linearly related or not equaly important (e.g. size vs. IQ). And then there are the cases where the 
+\newthought{Euclidean distance} assumes all dimensions are equally important and measured in the same units.\index{geometric assumptions} It also assumes a continuous, smooth space.
+It is trivial to think of scenarios where these assumptions do not hold, such as when features have different scales (e.g. age vs. income)
+or when the features are not linearly related or not equaly important (e.g. size vs. IQ). And then there are the cases where the
 units are ambiguous for the task like distances on maps.
 
 
@@ -555,9 +555,9 @@ However, this is sensitive to outliers, as they influence $\mu$ and $\sigma$.
     x'_i = \frac{x_i - \min_i}{\max_i - \min_i}
 \end{equation}
 
-\newthought{Use when} you need bounded values. 
-Unlike z-score, min-max guarantees a fixed range 
-but is even more sensitive to outliers since a single extreme 
+\newthought{Use when} you need bounded values.
+Unlike z-score, min-max guarantees a fixed range
+but is even more sensitive to outliers\index{outliers} since a single extreme
 value stretches the scale and compresses other ranges.
 
 
@@ -781,7 +781,7 @@ Use it as a starting point, break things, and observe what changes.}
 \newthought{A toy dataset to explore.} You are given measurements of 20 coffee samples with three features:
 \textit{acidity} (pH, 4.0 to 7.0), \textit{bitterness} (1 to 10), and \textit{brew strength} (mg/mL, 5 to 25).
 The samples belong to four varieties: cold brew, drip, espresso, and latte.
-Load the dataset and scatter-plot acidity vs.\ bitterness. Then compute the Euclidean distance matrix and identify the most similar pair, is the result plausible? Apply z-score normalization, recompute the distance matrix, and observe how the nearest neighbors shift. Compute cosine similarity between all pairs and compare it to the Euclidean grouping. Finally, compute the sample covariance matrix of the normalized data and check whether any features are correlated.
+Load the dataset and scatter-plot acidity vs.\ bitterness. Then compute the Euclidean distance matrix\index{distance matrix} and identify the most similar pair, is the result plausible? Apply z-score normalization, recompute the distance matrix, and observe how the nearest neighbors shift. Compute cosine similarity between all pairs and compare it to the Euclidean grouping. Finally, compute the sample covariance matrix of the normalized data and check whether any features are correlated.
 
 \newthought{What to observe.} Without normalization, brew strength dominates similarity because its scale (5 to 25\,mg/mL) dwarfs the others.
 A latte and an espresso with similar strength appear closer than two espressos with the same acidity and bitterness profile.

@@ -15,14 +15,14 @@
 
 K-Means left us with three sharp problems.
 
-\newthought{The centroid assumption} forces every cluster to be convex and compact.
+\newthought{The centroid assumption}\index{geometric assumptions} forces every cluster to be convex and compact.\index{cluster shape}
 A single mean position must stand in for all members, so the algorithm breaks whenever 
 clusters are elongated, ring-shaped, or split across multiple densities. All cluster characteristics 
 and structure information are lost and filtered when the mean is computed.
 The centroid then lands somewhere no data actually lives, and every assignment made 
 from that position is wrong by construction.
 
-\newthought{Sensitivity to initialization and outliers} means results are non-deterministic.
+\newthought{Sensitivity to initialization and outliers}\index{outliers}\index{initialization!sensitivity} means results are non-deterministic.\index{non-determinism}
 A single extreme point can pull a centroid far from the dense mass of its cluster, silently distorting every assignment downstream.
 Different random starts can converge to entirely different partitions of the same data.
 
@@ -80,10 +80,10 @@ In each case, the right question is not ``how many clusters?'' but ``which level
 
 
 
-\newthought{Hierarchical clustering} produces a dendrogram\index{dendrogram}: a binary tree in 
-which leaves are individual data points and each internal node records the distance at 
+\newthought{Hierarchical clustering} produces a dendrogram\index{dendrogram}: a binary tree in
+which leaves are individual data points and each internal node records the distance at
 which two sub-trees were merged.
-The full range of partitions, from $K{=}1$ to $K{=}n$, lives in this one structure.
+The full range of partitions\index{partition}, from $K{=}1$ to $K{=}n$, lives in this one structure.
 
 \marginnote{\newthought{The same distance matrix} that K-Means uses to assign points to centroids can be 
 used to build an entire tree of clusterings. The tree is built in one pass; 
@@ -190,7 +190,7 @@ and how different linkage criteria encode different assumptions about what makes
 
 \subsection{The Hierarchical Clustering Algorithm}\index{agglomerative clustering}
 
-\newthought{The agglomerative strategy}\index{agglomerative clustering}\cite{Ward1963} is bottom-up: given data $X = \{x_1,\ldots,x_n\}$, initialize $n$ singleton clusters $C_i = \{x_i\}$ in an active set and precompute a distance matrix $D[i,j] = d(x_i, x_j)$.
+\newthought{The agglomerative strategy}\index{agglomerative clustering}\cite{Ward1963} is bottom-up: given data $X = \{x_1,\ldots,x_n\}$, initialize $n$ singleton clusters $C_i = \{x_i\}$ in an active set and precompute a distance matrix\index{distance matrix} $D[i,j] = d(x_i, x_j)$.
 At each step the closest pair $(i^*,j^*) = \arg\min_{i \neq j} D[i,j]$ is merged into $C_m = C_{i^*} \cup C_{j^*}$; the distances to remaining active clusters are updated via linkage criterion $L$.
 Every merge is recorded as an internal node of the dendrogram $T$, labeled with the distance $D[i^*,j^*]$ at which it occurred.
 
@@ -216,13 +216,13 @@ The $n-1$ merge heights span the full range from the smallest pairwise distance 
 \end{algorithmic}
 \end{algorithm}
 
-\newthought{Notice that $L$ is the only design choice.} 
-The algorithm is otherwise fully deterministic. 
+\newthought{Notice that $L$ is the only design choice.}\index{objective function}
+The algorithm is otherwise fully deterministic.\index{determinism}
 
-\newthought{Initialization is deterministic.} Each point starts as its own singleton cluster,
-there is nothing to choose. This stands in sharp contrast to $k$-means, 
-where a random centroid draw forces multiple restarts for optimization. Here, the starting state 
-is uniquely determined by the data, so two runs on the same dataset always produce the same 
+\newthought{Initialization is deterministic.}\index{initialization!hierarchical clustering} Each point starts as its own singleton cluster,
+there is nothing to choose. This stands in sharp contrast to $k$-means,
+where a random centroid draw forces multiple restarts for optimization. Here, the starting state
+is uniquely determined by the data, so two runs on the same dataset always produce the same
 dendrogram.
 
 \newthought{Trace through our six points.} Dotted edges represent pairwise distance calculations;
@@ -604,8 +604,8 @@ different clustering.
 
 
 The distance between two clusters is the distance between their nearest members.
-Single linkage admits an implementation based on Prim's minimal spanning tree (details later), which is fast. This also lets it detect elongated, 
-non-convex clusters. This behavior is called chaining, and is also a weakness; a single close pair of 
+Single linkage admits an implementation based on Prim's minimal spanning tree (details later), which is fast. This also lets it detect elongated,
+non-convex clusters\index{non-convex clusters}. This behavior is called chaining, and is also a weakness; a single close pair of
 points can bridge two otherwise distant clusters, pulling them into one.
 
 \newthought{Complete Linkage}\index{complete linkage}
@@ -770,9 +770,9 @@ total within-cluster variance:
 \end{align*}
 
 where $\mu_i$ and $\mu_j$ are the centroids of $C_i$ and $C_j$.
-Ward's method produces compact, spherical clusters and is closely related to K-Means as 
-both minimise within-cluster variance or inertia. Of course this makes Ward share the 
-same weaknesses as K-Means. 
+Ward's method produces compact, spherical clusters\index{geometric assumptions} and is closely related to K-Means as
+both minimise within-cluster variance\index{within-cluster variance} or inertia. Of course this makes Ward share the
+same weaknesses as K-Means.
 
 
 
@@ -826,8 +826,8 @@ can partially correct a bad partition. Ward's cannot; the bias compounds irrever
 
 \marginnote{\newthought{Irrecoverability}\index{irrecoverability!hierarchical clustering} is what makes chaining and shape bias genuinely dangerous. A bad merge silently propagates through every subsequent distance update; the only remedy is to restart from scratch.}
 
-\newthought{Irreversible greedy merges and local optima.} At each step the algorithm 
-selects the globally optimal merge under the current distance matrix: no local minimum 
+\newthought{Irreversible greedy merges and local optima.}\index{local optimum}\index{convergence} At each step the algorithm
+selects the globally optimal merge under the current distance matrix: no local minimum
 trap exists within a single iteration. However, the greedy (no-reassignment) strategy is myopic. 
 Once $C_{i^*}$ and $C_{j^*}$ are merged into $C_m$, that decision is permanent; 
 no subsequent step can reverse it. A suboptimal early merge propagates through all 
@@ -988,7 +988,7 @@ Following the tree upward from any node gives its ancestors; following downward 
 \vspace{2.5em}
 \newthought{Reading a dendrogram} requires only one rule: a horizontal cut at height $h$ partitions the data into as many clusters as there are vertical stems crossing that line.
 Cutting above $h_4{=}6.40$ gives one cluster; cutting between $h_3{=}2.24$ and $h_4{=}6.40$ gives two; cutting between $h_1{=}1.41$ and $h_2{=}2.00$ gives four; cutting below $h_1$ gives $n$ singletons.
-A large gap between consecutive merge heights is the dendrogram equivalent of the elbow: it suggests a natural number of clusters.
+A large gap between consecutive merge heights is the dendrogram equivalent of the elbow\index{hyperparameter selection}: it suggests a natural number of clusters.
 The kink at $k{=}2$ (filled dot) marks the jump from $2.24$ to $6.40$, 
 confirming two natural clusters. Notice the missing value at $k=3$.
 
