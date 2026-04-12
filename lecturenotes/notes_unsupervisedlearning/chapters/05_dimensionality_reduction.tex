@@ -16,17 +16,18 @@ Yet the intrinsic dimensionality\index{intrinsic dimensionality}, the number of 
 
 \marginnote{\newthought{The manifold hypothesis} holds that high-dimensional data lies on a low-dimensional manifold embedded in the ambient space. The goal of dimensionality reduction is to find that manifold.}
 
-\newthought{Why reduce dimensions?}
-\begin{itemize}
-    \item \textbf{Visualization}: we can only see 2D or 3D directly.
-    \item \textbf{Noise reduction}: irrelevant variation is filtered away.
-    \item \textbf{Computational efficiency}: downstream algorithms run faster and generalize better.
-    \item \textbf{Feature extraction}: latent factors of variation are made explicit.
-    \item \textbf{Combating the curse of dimensionality}: distances become meaningful again.
-\end{itemize}
+\newthought{The curse of dimensionality}\cite{Bellman1961}\index{curse of dimensionality} compounds as features grow: distances concentrate, volumes flee to corners, and the data becomes so sparse that nearest-neighbour methods and clustering lose their footing.
+Every method in Part I suffers from this.
 
 \newthought{Faces, for example,} live in a space with millions of pixels, but vary along a handful of factors: pose, lighting, expression, identity.
 Dimensionality reduction finds those factors and discards the rest.
+
+\newthought{In order to move from high-dimensional observations to compact, signal-carrying representations} we have good reason to find ways to,
+\begin{itemize}
+    \item identify the directions of maximum variance and project data onto them, filtering noise from signal.
+    \item construct new coordinate axes that are not limited to the original features, so that diagonal structure becomes visible.
+    \item preserve local neighbourhood structure when projecting to two or three dimensions for visualization, while understanding what such embeddings can and cannot tell us.
+\end{itemize}
 
 
 \subsection{Hands On Experience}
@@ -85,7 +86,7 @@ What would the second principal component look like, and what does it capture?
 
 \section{The Curse of Dimensionality}\index{curse of dimensionality}
 
-\marginnote{\newthought{Richard Bellman} coined the term ``curse of dimensionality'' in 1961 while studying dynamic programming. The insight carries over directly to machine learning.}
+\marginnote{\newthought{Richard Bellman}\cite{Bellman1961} coined the term ``curse of dimensionality'' in 1961 while studying dynamic programming. The insight carries over directly to machine learning.}
 
 High-dimensional spaces behave counterintuitively.
 As the number of dimensions $d$ grows, three problems compound.
@@ -163,7 +164,7 @@ This is devastating for nearest-neighbour methods and for K-Means.
 \newthought{Data becomes sparse.}
 To maintain the same density of points you need exponentially more data: 10 points per unit in 2D requires 100 points; in 10D, 10 billion.
 
-\marginnote{\newthought{The blessing of dimensionality.} The Johnson-Lindenstrauss lemma shows that $n$ points in high dimensions can be projected to $O(\log n / \epsilon^2)$ dimensions while preserving pairwise distances within $(1{\pm}\epsilon)$. Random projections are cheap and surprisingly powerful.}
+\marginnote{\newthought{The blessing of dimensionality.} The Johnson-Lindenstrauss lemma\cite{JohnsonLindenstrauss1984} shows that $n$ points in high dimensions can be projected to $O(\log n / \epsilon^2)$ dimensions while preserving pairwise distances within $(1{\pm}\epsilon)$. Random projections are cheap and surprisingly powerful.}
 
 \newthought{Implications for machine learning:} K-nearest neighbours degrades; clustering becomes harder; distances lose meaning.
 Dimensionality reduction is often essential before any other algorithm.
@@ -307,7 +308,7 @@ That is exactly what PCA does.
 
 \section{Principal Component Analysis}\index{PCA}\index{covariance matrix}
 
-\marginnote{\newthought{PCA} finds orthogonal directions of maximum variance in the data.}
+\marginnote{\newthought{PCA}\cite{Pearson1901}\cite{Hotelling1933} finds orthogonal directions of maximum variance in the data.}
 
 \newthought{Given centred data} $X \in \mathbb{R}^{n \times d}$, where rows are samples, PCA finds a $k$-dimensional subspace, $k < d$, that best represents the data.
 
@@ -430,13 +431,13 @@ Any matrix $X \in \mathbb{R}^{n \times d}$ has an SVD:
     X &= U \Sigma V^T
 \end{align*}
 
-where $U \in \mathbb{R}^{n \times r}$ holds left singular vectors (orthonormal), $\Sigma \in \mathbb{R}^{r \times r}$ is diagonal with singular values $\sigma_1 \geq \sigma_2 \geq \ldots$, $V \in \mathbb{R}^{d \times r}$ holds right singular vectors (orthonormal), and $r{=}\text{rank}(X)$.
+where $U \in \mathbb{R}^{n \times r}$ holds orthonormal left singular vectors, $\Sigma \in \mathbb{R}^{r \times r}$ is diagonal with singular values $\sigma_1 \geq \sigma_2 \geq \ldots$, $V \in \mathbb{R}^{d \times r}$ holds orthonormal right singular vectors, and $r{=}\text{rank}(X)$.
 
 \newthought{Connection to PCA.} The columns of $V$ are the eigenvectors of $X^T X$, with $\lambda_i = \sigma_i^2 / n$.
 In practice, always compute PCA via the SVD: it is numerically stable and avoids forming $X^T X$ explicitly.
 
 \newthought{Truncated SVD} keeps only the top $k$ singular values: $X_k = U_k \Sigma_k V_k^T$.
-By the Eckart-Young-Mirsky theorem, $X_k$ is the best rank-$k$ approximation to $X$ in both Frobenius and spectral norms.
+By the Eckart-Young-Mirsky theorem\cite{EckartYoung1936}, $X_k$ is the best rank-$k$ approximation to $X$ in both Frobenius and spectral norms.
 
 
 \section{Independent Component Analysis}\index{ICA}
@@ -450,14 +451,14 @@ ICA goes further and finds independent components\index{statistical independence
 Model: $X = AS$, where $A$ is a mixing matrix and $S$ contains independent source signals.
 ICA estimates $W{=}A^{-1}$ to recover $S{=}WX$.
 
-\newthought{The key insight:} independent non-Gaussian signals become more Gaussian when mixed (central limit theorem).
+\newthought{The key insight:} independent non-Gaussian signals become more Gaussian when mixed, a consequence of the central limit theorem.
 ICA maximises non-Gaussianity, measured via kurtosis or negentropy, to separate sources.
-The FastICA algorithm implements this efficiently.
+The FastICA\cite{Hyvarinen1999} algorithm implements this efficiently.
 
 
 \section{t-SNE}\index{t-SNE}
 
-\marginnote{\newthought{t-SNE} stands for t-distributed Stochastic Neighbour Embedding (van der Maaten \& Hinton, 2008). It is optimised for two- or three-dimensional visualization.}
+\marginnote{\newthought{t-SNE} stands for t-distributed Stochastic Neighbour Embedding\cite{vanDerMaaten2008}. It is optimised for two- or three-dimensional visualization.}
 
 \newthought{t-SNE preserves local structure}: nearby points in high dimensions stay nearby in the 2D embedding.
 It does this in four steps.
@@ -539,7 +540,7 @@ Higher perplexity means more global structure is considered.
 
 \section{UMAP}\index{UMAP}
 
-\marginnote{\newthought{UMAP} stands for Uniform Manifold Approximation and Projection (McInnes et al., 2018). It has theoretical foundations in Riemannian geometry and algebraic topology.}
+\marginnote{\newthought{UMAP} stands for Uniform Manifold Approximation and Projection\cite{McInnes2018}. It has theoretical foundations in Riemannian geometry and algebraic topology.}
 
 \newthought{UMAP is a newer non-linear method} that typically preserves more global structure than t-SNE, runs faster on large datasets, and has a theoretical foundation in manifold learning.
 
@@ -681,6 +682,9 @@ Reconstruction error from PCA tells you whether 50 dimensions were truly needed.
 Given two coffee aroma profiles that differ only in a small measurement noise, their PCA projections land at two nearby points with no indication of how reliably they were placed there.
 There is no principled way to generate a new profile by sampling from the compressed space, and no way to interpolate smoothly between two known profiles.
 
+\marginnote{\newthought{Teaser.} Can we replace the single compressed point with a distribution, so that sampling from the latent space generates new, plausible data?}
 \newthought{Variational Autoencoders} replace the single point with a distribution.
 The encoder no longer outputs coordinates but outputs a mean and a variance, turning compression into probabilistic inference.
 Every point in the latent space corresponds to something meaningful, and sampling from it generates new, plausible data.
+
+\marginnote{\newthought{feedback}}

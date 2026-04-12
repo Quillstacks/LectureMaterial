@@ -15,31 +15,39 @@
 
 The deep learning revolution was built on labeled data. But labeling is expensive:
 \begin{itemize}
-    \item ImageNet: 14 million images, years of labeling effort
-    \item Medical imaging: \$50--500 per expert annotation
-    \item Autonomous driving: hours per scene for 3D labeling
+    \item ImageNet required 14 million images and years of human annotation effort
+    \item Medical imaging annotations cost \$50--500 per expert label
+    \item Autonomous driving scenes demand hours of 3D labeling per frame
 \end{itemize}
 
-Meanwhile, unlabeled data is virtually unlimited: the internet has billions of images, trillions of text tokens, endless video.
+Meanwhile, unlabeled data is virtually unlimited: the internet holds billions of images, trillions of text tokens, and endless video.
 
-\textbf{Self-supervised learning} extracts supervision from the data itself by designing \textbf{pretext tasks}---auxiliary tasks whose labels come for free from data structure.
+\newthought{Self-supervised learning}\index{self-supervised learning} extracts supervision from the data itself by designing pretext tasks\index{pretext task}, auxiliary tasks whose labels come for free from data structure.
 
-\begin{figure}[h]
+\newthought{In order to move from expensive manual annotation to learning from raw data} we have good reason to find ways to,
+\begin{itemize}
+    \item design auxiliary tasks whose supervision signal is inherent in the data itself.
+    \item learn representations that capture semantic structure without any human labels.
+    \item transfer learned features to downstream tasks where labels are scarce.
+\end{itemize}
+
+\begin{figure}
 \centering
 \begin{tikzpicture}[node distance=1.2cm]
-    \node[draw, rectangle, fill=blue!20] (data) {Unlabeled Data};
-    \node[draw, rectangle, right of=data, xshift=2cm, fill=green!20] (pretext) {Pretext Task};
-    \node[draw, rectangle, right of=pretext, xshift=2cm, fill=orange!20] (repr) {Representations};
-    \node[draw, rectangle, right of=repr, xshift=2cm, fill=red!20] (down) {Downstream Task};
+    \node[draw, rectangle] (data) {Unlabeled Data};
+    \node[draw, rectangle, right of=data, xshift=2cm] (pretext) {Pretext Task};
+    \node[draw, rectangle, right of=pretext, xshift=2cm] (repr) {Representations};
+    \node[draw, rectangle, right of=repr, xshift=2cm] (down) {Downstream Task};
 
     \draw[->] (data) -- node[above] {\small design} (pretext);
     \draw[->] (pretext) -- node[above] {\small learn} (repr);
     \draw[->] (repr) -- node[above] {\small transfer} (down);
 \end{tikzpicture}
 \caption{Self-supervised learning pipeline: design pretext task $\to$ learn representations $\to$ transfer to downstream tasks.}
+\label{fig:ssl_pipeline}
 \end{figure}
 
-\subsection{Hands-On Experience}
+\subsection{Hands On Experience}
 
 Consider an image. Design a pretext task:
 \begin{enumerate}
@@ -50,30 +58,27 @@ Consider an image. Design a pretext task:
 
 \marginnote{The pretext task should be hard enough to require understanding image structure.}
 
-Each task forces the model to understand image structure---object shapes, semantics, texture---to succeed. The learned features transfer to real tasks like classification.
+Each task forces the model to understand image structure, including object shapes, semantics, and texture, to succeed. The learned features transfer to real tasks like classification.
 
-\subsection{Learning Objectives}
-
-After this lecture, you will be able to:
-\begin{enumerate}
-    \item Design pretext tasks that yield useful representations
-    \item Implement contrastive learning (SimCLR, MoCo)
-    \item Explain non-contrastive methods (BYOL, SimSiam) and why they don't collapse
-    \item Apply masked prediction for vision (MAE) and language (BERT)
-    \item Choose appropriate self-supervised methods for different modalities
-\end{enumerate}
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item Design pretext tasks and contrastive objectives that yield transferable representations.
+    \item Distinguish contrastive methods from non-contrastive and masked-prediction approaches, and identify what prevents collapse in each.
+    \item Apply masked prediction for both vision and language modalities.
+\end{itemize}
 
 %═══════════════════════════════════════════════════════════════════════
 % BLOCK 2: MAIN THEORY
 %═══════════════════════════════════════════════════════════════════════
 
-\section{Pretext Tasks}
+\newpage
+\section{Pretext Tasks}\index{pretext task}
 
 \marginnote{A pretext task creates pseudo-labels from data structure.}
 
-Early self-supervised methods designed clever pretext tasks:
+\newthought{Early self-supervised methods} designed clever pretext tasks:
 
-\begin{table}[h]
+\begin{table}
 \centering
 \begin{tabular}{ll}
 \toprule
@@ -86,24 +91,20 @@ Inpainting & Predict missing image regions \\
 Context prediction & Predict relative position of patches \\
 \bottomrule
 \end{tabular}
-\caption{Classic pretext tasks for images}
+\caption{Classic pretext tasks for images.}
+\label{tab:pretext_tasks}
 \end{table}
 
-\textbf{Limitation}: Pretext task performance doesn't always correlate with downstream task performance. We need more principled approaches.
+\newthought{The limitation} of handcrafted pretext tasks is that their performance does not always correlate with downstream task performance. We need more principled approaches.
 
 
-\section{Contrastive Learning}
+\section{Contrastive Learning}\index{contrastive learning}
 
 \marginnote{Core idea: pull similar things together, push different things apart.}
 
-\textbf{Contrastive learning} learns representations by:
-\begin{enumerate}
-    \item Creating \textbf{positive pairs}: augmented views of the same sample
-    \item Creating \textbf{negative pairs}: views of different samples
-    \item Training to distinguish positives from negatives
-\end{enumerate}
+\newthought{Contrastive learning} learns representations by creating positive pairs, augmented views of the same sample, and negative pairs, views of different samples, then training to distinguish positives from negatives.
 
-\subsection{InfoNCE Loss}
+\subsection{InfoNCE Loss}\index{InfoNCE}
 
 Given an anchor $x$, positive $x^+$, and negatives $\{x^-_k\}$:
 
@@ -111,25 +112,25 @@ Given an anchor $x$, positive $x^+$, and negatives $\{x^-_k\}$:
     \mathcal{L}_{\text{InfoNCE}} = -\log \frac{\exp(\text{sim}(z, z^+) / \tau)}{\exp(\text{sim}(z, z^+) / \tau) + \sum_k \exp(\text{sim}(z, z^-_k) / \tau)}
 \end{equation}
 
-where $\text{sim}(u, v) = u \cdot v / (\|u\| \|v\|)$ is cosine similarity and $\tau$ is temperature.
+where $\text{sim}(u, v) = u \cdot v / (\|u\| \|v\|)$ is cosine similarity and $\tau$ is temperature~\cite{vanDenOord2018InfoNCE}.
 
-\begin{figure}[h]
+\begin{figure}
 \centering
 \begin{tikzpicture}[scale=0.9]
     % Original image
-    \node[draw, rectangle, minimum width=1.5cm, minimum height=1.5cm, fill=blue!20] (orig) at (0,0) {$x$};
+    \node[draw, rectangle, minimum width=1.5cm, minimum height=1.5cm] (orig) at (0,0) {$x$};
 
     % Augmentations
-    \node[draw, rectangle, minimum width=1cm, minimum height=1cm, fill=green!20] (aug1) at (3,1) {$x_1$};
-    \node[draw, rectangle, minimum width=1cm, minimum height=1cm, fill=green!20] (aug2) at (3,-1) {$x_2$};
+    \node[draw, rectangle, minimum width=1cm, minimum height=1cm] (aug1) at (3,1) {$x_1$};
+    \node[draw, rectangle, minimum width=1cm, minimum height=1cm] (aug2) at (3,-1) {$x_2$};
 
     % Encoders
     \node[draw, rectangle] (enc1) at (5,1) {$f$};
     \node[draw, rectangle] (enc2) at (5,-1) {$f$};
 
     % Representations
-    \node[draw, circle, fill=green!30] (z1) at (7,1) {$z_1$};
-    \node[draw, circle, fill=green!30] (z2) at (7,-1) {$z_2$};
+    \node[draw, circle] (z1) at (7,1) {$z_1$};
+    \node[draw, circle] (z2) at (7,-1) {$z_2$};
 
     % Arrows
     \draw[->] (orig) -- node[above, sloped] {\small aug} (aug1);
@@ -140,21 +141,22 @@ where $\text{sim}(u, v) = u \cdot v / (\|u\| \|v\|)$ is cosine similarity and $\
     \draw[->] (enc2) -- (z2);
 
     % Similarity
-    \draw[<->, green, thick] (z1) -- node[right] {\small maximize} (z2);
+    \draw[<->, black, thick] (z1) -- node[right] {\small maximize} (z2);
 
     % Negative
-    \node[draw, circle, fill=red!30] (zneg) at (7,-3) {$z^-$};
-    \draw[<->, red, thick, dashed] (z1) -- node[right] {\small minimize} (zneg);
+    \node[draw, circle, black!55] (zneg) at (7,-3) {$z^-$};
+    \draw[<->, black!55, thick, dashed] (z1) -- node[right] {\small minimize} (zneg);
 \end{tikzpicture}
-\caption{Contrastive learning: augmented views of same image should have similar representations.}
+\caption{Contrastive learning: augmented views of the same image should have similar representations.}
+\label{fig:contrastive_learning}
 \end{figure}
 
 
-\section{SimCLR}
+\section{SimCLR}\index{SimCLR}
 
-\marginnote{SimCLR: Simple Contrastive Learning of Visual Representations (Chen et al., 2020)}
+\marginnote{\newthought{SimCLR.} Simple Contrastive Learning of Visual Representations~\cite{Chen2020SimCLR}.}
 
-\textbf{SimCLR} is a simple and effective contrastive framework:
+\newthought{SimCLR} is a simple and effective contrastive framework:
 
 \begin{algorithm}[H]
 \caption{SimCLR}
@@ -171,40 +173,40 @@ where $\text{sim}(u, v) = u \cdot v / (\|u\| \|v\|)$ is cosine similarity and $\
 \end{algorithmic}
 \end{algorithm}
 
-\textbf{Key ingredients}:
+\newthought{Key ingredients} of SimCLR:
 \begin{enumerate}
-    \item \textbf{Strong augmentations}: Random crop, color jitter, Gaussian blur, etc.
-    \item \textbf{Projection head}: MLP after encoder; discarded after training
-    \item \textbf{Large batch sizes}: More negatives $\to$ better performance (4096+)
-    \item \textbf{Temperature}: $\tau = 0.1$ works well
+    \item Strong augmentations: random crop, color jitter, Gaussian blur
+    \item Projection head: MLP after encoder; discarded after training
+    \item Large batch sizes: more negatives improve performance (4096+)
+    \item Temperature: $\tau = 0.1$ works well
 \end{enumerate}
 
 
-\section{MoCo}
+\section{MoCo}\index{MoCo}
 
-\marginnote{MoCo: Momentum Contrast (He et al., 2020)}
+\marginnote{\newthought{MoCo.} Momentum Contrast~\cite{He2020MoCo}.}
 
-SimCLR needs huge batches for enough negatives. \textbf{MoCo} uses a \textbf{queue} of negatives:
+SimCLR needs huge batches for enough negatives. MoCo\index{momentum encoder} uses a queue of negatives instead:
 
 \begin{itemize}
     \item Maintain a queue of recent embeddings as negatives
-    \item Use a \textbf{momentum encoder} (slowly updated copy) for consistency
+    \item Use a momentum encoder, a slowly updated copy, for consistency
     \item Update: $\theta_k \gets m \theta_k + (1-m) \theta_q$ where $m = 0.999$
 \end{itemize}
 
-Benefits: Works with small batches (256), memory-efficient.
+\newthought{The benefit} is that MoCo works with small batches of 256 and is memory-efficient.
 
 
-\section{Non-Contrastive Methods}
+\section{Non-Contrastive Methods}\index{non-contrastive learning}
 
 \marginnote{Surprising finding: you don't need negatives!}
 
-\subsection{BYOL: Bootstrap Your Own Latent}
+\subsection{BYOL: Bootstrap Your Own Latent}\index{BYOL}
 
-\textbf{BYOL} learns without negative pairs:
+\newthought{BYOL} learns without negative pairs~\cite{Grill2020BYOL}:
 \begin{enumerate}
     \item Online network: encoder $\to$ projector $\to$ predictor
-    \item Target network: encoder $\to$ projector (momentum-updated)
+    \item Target network: encoder $\to$ projector, updated via momentum
     \item Loss: MSE between online prediction and target projection
 \end{enumerate}
 
@@ -212,33 +214,34 @@ Benefits: Works with small batches (256), memory-efficient.
     \mathcal{L}_{\text{BYOL}} = \|q_\theta(z_1) - \text{sg}(z'_2)\|^2
 \end{equation}
 
-where $\text{sg}$ means stop-gradient (no backprop through target).
+where $\text{sg}$ means stop-gradient, preventing backpropagation through the target.
 
-\subsection{SimSiam: Simple Siamese}
+\subsection{SimSiam: Simple Siamese}\index{SimSiam}
 
-\textbf{SimSiam} is even simpler---no momentum encoder:
+\newthought{SimSiam} is even simpler, requiring no momentum encoder~\cite{Chen2021SimSiam}:
 \begin{equation}
     \mathcal{L} = -\frac{1}{2} \left( \text{sim}(p_1, \text{sg}(z_2)) + \text{sim}(p_2, \text{sg}(z_1)) \right)
 \end{equation}
 
-\subsection{Why Don't They Collapse?}
+\subsection{Why Don't They Collapse?}\index{representation collapse}
 
 \marginnote{Without negatives, why doesn't everything map to a constant?}
 
 Several hypotheses:
 \begin{itemize}
-    \item \textbf{Asymmetry}: Predictor network breaks symmetry
-    \item \textbf{Stop-gradient}: Prevents both branches from collapsing together
-    \item \textbf{BatchNorm}: Implicitly creates contrastive signal within batch
+    \item Asymmetry: the predictor network breaks symmetry
+    \item Stop-gradient: prevents both branches from collapsing together
+    \item BatchNorm: implicitly creates a contrastive signal within each batch
 \end{itemize}
 
 
-\section{Masked Prediction}
+\section{Masked Prediction}\index{masked prediction}
 
 \marginnote{Mask part of the input; predict the masked part.}
 
-\subsection{BERT: Masked Language Modeling}
+\subsection{BERT: Masked Language Modeling}\index{BERT}\index{masked language modeling}
 
+\newthought{BERT} pioneered masked prediction for language~\cite{Devlin2019BERT}:
 \begin{enumerate}
     \item Mask 15\% of tokens randomly
     \item Of masked: 80\% [MASK], 10\% random, 10\% unchanged
@@ -249,19 +252,19 @@ Several hypotheses:
     \mathcal{L}_{\text{MLM}} = -\sum_{i \in \text{masked}} \log p(x_i | x_{\backslash i})
 \end{equation}
 
-\subsection{MAE: Masked Autoencoders}
+\subsection{MAE: Masked Autoencoders}\index{MAE}\index{masked autoencoder}
 
-\marginnote{MAE: Mask 75\% of image patches, reconstruct pixels.}
+\marginnote{\newthought{MAE.} Mask 75\% of image patches, reconstruct pixels~\cite{He2022MAE}.}
 
 For vision:
 \begin{enumerate}
-    \item Divide image into patches (e.g., 16×16)
+    \item Divide image into patches, e.g.\ 16$\times$16
     \item Mask 75\% of patches randomly
-    \item Encode visible patches with transformer
-    \item Decode (with mask tokens) to reconstruct pixels
+    \item Encode visible patches with a transformer
+    \item Decode with mask tokens to reconstruct pixels
 \end{enumerate}
 
-\begin{figure}[h]
+\begin{figure}
 \centering
 \begin{tikzpicture}[scale=0.6]
     % Original image grid
@@ -280,18 +283,18 @@ For vision:
         }
     }
     % Fill masked patches
-    \fill[gray!50] (0,0) rectangle (1,1);
-    \fill[gray!50] (1,0) rectangle (2,1);
-    \fill[gray!50] (2,1) rectangle (3,2);
-    \fill[gray!50] (0,2) rectangle (1,3);
-    \fill[gray!50] (1,2) rectangle (2,3);
-    \fill[gray!50] (2,2) rectangle (3,3);
-    \fill[gray!50] (3,2) rectangle (4,3);
-    \fill[gray!50] (0,3) rectangle (1,4);
-    \fill[gray!50] (2,3) rectangle (3,4);
-    \fill[gray!50] (3,3) rectangle (4,4);
-    \fill[gray!50] (3,0) rectangle (4,1);
-    \fill[gray!50] (3,1) rectangle (4,2);
+    \fill[black!20] (0,0) rectangle (1,1);
+    \fill[black!20] (1,0) rectangle (2,1);
+    \fill[black!20] (2,1) rectangle (3,2);
+    \fill[black!20] (0,2) rectangle (1,3);
+    \fill[black!20] (1,2) rectangle (2,3);
+    \fill[black!20] (2,2) rectangle (3,3);
+    \fill[black!20] (3,2) rectangle (4,3);
+    \fill[black!20] (0,3) rectangle (1,4);
+    \fill[black!20] (2,3) rectangle (3,4);
+    \fill[black!20] (3,3) rectangle (4,4);
+    \fill[black!20] (3,0) rectangle (4,1);
+    \fill[black!20] (3,1) rectangle (4,2);
     \node at (2,-0.5) {75\% masked};
     \end{scope}
 
@@ -310,47 +313,42 @@ For vision:
     \end{scope}
 \end{tikzpicture}
 \caption{MAE: mask most patches, reconstruct pixels.}
+\label{fig:mae}
 \end{figure}
 
-\subsection{Data2Vec}
+\subsection{Data2Vec}\index{Data2Vec}
 
-Generalizes masked prediction across modalities (vision, speech, text) using a single framework with teacher-student distillation.
+\newthought{Data2Vec} generalises masked prediction across modalities, including vision, speech, and text, using a single framework with teacher-student distillation~\cite{Baevski2022Data2Vec}.
 
 
-\section{Cross-Modal Self-Supervision}
+\section{Cross-Modal Self-Supervision}\index{CLIP}
 
-\marginnote{CLIP: learn joint image-text representations from web data.}
+\marginnote{\newthought{CLIP.} Contrastive Language-Image Pre-training~\cite{Radford2021CLIP}.}
 
-\textbf{CLIP} (Contrastive Language-Image Pre-training):
+\newthought{CLIP} learns joint image-text representations from web data:
 \begin{itemize}
     \item Train on 400M image-caption pairs from the web
     \item Contrastive loss: match images with their captions
     \item Result: powerful zero-shot transfer to new tasks
 \end{itemize}
 
-This bridges to next chapter on zero-shot learning.
+This bridges to the next chapter on zero-shot learning.
 
 
 %═══════════════════════════════════════════════════════════════════════
 % BLOCK 3: STUDENT ACTIVATION
 %═══════════════════════════════════════════════════════════════════════
 
+\newpage
 \section{Examples \& Exercises}
 
 \subsection{Exercise 1: Design a Pretext Task}
 
 Propose a self-supervised pretext task for:
 \begin{enumerate}
-    \item Audio data (e.g., speech recordings)
-    \item Time series (e.g., sensor readings)
-    \item Graphs (e.g., molecular structures)
-\end{enumerate}
-
-\textbf{Solutions}:
-\begin{enumerate}
-    \item Audio: Predict next audio frame, predict speaker identity, contrastive on time-shifted clips
-    \item Time series: Predict future values, contrastive on temporal augmentations, predict transformations
-    \item Graphs: Mask nodes/edges, contrastive on graph augmentations (drop edges, mask features)
+    \item Audio data, e.g.\ speech recordings
+    \item Time series, e.g.\ sensor readings
+    \item Graphs, e.g.\ molecular structures
 \end{enumerate}
 
 \subsection{Exercise 2: InfoNCE Loss}
@@ -363,44 +361,42 @@ Given embeddings with cosine similarities:
 
 Compute InfoNCE loss with $\tau = 0.5$.
 
-\textbf{Solution}:
-\begin{align*}
-    \mathcal{L} &= -\log \frac{e^{0.9/0.5}}{e^{0.9/0.5} + e^{0.3/0.5} + e^{0.1/0.5}} \\
-    &= -\log \frac{e^{1.8}}{e^{1.8} + e^{0.6} + e^{0.2}} \\
-    &= -\log \frac{6.05}{6.05 + 1.82 + 1.22} \approx -\log(0.66) \approx 0.41
-\end{align*}
-
 \subsection{Exercise 3: Augmentation Ablation}
 
 Why is random cropping important in SimCLR? What would happen without it?
 
-\textbf{Solution}: Random cropping forces the model to learn features invariant to position and scale. Without it, two augmentations of the same image might share only color information, leading to representations that encode color but not object identity.
 
+\section{Self-Reflection and Recap}
 
-\section{Self-Reflection \& Recap}
+\newthought{Self-Reflection.}
 
-\subsection{Reflection Questions}
 \begin{enumerate}
     \item Why is the projection head discarded after training in SimCLR?
-    \begin{quote}
-        \textit{The projection head removes information useful for contrastive learning but not for downstream tasks. The encoder before the head retains more general features.}
-    \end{quote}
-
-    \item What prevents collapse in non-contrastive methods?
-    \begin{quote}
-        \textit{Asymmetry (predictor network) and stop-gradient break the symmetry that would allow both branches to collapse to a constant.}
-    \end{quote}
+    \item What prevents collapse in non-contrastive methods like BYOL and SimSiam?
+    \item How does the masking ratio in MAE affect what the model must learn?
+    \item When would contrastive learning outperform masked prediction, and vice versa?
+    \item How does the choice of augmentation define what the representation becomes invariant to?
+    \item What failure modes arise when the pretext task is too easy or too hard?
+    \item Why does cross-modal pre-training as in CLIP enable zero-shot transfer?
 \end{enumerate}
 
-\subsection{Key Concepts}
+\vspace{1.5em}
+
+\newthought{Recap.}
+
 \begin{itemize}
-    \item Self-supervision creates labels from data structure
-    \item \textbf{Contrastive}: pull positives together, push negatives apart
-    \item \textbf{Non-contrastive}: works without negatives (BYOL, SimSiam)
-    \item \textbf{Masked prediction}: reconstruct missing information (BERT, MAE)
-    \item Augmentations are crucial for defining what should be invariant
+    \item Self-supervision creates labels from data structure; contrastive methods pull positive pairs together and push negatives apart via the InfoNCE loss.
+    \item Non-contrastive methods such as BYOL and SimSiam avoid collapse through asymmetry and stop-gradient, eliminating the need for large negative batches.
+    \item Masked prediction reconstructs hidden input tokens or patches, forcing the model to capture long-range dependencies; BERT applies this to language and MAE to vision.
+    \item The choice of augmentation determines the invariances of the learned representation; augmentations that are too weak yield shortcut features.
 \end{itemize}
 
-\subsection{Next Chapter Teaser}
-\marginnote{Teaser: From learning to transferring}
-\newthought{We can now learn powerful representations without labels.} But can we use these representations for tasks we never trained for? The next chapter explores \textbf{zero-shot and few-shot learning}---leveraging pre-trained knowledge for new tasks with minimal or no examples.
+\vspace{2.5em}
+
+\marginnote{\newthought{Teaser.} Self-supervised representations are powerful, but can we use them for tasks we never trained for, with no labelled examples at all?}
+
+\newthought{We can now learn powerful representations without labels.} But representations alone do not solve downstream tasks. When a new category or domain appears, we still need a way to bridge from pre-trained features to task performance, ideally with zero or very few labelled examples.
+
+\newthought{The next chapter introduces zero-shot and few-shot learning,} where pre-trained vision-language models like CLIP classify images by matching them to text descriptions, and foundation models serve as universal building blocks for new tasks.
+
+\marginnote{\newthought{feedback}}

@@ -11,22 +11,22 @@
 
 \section{The Why}\index{variational inference}\index{latent variable model}
 
-\marginnote{\newthought{Autoencoders compress,} but VAEs generate---and quantify uncertainty.}
+\marginnote{\newthought{Autoencoders compress,} but VAEs generate and quantify uncertainty in a single framework.}
 
 Standard autoencoders learn a deterministic mapping: input $\to$ latent code $\to$ reconstruction.
 The latent space may be irregular, with holes where no training data maps.
 Sampling a random point from that space and decoding it may produce nonsense.
 
-\newthought{Three questions arise naturally} once we have compressed representations:
-\begin{itemize}
-    \item Can we generate new samples by sampling from the latent space?
-    \item Can we interpolate smoothly between data points?
-    \item Can we quantify how uncertain a representation is?
-\end{itemize}
-
-\newthought{Variational Autoencoders}\index{VAE} answer all three by replacing the deterministic bottleneck with a probabilistic one.
+\newthought{Variational Autoencoders}\index{VAE}\cite{KingmaWelling2014} answer three questions at once by replacing the deterministic bottleneck with a probabilistic one.
 Instead of encoding each input to a single point, the encoder outputs a distribution.
 The decoder then samples from that distribution, and a regularisation term ensures the latent space is well-structured.
+
+\newthought{In order to move from deterministic compression to probabilistic latent spaces} we have good reason to find ways to,
+\begin{itemize}
+    \item derive a training objective that trades off faithful reconstruction against latent-space regularity.
+    \item enable gradient-based optimisation through a stochastic sampling step that would otherwise block backpropagation.
+    \item understand which structural knobs, the KL weight, discrete versus continuous codes, conditioning variables, shape the resulting latent space and what each variant buys us.
+\end{itemize}
 
 
 \subsection{Hands On Experience}
@@ -98,7 +98,7 @@ Why might a standard autoencoder fail to produce a meaningful interpolation?
 \newthought{A standard autoencoder} consists of an encoder $f_\phi\colon x \mapsto z$, a decoder $g_\theta\colon z \mapsto \hat{x}$, and a reconstruction loss $\mathcal{L} = \|x - g_\theta(f_\phi(x))\|^2$.
 
 \newthought{Three problems emerge} once we look beyond reconstruction.
-The latent space may contain holes---points $z$ that do not decode to valid data.
+The latent space may contain holes, regions where no training point maps, and decoding a $z$ from such a region may produce nonsense.
 There is no principled way to sample new data from the latent space.
 And there is no measure of how uncertain a given representation is.
 
@@ -270,7 +270,7 @@ The regularisation ensures that every region of the prior generates plausible da
 
 \marginnote{\newthought{$\beta$-VAE} trades reconstruction fidelity for disentanglement by scaling the KL term.}
 
-\newthought{$\beta$-VAE} increases the weight on the KL term:
+\newthought{$\beta$-VAE}\cite{Higgins2017} increases the weight on the KL term:
 
 \begin{align*}
     \mathcal{L}_\beta &= \text{Reconstruction} + \beta \cdot D_{\text{KL}}
@@ -278,7 +278,7 @@ The regularisation ensures that every region of the prior generates plausible da
 
 With $\beta > 1$ the model is pressured to use the latent space efficiently, often leading to disentangled\index{disentanglement} representations where each latent dimension corresponds to a single factor of variation.
 
-\newthought{VQ-VAE}\index{VQ-VAE} replaces continuous latents with discrete codes from a learned codebook.
+\newthought{VQ-VAE}\index{VQ-VAE}\cite{vanDenOord2017} replaces continuous latents with discrete codes from a learned codebook.
 Each encoder output $z_e$ is snapped to the nearest codebook entry:
 
 \begin{align*}
@@ -289,7 +289,7 @@ Each encoder output $z_e$ is snapped to the nearest codebook entry:
 
 Discrete codes sidestep posterior collapse entirely and enable autoregressive priors that capture complex dependencies between code positions.
 
-\newthought{Conditional VAE} adds a conditioning variable $c$, such as a class label, to both encoder $q_\phi(z|x, c)$ and decoder $p_\theta(x|z, c)$.
+\newthought{Conditional VAE}\cite{Sohn2015} adds a conditioning variable $c$, such as a class label, to both encoder $q_\phi(z|x, c)$ and decoder $p_\theta(x|z, c)$.
 This enables controlled generation: sample $z$, specify $c$, and decode.
 
 
@@ -297,7 +297,7 @@ This enables controlled generation: sample $z$, specify $c$, and decode.
 
 \marginnote{\newthought{Distillation} transfers knowledge from a large teacher to a small student.}
 
-\newthought{Knowledge distillation} compresses a large teacher model into a smaller student by training the student to match the teacher's soft output distributions rather than hard labels.
+\newthought{Knowledge distillation}\cite{HintonDistillation2015} compresses a large teacher model into a smaller student by training the student to match the teacher's soft output distributions rather than hard labels.
 
 \newthought{Soft labels} are produced by scaling the teacher's logits with a temperature $T$:
 
@@ -382,7 +382,7 @@ Increasing $\beta$ should sharpen the cluster boundaries but blur the reconstruc
 \begin{itemize}
     \item Why does the ELBO contain two terms, and what does each one enforce?
     \item What happens if you remove the KL term entirely and train with reconstruction loss alone?
-    \item Why does the reparameterisation trick work---what mathematical property of the Gaussian does it exploit?
+    \item Why does the reparameterisation trick work, and what mathematical property of the Gaussian does it exploit?
     \item What is posterior collapse, and under what conditions does it occur?
     \item How does $\beta$-VAE encourage disentanglement, and what is sacrificed in return?
     \item Why does VQ-VAE avoid posterior collapse, and what new challenge does discrete quantisation introduce?
@@ -406,4 +406,6 @@ A contaminated sample, one the model has never seen, will reconstruct poorly and
 The model knows something is wrong, but it cannot quantify how uncertain it is, or decide what to do about it.
 
 \newthought{Uncertainty estimation} fills this gap.
-The next chapter develops tools for quantifying what a model does and does not know---distinguishing irreducible noise from reducible ignorance---and shows how uncertainty estimates enable anomaly detection, out-of-distribution detection, and graceful degradation in deployed systems.
+The next chapter develops tools for quantifying what a model does and does not know, distinguishing irreducible noise from reducible ignorance, and shows how uncertainty estimates enable anomaly detection, out-of-distribution detection, and graceful degradation in deployed systems.
+
+\marginnote{\newthought{feedback}}
