@@ -298,12 +298,11 @@ When the important pattern runs diagonally across the coordinate axes, no single
 \centering
 \begin{tikzpicture}
     \begin{axis}[
-        name=naive,
         xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
         xmin=-4, xmax=4,
         ymin=-4, ymax=4,
-        width=0.42\textwidth,
-        height=0.42\textwidth,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
         xtick={-3,0,3},
@@ -312,7 +311,6 @@ When the important pattern runs diagonally across the coordinate axes, no single
         yticklabel style={font=\small},
         tick align=outside,
         tick pos=left,
-        title={Na\"ive: keep $x^{(1)}$},
     ]
     % Data along y=x direction
     \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
@@ -329,13 +327,20 @@ When the important pattern runs diagonally across the coordinate axes, no single
         \addplot[black, thin, dashed] coordinates {(\xa,\ya) (\xa,0)};
     }
     \end{axis}
+\end{tikzpicture}
+\caption{Na\"ive feature selection: dropping $x^{(2)}$ projects onto the horizontal axis. The dashed errors are large because the data varies along $y{=}x$, not along a coordinate axis. Both features have nearly equal variance, so the na\"ive ranking cannot decide which to keep.}
+\label{fig:naive_projection}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
     \begin{axis}[
-        at={(naive.east)}, anchor=west, xshift=1cm,
         xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
         xmin=-4, xmax=4,
         ymin=-4, ymax=4,
-        width=0.42\textwidth,
-        height=0.42\textwidth,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
         xtick={-3,0,3},
@@ -344,7 +349,6 @@ When the important pattern runs diagonally across the coordinate axes, no single
         yticklabel style={font=\small},
         tick align=outside,
         tick pos=left,
-        title={PCA: project onto PC1},
     ]
     % Same data
     \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
@@ -353,7 +357,7 @@ When the important pattern runs diagonally across the coordinate axes, no single
     };
     % PC1 direction line
     \addplot[black, thin, domain=-3.5:3.5] {x};
-    % Projections onto y=x line (project (a,b) onto y=x: ((a+b)/2, (a+b)/2))
+    % Projections onto y=x line
     \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {
         (-2.85,-2.85) (-2.15,-2.15) (-1.45,-1.45) (-0.85,-0.85) (-0.15,-0.15)
         (0.35,0.35) (0.95,0.95) (1.55,1.55) (2.25,2.25) (2.85,2.85)
@@ -367,8 +371,8 @@ When the important pattern runs diagonally across the coordinate axes, no single
     }
     \end{axis}
 \end{tikzpicture}
-\caption{Left: dropping $x^{(2)}$ projects onto the horizontal axis --- the dashed errors are large because the data varies along $y{=}x$, not along a coordinate axis. Right: PCA projects onto the direction of maximum variance; the reconstruction errors are tiny. Both features have nearly equal variance, so the na\"ive ranking cannot decide which to keep.}
-\label{fig:naive_vs_pca}
+\caption{PCA projection onto PC1: the direction of maximum variance runs along $y{=}x$. The reconstruction errors (dashed) are tiny compared to the na\"ive projection.}
+\label{fig:pca_projection}
 \end{figure}
 
 \newthought{Here both features have nearly the same variance,} so variance-based selection cannot decide which to keep.
@@ -475,7 +479,6 @@ Choose $k$ so that the cumulative explained variance exceeds a threshold, common
 \centering
 \begin{tikzpicture}
     \begin{axis}[
-        name=scree,
         xlabel={Component},
         ylabel={Eigenvalue $\lambda_i$},
         xmin=0.5, xmax=10.5,
@@ -497,22 +500,27 @@ Choose $k$ so that the cumulative explained variance exceeds a threshold, common
         (6,0.2) (7,0.2) (8,0.1) (9,0.1) (10,0.1)
     };
     \end{axis}
+\end{tikzpicture}
+\caption{Scree plot showing individual eigenvalues. The sharp drop after the first component reveals that one direction dominates.}
+\label{fig:scree_plot}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
     \begin{axis}[
-        at={(scree.east)},
-        anchor=west,
-        xshift=1.5cm,
         xlabel={Component},
         ylabel={Cumulative variance},
         xmin=0.5, xmax=10.5,
         ymin=0, ymax=1.1,
-        width=0.45\textwidth,
-        height=0.3\textwidth,
+        width=0.5\textwidth,
+        height=0.35\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
         xtick={1,2,3,4,5,6,7,8,9,10},
         ytick={0,0.5,0.95,1},
-        xticklabel style={font=\tiny},
-        yticklabel style={font=\tiny},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
         tick align=outside,
         tick pos=left,
     ]
@@ -523,9 +531,8 @@ Choose $k$ so that the cumulative explained variance exceeds a threshold, common
     \addplot[black, thin, dashed, domain=0.5:10.5] {0.95};
     \end{axis}
 \end{tikzpicture}
-\vspace{2em}
-\caption{Left: scree plot showing individual eigenvalues; the sharp drop after the first component reveals that one direction dominates. Right: cumulative explained variance; the dashed line marks the 95\% threshold, reached at six components.}
-\label{fig:scree_and_cumvar}
+\caption{Cumulative explained variance. The dashed line marks the 95\% threshold, reached at six components.}
+\label{fig:cumvar_plot}
 \end{figure}
 
 
@@ -597,11 +604,9 @@ Higher perplexity means more global pattern is considered.
 \centering
 \begin{tikzpicture}
     \begin{axis}[
-        name=low,
-        title={Perplexity $= 5$},
         xmin=-30, xmax=30, ymin=-30, ymax=30,
-        width=0.4\textwidth,
-        height=0.4\textwidth,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
         xtick=\empty, ytick=\empty,
@@ -614,12 +619,18 @@ Higher perplexity means more global pattern is considered.
         (15,20) (16,18) (14,19) (17,21)
     };
     \end{axis}
+\end{tikzpicture}
+\caption{t-SNE embedding at perplexity $= 5$. Three tight clusters emerge from local neighbourhood preservation.}
+\label{fig:tsne_perplexity_low}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
     \begin{axis}[
-        at={(low.east)}, anchor=west, xshift=0.5cm,
-        title={Perplexity $= 50$},
         xmin=-30, xmax=30, ymin=-30, ymax=30,
-        width=0.4\textwidth,
-        height=0.4\textwidth,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
         xtick=\empty, ytick=\empty,
@@ -633,8 +644,8 @@ Higher perplexity means more global pattern is considered.
     };
     \end{axis}
 \end{tikzpicture}
-\caption{Same data at two perplexity values. Cluster shapes, sizes, and between-cluster distances all change, neither reflects original geometry.}
-\label{fig:tsne_perplexity}
+\caption{t-SNE embedding at perplexity $= 50$. The same data produces different cluster shapes, sizes, and between-cluster distances. Neither embedding reflects the original geometry.}
+\label{fig:tsne_perplexity_high}
 \end{figure}
 
 \newthought{Common pitfalls:}
