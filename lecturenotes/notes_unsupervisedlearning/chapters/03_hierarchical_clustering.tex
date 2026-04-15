@@ -733,6 +733,8 @@ Average linkage averages all cross-cluster pairwise distances.
 
 \newpage
 \newthought{Ward's Method}\index{Ward's method}
+\marginnote{$\|\cdot\|^2$ is a squared norm, not a Euclidean distance. Ward's values are variance increases; 
+single and average linkage values are distances. The scales are not comparable.}
 
 \begin{marginfigure}
 \centering
@@ -787,10 +789,7 @@ total within-cluster variance:
 
 where $\mu_i$ and $\mu_j$ are the centroids of $C_i$ and $C_j$.
 
-\marginnote{$\|\cdot\|^2$ is a squared norm, not a Euclidean distance. Ward's values are variance increases; single and average linkage values are distances. The scales are not comparable.}
-Ward's method produces compact, spherical clusters\index{geometric assumptions} and is closely related to K-Means as
-both minimise within-cluster variance\index{within-cluster variance} or inertia. Of course this makes Ward share the
-same weaknesses as K-Means.
+
 
 
 
