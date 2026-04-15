@@ -44,31 +44,46 @@ This is not a flaw in the algorithm but a flaw in the question: asking ``how man
             yticklabel style={font=\tiny},
             tick align=outside, tick pos=left,
         ]
-        % Dotted lines from mu1=(2,2) to C1 points
-        \addplot[dotted, black, thin] coordinates {(2,2)(1,2)};
-        \addplot[dotted, black, thin] coordinates {(2,2)(2,3)};
-        \addplot[dotted, black, thin] coordinates {(2,2)(3,1)};
-        % Dotted lines from mu2=(7.33,8) to C2 points
-        \addplot[dotted, black!55, thin] coordinates {(7.33,8)(6,8)};
-        \addplot[dotted, black!55, thin] coordinates {(7.33,8)(8,7)};
-        \addplot[dotted, black!55, thin] coordinates {(7.33,8)(8,9)};
+        % All pairwise distances as dashed lines
+        \draw[densely dashed, black!25, thin] (axis cs:1,2) -- (axis cs:2,3);
+        \draw[densely dashed, black!25, thin] (axis cs:1,2) -- (axis cs:3,1);
+        \draw[densely dashed, black!25, thin] (axis cs:1,2) -- (axis cs:6,8);
+        \draw[densely dashed, black!25, thin] (axis cs:1,2) -- (axis cs:8,7);
+        \draw[densely dashed, black!25, thin] (axis cs:1,2) -- (axis cs:8,9);
+        \draw[densely dashed, black!25, thin] (axis cs:2,3) -- (axis cs:3,1);
+        \draw[densely dashed, black!25, thin] (axis cs:2,3) -- (axis cs:6,8);
+        \draw[densely dashed, black!25, thin] (axis cs:2,3) -- (axis cs:8,7);
+        \draw[densely dashed, black!25, thin] (axis cs:2,3) -- (axis cs:8,9);
+        \draw[densely dashed, black!25, thin] (axis cs:3,1) -- (axis cs:6,8);
+        \draw[densely dashed, black!25, thin] (axis cs:3,1) -- (axis cs:8,7);
+        \draw[densely dashed, black!25, thin] (axis cs:3,1) -- (axis cs:8,9);
+        \draw[densely dashed, black!25, thin] (axis cs:6,8) -- (axis cs:8,7);
+        \draw[densely dashed, black!25, thin] (axis cs:6,8) -- (axis cs:8,9);
+        \draw[densely dashed, black!25, thin] (axis cs:8,7) -- (axis cs:8,9);
+        % Full single-linkage hierarchy as solid lines (matching trace)
+        % Merge 1: x1--x2
+        \draw[black!55, thin] (axis cs:1,2) -- (axis cs:2,3);
+        % Merge 2: x5--x6
+        \draw[black!55, thin] (axis cs:8,7) -- (axis cs:8,9);
+        % Merge 3: x4--x5 (x4 joins {x5,x6} via x5)
+        \draw[black!55, thin] (axis cs:6,8) -- (axis cs:8,7);
+        % Merge 4: x2--x3 (x3 joins {x1,x2} via x2)
+        \draw[black!55, thin] (axis cs:2,3) -- (axis cs:3,1);
+        % Merge 5: x2--x4 (final merge across groups)
+        \draw[black!55, thin] (axis cs:2,3) -- (axis cs:6,8);
         % Data points
-        \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(1,2)(2,3)(3,1)};
-        \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(6,8)(8,7)(8,9)};
-        % Centroids
-        \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {(2,2)};
-        \addplot[only marks, mark=o, mark size=2pt, black!55, thick] coordinates {(7.33,8)};
+        \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {(1,2)(2,3)(3,1)(6,8)(8,7)(8,9)};
         \node[font=\tiny, anchor=south east] at (axis cs:1,2) {$x_1$};
         \node[font=\tiny, anchor=south east] at (axis cs:2,3) {$x_2$};
         \node[font=\tiny, anchor=north]      at (axis cs:3,1) {$x_3$};
         \node[font=\tiny, anchor=south west] at (axis cs:6,8) {$x_4$};
         \node[font=\tiny, anchor=north west] at (axis cs:8,7) {$x_5$};
         \node[font=\tiny, anchor=south west] at (axis cs:8,9) {$x_6$};
-        \node[font=\tiny, anchor=north east] at (axis cs:2,2) {$\mu_1$};
-        \node[font=\tiny, anchor=north]      at (axis cs:7.33,8) {$\mu_2$};
         \end{axis}
     \end{tikzpicture}
-    \caption{The canonical six points in two natural clusters $K=2$. Open circles mark the centroids $\mu_1{=}(2,2)$ and $\mu_2{\approx}(7.3,8)$; dotted lines show the distance each point contributes to inertia.}
+    \caption{The canonical six points with all pairwise distances (dashed) and the full single-linkage hierarchy (solid). 
+    The last merge connects $x_2$ and $x_4$ across the two groups. No centroids needed; 
+    only pairwise distances drive the clustering.}
     \label{fig:why_canonical}
     \end{marginfigure}
 
@@ -216,14 +231,15 @@ The $n-1$ merge heights span the full range from the smallest pairwise distance 
 \end{algorithmic}
 \end{algorithm}
 
-\newthought{Notice that $L$ is the only design choice.}\index{objective function}
+\newthought{Notice that $L$ is the only hyperparameter to determine.}\index{objective function}
 The algorithm is otherwise fully deterministic.\index{determinism}
 
 \newthought{Initialization is deterministic.}\index{initialization!hierarchical clustering} Each point starts as its own singleton cluster,
 there is nothing to choose. This stands in sharp contrast to $k$-means,
 where a random centroid draw forces multiple restarts for optimization. Here, the starting state
 is uniquely determined by the data, so two runs on the same dataset always produce the same
-dendrogram.
+dendrogram.\marginnote{Strictly, the dendrogram is unique only when all pairwise distances are distinct. 
+When ties occur, the merge order depends on the tie-breaking rule, typically lowest index first.}
 
 \newthought{Trace through our six points.} Dotted edges represent pairwise distance calculations;
 the dashed edge marks the current merge; gray edges record prior ones.
@@ -770,6 +786,8 @@ total within-cluster variance:
 \end{align*}
 
 where $\mu_i$ and $\mu_j$ are the centroids of $C_i$ and $C_j$.
+
+\marginnote{$\|\cdot\|^2$ is a squared norm, not a Euclidean distance. Ward's values are variance increases; single and average linkage values are distances. The scales are not comparable.}
 Ward's method produces compact, spherical clusters\index{geometric assumptions} and is closely related to K-Means as
 both minimise within-cluster variance\index{within-cluster variance} or inertia. Of course this makes Ward share the
 same weaknesses as K-Means.
@@ -1189,7 +1207,7 @@ This matches SLINK\index{SLINK}, the classical optimal algorithm for single link
         \end{axis}
     \end{tikzpicture}
     \caption{The same three points from the K-Means exercise. No centroids this time; the algorithm needs only pairwise distances.}
-    \label{fig:hc_exercise_scatter}
+    \label{fig:hc_exercise_three_scatter}
 \end{marginfigure}
 
 \newthought{Given three points} $x_1{=}(1,1)$, $x_2{=}(3,1)$, $x_3{=}(8,7)$, run 

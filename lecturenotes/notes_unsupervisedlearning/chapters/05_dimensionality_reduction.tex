@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Dimensionality Reduction}\index{dimensionality reduction}\index{PCA}\index{t-SNE}\index{UMAP}
-\newthought{High dimensions hide structure, compress to reveal it.}
+\newthought{Folding and Unfolding Space.}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -11,71 +11,163 @@
 
 \section{The Why}\index{curse of dimensionality}\index{intrinsic dimensionality}
 
-Real-world data is often high-dimensional: images have millions of pixels, genomes have billions of base pairs, text embeddings have hundreds of dimensions.
-Yet the intrinsic dimensionality\index{intrinsic dimensionality}, the number of degrees of freedom that actually vary, is often much lower.
-
-\marginnote{\newthought{The manifold hypothesis} holds that high-dimensional data lies on a low-dimensional manifold embedded in the ambient space. The goal of dimensionality reduction is to find that manifold.}
-
-\newthought{The curse of dimensionality}\cite{Bellman1961}\index{curse of dimensionality} compounds as features grow: distances concentrate, volumes flee to corners, and the data becomes so sparse that nearest-neighbour methods and clustering lose their footing.
-Every method in Part I suffers from this.
-
-\newthought{Faces, for example,} live in a space with millions of pixels, but vary along a handful of factors: pose, lighting, expression, identity.
+\marginnote{\newthought{MNIST handwritten digits}\cite{LeCun1998}, for example, 
+live in $\mathbb{R}^{784}$ ($28{\times}28$ pixels), but vary along a handful of latent factors such as shapes or geometric primitives. 
+The intrinsic dimensionality\index{intrinsic dimensionality} is 
+estimated at roughly $k \approx 12$ to $14$.}
 Dimensionality reduction finds those factors and discards the rest.
+
+
+
+
+
+
+
+\newthought{Real-world data} $\mathbf{X} \in \mathbb{R}^{n \times d}$ is often high-dimensional: 
+images have millions of pixels, genomes have billions of base pairs, text embeddings have thousands of dimensions.
+Every clustering method in Part~I takes such a feature space as given and works within it.
+But while dimensionality comes at a cost and degrades our approaches, dimensionality carries information. 
+The question then becomes whether a more compact representation could carry the same information.
+
+
+\newthought{Dimensionality has a price}\index{curse of dimensionality}.
+In low dimensions, some points are close and others are far away; that contrast is what makes clustering work.
+As $d$ grows, the contrast disappears: all pairwise distances converge toward the same value.
+
+
+\newthought{Computational cost} grows with $d$, too.
+Distance computations scale as $O(nd)$, covariance matrices require $O(d^{2})$ storage, and 
+eigendecompositions cost $O(d^{3})$.
+Reducing from $d$ to $k$ before fitting a downstream model can turn an intractable pipeline into a practical one.
+
+\newthought{Expressiveness of the feature space.} Original features are often redundant or entangled.
+If two features $x^{(i)}$ and $x^{(j)}$ are highly correlated ($|\rho_{ij}| \approx 1$), 
+they carry nearly the same information; a good representation replaces them with a single component 
+that captures their shared variance.
+
+\newthought{Interpretability} benefits directly.
+Humans usually usually do not think and reason in high-dimensional vector spaces; we prefer low-dimensional, 
+disentangled representations that align with our concepts of space.
+
+
 
 \newthought{In order to move from high-dimensional observations to compact, signal-carrying representations} we have good reason to find ways to,
 \begin{itemize}
-    \item identify the directions of maximum variance and project data onto them, filtering noise from signal.
-    \item construct new coordinate axes that are not limited to the original features, so that diagonal structure becomes visible.
-    \item preserve local neighbourhood structure when projecting to two or three dimensions for visualization, while understanding what such embeddings can and cannot tell us.
+    \item find a mapping that retains the pattern that carries the signal.
+    \item construct proxy dimensions that are not limited to the original features, so that hidden patterns become apparent.
+    \item understand what different notions of preserving pattern imply, and choose the right one for a given task.
 \end{itemize}
 
 
-\subsection{Hands On Experience}
 
-\newthought{Consider} the following 2D data that lies approximately along the line $y{=}x$.
 
-\begin{marginfigure}
+
+
+
+
+
+
+
+
+\newpage
+\subsection{Hands-On Experience}
+
+\newthought{Consider} the canonical six points, but now arranged so that $x^{(1)}$ varies 
+only slightly while $x^{(2)}$ carries nearly all the spread.
+
+\begin{figure}
 \centering
-\begin{tikzpicture}
+\begin{tikzpicture}[scale=1]
     \begin{axis}[
-        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
-        xmin=-2, xmax=6,
-        ymin=-1, ymax=5,
-        width=\marginparwidth,
-        height=\marginparwidth,
+        xmin=0, xmax=10,
+        ymin=0, ymax=10,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
         axis line style={draw=none},
-        tick style={black, thin},
-        xtick={0,2,4},
-        ytick={0,2,4},
-        xticklabel style={font=\tiny},
-        yticklabel style={font=\tiny},
+        tick style={black, thick},
+        xtick={1,2,3,4,5,6,7,8,9},
+        ytick={1,2,3,4,5,6,7,8,9},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
         tick align=outside,
         tick pos=left,
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
     ]
     \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
-        (0,0.1) (1,1.2) (2,1.9) (3,3.1) (4,4.0) (5,4.8)
-        (0.5,0.4) (1.5,1.6) (2.5,2.4) (3.5,3.6) (4.5,4.3)
+        (4.8,1) (5.3,2) (4.5,1.5)
     };
-    \addplot[black, thin, domain=-0.5:5.5] {x};
-    \node[font=\small, anchor=south] at (axis cs:4,3.5) {PC1};
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (5.2,7.5) (4.7,8.5) (5.5,9)
+    };
+    \node[font=\small, anchor=east]       at (axis cs:4.8,1)   {$x_1$};
+    \node[font=\small, anchor=west]       at (axis cs:5.3,2)   {$x_2$};
+    \node[font=\small, anchor=east]       at (axis cs:4.5,1.5) {$x_3$};
+    \node[font=\small, anchor=east]       at (axis cs:5.2,7.5) {$x_4$};
+    \node[font=\small, anchor=east]       at (axis cs:4.7,8.5) {$x_5$};
+    \node[font=\small, anchor=west]       at (axis cs:5.5,9)   {$x_6$};
     \end{axis}
 \end{tikzpicture}
-\caption{Data lies along a 1D subspace. The direction of maximum variance is the first principal component.}
-\label{fig:pca_intro}
-\end{marginfigure}
+\caption{The canonical six points, repositioned so that $x^{(1)}$ barely varies while $x^{(2)}$ carries both the cluster separation and the within-cluster spread. Two features describe each point, but the data is essentially one-dimensional.}
+\label{fig:dimred_intro_scatter}
+\end{figure}
 
-\newthought{Which direction} captures the most variance?
-If you project onto that direction, how much information is lost?
-What would the second principal component look like, and what does it capture?
+\marginnote{
+\begin{itemize}
+    \item If you had to keep only one of the two features, which would you choose?
+    \item How much information would you lose?
+    \item And could you recover the two clusters from that single feature alone?
+\end{itemize}}
 
-\vspace{2.5em}
+
+\newthought{The two clusters} are clearly visible, and one feature carries almost all the signal.
+The first feature $x^{(1)}$ hovers around 5 for every point; dropping it loses almost nothing.
+The second feature $x^{(2)}$ alone separates the two groups and captures the within-cluster variation.
+
+
+\marginnote{\newthought{Hand-crafted feature engineering} is dimensionality reduction by another name. 
+When a domain expert selects "age" and "income" from a database with hundreds of columns, or computes edge gradients 
+from raw pixels, they are projecting from $\mathbb{R}^{d}$ to $\mathbb{R}^{k}$ using human genius. 
+}
+\begin{marginfigure}
+    \centering
+    \includegraphics[width=0.5\marginparwidth]{./figures/eight.png}
+    \caption{A single MNIST digit its meaningful variation spans few dimensions.}
+    \label{fig:mnist_eight}
+\end{marginfigure} 
+
+\newthought{The methods in this chapter automate that judgment of dimensionality reduction.} 
+What is the most efficient mapping you can find for the MNIST dataset, using only geometric primitives such as 
+circles, lines so that each class is well-separated? 
+
+
+
+\newthought{A well-chosen mapping} $f\colon \mathbb{R}^{d} \to \mathbb{R}^{k}$ disentangles latent factors, 
+yielding coordinates that are more discriminative for downstream tasks than the originals.
+
+
 
 \newthought{The Learning Objectives} of this lecture:
 \begin{itemize}
+    \item Understand naive feature selection based on variance and its limitations.
     \item Understand the PCA objective and its connection to variance maximization and the singular value decomposition.
     \item Apply t-SNE and UMAP for visualization and avoid common misinterpretations of their output.
     \item Choose appropriate dimensionality reduction methods based on linearity, dataset scale, and whether the goal is preprocessing or visualization.
 \end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 % ==============================================================================================
@@ -84,92 +176,74 @@ What would the second principal component look like, and what does it capture?
 
 \newpage
 
-\section{The Curse of Dimensionality}\index{curse of dimensionality}
+\section{The Curse of Dimensionality, Revisited}\index{curse of dimensionality}
 
-\marginnote{\newthought{Richard Bellman}\cite{Bellman1961} coined the term ``curse of dimensionality'' in 1961 while studying dynamic programming. The insight carries over directly to machine learning.}
-
-High-dimensional spaces behave counterintuitively.
-As the number of dimensions $d$ grows, three problems compound.
-
-\newthought{Volume concentrates in corners.}
-Consider a hypercube $[-1,1]^d$.
-The inscribed hypersphere has radius 1.
-As $d$ increases, the ratio of their volumes vanishes:
-
-\begin{align*}
-    \frac{V_{\text{sphere}}}{V_{\text{cube}}} &= \frac{\pi^{d/2} / \Gamma(d/2 + 1)}{2^d} \xrightarrow{d \to \infty} 0
-\end{align*}
-
-Almost all volume lives in the corners, far from the centre.
+\newthought{The key observation} is that high $d$ is only fatal when all $d$ dimensions carry independent information.
+In practice they rarely do.
+Features are correlated, redundant, or simply noisy.
+The effective degrees of freedom, the intrinsic dimensionality $k$, is often far smaller than $d$.
 
 \begin{marginfigure}
 \centering
 \begin{tikzpicture}
     \begin{axis}[
         xlabel={Dimension $d$},
-        ylabel={Volume ratio},
-        xmin=1, xmax=20,
-        ymin=0, ymax=1,
+        ylabel={$N^{-1/d}$},
+        xmin=1, xmax=50,
+        ymin=0, ymax=1.05,
         width=\marginparwidth,
         height=\marginparwidth,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick={1,5,10,15,20},
+        xtick={1,10,20,30,40,50},
         ytick={0,0.5,1},
         xticklabel style={font=\tiny},
         yticklabel style={font=\tiny},
         tick align=outside,
         tick pos=left,
     ]
-    % Precomputed values for pi^(d/2) / (2^d * Gamma(d/2 + 1)), d=1..20
+    % N=100 points: N^{-1/d} = 100^{-1/d}
     \addplot[black, thin]
         coordinates {
-            (1, 0.7854)
-            (2, 0.7854)
-            (3, 0.5236)
-            (4, 0.3084)
-            (5, 0.1645)
-            (6, 0.0807)
-            (7, 0.0378)
-            (8, 0.0168)
-            (9, 0.0071)
-            (10, 0.0029)
-            (11, 0.0011)
-            (12, 0.0004)
-            (13, 0.0001)
-            (14, 0.00005)
-            (15, 0.00002)
-            (16, 0.000006)
-            (17, 0.000002)
-            (18, 0.0000006)
-            (19, 0.0000002)
-            (20, 0.00000006)
+            (1, 0.01)
+            (2, 0.10)
+            (3, 0.22)
+            (5, 0.40)
+            (7, 0.51)
+            (10, 0.63)
+            (15, 0.74)
+            (20, 0.79)
+            (30, 0.86)
+            (40, 0.89)
+            (50, 0.91)
         };
+    \addplot[black, thin, dashed, domain=1:50] {1};
+    \node[font=\tiny, anchor=south west] at (axis cs:25,0.88) {$N{=}100$};
     \end{axis}
 \end{tikzpicture}
-\caption{Sphere-to-cube volume ratio vanishes as dimension increases.}
-\label{fig:volume_ratio}
+\caption{Mean nearest-neighbour spacing $d_{\mathrm{NN}} \propto N^{-1/d}$ for $N{=}100$ points. By $d{=}50$ every point is nearly as far from its neighbour as from the boundary. But if the data only occupies $k \ll d$ effective dimensions, the curse applies to $k$, not $d$.}
+\label{fig:nn_spacing_curse}
 \end{marginfigure}
 
-\newthought{Distances concentrate.}
-For random points uniformly distributed in a hypercube, as $d \to \infty$:
+\newthought{Reducing $d$ to $k$ reverses the curse.}
+The spacing, the distance concentration, the density collapse all depend on the dimension of the space the data actually lives in.
+If we project from $\mathbb{R}^{d}$ down to $\mathbb{R}^{k}$, the clustering methods from Part~I regain their footing: distances become discriminative again, $\varepsilon$-neighbourhoods fill up, and centroids sit among their members.
 
-\begin{align*}
-    \frac{d_{\max} - d_{\min}}{d_{\min}} &\to 0
-\end{align*}
+\marginnote{\newthought{The blessing of dimensionality.} The Johnson-Lindenstrauss lemma\cite{JohnsonLindenstrauss1984} shows that $n$ points in high dimensions can be projected to $O(\log n / \epsilon^2)$ dimensions while preserving pairwise distances within $(1{\pm}\epsilon)$. Even random projections work.}
 
-All points become approximately equidistant.
-This is devastating for nearest-neighbour methods and for K-Means.
-
-\newthought{Data becomes sparse.}
-To maintain the same density of points you need exponentially more data: 10 points per unit in 2D requires 100 points; in 10D, 10 billion.
-
-\marginnote{\newthought{The blessing of dimensionality.} The Johnson-Lindenstrauss lemma\cite{JohnsonLindenstrauss1984} shows that $n$ points in high dimensions can be projected to $O(\log n / \epsilon^2)$ dimensions while preserving pairwise distances within $(1{\pm}\epsilon)$. Random projections are cheap and surprisingly powerful.}
-
-\newthought{Implications for machine learning:} K-nearest neighbours degrades; clustering becomes harder; distances lose meaning.
-Dimensionality reduction is often essential before any other algorithm.
+\newthought{The question is how to find the right $k$ directions.}
+Picking original features by hand (as in variance-based selection) works when the axes happen to align with the signal.
+When they do not, we need methods that construct new directions from the data itself.
+That is what PCA, and later t-SNE and UMAP, will do.
 
 
+
+
+
+
+
+
+\vspace{1.5em}
 \section{A Na\"ive Baseline: Variance-Based Feature Selection}\index{feature selection}\index{variance}
 
 \marginnote{\newthought{The simplest idea:} rank each feature by how much it varies, then drop the ones that barely move.}
@@ -218,7 +292,7 @@ A near-constant feature carries almost no information, and removing it loses lit
 \end{marginfigure}
 
 \newthought{When does it fail?}
-When the important structure runs diagonally across the coordinate axes, no single original feature captures it well.
+When the important pattern runs diagonally across the coordinate axes, no single original feature captures it well.
 
 \begin{figure}
 \centering
@@ -299,13 +373,15 @@ When the important structure runs diagonally across the coordinate axes, no sing
 
 \newthought{Here both features have nearly the same variance,} so variance-based selection cannot decide which to keep.
 Dropping either axis incurs large reconstruction error.
-The real structure lies along the diagonal $y{=}x$, a direction that no original feature represents.
+The real pattern lies along the diagonal $y{=}x$, a direction that no original feature represents.
 
 \newthought{The lesson:} selecting among existing axes is limited to cases where those axes already align with the data.
 When the interesting variation runs between features, we need to construct new axes.
 That is exactly what PCA does.
 
-
+\marginnote{\newthought{The manifold hypothesis} holds that high-dimensional data concentrates 
+on a $k$-dimensional manifold $\mathcal{M} \subset \mathbb{R}^{d}$ with $k \ll d$. The goal of 
+dimensionality reduction is to find a coordinate system for $\mathcal{M}$.}
 \section{Principal Component Analysis}\index{PCA}\index{covariance matrix}
 
 \marginnote{\newthought{PCA}\cite{Pearson1901}\cite{Hotelling1933} finds orthogonal directions of maximum variance in the data.}
@@ -381,6 +457,11 @@ Both views yield the same solution: the first $k$ eigenvectors of the covariance
 \end{algorithmic}
 \end{algorithm}
 
+\newthought{A simple diagnostic} reveals whether the data is compressible.
+Inspect the eigenvalues $\lambda_1 \geq \lambda_2 \geq \ldots \geq \lambda_d$ of $\Sigma$.
+If most are near zero, the data varies in only a few directions; the remaining dimensions add volume but no information.
+The scree plot (Figure~\ref{fig:scree_and_cumvar}) visualises exactly this: a steep drop tells you how many components matter.
+
 \newthought{Explained variance.}
 The fraction of total variance explained by the first $k$ components is:
 
@@ -390,19 +471,45 @@ The fraction of total variance explained by the first $k$ components is:
 
 Choose $k$ so that the cumulative explained variance exceeds a threshold, commonly 95\%.
 
-\begin{marginfigure}
+\begin{figure}
 \centering
 \begin{tikzpicture}
     \begin{axis}[
-        xlabel={Components},
-        ylabel={Cumulative variance},
-        xmin=0, xmax=10,
-        ymin=0, ymax=1.1,
-        width=\marginparwidth,
-        height=\marginparwidth,
+        name=scree,
+        xlabel={Component},
+        ylabel={Eigenvalue $\lambda_i$},
+        xmin=0.5, xmax=10.5,
+        ymin=0,
+        width=0.45\textwidth,
+        height=0.3\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick={0,5,10},
+        xtick={1,2,3,4,5,6,7,8,9,10},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside,
+        tick pos=left,
+        ybar,
+        bar width=6pt,
+    ]
+    \addplot[fill=black!70, draw=black] coordinates {
+        (1,6.0) (2,1.5) (3,1.0) (4,0.5) (5,0.3)
+        (6,0.2) (7,0.2) (8,0.1) (9,0.1) (10,0.1)
+    };
+    \end{axis}
+    \begin{axis}[
+        at={(scree.east)},
+        anchor=west,
+        xshift=1.5cm,
+        xlabel={Component},
+        ylabel={Cumulative variance},
+        xmin=0.5, xmax=10.5,
+        ymin=0, ymax=1.1,
+        width=0.45\textwidth,
+        height=0.3\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={1,2,3,4,5,6,7,8,9,10},
         ytick={0,0.5,0.95,1},
         xticklabel style={font=\tiny},
         yticklabel style={font=\tiny},
@@ -413,12 +520,13 @@ Choose $k$ so that the cumulative explained variance exceeds a threshold, common
         (1,0.6) (2,0.75) (3,0.85) (4,0.9) (5,0.93)
         (6,0.95) (7,0.97) (8,0.98) (9,0.99) (10,1.0)
     };
-    \addplot[black, thin, dashed, domain=0:10] {0.95};
+    \addplot[black, thin, dashed, domain=0.5:10.5] {0.95};
     \end{axis}
 \end{tikzpicture}
-\caption{Cumulative explained variance. The dashed line marks the 95\% threshold; six components suffice here.}
-\label{fig:explained_variance}
-\end{marginfigure}
+\vspace{2em}
+\caption{Left: scree plot showing individual eigenvalues; the sharp drop after the first component reveals that one direction dominates. Right: cumulative explained variance; the dashed line marks the 95\% threshold, reached at six components.}
+\label{fig:scree_and_cumvar}
+\end{figure}
 
 
 \section{Singular Value Decomposition}\index{SVD}
@@ -460,7 +568,7 @@ The FastICA\cite{Hyvarinen1999} algorithm implements this efficiently.
 
 \marginnote{\newthought{t-SNE} stands for t-distributed Stochastic Neighbour Embedding\cite{vanDerMaaten2008}. It is optimised for two- or three-dimensional visualization.}
 
-\newthought{t-SNE preserves local structure}: nearby points in high dimensions stay nearby in the 2D embedding.
+\newthought{t-SNE preserves local pattern}: nearby points in high dimensions stay nearby in the 2D embedding.
 It does this in four steps.
 
 \begin{algorithm}[H]
@@ -479,7 +587,7 @@ It does this in four steps.
 \newthought{Perplexity} controls the effective number of neighbours each point considers.
 It sets the bandwidth $\sigma_i$ of the Gaussian kernel.
 Typical values: 5--50.
-Higher perplexity means more global structure is considered.
+Higher perplexity means more global pattern is considered.
 
 \marginnote{\newthought{Perplexity} is defined as $2^{H(P_i)}$ where $H$ is the Shannon entropy of the conditional distribution over neighbours. Think of it as the effective number of neighbours.}
 
@@ -532,7 +640,7 @@ Higher perplexity means more global structure is considered.
 \newthought{Common pitfalls:}
 \begin{itemize}
     \item Cluster sizes are meaningless: t-SNE equalises local densities.
-    \item Distances between clusters are meaningless: the embedding preserves local, not global, structure.
+    \item Distances between clusters are meaningless: the embedding preserves local, not global, pattern.
     \item Results vary with random initialisation; run multiple times.
     \item t-SNE is for visualization only, not for preprocessing or downstream tasks.
 \end{itemize}
@@ -542,17 +650,33 @@ Higher perplexity means more global structure is considered.
 
 \marginnote{\newthought{UMAP} stands for Uniform Manifold Approximation and Projection\cite{McInnes2018}. It has theoretical foundations in Riemannian geometry and algebraic topology.}
 
-\newthought{UMAP is a newer non-linear method} that typically preserves more global structure than t-SNE, runs faster on large datasets, and has a theoretical foundation in manifold learning.
+\newthought{UMAP is a newer non-linear method} that typically preserves more global pattern than t-SNE, runs faster on large datasets, and has a theoretical foundation in manifold learning.
 
 \newthought{Key ideas.}
 \begin{enumerate}
     \item Build a weighted $k$-nearest-neighbour graph in high dimensions.
-    \item Find a low-dimensional embedding that preserves the graph structure.
+    \item Find a low-dimensional embedding that preserves the graph topology.
     \item Use cross-entropy loss, rather than KL divergence, to match fuzzy simplicial sets.
 \end{enumerate}
 
-\newthought{Key parameters.} \texttt{n\_neighbors}, similar to perplexity and typically set between 15 and 200, controls how much local versus global structure is preserved.
-\texttt{min\_dist}, typically 0.1--0.5, controls how tightly points cluster in the embedding.
+\begin{algorithm}[H]
+\caption{UMAP}
+\begin{algorithmic}[1]
+\Require High-dimensional data $X$, number of neighbours $k$, target dimension $d$, minimum distance $\delta$
+\State For each $x_i$, find its $k$ nearest neighbours; set $\rho_i = \min_{j \in \text{NN}(i)} \|x_i - x_j\|$
+\State Choose $\sigma_i$ so that $\sum_{j \in \text{NN}(i)} \exp\bigl(-(\|x_i - x_j\| - \rho_i) / \sigma_i\bigr) = \log_2 k$
+\State Compute directed edge weights: $w_{j|i} = \exp\bigl(-\max(0,\, \|x_i - x_j\| - \rho_i) / \sigma_i\bigr)$
+\State Symmetrise: $w_{ij} = w_{j|i} + w_{i|j} - w_{j|i} \cdot w_{i|j}$ \Comment{Fuzzy union of local neighbourhoods}
+\State Initialise low-dimensional coordinates $Y$ (e.g.\ via spectral embedding)
+\Repeat
+    \State Compute low-D weights: $v_{ij} = \bigl(1 + a\,\|y_i - y_j\|^{2b}\bigr)^{-1}$, where $a, b$ are derived from $\delta$
+    \State Gradient step: minimise fuzzy set cross-entropy $\mathcal{L} = \sum_{ij}\bigl[ w_{ij}\log\frac{w_{ij}}{v_{ij}} + (1-w_{ij})\log\frac{1-w_{ij}}{1-v_{ij}} \bigr]$
+\Until{convergence}
+\end{algorithmic}
+\end{algorithm}
+
+\newthought{Key parameters.} \texttt{n\_neighbors}, similar to perplexity and typically set between 15 and 200, controls how much local versus global pattern is preserved.
+\texttt{min\_dist}, typically 0.1 to 0.5, controls how tightly points cluster in the embedding.
 
 \vspace{2.5em}
 
@@ -564,10 +688,10 @@ Higher perplexity means more global structure is considered.
     \toprule
     \textbf{Method} & \textbf{Linear} & \textbf{Scalable} & \textbf{Best use} \\
     \midrule
-    PCA   & Yes & Yes    & Preprocessing, denoising, linear structure \\
+    PCA   & Yes & Yes    & Preprocessing, denoising, linear pattern \\
     ICA   & Yes & Yes    & Source separation, statistical independence \\
     t-SNE & No  & Medium & Visualization of small datasets ($n < 10\,000$) \\
-    UMAP  & No  & Yes    & Visualization of large datasets, more global structure \\
+    UMAP  & No  & Yes    & Visualization of large datasets, more global pattern \\
     \bottomrule
 \end{tabular}
 \vspace{2em}
@@ -647,7 +771,7 @@ Scatter-plot the first two principal components, colour-coded by variety.
 Run t-SNE and UMAP on the same data and compare the three embeddings.
 
 \newthought{What to observe.}
-PCA preserves global structure: the four varieties form elongated regions that reflect their actual distances in the original space.
+PCA preserves global pattern: the four varieties form elongated regions that reflect their actual distances in the original space.
 t-SNE compresses each variety into a tight ball; distances between balls are arbitrary.
 UMAP may show clearer cluster separation than t-SNE while better preserving global topology.
 Reconstruction error from PCA tells you whether 50 dimensions were truly needed.
@@ -671,7 +795,7 @@ Reconstruction error from PCA tells you whether 50 dimensions were truly needed.
 \begin{itemize}
     \item PCA finds the orthogonal directions of maximum variance via eigendecomposition of the covariance matrix; SVD is the numerically preferred implementation.
     \item The explained-variance ratio guides the choice of $k$; retain enough components to exceed a threshold such as 95\%.
-    \item t-SNE and UMAP preserve local neighbourhood structure for visualization; cluster sizes and between-cluster distances in their output are not interpretable.
+    \item t-SNE and UMAP preserve local neighbourhood patterns for visualization; cluster sizes and between-cluster distances in their output are not interpretable.
     \item ICA finds statistically independent sources by maximising non-Gaussianity, going beyond the uncorrelated directions found by PCA.
     \item No non-linear method should be used as a preprocessing step for downstream learning; use PCA or SVD for that purpose.
 \end{itemize}

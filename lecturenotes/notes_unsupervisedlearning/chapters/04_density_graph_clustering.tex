@@ -599,7 +599,7 @@ All points visited. Final result: $C_1{=}\{x_1,x_2,x_3\}$, $C_2{=}\{x_4,x_5,x_6\
 
 \subsection{Hyperparameter Selection}\index{DBSCAN!parameter selection}\index{hyperparameter selection}
 
-\newthought{Choosing $n_{\min}$} follows a practical rule of thumb: set $n_{\min} \geq d{+}1$ where $d$ 
+\newthought{Choosing $n_{\min}$} follows a practical rule of thumb: set $n_{\min} > d{+}1$ where $d$ 
 is the dimension of the feature space.
 For two-dimensional data, $n_{\min}{=}3$ or $4$ is typical; higher dimensions require larger values to keep sparse neighbourhoods 
 from being treated as dense. 
@@ -637,6 +637,7 @@ from being treated as dense.
 
 \newthought{Choosing $\varepsilon$} uses the $k$-distance plot\index{k-distance plot}: for each point, 
 compute the distance $d_k(x_i)$ to its $k$-th nearest neighbour at $k{=}n_{\min}{-}1$.
+The $(n_{\min}{-}1)$-th nearest neighbour distance is the tightest radius that still qualifies.
 
 \vspace{1.5em}
 \begin{figure}
@@ -921,7 +922,7 @@ The density language and the hierarchical-clustering language describe the same 
 
 
 
-\vspace{3.5em}
+\vspace{2.5em}
 
 
 \newthought{The curse of dimensionality}\index{curse of dimensionality}: All distance-based methods share a deeper vulnerability as the number of features $d$ grows,
@@ -1328,8 +1329,6 @@ In next steps, learn about sensitivity sweeps and HDBSCAN to address this.
     \item Why is bridging the density-based dual of single-linkage chaining, and why does every remedy cost something?
     \item The $k$-distance plot shows a straight line with no elbow. What does this tell you, and which method would you try next?
     \item What is the essential difference between an OPTICS reachability plot and an HDBSCAN density hierarchy?
-    \item DB Scan is connected components on the $\varepsilon$-graph. What extra structure does spectral clustering use on top of that graph?
-    \item Why do the zero eigenvalues of $L$ count connected components, and why is that alone not enough for real data?
     \item When would you prefer DB Scan over Ward's method even if both produce a sensible partition?
 \end{itemize}
 
@@ -1343,8 +1342,6 @@ In next steps, learn about sensitivity sweeps and HDBSCAN to address this.
     \item Failure modes: varying density, where no global $\varepsilon$ fits two scales, and high dimensionality, where distances concentrate
     \item Bridging fuses clusters through chains of $p_c$'s, the density dual of single-linkage chaining
     \item OPTICS exposes all density scales via a reachability plot; HDBSCAN extracts the most persistent clusters from a full density hierarchy
-    \item DB Scan is connected components on the $\varepsilon$-graph; spectral clustering\index{spectral clustering} replaces hard connectivity with the NCut objective, solved through the eigenvectors of $L_{\mathrm{sym}}$\index{Laplacian} followed by K-Means
-    \item The eigengap heuristic\index{eigengap heuristic} picks $K$ at the largest jump between consecutive Laplacian eigenvalues
 \end{itemize}
 
 \newthought{Two ways out of the curse of dimensionality.} Either we collect exponentially more data~\cite{Halevy2009}, which is rarely possible, or we reduce the dimension so that the samples we already have sit densely in the space we actually care about.
