@@ -2,19 +2,30 @@ Combobulated by Prof. Dr.-Ing. Mark Schutera
 
 ## Lecture Notes
 
-- **Philosophy of AI** — [PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf)
-- **Unsupervised Deep Learning** — [PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/notes_unsupervisedlearning.pdf)
-  <details><summary>🔊 Voice recordings</summary>
+* **Philosophy of AI**<br>
+[📄 View PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf)
+
+* **Unsupervised Deep Learning**<br>
+ [📄 View PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/notes_unsupervisedlearning.pdf)
+  <details>
+  <summary>🔊 <b>Voice recordings</b></summary>
+  <br/>
 
   | Chapter | Voice 1 | Voice 2 |
-  |---|---|---|
-  | 01 · Similarity & Distance | [mp3](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/voice/voice_one/chapter_01_similarity_and_distance.mp3) | [mp3](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/voice/voice_two/chapter_01_similarity_and_distance.mp3) |
-  | 02 · Centroid Clustering | [mp3](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/voice/voice_one/chapter_02_centroid_clustering.mp3) | [mp3](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/voice/voice_two/chapter_02_centroid_clustering.mp3) |
-  | 03 · Hierarchical Clustering | [mp3](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/voice/voice_one/chapter_03_hierarchical_clustering.mp3) | [mp3](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/voice/voice_two/chapter_03_hierarchical_clustering.mp3) |
-  | 04 · Density-Based Clustering | [mp3](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/voice/voice_one/chapter_04_density_based_clustering.mp3) | [mp3](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/voice/voice_two/chapter_04_density_based_clustering.mp3) |
+  | :--- | :---: | :---: |
+  | 01 · Similarity & Distance | [mp3](https://material.schutera.com/...) | [mp3](https://material.schutera.com/...) |
+  | 02 · Centroid Clustering | [mp3](https://material.schutera.com/...) | [mp3](https://material.schutera.com/...) |
+  | 03 · Hierarchical Clustering | [mp3](https://material.schutera.com/...) | [mp3](https://material.schutera.com/...) |
+  | 04 · Density-Based Clustering | [mp3](https://material.schutera.com/...) | [mp3](https://material.schutera.com/...) |
 
   </details>
-- **Numerical Methods** — [PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/notes_numerischemethoden.pdf)
+
+* **Numerical Methods**<br>
+[📄 View PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/notes_numerischemethoden.pdf)
+
+
+* **Full Stack Handwerkszeug**<br>
+[📄 View PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/notes_missingsemester.pdf)
 
 ---
 
