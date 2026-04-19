@@ -1,0 +1,314 @@
+% !TEX root = ../notes_missingsemester.tex
+% Block 8: Automate Everything — CI/CD, Cron, Webhooks & Backups
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{CI/CD}\index{GitHub Actions}\index{cron}\index{backup}\index{feature flag}
+\chapter{Automate Everything: CI/CD, Cron, Webhooks \& Backups}
+\newthought{Manual deploys are technical debt. Automate or regret.}
+
+% ==============================================================================
+% SESSION A: THEORY
+% ==============================================================================
+
+\section{CI/CD: What It Is and Why It Matters}\index{CI/CD}
+
+\newthought{Continuous Integration\index{continuous integration}} means every push is automatically linted and
+tested—broken code is caught before it reaches the server.
+
+\newthought{Continuous Deployment\index{continuous deployment}} means every merge to \texttt{main} automatically
+deploys to the server—no manual SSH-and-pull.
+
+\newthought{The pipeline:} lint $\to$ test $\to$ deploy. Each step gates the next. If linting fails,
+tests do not run. If tests fail, the deploy does not happen.
+
+\section{GitHub Actions}\index{GitHub Actions}
+
+\newthought{GitHub Actions}\marginnote{GitHub Actions\index{GitHub Actions}:
+\url{https://docs.github.com/en/actions}\\
+Workflow syntax: \url{https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions}}
+run workflows in response to repository events. The configuration lives in
+YAML files under \texttt{.github/workflows/}.
+
+\begin{verbatim}
+# .github/workflows/ci.yml
+name: CI
+on: [push, pull_request]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+          pip install ruff pytest
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test
+        run: pytest tests/
+\end{verbatim}
+
+\marginnote{Key concepts: \textbf{triggers}\index{GitHub Actions!triggers} (\texttt{push}, \texttt{pull\_request})
+define when a workflow runs. \textbf{Jobs} run on \textbf{runners}—GitHub-provided VMs. \textbf{Steps} are
+sequential commands within a job.}
+
+\subsection{Using Secrets in Actions}\index{GitHub Actions!secrets}
+
+\newthought{Never hardcode secrets in workflow files.} Store them in GitHub's repository settings under
+\emph{Settings $\to$ Secrets and variables $\to$ Actions}. Reference them as \texttt{\$\{\{ secrets.MY\_SECRET \}\}}.
+Never echo them in logs.
+
+\subsection{The Deploy Workflow}
+
+\begin{verbatim}
+# .github/workflows/deploy.yml
+name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/pixelwise
+            bash scripts/deploy.sh
+\end{verbatim}
+
+\section{The Deploy Script}\index{deploy.sh}
+
+\newthought{A standalone deploy script} is reusable from both Actions and manual deploys:
+
+\begin{verbatim}
+#!/bin/bash
+# scripts/deploy.sh
+set -euo pipefail
+
+cd /opt/pixelwise
+git pull origin main
+source .venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+sudo systemctl restart pixelwise
+echo "Deploy complete: $(date)"
+\end{verbatim}
+
+\section{Cron: Scheduled Automation}\index{cron}
+
+\newthought{Cron runs commands on a schedule}—no human required. The syntax has five fields:
+
+\begin{verbatim}
+# +-------- minute (0-59)
+# | +------ hour (0-23)
+# | | +---- day of month (1-31)
+# | | | +-- month (1-12)
+# | | | | + day of week (0-7, Sun=0 or 7)
+# | | | | |
+  * * * * *  command
+\end{verbatim}
+
+\newthought{Common patterns:}
+\begin{verbatim}
+0 2 * * *    # daily at 2:00 AM
+*/5 * * * *  # every 5 minutes
+0 0 * * 0    # weekly, Sunday midnight
+\end{verbatim}
+
+Edit with \texttt{crontab -e}. List with \texttt{crontab -l}.
+
+\marginnote{Real-world cron uses: database backups, clearing temporary files, health checks that ping your
+service and alert on failure, certificate renewal, triggering retraining pipelines, sending summary reports.
+The common thread: anything that needs to happen reliably on a schedule without a human remembering.}
+
+\newthought{Students have already seen automation:} \texttt{systemd} restarts their crashed service
+automatically (Block~5). \texttt{journalctl} rotates its own logs. Package managers run unattended
+security updates. Cron jobs are the explicit, user-controlled version of automation that is already
+everywhere under the hood.
+
+\section{Webhooks}\index{webhooks}
+
+\newthought{Webhooks are HTTP endpoints triggered by external events}—the internet is event-driven.
+GitHub can call your server when code is pushed; Discord can receive a message when your deploy succeeds.
+The pattern is always the same: an event happens $\to$ an HTTP POST is sent to a URL you control.
+
+\section{Backup Strategy}\index{backup}\index{pg\_dump}\index{rsync}
+
+\newthought{What to back up:} the database. Code is on GitHub; the model is reproducible from \texttt{train.py}.
+The database contains data that cannot be recreated—every prediction, every timestamp, every confidence score.
+
+\newthought{How:} \texttt{pg\_dump}\index{pg\_dump} exports the database to a SQL file.
+
+\newthought{Where:} off-site. A backup on the same server dies with the server. The \texttt{dev} VM
+is the natural off-site target: \texttt{pg\_dump} creates the dump, \texttt{rsync}\index{rsync} copies it
+to the dev VM over SSH. The two-machine setup from Block~1 pays off again.
+
+\begin{verbatim}
+# Backup script
+pg_dump -U pixelwise pixelwise \
+    > /tmp/pixelwise_$(date +%Y%m%d).sql
+rsync -avz /tmp/pixelwise_$(date +%Y%m%d).sql \
+    student@192.168.56.10:/backups/pixelwise/
+\end{verbatim}
+
+\marginnote{\texttt{rsync}\index{rsync} (\url{https://rsync.samba.org/}) is efficient file sync over SSH—incremental
+(only transfers changed bytes), fast, scriptable. The right tool for moving backup files between machines.}
+
+\newthought{How to verify:} restore from a backup at least once—an untested backup is not a backup:
+
+\begin{verbatim}
+# On the dev VM: restore into a test database
+psql -U pixelwise -d pixelwise_test \
+    < /backups/pixelwise/pixelwise_20260405.sql
+\end{verbatim}
+
+\section{Feature Flags}\index{feature flag}
+
+\newthought{Deploying new behaviour without deploying new code.} The simplest form: an env var that
+controls which code path runs. Change the flag, restart the service—the new behaviour is live.
+No code change, no PR, no CI pipeline.
+
+\begin{verbatim}
+# .env
+MODEL_VERSION=v1
+
+# In classifier.py
+model_path = f"models/digit_classifier_{MODEL_VERSION}.pkl"
+\end{verbatim}
+
+\marginnote{This is how teams roll out features gradually or switch between model versions without risk.
+Both \texttt{v1} and \texttt{v2} model files are available. Switching the model is a config change +
+service restart. Block~9 will use this to compare model performance.}
+
+\section{Tests: Where They Live}\index{testing}\index{pytest}
+
+\newthought{The CI pipeline runs \texttt{pytest},}\marginnote{pytest\index{pytest}:
+\url{https://docs.pytest.org/}\\
+ruff\index{ruff} (linter): \url{https://docs.astral.sh/ruff/}} but writing tests is an entire discipline covered
+in dedicated courses. Here we show where tests live (\texttt{tests/}), what a test looks like, and how
+the CI pipeline runs them. A few example tests are provided in the boilerplate:
+
+\begin{verbatim}
+# tests/test_classifier.py
+from app.classifier import classify_batch
+import numpy as np
+
+def test_classify_batch_shape():
+    images = np.zeros((2, 28, 28), dtype=np.uint8)
+    results = classify_batch(images)
+    assert len(results) == 2
+    assert "prediction" in results[0]
+    assert "confidence" in results[0]
+\end{verbatim}
+
+The goal is to see the feedback loop: push code $\to$ tests run $\to$ green or red.
+
+% ==============================================================================
+% SESSION B: HANDS-ON
+% ==============================================================================
+
+\newpage
+\section{Workshop}
+
+\marginnote{If your VM is broken, restore the \texttt{B7-complete} snapshot.
+At the end of this session, take a snapshot named \texttt{B8-complete}.}
+
+\begin{enumerate}
+    \item \textbf{Write the CI workflow:} Create \texttt{.github/workflows/ci.yml} that on every push
+    lints with \texttt{ruff}\index{ruff} and runs \texttt{pytest} against the boilerplate tests in \texttt{tests/}:
+    \begin{verbatim}
+    mkdir -p .github/workflows
+    nano .github/workflows/ci.yml
+    \end{verbatim}
+    Use the YAML from the theory section. Push and watch the workflow run on GitHub.
+
+    \item \textbf{Write the deploy workflow:} Create \texttt{.github/workflows/deploy.yml} that on merge
+    to \texttt{main}, SSHs to the server and runs the deploy script. Add your SSH key and server IP
+    as GitHub Actions secrets.
+
+    \item \textbf{Write the deploy script:} Create \texttt{scripts/deploy.sh} with the steps from the
+    theory section: pull, install deps, run migrations, restart service.
+    \begin{verbatim}
+    mkdir -p scripts
+    nano scripts/deploy.sh
+    chmod +x scripts/deploy.sh
+    \end{verbatim}
+
+    \item \textbf{Set up the nightly backup cron:} On the server, create a cron job that runs nightly
+    at 2:00~AM—\texttt{pg\_dump} the database, then \texttt{rsync} the dump to the dev VM:
+    \begin{verbatim}
+    crontab -e
+    \end{verbatim}
+    Add:
+    \begin{verbatim}
+    0 2 * * * pg_dump -U pixelwise pixelwise \
+        > /tmp/pixelwise_$(date +\%Y\%m\%d).sql \
+        && rsync -avz \
+        /tmp/pixelwise_$(date +\%Y\%m\%d).sql \
+        student@192.168.56.10:/backups/pixelwise/
+    \end{verbatim}
+    On the dev VM, create the backup directory:
+    \begin{verbatim}
+    mkdir -p /backups/pixelwise
+    \end{verbatim}
+
+    \item \textbf{Verify the backup:} Run the backup manually once. Then restore it into a test database
+    on the dev VM and verify the data is intact.
+
+    \item \textbf{Add a feature flag for model version:} Add \texttt{MODEL\_VERSION=v1} to \texttt{.env}
+    and \texttt{.env.example}. Update \texttt{classifier.py} to load the model path dynamically.
+    Place both \texttt{v1.pkl} and \texttt{v2.pkl} in \texttt{models/}. Switch the flag to \texttt{v2},
+    restart the service, and verify the model changed:
+    \begin{verbatim}
+    curl https://192.168.56.11/api/health -k
+    # Should show "model_version": "v2"
+    \end{verbatim}
+
+    \item \textbf{Commit and trigger the pipeline:}
+    \begin{verbatim}
+    git add .github/ scripts/ tests/ .env.example
+    git commit -m "Add CI/CD pipeline, backup cron, feature flag"
+    git push
+    \end{verbatim}
+    Watch the CI workflow on GitHub. If green, merge—the deploy workflow should update the server automatically.
+
+    \item \textbf{Take a snapshot} of both VMs. Name them \texttt{B8-complete}.
+\end{enumerate}
+
+\section{Security Thread}
+
+\newthought{Store all deployment credentials} (SSH keys, server IP) as GitHub Actions secrets—never in
+workflow files. \texttt{rsync} and SSH-based deploys only, never plain protocols. Backup files contain your
+entire database—protect them accordingly (file permissions, consider encryption for off-site storage).
+
+\section{Self-Reflection and Recap}
+
+\newthought{Reflection questions:}
+\begin{itemize}
+    \item What is the difference between Continuous Integration and Continuous Deployment?
+    \item Why should secrets never appear in workflow YAML files?
+    \item Why is a backup on the same server not a real backup?
+    \item How do feature flags let you deploy new behaviour without deploying new code?
+    \item What happens if the CI pipeline fails? Does the deploy still happen?
+\end{itemize}
+
+\newthought{Milestone:} Every push to \texttt{main} automatically lints and tests. Every merge deploys to
+the server. Nightly database backup is running and has been verified by restoring once. Feature flag for
+model version switching is in place.

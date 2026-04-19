@@ -1,0 +1,284 @@
+% !TEX root = ../notes_missingsemester.tex
+% Block 7: Face the World — Frontend & Nginx
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{Nginx}\index{reverse proxy}\index{frontend}\index{HTTPS}\index{CORS}
+\chapter{Face the World: Frontend \& Nginx}
+\newthought{Browsers do not talk to your app server directly.}
+
+% ==============================================================================
+% SESSION A: THEORY
+% ==============================================================================
+
+\section{The Problem}
+
+\newthought{uvicorn listens on port 8000,} but browsers expect port 80 (HTTP) and 443 (HTTPS).
+You need something in front that handles the ports, serves static files, and forwards API requests.
+That something is Nginx\index{Nginx}.
+
+\section{Nginx: Three Roles in One}\index{Nginx}
+
+\newthought{Nginx serves three roles}\marginnote{Nginx\index{Nginx}: \url{https://nginx.org/}\\
+Nginx Docs: \url{https://nginx.org/en/docs/}} in the PixelWise stack:
+
+\begin{description}
+    \item[Static file server] Serves HTML, CSS, and JavaScript files far more efficiently than Python.
+    \item[Reverse proxy]\index{reverse proxy} Forwards \texttt{/api/} requests to \texttt{localhost:8000} (uvicorn).
+    The browser never talks to uvicorn directly.
+    \item[SSL terminator]\index{TLS}\index{SSL} Handles HTTPS encryption. The backend receives plain HTTP; encryption
+    is Nginx's job.
+\end{description}
+
+\subsection{Nginx Config Anatomy}
+
+\newthought{Nginx configuration} is structured in nested blocks:
+
+\begin{verbatim}
+server {
+    listen 80;
+    server_name 192.168.56.11;
+
+    # Serve static files
+    location / {
+        root /opt/pixelwise/frontend;
+        index index.html;
+    }
+
+    # Proxy API requests to uvicorn
+    location /api/ {
+        proxy_pass http://localhost:8000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+\end{verbatim}
+
+\marginnote{The \texttt{proxy\_pass} directive is the reverse proxy: any request to \texttt{/api/classify}
+is forwarded to \texttt{http://localhost:8000/classify}. The browser sees \texttt{https://192.168.56.11/api/classify};
+uvicorn sees \texttt{http://localhost:8000/classify}. The trailing slash matters—it strips the \texttt{/api}
+prefix.}
+
+\section{CORS: Cross-Origin Resource Sharing}\index{CORS}
+
+\newthought{CORS is a browser security policy}\marginnote{CORS explained:
+\url{https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS}} that blocks requests from one origin to another. When your
+frontend is served on port 443 and the API runs on port 8000, the browser considers them different origins
+and blocks the request.
+
+\newthought{During development,} CORS causes pain. The browser's console shows a cryptic error:
+\texttt{Access to fetch has been blocked by CORS policy}. The fix: configure FastAPI to allow requests
+from the frontend's origin:
+
+\begin{verbatim}
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://192.168.56.11"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+\end{verbatim}
+
+\marginnote{Never use \texttt{allow\_origins=["*"]} in production—it allows any website to call your API.
+Configure allowed origins explicitly.}
+
+\newthought{With Nginx as a reverse proxy,} CORS often resolves itself: the frontend and API share the
+same origin (\texttt{https://192.168.56.11}), so the browser does not block the request. But students must
+understand CORS because they will hit it in every deployment that separates frontend and backend.
+
+\section{The Frontend Stack}\index{JavaScript}\index{HTML}\index{CSS}
+
+\subsection{Why Vanilla JavaScript}
+
+\newthought{HTML for structure, CSS for layout, JavaScript for interactivity.} The \texttt{fetch} API
+sends requests to the backend.
+
+\marginnote{MDN Web Docs\index{MDN} (HTML/CSS/JS reference): \url{https://developer.mozilla.org/}\\
+Fetch API: \url{https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API}}
+
+\marginnote{Why not React, Vue, or Svelte? Frameworks solve problems that appear at scale—component reuse,
+state management, routing across dozens of views. PixelWise has one page with one canvas and one results panel.
+A framework would add a build toolchain (Node.js, npm, bundler), a learning curve orthogonal to this course,
+and complexity that hides what is actually happening between browser and server. Vanilla JS keeps the HTTP
+layer visible.}
+
+\newthought{The starter code is provided.} Students need to understand it well enough to wire it up
+and extend it in Block~10. The key pieces:
+
+\begin{description}
+    \item[Drawing canvas] A 28$\times$28 pixel grid where users draw with the mouse.
+    \item[Submit button] Extracts the pixel array from the canvas and sends a \texttt{POST /api/classify} request.
+    \item[Results panel] Displays the predicted digit, confidence score, and a confidence bar.
+\end{description}
+
+\newthought{The \texttt{fetch} call} is the bridge between frontend and backend:
+
+\begin{verbatim}
+async function classifyDrawing() {
+    const pixels = getPixelsFromCanvas();  // 28x28 array
+    const response = await fetch("/api/classify", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": API_KEY
+        },
+        body: JSON.stringify({ pixels: pixels })
+    });
+    const result = await response.json();
+    displayResult(result);
+}
+\end{verbatim}
+
+\marginnote{No build step, no \texttt{node\_modules}, no framework version to maintain. The code runs in
+any browser, can be read by any developer, and deploys as static files served directly by Nginx. Students
+who later build larger applications will recognise when a framework becomes necessary—and why.}
+
+\section{URL Design}\index{URL design}
+
+\newthought{Clean, readable URLs} matter:
+
+\begin{description}
+    \item[Good] \texttt{/results?digit=7\&model=v2}
+    \item[Bad] \texttt{/getResults.php?action=list\&d=7}
+\end{description}
+
+\newthought{Query parameters} serve filtering and configuration. Storing session IDs in URLs
+(\texttt{/classify?session=abc123}) lets you track a user's session without cookies, link to specific
+results, or pass configuration to the frontend. The URL is state—treat it deliberately.
+
+\section{HTTPS and TLS}\index{HTTPS}\index{TLS}
+
+\newthought{Without HTTPS, API keys travel in plaintext.} Anyone on the network can read them.
+HTTPS encrypts the entire channel between browser and server.
+
+\begin{description}
+    \item[Self-signed certificate] Fine for development. The browser shows a warning—ignore it.
+    \item[Let's Encrypt]\index{Let's Encrypt} Free, automated certificates for production (\url{https://letsencrypt.org/}).
+    Renewal is automatic via \texttt{certbot}\index{certbot} (\url{https://certbot.eff.org/}).
+\end{description}
+
+\newthought{Generating a self-signed certificate:}
+
+\begin{verbatim}
+sudo openssl req -x509 -nodes -days 365 \
+    -newkey rsa:2048 \
+    -keyout /etc/ssl/private/pixelwise.key \
+    -out /etc/ssl/certs/pixelwise.crt
+\end{verbatim}
+
+\subsection{Security Headers}\index{security headers}
+
+\newthought{Nginx can add security headers} to every response—one place, all responses covered:
+
+\begin{verbatim}
+add_header X-Frame-Options "DENY";
+add_header X-Content-Type-Options "nosniff";
+add_header Content-Security-Policy "default-src 'self'";
+\end{verbatim}
+
+\section{Sidenote: \texttt{ufw}}\index{ufw}\index{firewall}
+
+\marginnote{\texttt{ufw}\index{ufw} (Uncomplicated Firewall) is Ubuntu's firewall tool. On managed production
+servers, the firewall is typically preconfigured to allow only ports 22 (SSH), 80 (HTTP), 443 (HTTPS).
+On the classroom VMs this is a formality (host-only network), but students should know the concept exists.}
+
+% ==============================================================================
+% SESSION B: HANDS-ON
+% ==============================================================================
+
+\newpage
+\section{Workshop}
+
+\marginnote{If your VM is broken, restore the \texttt{B6-complete} snapshot.
+At the end of this session, take a snapshot named \texttt{B7-complete}.}
+
+\begin{enumerate}
+    \item \textbf{Deploy the frontend:} Copy the provided starter code to \texttt{frontend/} on the server.
+    Walk through the code to understand: the \texttt{fetch} call to \texttt{/api/classify}, the pixel array
+    extraction from the canvas, the response rendering:
+    \begin{verbatim}
+    # On the server
+    ls /opt/pixelwise/frontend/
+    # Should contain: index.html, style.css, app.js
+    \end{verbatim}
+
+    \item \textbf{Install and configure Nginx:}
+    \begin{verbatim}
+    sudo apt install -y nginx
+    \end{verbatim}
+    Create the PixelWise site configuration:
+    \begin{verbatim}
+    sudo nano /etc/nginx/sites-available/pixelwise
+    \end{verbatim}
+    Use the config from the theory section. Enable the site and restart:
+    \begin{verbatim}
+    sudo ln -s /etc/nginx/sites-available/pixelwise \
+        /etc/nginx/sites-enabled/
+    sudo rm /etc/nginx/sites-enabled/default
+    sudo nginx -t          # test config syntax
+    sudo systemctl restart nginx
+    \end{verbatim}
+
+    \item \textbf{Verify the reverse proxy:} Open a browser on the host machine and navigate to
+    \texttt{http://192.168.56.11}. You should see the PixelWise frontend. Draw a digit and submit—the
+    request goes through Nginx to uvicorn and back.
+
+    \item \textbf{Debug CORS if needed:} If the frontend cannot reach the API, check the browser console
+    for CORS errors. Add the CORS middleware to FastAPI with the correct allowed origin. This is a rite of passage.
+
+    \item \textbf{Enable HTTPS} with a self-signed certificate:
+    \begin{verbatim}
+    sudo openssl req -x509 -nodes -days 365 \
+        -newkey rsa:2048 \
+        -keyout /etc/ssl/private/pixelwise.key \
+        -out /etc/ssl/certs/pixelwise.crt
+    \end{verbatim}
+    Update the Nginx config to listen on port 443 with the certificate:
+    \begin{verbatim}
+    server {
+        listen 443 ssl;
+        ssl_certificate /etc/ssl/certs/pixelwise.crt;
+        ssl_certificate_key /etc/ssl/private/pixelwise.key;
+        # ... rest of config
+    }
+    \end{verbatim}
+    Restart Nginx and verify \texttt{https://192.168.56.11} works (accept the browser warning).
+
+    \item \textbf{Add security headers:} Add \texttt{X-Frame-Options}, \texttt{X-Content-Type-Options},
+    and \texttt{Content-Security-Policy} to the Nginx config. Restart and verify they appear in the
+    response headers:
+    \begin{verbatim}
+    curl -I https://192.168.56.11 -k
+    \end{verbatim}
+
+    \item \textbf{Commit:}
+    \begin{verbatim}
+    git add frontend/ nginx/
+    git commit -m "Add frontend and Nginx reverse proxy"
+    git push
+    \end{verbatim}
+
+    \item \textbf{Take a snapshot} of both VMs. Name them \texttt{B7-complete}.
+\end{enumerate}
+
+\section{Security Thread}
+
+\newthought{Security headers are configured at the Nginx layer}—one place, all responses covered.
+HTTPS encrypts the channel; without it, API keys travel in plaintext. CORS misconfiguration is a common
+deployment bug—configure allowed origins explicitly, never \texttt{*} in production.
+
+\section{Self-Reflection and Recap}
+
+\newthought{Reflection questions:}
+\begin{itemize}
+    \item Why do browsers not talk to uvicorn directly? What does Nginx add?
+    \item What is a reverse proxy and why is it called ``reverse''?
+    \item What happens if you set \texttt{allow\_origins=["*"]} in production?
+    \item Why do we use vanilla JavaScript instead of a framework like React?
+    \item What is the difference between a self-signed certificate and one from Let's Encrypt?
+\end{itemize}
+
+\newthought{Milestone:} PixelWise accessible in a browser at \texttt{https://192.168.56.11}. Draw a digit,
+get a prediction. Nginx serves static files and proxies the API. The full stack is live:
+browser $\to$ Nginx $\to$ uvicorn $\to$ FastAPI $\to$ PostgreSQL.

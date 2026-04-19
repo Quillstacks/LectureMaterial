@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelWise — Digit Recognition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>PixelWise</h1>
+        <p class="subtitle">Draw a digit and let the model predict it.</p>
+
+        <div class="main-panel">
+            <!-- Drawing canvas -->
+            <div class="canvas-section">
+                <div class="canvas-wrapper">
+                    <canvas id="drawing-canvas" width="280" height="280"></canvas>
+                    <div class="grid-overlay" id="grid-overlay"></div>
+                </div>
+                <div class="canvas-controls">
+                    <button id="btn-submit" class="btn btn-primary">Classify</button>
+                    <button id="btn-clear" class="btn btn-secondary">Clear</button>
+                </div>
+            </div>
+
+            <!-- Results panel -->
+            <div class="results-section">
+                <div id="result-display" class="result-display">
+                    <div class="result-placeholder">Draw a digit and press Classify</div>
+                </div>
+
+                <div id="confidence-bars" class="confidence-bars" style="display: none;">
+                    <h3>Confidence per class</h3>
+                    <div id="bars-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Frontend analytics counters (Block 9) -->
+        <div class="analytics-panel" id="analytics-panel">
+            <span>Page loads: <strong id="stat-loads">0</strong></span>
+            <span>Submissions: <strong id="stat-submissions">0</strong></span>
+            <span>Clears: <strong id="stat-clears">0</strong></span>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

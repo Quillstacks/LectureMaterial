@@ -1,0 +1,108 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Missing Semester MIT Adaptation
+% Author: Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+\makeindex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+\title{Full Stack Handwerk}
+\author[\defaultauthor]{\defaultauthor}
+\publisher[\defaultpublisher]{\defaultpublisher}
+
+% Load optional fonts
+\loadoptionalfonts
+
+% Additional packages
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\begin{document}
+
+
+
+\makestandardfrontmatter
+% Dedication
+% Alternative quotes:
+\makededication{\openepigraph{“Seine Wort' und Werke
+Merkt ich und den Brauch,\\
+und mit Geistesstärke
+tu ich Wunder auch.”}{Der Zauberlehrling}}
+\tableofcontents
+
+
+% Introduction
+\makeintroduction{%
+  \newthought{This is an adaptation} of the MIT Missing Semester course material. And oh boy, we need it here in Germany as well! In the Länd of the 
+  "Ingenieure", "Handwerk", and "Lehrlings" - we forgot the importance of practice and mastering our tooling skills. 
+  \marginnote{Original course URL \url{https://missing.csail.mit.edu/}}
+  }
+  
+  \newthought{As a mechanical engineer by training}, I have always had this nagging feeling that something important was missing from my education.
+  The more I transitioned into software engineering roles, the more this feeling intensified.
+  Looking at your curriculum, there is no shortage of advanced concepts and theories to learn. This one fills the gap
+  that many computer science programs overlook: practical proficiency with essential tools and workflows that every software engineer relies on.
+  And truth be told, Professors rely on students having this basic proficiency already acquired, or to figure this stuff out on their own - which is fair in academia.
+  For me, software engineering is also a practical discipline, and ought to be taught as such. I need you to know this stuff, so it is also fair to teach it.
+   
+  \newthought{This course will teach you} everything you need to know to become proficient with the command line, version control systems like Git,
+  text editors, shell scripting, and other essential tools that are the backbone of modern software development - in the end you will be able to develop and deploy 
+  your software solutions. This will make you a better software engineer, and it will make your life easier latest when you need to go full ML Lifecycle.
+
+%% Start the main matter
+\mainmatter
+
+% ----------------------------------------------------------------------
+% 10-LECTURE STRUCTURE: FULL-STACK ML LIFECYCLE
+% Goal: students can develop and deploy an ML product across VMs
+% Each lecture: ~45 min general full-stack tooling + ~45 min ML lifecycle application
+% Structure: Introduction (Why, Preview, Objectives) → Theory → Exercises & Reflection
+% ----------------------------------------------------------------------
+
+% LECTURE 1: Set Up the Lab
+\input{chapters/01_servers_vms_linux.tex}
+
+% LECTURE 2: Track the Code
+% \input{chapters/02_git_github.tex}
+
+% LECTURE 3: Package the Stack
+%\input{chapters/03_dependencies_structure.tex}
+
+% LECTURE 4: Integrate the Model
+%\input{chapters/04_model_integration.tex}
+
+% LECTURE 5: Build the Backend
+%\input{chapters/05_apis_services.tex}
+
+% LECTURE 6: Store the Data
+%\input{chapters/06_databases_sql.tex}
+
+% LECTURE 7: Expose to the World
+%\input{chapters/07_frontend_nginx.tex}
+
+% LECTURE 8: Ship It
+%\input{chapters/08_cicd_automation.tex}
+
+% LECTURE 9: Watch It Run
+%\input{chapters/09_monitoring_logging.tex}
+
+% LECTURE 10: Vibe Coding
+%\input{chapters/10_ai_dev_vibecoding.tex}
+
+
+\nocite{TufteVisuals2001}
+\makestandardbackmatter{missingsemester}
+
+\end{document}

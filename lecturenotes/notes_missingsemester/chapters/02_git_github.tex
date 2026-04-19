@@ -1,0 +1,284 @@
+% !TEX root = ../notes_missingsemester.tex
+% Block 2: Version Everything — Git & GitHub
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{Git}\index{GitHub}\index{version control}
+\chapter{Version Everything: Git \& GitHub}
+\newthought{No zip files. No \texttt{final\_v2\_FINAL.py}. No excuses.}
+
+% ==============================================================================
+% SESSION A: THEORY
+% ==============================================================================
+
+\section{The Why}
+
+\newthought{You have been there.} A folder full of copies: \texttt{report.py}, \texttt{report\_v2.py},
+\texttt{report\_final.py}, \texttt{report\_FINAL\_fixed.py}. Which one is current? Which one works?
+What changed between them? Nobody knows, including you, two weeks from now.
+
+Version control\index{version control} solves this permanently. Every change is recorded, annotated, and reversible.
+You can see exactly what changed, when, by whom, and why. You can go back to any previous state.
+You can work on multiple ideas in parallel without them interfering with each other.
+
+\section{The Git Data Model}\index{Git!data model}
+
+\newthought{Git is not a backup tool.} It is a content-addressable filesystem with a version history layered on top.
+Understanding the data model makes every command intuitive.
+
+\marginnote{Git was created by Linus Torvalds in 2005 to manage the Linux kernel source code.
+It is now the de facto standard for version control in software development.\\
+Git: \url{https://git-scm.com/}\\
+Pro Git book (free): \url{https://git-scm.com/book/en/v2}}
+
+\begin{description}
+    \item[Blob]\index{Git!blob} A file's contents, stored by its SHA-1 hash. The name is irrelevant; only the content matters.
+    \item[Tree]\index{Git!tree} A directory listing: maps filenames to blobs (files) or other trees (subdirectories).
+    \item[Commit]\index{Git!commit} A snapshot of the entire project at a point in time. Contains: a pointer to the root tree,
+    the author, a timestamp, a message, and a pointer to the parent commit(s).
+    \item[Branch]\index{Git!branch} A lightweight, movable pointer to a commit. \texttt{main} is a branch.
+    Creating a branch is instantaneous—it just creates a new pointer.
+    \item[HEAD]\index{Git!HEAD} A pointer to the branch you are currently on. When you commit, \texttt{HEAD} moves forward.
+\end{description}
+
+\newthought{Every commit} is identified by a SHA-1 hash—a 40-character hexadecimal string like
+\texttt{a3f2b7c...}. This hash is computed from the commit's contents. If anything changes—even a single
+character in a single file—the hash changes. This makes Git history tamper-proof.
+
+\section{The Staging Workflow}\index{Git!staging}
+
+\newthought{Git has three areas:}
+
+\begin{description}
+    \item[Working directory] The files on disk. What you edit.
+    \item[Staging area (index)] What you have marked for the next commit. A deliberate selection.
+    \item[Repository] The committed history. Permanent, immutable snapshots.
+\end{description}
+
+\newthought{The core commands:}
+
+\begin{verbatim}
+git status              # what changed? what is staged?
+git add file.py         # stage a file for the next commit
+git add .               # stage everything (use with care)
+git commit -m "message" # commit the staged changes
+git diff                # unstaged changes vs last commit
+git diff --staged       # staged changes vs last commit
+git log                 # show commit history
+git log --oneline       # compact view: one line per commit
+\end{verbatim}
+
+\marginnote{Write commit messages in the imperative mood: ``Add classifier module'' not ``Added classifier module.''
+The message completes the sentence ``This commit will \ldots''. Keep the first line under 72 characters.}
+
+\section{Branching and Merging}\index{Git!branching}\index{Git!merging}
+
+\newthought{Branches let you work on ideas in isolation.} The \texttt{main} branch is the stable baseline.
+Feature branches diverge, evolve, and merge back when ready.
+
+\begin{verbatim}
+git branch                   # list branches
+git branch feature-x         # create a new branch
+git checkout feature-x       # switch to it
+git checkout -b feature-y    # create and switch in one step
+\end{verbatim}
+
+\newthought{When the feature is ready,} merge it back:
+
+\begin{verbatim}
+git checkout main
+git merge feature-x
+\end{verbatim}
+
+\subsection{Merge Conflicts}\index{Git!merge conflict}
+
+\newthought{A merge conflict} occurs when two branches changed the same line in the same file.
+Git cannot decide which version to keep—you must resolve it manually.
+
+\newthought{Git marks the conflict} in the file:
+
+\begin{verbatim}
+<<<<<<< HEAD
+result = model.predict(x)
+=======
+result = classifier.classify(x)
+>>>>>>> feature-x
+\end{verbatim}
+
+Edit the file to keep the correct version, remove the markers, then:
+
+\begin{verbatim}
+git add file.py
+git commit -m "Resolve merge conflict in file.py"
+\end{verbatim}
+
+\section{Tags}\index{Git!tags}
+
+\newthought{A tag marks a point in history that matters}—a release, a milestone, a known-good state.
+
+\begin{verbatim}
+git tag v0.1                          # lightweight tag
+git tag -a v0.1 -m "initial setup"    # annotated tag (preferred)
+git push --tags                       # push tags to remote
+\end{verbatim}
+
+\marginnote{Lightweight tags are just a name pointing to a commit. Annotated tags store the tagger,
+date, and message—use them for releases. We tag \texttt{v0.1} today; the tag becomes meaningful
+when you look back at it in Block~8.}
+
+\section{Remotes and GitHub}\index{Git!remotes}\index{GitHub}
+
+\newthought{A remote} is a copy of your repository on another machine—usually GitHub.
+
+\begin{verbatim}
+git remote add origin git@github.com:user/pixelwise.git
+git push -u origin main     # push and set upstream
+git pull                     # fetch + merge from remote
+git fetch                    # fetch without merging
+git clone <url>              # copy a remote repo locally
+\end{verbatim}
+
+\marginnote{GitHub is not Git. Git is the version control system; GitHub is a hosting platform
+that adds pull requests\index{pull request}, issues\index{issues}, CI/CD, and collaboration features on top of Git.
+Alternatives include GitLab and Bitbucket.\\
+GitHub: \url{https://github.com/}\\
+GitHub Docs: \url{https://docs.github.com/}}
+
+\subsection{Pull Requests}
+
+\newthought{A pull request\index{pull request}} is a proposal to merge a branch into another branch—typically a
+feature branch into \texttt{main}. It is the standard mechanism for code review: your changes are visible,
+reviewable, and discussable before they become part of the main codebase.
+
+\subsection{The \texttt{.gitignore} File}\index{.gitignore}
+
+\newthought{Not everything belongs in version control.} The \texttt{.gitignore} file tells Git which files
+and directories to exclude from tracking:
+
+\begin{verbatim}
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Secrets
+.env
+
+# Data and models (too large, reproducible)
+data/
+models/*.pkl
+
+# Editor files
+.vscode/
+*.swp
+\end{verbatim}
+
+\marginnote{Git history is permanent\index{Git!history}. A secret committed once is leaked forever—even if you
+delete the file in a later commit. The old commit still contains it. \texttt{.gitignore} is your first line of defence.}
+
+\section{The Setup Script}\index{setup-server.sh}
+
+\newthought{On the server VM,} you installed packages manually in Block~1. Now capture that work in a script
+so any fresh VM can be provisioned identically:
+
+\begin{verbatim}
+#!/bin/bash
+# setup-server.sh — provision a fresh server VM
+set -euo pipefail
+
+sudo apt update
+sudo apt install -y git python3 python3-pip python3-venv curl
+\end{verbatim}
+
+\marginnote{The \texttt{set -euo pipefail} line makes the script fail immediately on any error
+(\texttt{-e}), on undefined variables (\texttt{-u}), and on pipe failures (\texttt{-o pipefail}).
+This prevents silent failures that leave the server in a half-configured state.}
+
+This is the first file you commit—version control paying for itself immediately. When a new team member
+joins or a VM is rebuilt, \texttt{bash setup-server.sh} reproduces the exact same environment.
+
+% ==============================================================================
+% SESSION B: HANDS-ON
+% ==============================================================================
+
+\newpage
+\section{Workshop}
+
+\marginnote{If your VM is broken, restore the \texttt{B1-complete} snapshot and start fresh.
+At the end of this session, take a snapshot named \texttt{B2-complete}.}
+
+\begin{enumerate}
+    \item \textbf{Create a GitHub account} (if you do not have one). Configure your Git identity on the \texttt{dev} VM:
+    \begin{verbatim}
+    git config --global user.name "Your Name"
+    git config --global user.email "your@email.com"
+    \end{verbatim}
+    Generate an SSH key and add it to GitHub so you can push over SSH.
+
+    \item \textbf{Install packages on the server:} SSH into the server VM and install the tools we need:
+    \begin{verbatim}
+    sudo apt update
+    sudo apt install -y git python3 python3-pip \
+        python3-venv curl
+    \end{verbatim}
+    Verify with \texttt{git --version} and \texttt{python3 --version}.
+
+    \item \textbf{Write \texttt{setup-server.sh}:} Capture exactly what you just ran in a shell script.
+    Add \texttt{set -euo pipefail} at the top. This script is the reproducible record of your server setup.
+
+    \item \textbf{Initialise the PixelWise repo} on the \texttt{dev} VM:
+    \begin{verbatim}
+    mkdir pixelwise && cd pixelwise
+    git init
+    \end{verbatim}
+    Write a \texttt{README.md} with a one-line project description. Write a \texttt{.gitignore} covering
+    Python files, secrets, editors, data, and model artefacts.
+
+    \item \textbf{First commit and push:} Stage and commit \texttt{setup-server.sh}, \texttt{README.md},
+    and \texttt{.gitignore}:
+    \begin{verbatim}
+    git add setup-server.sh README.md .gitignore
+    git commit -m "Add server setup script and project skeleton"
+    \end{verbatim}
+    Create a repository on GitHub, add it as a remote, and push:
+    \begin{verbatim}
+    git remote add origin git@github.com:user/pixelwise.git
+    git push -u origin main
+    \end{verbatim}
+
+    \item \textbf{Tag the release:} Mark this point in history:
+    \begin{verbatim}
+    git tag -a v0.1 -m "initial server setup"
+    git push --tags
+    \end{verbatim}
+
+    \item \textbf{Clone to the server:} SSH into the server and clone PixelWise to its permanent home:
+    \begin{verbatim}
+    sudo mkdir -p /opt/pixelwise
+    sudo chown student:student /opt/pixelwise
+    git clone git@github.com:user/pixelwise.git /opt/pixelwise
+    \end{verbatim}
+    PixelWise now lives on both machines.
+
+    \item \textbf{Take a snapshot} of both VMs. Name them \texttt{B2-complete}.
+\end{enumerate}
+
+\section{Security Thread}
+
+\newthought{\texttt{.gitignore} is a security control.}\index{.gitignore!security} Git history is permanent—a leaked
+secret committed once is leaked forever, even after deletion. \texttt{setup-server.sh} must never contain
+passwords, keys, or credentials. If a secret is accidentally committed, consider the secret compromised:
+rotate it immediately, then use tools like \texttt{git filter-branch} or BFG Repo-Cleaner to rewrite history.
+
+\section{Self-Reflection and Recap}
+
+\newthought{Reflection questions:}
+\begin{itemize}
+    \item What is the difference between \texttt{git add} and \texttt{git commit}?
+    \item Why should you never commit \texttt{.env} files or API keys?
+    \item What happens to a secret that was committed and then deleted in a later commit?
+    \item Why do we capture the server setup in a script rather than just running commands manually?
+    \item When would you use a branch instead of committing directly to \texttt{main}?
+\end{itemize}
+
+\newthought{Milestone:} PixelWise lives on GitHub. Server has the repo cloned at \texttt{/opt/pixelwise}.
+\texttt{setup-server.sh} is version-controlled: provisioning is reproducible and auditable.

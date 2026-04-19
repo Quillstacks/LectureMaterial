@@ -1,0 +1,221 @@
+/* PixelWise — Minimal starter styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.container {
+    max-width: 720px;
+    width: 100%;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.subtitle {
+    color: #888;
+    margin-bottom: 2rem;
+}
+
+/* --- Main layout --- */
+
+.main-panel {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+/* --- Canvas --- */
+
+.canvas-section {
+    flex-shrink: 0;
+}
+
+.canvas-wrapper {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: crosshair;
+}
+
+#drawing-canvas {
+    display: block;
+    image-rendering: pixelated;
+}
+
+.canvas-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+/* --- Buttons --- */
+
+.btn {
+    padding: 0.5rem 1.25rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: #fff;
+    flex: 1;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #d1d5db;
+}
+
+/* --- Results --- */
+
+.results-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.result-display {
+    background: #fff;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    padding: 1.5rem;
+    text-align: center;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.result-placeholder {
+    color: #aaa;
+    font-style: italic;
+}
+
+.result-prediction {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.result-confidence {
+    margin-top: 0.5rem;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+/* --- Confidence bars --- */
+
+.confidence-bars {
+    margin-top: 1rem;
+}
+
+.confidence-bars h3 {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #888;
+    margin-bottom: 0.5rem;
+}
+
+.bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.bar-label {
+    width: 1.5rem;
+    text-align: right;
+    margin-right: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.bar-track {
+    flex: 1;
+    height: 14px;
+    background: #eee;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: #2563eb;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.bar-fill.top {
+    background: #16a34a;
+}
+
+.bar-value {
+    width: 3rem;
+    text-align: right;
+    margin-left: 0.5rem;
+    color: #888;
+    font-size: 0.75rem;
+}
+
+/* --- Analytics panel (Block 9) --- */
+
+.analytics-panel {
+    margin-top: 2rem;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.analytics-panel strong {
+    color: #333;
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 600px) {
+    .main-panel {
+        flex-direction: column;
+    }
+
+    .canvas-wrapper {
+        width: 100%;
+        max-width: 280px;
+    }
+}
