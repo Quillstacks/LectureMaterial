@@ -229,7 +229,7 @@ The effective degrees of freedom, the intrinsic dimensionality $k$, is often far
 The spacing, the distance concentration, the density collapse all depend on the dimension of the space the data actually lives in.
 If we project from $\mathbb{R}^{d}$ down to $\mathbb{R}^{k}$, the clustering methods from Part~I regain their footing: distances become discriminative again, $\varepsilon$-neighbourhoods fill up, and centroids sit among their members.
 
-\marginnote{\newthought{The blessing of dimensionality.} The Johnson-Lindenstrauss lemma\cite{JohnsonLindenstrauss1984} shows that $n$ points in high dimensions can be projected to $O(\log n / \epsilon^2)$ dimensions while preserving pairwise distances within $(1{\pm}\epsilon)$. Even random projections work.}
+\marginnote{\newthought{The blessing of dimensionality.} The Johnson-Lindenstrauss lemma\index{Johnson-Lindenstrauss lemma}\cite{JohnsonLindenstrauss1984} shows that $n$ points in high dimensions can be projected to $O(\log n / \epsilon^2)$ dimensions while preserving pairwise distances within $(1{\pm}\epsilon)$. Even random projections work.}
 
 \newthought{The question is how to find the right $k$ directions.}
 Picking original features by hand (as in variance-based selection) works when the axes happen to align with the signal.
@@ -248,7 +248,8 @@ That is what PCA, and later t-SNE and UMAP, will do.
 
 \marginnote{\newthought{The simplest idea:} rank each feature by how much it varies, then drop the ones that barely move.}
 
-\newthought{Before learning any new directions,} consider the most straightforward way to reduce dimensions: measure the variance of each original feature independently and keep only those with the highest variance.
+\newthought{When axes align with the signal} consider the most straightforward way to reduce dimensions: 
+measure the variance of each original feature independently and keep only those with the highest variance.\\
 
 Given data $X \in \mathbb{R}^{n \times d}$, compute the variance along each coordinate axis:
 \begin{align*}
@@ -268,13 +269,13 @@ A near-constant feature carries almost no information, and removing it loses lit
     \begin{axis}[
         xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
         xmin=-4, xmax=4,
-        ymin=-1, ymax=1,
+        ymin=-4, ymax=4,
         width=\marginparwidth,
-        height=0.6\marginparwidth,
+        height=\marginparwidth,
         axis line style={draw=none},
         tick style={black, thin},
         xtick={-3,0,3},
-        ytick={-0.5,0,0.5},
+        ytick={-3,0,3},
         xticklabel style={font=\tiny},
         yticklabel style={font=\tiny},
         tick align=outside,
@@ -292,7 +293,9 @@ A near-constant feature carries almost no information, and removing it loses lit
 \end{marginfigure}
 
 \newthought{When does it fail?}
-When the important pattern runs diagonally across the coordinate axes, no single original feature captures it well.
+When the signal does not happen to align with the axis, for example when it 
+runs diagonally across the coordinate axes. In that case, no single original 
+feature captures it well.
 
 \begin{figure}
 \centering
@@ -312,25 +315,44 @@ When the important pattern runs diagonally across the coordinate axes, no single
         tick align=outside,
         tick pos=left,
     ]
-    % Data along y=x direction
+    % Data scattered around y=x
     \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
-        (-2.8,-2.9) (-2.1,-2.2) (-1.5,-1.4) (-0.8,-0.9) (-0.2,-0.1)
-        (0.3,0.4) (1.0,0.9) (1.6,1.5) (2.2,2.3) (2.9,2.8)
+        (-2.5,-3.1) (-2.2,-1.5) (-1.3,-1.7) (-0.7,-0.2) (-0.3,0.5)
+        (0.5,-0.1) (1.2,1.6) (1.6,0.8) (2.3,2.9) (3.0,2.4)
     };
     % Projection onto x-axis
     \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {
-        (-2.8,0) (-2.1,0) (-1.5,0) (-0.8,0) (-0.2,0)
-        (0.3,0) (1.0,0) (1.6,0) (2.2,0) (2.9,0)
+        (-2.5,0) (-2.2,0) (-1.3,0) (-0.7,0) (-0.3,0)
+        (0.5,0) (1.2,0) (1.6,0) (2.3,0) (3.0,0)
     };
-    \foreach \xa/\ya in {-2.8/-2.9, -2.1/-2.2, -1.5/-1.4, -0.8/-0.9, -0.2/-0.1,
-                          0.3/0.4, 1.0/0.9, 1.6/1.5, 2.2/2.3, 2.9/2.8}{
+    \foreach \xa/\ya in {-2.5/-3.1, -2.2/-1.5, -1.3/-1.7, -0.7/-0.2, -0.3/0.5,
+                          0.5/-0.1, 1.2/1.6, 1.6/0.8, 2.3/2.9, 3.0/2.4}{
         \addplot[black, thin, dashed] coordinates {(\xa,\ya) (\xa,0)};
     }
     \end{axis}
 \end{tikzpicture}
-\caption{Na\"ive feature selection: dropping $x^{(2)}$ projects onto the horizontal axis. The dashed errors are large because the data varies along $y{=}x$, not along a coordinate axis. Both features have nearly equal variance, so the na\"ive ranking cannot decide which to keep.}
+\caption{Na\"ive feature selection: dropping $x^{(2)}$ projects onto the horizontal axis. 
+The dashed errors are large because the data varies along $y{=}x$, not along a coordinate axis. 
+Both features have nearly equal variance, so the na\"ive ranking cannot decide which to keep. Notice, 
+how in this case both features would still preserver the signal.}
 \label{fig:naive_projection}
 \end{figure}
+
+
+\section{Principal Component Analysis}\index{PCA}\index{covariance matrix}
+
+\marginnote{\newthought{The manifold hypothesis}\index{manifold} holds that high-dimensional data concentrates
+on a $k$-dimensional manifold $\mathcal{M} \subset \mathbb{R}^{d}$ with $k \ll d$. The goal of
+dimensionality reduction is to find a coordinate system for $\mathcal{M}$.}
+
+
+
+\newthought{Here both features have nearly the same variance,} so variance-based selection cannot decide which to keep.
+Dropping either axis incurs large reconstruction error.
+The real pattern lies along the diagonal $y{=}x$, a direction that no original feature represents. 
+When the interesting variation runs between features, we need to construct and map to new dimensions, meaning features.
+That is exactly what PCA does.
+
 
 \begin{figure}
 \centering
@@ -350,109 +372,57 @@ When the important pattern runs diagonally across the coordinate axes, no single
         tick align=outside,
         tick pos=left,
     ]
-    % Same data
+    % Same scattered data
     \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
-        (-2.8,-2.9) (-2.1,-2.2) (-1.5,-1.4) (-0.8,-0.9) (-0.2,-0.1)
-        (0.3,0.4) (1.0,0.9) (1.6,1.5) (2.2,2.3) (2.9,2.8)
+        (-2.5,-3.1) (-2.2,-1.5) (-1.3,-1.7) (-0.7,-0.2) (-0.3,0.5)
+        (0.5,-0.1) (1.2,1.6) (1.6,0.8) (2.3,2.9) (3.0,2.4)
     };
-    % PC1 direction line
-    \addplot[black, thin, domain=-3.5:3.5] {x};
-    % Projections onto y=x line
+    % PC1 tick marks and label (no connecting line)
+    \draw[black,thin] (axis cs:-3.1,-2.9)--(axis cs:-2.9,-3.1);
+    \draw[black,thin] (axis cs:-2.1,-1.9)--(axis cs:-1.9,-2.1);
+    \draw[black,thin] (axis cs:-1.1,-0.9)--(axis cs:-0.9,-1.1);
+    \draw[black,thin] (axis cs:-0.1,0.1)--(axis cs:0.1,-0.1);
+    \draw[black,thin] (axis cs:0.9,1.1)--(axis cs:1.1,0.9);
+    \draw[black,thin] (axis cs:1.9,2.1)--(axis cs:2.1,1.9);
+    \draw[black,thin] (axis cs:2.9,3.1)--(axis cs:3.1,2.9);
+    \node[font=\small] at (axis cs:3.0,-2.0) {PC1};
+    % Projections onto y=x line: proj = ((x+y)/2, (x+y)/2)
     \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {
-        (-2.85,-2.85) (-2.15,-2.15) (-1.45,-1.45) (-0.85,-0.85) (-0.15,-0.15)
-        (0.35,0.35) (0.95,0.95) (1.55,1.55) (2.25,2.25) (2.85,2.85)
+        (-2.8,-2.8) (-1.85,-1.85) (-1.5,-1.5) (-0.45,-0.45) (0.1,0.1)
+        (0.2,0.2) (1.4,1.4) (1.2,1.2) (2.6,2.6) (2.7,2.7)
     };
-    \foreach \xa/\ya/\px/\py in {
-        -2.8/-2.9/-2.85/-2.85, -2.1/-2.2/-2.15/-2.15, -1.5/-1.4/-1.45/-1.45,
-        -0.8/-0.9/-0.85/-0.85, -0.2/-0.1/-0.15/-0.15,
-        0.3/0.4/0.35/0.35, 1.0/0.9/0.95/0.95, 1.6/1.5/1.55/1.55,
-        2.2/2.3/2.25/2.25, 2.9/2.8/2.85/2.85}{
-        \addplot[black, thin, dashed] coordinates {(\xa,\ya) (\px,\py)};
-    }
+    % Dashed projection lines from data to PC1
+    \draw[black,thin,dashed] (axis cs:-2.5,-3.1)--(axis cs:-2.8,-2.8);
+    \draw[black,thin,dashed] (axis cs:-2.2,-1.5)--(axis cs:-1.85,-1.85);
+    \draw[black,thin,dashed] (axis cs:-1.3,-1.7)--(axis cs:-1.5,-1.5);
+    \draw[black,thin,dashed] (axis cs:-0.7,-0.2)--(axis cs:-0.45,-0.45);
+    \draw[black,thin,dashed] (axis cs:-0.3,0.5)--(axis cs:0.1,0.1);
+    \draw[black,thin,dashed] (axis cs:0.5,-0.1)--(axis cs:0.2,0.2);
+    \draw[black,thin,dashed] (axis cs:1.2,1.6)--(axis cs:1.4,1.4);
+    \draw[black,thin,dashed] (axis cs:1.6,0.8)--(axis cs:1.2,1.2);
+    \draw[black,thin,dashed] (axis cs:2.3,2.9)--(axis cs:2.6,2.6);
+    \draw[black,thin,dashed] (axis cs:3.0,2.4)--(axis cs:2.7,2.7);
     \end{axis}
 \end{tikzpicture}
-\caption{PCA projection onto PC1: the direction of maximum variance runs along $y{=}x$. The reconstruction errors (dashed) are tiny compared to the na\"ive projection.}
+\caption{PCA projection onto PC1: The direction of maximum variance runs along $y{=}x$. 
+The reconstruction errors (dashed) are tiny compared to the na\"ive projection.}
 \label{fig:pca_projection}
 \end{figure}
 
-\newthought{Here both features have nearly the same variance,} so variance-based selection cannot decide which to keep.
-Dropping either axis incurs large reconstruction error.
-The real pattern lies along the diagonal $y{=}x$, a direction that no original feature represents.
+\marginnote{\newthought{PCA}\cite{Pearson1901}\cite{Hotelling1933} finds orthogonal 
+directions of maximum variance in the data.}
 
-\newthought{The lesson:} selecting among existing axes is limited to cases where those axes already align with the data.
-When the interesting variation runs between features, we need to construct new axes.
-That is exactly what PCA does.
 
-\marginnote{\newthought{The manifold hypothesis} holds that high-dimensional data concentrates 
-on a $k$-dimensional manifold $\mathcal{M} \subset \mathbb{R}^{d}$ with $k \ll d$. The goal of 
-dimensionality reduction is to find a coordinate system for $\mathcal{M}$.}
-\section{Principal Component Analysis}\index{PCA}\index{covariance matrix}
 
-\marginnote{\newthought{PCA}\cite{Pearson1901}\cite{Hotelling1933} finds orthogonal directions of maximum variance in the data.}
+
+
 
 \newthought{Given centred data} $X \in \mathbb{R}^{n \times d}$, where rows are samples, PCA finds a $k$-dimensional subspace, $k < d$, that best represents the data.
-
-\newthought{The variance maximization view.}
-Find the direction $w_1 \in \mathbb{R}^d$ with $\|w_1\|{=}1$ that maximises the variance of projected data:
-
-\begin{align*}
-    w_1 &= \arg\max_{\|w\|=1} \text{Var}(Xw) \\
-        &= \arg\max_{\|w\|=1} w^T \Sigma\, w
-\end{align*}
-
-where $\Sigma = X^T X / n$ is the covariance matrix.
-
-\marginnote{\newthought{Lagrange multipliers.} Setting $\mathcal{L} = w^T \Sigma w - \lambda(w^T w - 1)$ and differentiating gives $\Sigma w = \lambda w$, so $w_1$ is the eigenvector of $\Sigma$ with the largest eigenvalue $\lambda_1$.}
-
-\newthought{The solution:} $w_1$ is the eigenvector of $\Sigma$ corresponding to the largest eigenvalue $\lambda_1$.
-The second principal component is the eigenvector with the second-largest eigenvalue, orthogonal to the first, and so on.
-The first $k$ principal components together define the optimal $k$-dimensional subspace.
-
-\newthought{The reconstruction error view.}
-Equivalently, PCA minimises the squared reconstruction error:
-
-\begin{align*}
-    \min_{W \in \mathbb{R}^{d \times k},\; W^T W = I_k} \sum_{i=1}^n \|x_i - WW^T x_i\|^2
-\end{align*}
-
-Both views yield the same solution: the first $k$ eigenvectors of the covariance matrix.
-
-\begin{figure}
-\centering
-\begin{tikzpicture}
-    \begin{axis}[
-        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
-        xmin=-1, xmax=5,
-        ymin=-1, ymax=4,
-        width=0.5\textwidth,
-        height=0.5\textwidth,
-        axis line style={draw=none},
-        tick style={black, thin},
-        xtick={0,2,4},
-        ytick={0,2},
-        xticklabel style={font=\small},
-        yticklabel style={font=\small},
-        tick align=outside,
-        tick pos=left,
-    ]
-    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(3,2.5)};
-    \addplot[black, thin, domain=0:4] {0.8*x};
-    \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {(2.73,2.18)};
-    \addplot[black, thin, dashed] coordinates {(3,2.5) (2.73,2.18)};
-    \node[font=\small, anchor=west] at (axis cs:3.1,2.5) {$x$};
-    \node[font=\small, anchor=north] at (axis cs:2.73,2.1) {$\hat{x}$};
-    \node[font=\small, anchor=west] at (axis cs:2.9,2.3) {error};
-    \end{axis}
-\end{tikzpicture}
-\caption{PCA projects $x$ onto the principal subspace (line), minimising the reconstruction error (dashed line to $\hat{x}$).}
-\label{fig:pca_reconstruction}
-\end{figure}
-
 
 \begin{algorithm}[H]
 \caption{PCA via Eigendecomposition}
 \begin{algorithmic}[1]
-\Require Centred data $X \in \mathbb{R}^{n \times d}$, target dimension $k$
+\Require Centred data $X \in \mathbb{R}^{n \times d}$ (each column has zero mean, so that $X^T X / n$ is the covariance matrix; if features have different scales, standardise first by dividing each column by its standard deviation), target dimension $k$
 \Ensure Principal components $W \in \mathbb{R}^{d \times k}$, projected data $Z \in \mathbb{R}^{n \times k}$
 \State Compute covariance matrix $\Sigma = X^T X / n$
 \State Compute eigendecomposition $\Sigma = V \Lambda V^T$
@@ -461,19 +431,139 @@ Both views yield the same solution: the first $k$ eigenvectors of the covariance
 \end{algorithmic}
 \end{algorithm}
 
-\newthought{A simple diagnostic} reveals whether the data is compressible.
-Inspect the eigenvalues $\lambda_1 \geq \lambda_2 \geq \ldots \geq \lambda_d$ of $\Sigma$.
-If most are near zero, the data varies in only a few directions; the remaining dimensions add volume but no information.
-The scree plot (Figure~\ref{fig:scree_and_cumvar}) visualises exactly this: a steep drop tells you how many components matter.
-
-\newthought{Explained variance.}
-The fraction of total variance explained by the first $k$ components is:
+\newthought{The variance maximization view.}
+Find the direction $w_1 \in \mathbb{R}^d$ with $\|w_1\|{=}1$ that maximises the variance of projected data:
 
 \begin{align*}
-    \text{explained variance ratio} &= \frac{\sum_{i=1}^k \lambda_i}{\sum_{i=1}^d \lambda_i}
+    w_1 &= \arg\max_{\|w\|=1} \text{Var}(Xw) \\
+        &= \arg\max_{\|w\|=1} w^T \Sigma\, w, \\
+    \Sigma &= \tfrac{1}{n} X^T X.
 \end{align*}
 
-Choose $k$ so that the cumulative explained variance exceeds a threshold, commonly 95\%.
+\newthought{Lagrange multipliers.}
+Maximising $w^T \Sigma w$ subject to $w^T w = 1$ is a constrained optimisation problem.
+Introduce a multiplier $\lambda$\index{Lagrange multiplier} and form the Lagrangian:
+
+\begin{align*}
+    \mathcal{L}(w,\, \lambda) &= w^T \Sigma\, w \;-\; \lambda\,(w^T w - 1)
+\end{align*}
+
+Differentiating with respect to $w$ and setting the gradient to zero:
+
+\begin{align*}
+    \frac{\partial \mathcal{L}}{\partial w}
+        &= 2\,\Sigma\, w \;-\; 2\,\lambda\, w \\
+        &\stackrel{!}{=}\; 0
+\end{align*}
+
+which gives the eigenvalue\index{eigenvalue} equation:
+
+\begin{align*}
+    \Sigma\, w &= \lambda\, w
+\end{align*}
+
+So $w$ must be an eigenvector\index{eigenvector} of $\Sigma$.
+The projected variance along any such eigenvector equals its eigenvalue:
+
+\begin{align*}
+    w^T \Sigma\, w &= w^T (\lambda\, w) \\
+                   &= \lambda\, w^T w \\
+                   &= \lambda
+\end{align*}
+
+\marginnote{\newthought{Orthogonality} of principal components follows directly: eigenvectors of a symmetric matrix corresponding to distinct eigenvalues are orthogonal.}
+
+Maximising the variance therefore means choosing $w_1$ as the eigenvector with the largest eigenvalue $\lambda_1$.
+The second principal component is the eigenvector with the second-largest eigenvalue, orthogonal to the first, and so on.
+The first $k$ principal components together define the optimal $k$-dimensional subspace. $k \leq d$ is a free choice.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
+        xmin=-4, xmax=4,
+        ymin=-4, ymax=4,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-3,0,3},
+        ytick={-3,0,3},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+    ]
+    % Same scattered data
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (-2.5,-3.1) (-2.2,-1.5) (-1.3,-1.7) (-0.7,-0.2) (-0.3,0.5)
+        (0.5,-0.1) (1.2,1.6) (1.6,0.8) (2.3,2.9) (3.0,2.4)
+    };
+    % PC1 eigenvector: along y=x, i.e. (1/sqrt2, 1/sqrt2)
+    \draw[-{Stealth[length=4pt,width=2.5pt]}, black!50, semithick] (axis cs:0,0) -- (axis cs:2.1,2.1);
+    \node[font=\small, black!50, anchor=north west] at (axis cs:1.8,1.6) {$w_1$};
+    % PC2 eigenvector: perpendicular, i.e. (1/sqrt2, -1/sqrt2)
+    \draw[-{Stealth[length=4pt,width=2.5pt]}, black!50, semithick] (axis cs:0,0) -- (axis cs:0.7,-0.7);
+    \node[font=\small, black!50, anchor=north west] at (axis cs:0.7,-0.7) {$w_2$};
+    \end{axis}
+\end{tikzpicture}
+\caption{The two eigenvectors of $\Sigma$. $w_1$ points along the direction of maximum variance; $w_2$ is orthogonal and captures the residual spread.}
+\label{fig:pca_eigenvectors}
+\end{figure}
+
+
+
+
+
+\newthought{Computing eigenvalues.}
+Eigenvalues satisfy the characteristic equation $\det(\Sigma - \lambda I) = 0$.%
+\marginnote{\newthought{Geometric intuition.}
+$\Sigma$ stretches space along its eigenvector directions.
+Subtracting $\lambda I$ weakens every direction by $\lambda$.
+When $\lambda$ exactly matches the stretch along some eigenvector,
+$\Sigma - \lambda I$ collapses that direction to zero,
+the matrix becomes singular, and $\det = 0$.
+So the characteristic equation asks:
+at which scaling factors $\lambda$ does $\Sigma$ lose a dimension?}
+For a $2{\times}2$ covariance matrix
+$\Sigma = \begin{pmatrix} a & b \\ b & c \end{pmatrix}$:
+
+\begin{align*}
+    \det(\Sigma - \lambda I)
+        &= \det\begin{pmatrix} a - \lambda & b \\ b & c - \lambda \end{pmatrix} \\
+        &= (a - \lambda)(c - \lambda) - b^2 \\
+        &= \lambda^2 - (a + c)\,\lambda + (ac - b^2) \\
+        &\stackrel{!}{=}\; 0
+\end{align*}
+
+Applying the quadratic formula:
+
+\begin{align*}
+    \lambda
+        &= \frac{(a + c) \pm \sqrt{(a + c)^2 - 4(ac - b^2)}}{2} \\[4pt]
+        &= \frac{(a + c) \pm \sqrt{(a - c)^2 + 4b^2}}{2}
+\end{align*}
+
+\newthought{Computing eigenvectors.}
+For each eigenvalue $\lambda_i$, solve $(\Sigma - \lambda_i I)\, w = 0$.
+From the first row of the $2{\times}2$ system:
+
+\begin{align*}
+    (a - \lambda_i)\, w^{(1)} + b\, w^{(2)} &= 0 \\[4pt]
+    w^{(2)} &= -\frac{a - \lambda_i}{b}\; w^{(1)}
+\end{align*}
+
+Any non-zero solution gives the direction; normalise to $\|w_i\|{=}1$ to obtain the principal component.
+
+
+\newthought{A simple diagnostic} reveals whether the data is compressible.
+Inspect the eigenvalues $\lambda_1 \geq \lambda_2 \geq \ldots \geq \lambda_d$ of $\Sigma$.\index{explained variance}
+If most are near zero, the data varies in only a few directions; the remaining dimensions
+add volume but no information.
+
+
+The scree plot\index{scree plot} (Figure~\ref{fig:scree_plot}) visualises exactly this: a steep drop tells you how many components matter.
 
 \begin{figure}
 \centering
@@ -481,27 +571,26 @@ Choose $k$ so that the cumulative explained variance exceeds a threshold, common
     \begin{axis}[
         xlabel={Component},
         ylabel={Eigenvalue $\lambda_i$},
-        xmin=0.5, xmax=10.5,
+        xmin=0.5, xmax=2.5,
         ymin=0,
-        width=0.45\textwidth,
-        height=0.3\textwidth,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick={1,2,3,4,5,6,7,8,9,10},
-        xticklabel style={font=\tiny},
-        yticklabel style={font=\tiny},
+        xtick={1,2},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
         tick align=outside,
         tick pos=left,
-        ybar,
-        bar width=6pt,
     ]
-    \addplot[fill=black!70, draw=black] coordinates {
-        (1,6.0) (2,1.5) (3,1.0) (4,0.5) (5,0.3)
-        (6,0.2) (7,0.2) (8,0.1) (9,0.1) (10,0.1)
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (1,4.5) (2,0.5)
     };
+    % Line segment with gaps around each dot
+    \draw[black, thin] (axis cs:1.15,3.90) -- (axis cs:1.85,1.10);
     \end{axis}
 \end{tikzpicture}
-\caption{Scree plot showing individual eigenvalues. The sharp drop after the first component reveals that one direction dominates.}
+\caption{Scree plot for the two-component example ($\lambda_1{=}4.5$, $\lambda_2{=}0.5$). The sharp drop confirms that one direction captures most of the variance.}
 \label{fig:scree_plot}
 \end{figure}
 
@@ -509,206 +598,423 @@ Choose $k$ so that the cumulative explained variance exceeds a threshold, common
 \centering
 \begin{tikzpicture}
     \begin{axis}[
-        xlabel={Component},
+        xlabel={Components},
         ylabel={Cumulative variance},
-        xmin=0.5, xmax=10.5,
+        xmin=0.5, xmax=2.5,
         ymin=0, ymax=1.1,
         width=0.5\textwidth,
-        height=0.35\textwidth,
+        height=0.5\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick={1,2,3,4,5,6,7,8,9,10},
-        ytick={0,0.5,0.95,1},
+        xtick={1,2},
+        ytick={0,0.5,0.9,1},
         xticklabel style={font=\small},
         yticklabel style={font=\small},
         tick align=outside,
         tick pos=left,
     ]
     \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
-        (1,0.6) (2,0.75) (3,0.85) (4,0.9) (5,0.93)
-        (6,0.95) (7,0.97) (8,0.98) (9,0.99) (10,1.0)
+        (1,0.90) (2,1.0)
     };
-    \addplot[black, thin, dashed, domain=0.5:10.5] {0.95};
+    % Line segment with gaps around each dot
+    \draw[black, thin] (axis cs:1.15,0.915) -- (axis cs:1.85,0.985);
+    \addplot[black, thin, dashed, domain=0.5:2.5] {0.95};
+    \node[font=\small, anchor=north east] at (axis cs:2.4,0.95) {0.95};
     \end{axis}
 \end{tikzpicture}
-\caption{Cumulative explained variance. The dashed line marks the 95\% threshold, reached at six components.}
+\caption{Cumulative explained variance: the fraction of total variance captured by the first $k$ components 
+is $\sum_{i=1}^k \lambda_i / \sum_{i=1}^d \lambda_i$. Here PC1 alone explains 90\%; 
+both components are needed to exceed the rule of thumb 95\% threshold (dashed).}
 \label{fig:cumvar_plot}
 \end{figure}
 
 
-\section{Singular Value Decomposition}\index{SVD}
 
-\marginnote{\newthought{SVD} is the workhorse of numerical linear algebra and the computationally preferred route to PCA.}
 
-Any matrix $X \in \mathbb{R}^{n \times d}$ has an SVD:
+
+\newpage
+\section{Reconstruction Error}\index{reconstruction error}
+
+\newthought{So far we derived PCA from variance maximisation:} find the directions 
+along which the projected data spreads the most.
+There is a dual view that asks the opposite question: 
+if we compress from $d$ dimensions to $k$ and then decompress back to $d$, how much signal do we lose?
+
+\newthought{Given centred data} $X \in \mathbb{R}^{n \times d}$ and an orthonormal basis $W \in \mathbb{R}^{d \times k}$ ($W^T W = I_k$), each point $x_i$ is projected to $z_i = W^T x_i \in \mathbb{R}^k$ and reconstructed as $\hat{x}_i = W z_i = W W^T x_i$.
+The reconstruction error is the squared distance between each point and its reconstruction:
 
 \begin{align*}
-    X &= U \Sigma V^T
+    \mathcal{L}(R &= \sum_{i=1}^n \|x_i - \hat{x}_i\|^2 \\
+                   &= \sum_{i=1}^n \|x_i - W W^T x_i\|^2
 \end{align*}
 
-where $U \in \mathbb{R}^{n \times r}$ holds orthonormal left singular vectors, $\Sigma \in \mathbb{R}^{r \times r}$ is diagonal with singular values $\sigma_1 \geq \sigma_2 \geq \ldots$, $V \in \mathbb{R}^{d \times r}$ holds orthonormal right singular vectors, and $r{=}\text{rank}(X)$.
+\newthought{The dashed error} segments are short because PC1 captures the dominant 
+direction of variation, making $x$ and its reconstruction similar.
 
-\newthought{Connection to PCA.} The columns of $V$ are the eigenvectors of $X^T X$, with $\lambda_i = \sigma_i^2 / n$.
-In practice, always compute PCA via the SVD: it is numerically stable and avoids forming $X^T X$ explicitly.
 
-\newthought{Truncated SVD} keeps only the top $k$ singular values: $X_k = U_k \Sigma_k V_k^T$.
-By the Eckart-Young-Mirsky theorem\cite{EckartYoung1936}, $X_k$ is the best rank-$k$ approximation to $X$ in both Frobenius and spectral norms.
+\begin{figure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
+        xmin=-4, xmax=4,
+        ymin=-4, ymax=4,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-3,0,3},
+        ytick={-3,0,3},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+    ]
+    % Original data points
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (-2.5,-3.1) (-2.2,-1.5) (-1.3,-1.7) (-0.7,-0.2) (-0.3,0.5)
+        (0.5,-0.1) (1.2,1.6) (1.6,0.8) (2.3,2.9) (3.0,2.4)
+    };
+    % Projections onto y=x line: proj = ((x+y)/2, (x+y)/2)
+    \addplot[only marks, mark=o, mark size=2pt, black!55, thick] coordinates {
+        (-2.8,-2.8) (-1.85,-1.85) (-1.5,-1.5) (-0.45,-0.45) (0.1,0.1)
+        (0.2,0.2) (1.4,1.4) (1.2,1.2) (2.6,2.6) (2.7,2.7)
+    };
+    % Dashed reconstruction error lines
+    \draw[black,thin,dashed] (axis cs:-2.5,-3.1)--(axis cs:-2.8,-2.8);
+    \draw[black,thin,dashed] (axis cs:-2.2,-1.5)--(axis cs:-1.85,-1.85);
+    \draw[black,thin,dashed] (axis cs:-1.3,-1.7)--(axis cs:-1.5,-1.5);
+    \draw[black,thin,dashed] (axis cs:-0.7,-0.2)--(axis cs:-0.45,-0.45);
+    \draw[black,thin,dashed] (axis cs:-0.3,0.5)--(axis cs:0.1,0.1);
+    \draw[black,thin,dashed] (axis cs:0.5,-0.1)--(axis cs:0.2,0.2);
+    \draw[black,thin,dashed] (axis cs:1.2,1.6)--(axis cs:1.4,1.4);
+    \draw[black,thin,dashed] (axis cs:1.6,0.8)--(axis cs:1.2,1.2);
+    \draw[black,thin,dashed] (axis cs:2.3,2.9)--(axis cs:2.6,2.6);
+    \draw[black,thin,dashed] (axis cs:3.0,2.4)--(axis cs:2.7,2.7);
+    % Labels
+    \node[font=\small, black!50] at (axis cs:3.0,-2.0) {$\tilde{x}$};
+    \end{axis}
+\end{tikzpicture}
+\caption{Reconstruction error of PCA with $k{=}1$. Each point (filled) is projected onto PC1 (the line $y{=}x$) to get its reconstruction (open circle). The dashed segments are the reconstruction errors: the perpendicular distances that PCA minimises. Compare with Figure~\ref{fig:naive_projection}, where projection onto a coordinate axis leaves much larger errors.}
+\label{fig:pca_reconstruction}
+\end{figure}
 
+
+
+
+
+
+
+
+
+
+
+\marginnote{\newthought{For $d > 2$,} closed-form eigendecompositions do not exist. In practice, use the SVD\index{SVD}: $X = U \Sigma V^T$, where the columns of $V$ are the eigenvectors of $X^T X$ with $\lambda_i = \sigma_i^2 / n$. This avoids forming $X^T X$ explicitly and is numerically stable.}
 
 \section{Independent Component Analysis}\index{ICA}
 
-\marginnote{\newthought{ICA} seeks statistically independent sources, not just uncorrelated directions.}
-
-\newthought{PCA finds uncorrelated components.}
-ICA goes further and finds independent components\index{statistical independence}.
-
-\newthought{The cocktail party problem.} Multiple microphones record a mixture of speakers.
-Model: $X = AS$, where $A$ is a mixing matrix and $S$ contains independent source signals.
-ICA estimates $W{=}A^{-1}$ to recover $S{=}WX$.
-
-\newthought{The key insight:} independent non-Gaussian signals become more Gaussian when mixed, a consequence of the central limit theorem.
-ICA maximises non-Gaussianity, measured via kurtosis or negentropy, to separate sources.
-The FastICA\cite{Hyvarinen1999} algorithm implements this efficiently.
+\newthought{PCA decorrelates} but does not separate sources. 
+Uncorrelated ($\text{Cov}(s_i,s_j){=}0$) is weaker than independent 
+($p(s_i,s_j) = p(s_i)\,p(s_j)$). Given a linear mixture $X = AS$ of independent signals $S$, ICA\index{statistical independence} recovers $S = A^{-1}X$ by maximising non-Gaussianity\index{non-Gaussianity} of the components.
 
 
-\section{t-SNE}\index{t-SNE}
 
-\marginnote{\newthought{t-SNE} stands for t-distributed Stochastic Neighbour Embedding\cite{vanDerMaaten2008}. It is optimised for two- or three-dimensional visualization.}
 
-\newthought{t-SNE preserves local pattern}: nearby points in high dimensions stay nearby in the 2D embedding.
+\newpage
+\section{t-SNE\cite{vanDerMaaten2008}}\index{t-SNE}
+
+\marginnote[5cm]{\newthought{PCA and ICA are linear.} No rotation of the axes can untangle classes that
+live on a curved manifold. When the goal is visualization rather than preprocessing,
+we need methods that can bend the coordinate system to follow the data.
+This is what t-SNE and UMAP provide.}
+
+\newthought{t-SNE}. stands for t-distributed Stochastic Neighbour
+Embedding\index{embedding}. It is optimised for one-, two- or three-dimensional visualization\index{visualization}.
+t-SNE preserves local pattern; nearby points in high dimensions stay nearby in the embedding.
 It does this in four steps.
 
 \begin{algorithm}[H]
-\caption{t-SNE}
 \begin{algorithmic}[1]
 \Require High-dimensional data $X$, perplexity, target dimension $k$
-\State Compute pairwise similarities in high-D (Gaussian kernel): $p_{j|i} = \exp(-\|x_i - x_j\|^2 / 2\sigma_i^2) / \sum_{l \neq i} \exp(-\|x_i - x_l\|^2 / 2\sigma_i^2)$; symmetrize: $p_{ij} = (p_{j|i} + p_{i|j}) / 2n$
+
+\State Compute pairwise similarities in high-D (Gaussian kernel\index{Gaussian kernel}, maps distances to $(0,1]$):
+\[
+  p_{j|i} = \frac{\exp\!\bigl(-\|x_i - x_j\|^2 / 2\sigma_i^2\bigr)}
+                  {\sum_{l \neq i} \exp\!\bigl(-\|x_i - x_l\|^2 / 2\sigma_i^2\bigr)}
+\]
+Symmetrize: $p_{ij} = (p_{j|i} + p_{i|j}) / 2n$
+
 \State Initialize low-D embedding $Y$
+
 \Repeat
-    \State Compute low-D similarities with Student-$t$ kernel: $q_{ij} = (1 + \|y_i - y_j\|^2)^{-1} / \sum_{k \neq l} (1 + \|y_k - y_l\|^2)^{-1}$
-    \State Gradient step: minimise $\text{KL}(P \| Q) = \sum_{ij} p_{ij} \log (p_{ij} / q_{ij})$
+
+    \State Compute low-D similarities with Student-$t$ kernel\index{Student-t kernel}:
+    \[
+      q_{ij} = \frac{(1 + \|y_i - y_j\|^2)^{-1}}
+                    {\sum_{k \neq l} (1 + \|y_k - y_l\|^2)^{-1}}
+    \]
+
+    \State Gradient step: minimise
+    \[
+      \text{KL}(P \| Q) = \sum_{ij} p_{ij} \log \frac{p_{ij}}{q_{ij}}
+    \]
+
 \Until{convergence}
 \end{algorithmic}
+\caption{t-SNE. All points are updated simultaneously (batch gradient descent). 
+The KL objective is non-convex, so there is no convergence guarantee; different 
+random initialisations can yield different layouts.}
 \end{algorithm}
-
-\newthought{Perplexity} controls the effective number of neighbours each point considers.
-It sets the bandwidth $\sigma_i$ of the Gaussian kernel.
-Typical values: 5--50.
-Higher perplexity means more global pattern is considered.
 
 \marginnote{\newthought{Perplexity} is defined as $2^{H(P_i)}$ where $H$ is the Shannon entropy of the conditional distribution over neighbours. Think of it as the effective number of neighbours.}
 
-\newthought{Interpreting t-SNE output} requires caution.
+\newthought{Perplexity}\index{perplexity}\index{hyperparameter selection} controls the effective number of neighbours each point considers.
+It sets the bandwidth $\sigma_i$ of the Gaussian kernel.
+Typical values: 5 to 50.
+Higher perplexity means more global pattern is considered.
 
-\begin{figure}
+
+
+\marginnote{\newthought{The KL divergence}\index{KL divergence} $\text{KL}(P \| Q) = \sum_{ij} p_{ij} \log(p_{ij} / q_{ij})$ measures how much the low-dimensional distribution $Q$ diverges from the high-dimensional distribution $P$. It is zero when $Q = P$ and asymmetric: misrepresenting a large $p_{ij}$ with a small $q_{ij}$ is penalised heavily, so t-SNE prioritises preserving local neighbourhoods.}
+\newthought{The gradient} of $\text{KL}(P \| Q)$ with respect to each embedding coordinate is
+
+\begin{align*}
+    \frac{\partial\;\text{KL}}{\partial\, y_i}
+        &= 4 \sum_{j \neq i}
+           (p_{ij} - q_{ij})\,(y_i - y_j)\,
+           \bigl(1 + \|y_i - y_j\|^2\bigr)^{-1}
+\end{align*}
+
+Each summand acts as a pairwise force: where $p_{ij} > q_{ij}$ the force 
+is attractive, where $p_{ij} < q_{ij}$ it is repulsive. 
+The heavy tails of the Student-$t$ kernel give distant pairs in $Y$ a larger 
+$q_{ij}$ than a Gaussian would, so the repulsive force saturates. 
+This prevents the crowding problem\index{crowding problem} where all points collapse into the centre of the map.
+Gradient descent\index{gradient descent} moves the embedding until local neighbourhoods in $Y$ match those in $X$.
+
+\newthought{Trace} the four steps on our canonical six points,
+mapping from $\mathbb{R}^2$ to $\mathbb{R}^1$ with perplexity${=}2$.
+
+\begin{marginfigure}
 \centering
-\begin{tikzpicture}
+\begin{tikzpicture}[scale=1]
     \begin{axis}[
-        xmin=-30, xmax=30, ymin=-30, ymax=30,
-        width=0.5\textwidth,
-        height=0.5\textwidth,
+        xmin=0, xmax=10,
+        ymin=0, ymax=10,
+        width=\textwidth,
+        height=\textwidth,
         axis line style={draw=none},
-        tick style={black, thin},
-        xtick=\empty, ytick=\empty,
+        tick style={black, thick},
+        xtick={1,2,3,6,8},
+        ytick={1,2,3,7,8,9},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
         tick align=outside,
         tick pos=left,
     ]
-    \addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
-        (-20,-15) (-18,-14) (-19,-16) (-21,-15)
-        (0,0) (1,2) (-1,1) (2,-1)
-        (15,20) (16,18) (14,19) (17,21)
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (1,2) (2,3) (3,1)
     };
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (6,8) (8,7) (8,9)
+    };
+    \node[font=\tiny, anchor=south east] at (axis cs:1,2) {$x_1$};
+    \node[font=\tiny, anchor=south east] at (axis cs:2,3) {$x_2$};
+    \node[font=\tiny, anchor=north]      at (axis cs:3,1) {$x_3$};
+    \node[font=\tiny, anchor=south west] at (axis cs:6,8) {$x_4$};
+    \node[font=\tiny, anchor=north west] at (axis cs:8,7) {$x_5$};
+    \node[font=\tiny, anchor=south west] at (axis cs:8,9) {$x_6$};
     \end{axis}
 \end{tikzpicture}
-\caption{t-SNE embedding at perplexity $= 5$. Three tight clusters emerge from local neighbourhood preservation.}
-\label{fig:tsne_perplexity_low}
-\end{figure}
+\caption{The canonical six points (again)).
+Cluster~A: $x_1{=}(1,2)$, $x_2{=}(2,3)$, $x_3{=}(3,1)$.
+Cluster~B: $x_4{=}(6,8)$, $x_5{=}(8,7)$, $x_6{=}(8,9)$.}
+\label{fig:tsne_canonical_ref}
+\end{marginfigure}
 
-\begin{figure}
-\centering
+\newthought{Step 1: Initialise the embedding.}
+Each $y_i$ is drawn independently from $\mathcal{N}(0,\,10^{-4})$.
+At $t{=}0$ the six points land in near-random order: cluster~A (black) and 
+cluster~B (grey) are completely intermixed.
+
+\begin{center}
 \begin{tikzpicture}
     \begin{axis}[
-        xmin=-30, xmax=30, ymin=-30, ymax=30,
-        width=0.5\textwidth,
-        height=0.5\textwidth,
+        xmin=-6, xmax=6,
+        ymin=-0.5, ymax=0.5,
+        width=0.7\textwidth,
+        height=3cm,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick=\empty, ytick=\empty,
+        xtick={-6,-4,-2,0,2,4,6},
+        ytick=\empty,
+        xticklabel style={font=\small},
         tick align=outside,
         tick pos=left,
+        clip=false,
+        title={$t{=}0$},
+        title style={font=\small, at={(0,0.5)}, anchor=east, xshift=-5pt},
     ]
-    \addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
-        (-15,-10) (-13,-8) (-14,-12) (-16,-9)
-        (0,5) (2,7) (-2,6) (3,4)
-        (12,15) (14,13) (11,14) (15,16)
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (-0.4,0) (0.3,0) (-0.1,0)
     };
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (0.5,0) (-0.5,0) (0.2,0)
+    };
+    \node[font=\small, anchor=south] at (axis cs:0,0.15) {$\{x_1, \ldots, x_6\}$};
     \end{axis}
 \end{tikzpicture}
-\caption{t-SNE embedding at perplexity $= 50$. The same data produces different cluster shapes, sizes, and between-cluster distances. Neither embedding reflects the original geometry.}
-\label{fig:tsne_perplexity_high}
-\end{figure}
+\end{center}
 
-\newthought{Common pitfalls:}
-\begin{itemize}
-    \item Cluster sizes are meaningless: t-SNE equalises local densities.
-    \item Distances between clusters are meaningless: the embedding preserves local, not global, pattern.
-    \item Results vary with random initialisation; run multiple times.
-    \item t-SNE is for visualization only, not for preprocessing or downstream tasks.
-\end{itemize}
+\vspace{0.5em}
+\newthought{Step 2: Compute high-dimensional similarities and begin gradient descent.}
+Here perplexity~$= 2$.
+Same-cluster pairs get large similarities, cross-cluster pairs near zero; 
+the resulting matrix $P$ is computed once and stays fixed as the target.
+Gradient descent then pulls high-similarity neighbours together and pushes 
+low-similarity points apart.
+By $t{=}2$ most points drift toward their cluster partners, but $x_2$; initialised 
+near $x_4$ (see $t{=}0$), needed a few steps for its atractive forces to move through 
+the repulsive forces of the other cluster's points.
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        xmin=-6, xmax=6,
+        ymin=-0.5, ymax=0.5,
+        width=0.7\textwidth,
+        height=3cm,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-6,-4,-2,0,2,4,6},
+        ytick=\empty,
+        xticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+        clip=false,
+        title={$t{=}2$},
+        title style={font=\small, at={(0,0.5)}, anchor=east, xshift=-5pt},
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (-1.4,0) (0.2,0) (-2.0,0)
+    };
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (1.4,0) (0.5,0) (1.2,0)
+    };
+    \node[font=\small, anchor=south] at (axis cs:-2.0,0.1) {$x_3$};
+    \node[font=\small, anchor=north] at (axis cs:-1.4,-0.1) {$x_1$};
+    \node[font=\small, anchor=south] at (axis cs:0.2,0.1) {$x_2$};
+    \node[font=\small, anchor=north] at (axis cs:0.5,-0.1) {$x_5$};
+    \node[font=\small, anchor=south] at (axis cs:1.2,0.1) {$x_6$};
+    \node[font=\small, anchor=north] at (axis cs:1.4,-0.1) {$x_4$};
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.5em}
+\newthought{Step 3: Convergence.}
+At every iteration, $q_{ij}$ is recomputed from the current embedding distances.
+The forces balance and the embedding stabilises.
+Within each cluster the ordering mirrors similarity: $x_1$/$x_2$ (highest $p_{12}{=}0.098$) land closest in~A, $x_5$/$x_6$ ($p_{56}{=}0.089$) in~B.
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        xmin=-6, xmax=6,
+        ymin=-0.5, ymax=0.5,
+        width=0.7\textwidth,
+        height=3cm,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-6,-4,-2,0,2,4,6},
+        ytick=\empty,
+        xticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+        clip=false,
+        title={$t{=}100$},
+        title style={font=\small, at={(0,0.5)}, anchor=east, xshift=-5pt},
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (-4.7,0) (-4.6,0) (-5.1,0)
+    };
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (5.0,0) (4.6,0) (4.7,0)
+    };
+    \node[font=\small, anchor=south] at (axis cs:-4.8,0.15) {$\{x_1, x_2, x_3\}$};
+    \node[font=\small, anchor=south] at (axis cs:4.8,0.15) {$\{x_4, x_5, x_6\}$};
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+
+\marginnote{\newthought{Interpreting t-SNE.} Cluster sizes and 
+inter-cluster distances are meaningless. t-SNE equalises local densities 
+and preserves only neighbourhood structure. Results vary with the random seed; 
+always run multiple times. Use t-SNE for visualization only, 
+never as preprocessing for downstream models.}
+
+
+
+
+
 
 
 \section{UMAP}\index{UMAP}
 
 \marginnote{\newthought{UMAP} stands for Uniform Manifold Approximation and Projection\cite{McInnes2018}. It has theoretical foundations in Riemannian geometry and algebraic topology.}
 
-\newthought{UMAP is a newer non-linear method} that typically preserves more global pattern than t-SNE, runs faster on large datasets, and has a theoretical foundation in manifold learning.
+\newthought{UMAP brings three practical strengths.}
 
-\newthought{Key ideas.}
-\begin{enumerate}
-    \item Build a weighted $k$-nearest-neighbour graph in high dimensions.
-    \item Find a low-dimensional embedding that preserves the graph topology.
-    \item Use cross-entropy loss, rather than KL divergence, to match fuzzy simplicial sets.
-\end{enumerate}
+\newthought{Scale.} UMAP operates on a sparse $k$-nearest-neighbour graph instead of all $n^2$ pairs, giving $O(n \log n)$ complexity\index{computational complexity!UMAP} in practice, large enough for million-point datasets.
 
+\newthought{Global structure.} UMAP optimises a cross-entropy\index{cross-entropy} loss that penalises both pulling true neighbours apart \emph{and} pushing true non-neighbours together, so the embedding preserves large-scale arrangement alongside local clusters.
+
+\newthought{Reproducibility.} UMAP initialises the embedding with a spectral embedding\index{spectral embedding} of the graph Laplacian, so repeated runs on the same data converge to similar layouts rather than producing arbitrary rotations each time.
+
+
+\vspace{1.5em}
 \begin{algorithm}[H]
-\caption{UMAP}
+\caption{UMAP. Like t-SNE, all points are updated simultaneously and the objective is non-convex. The spectral initialisation makes results more reproducible than t-SNE's random start, but does not guarantee a global optimum. Key parameters: \texttt{n\_neighbors} (typically 15--200) controls local versus global structure, analogous to perplexity in t-SNE; \texttt{min\_dist} (typically 0.1--0.5) controls how tightly points cluster in the embedding.}
 \begin{algorithmic}[1]
 \Require High-dimensional data $X$, number of neighbours $k$, target dimension $d$, minimum distance $\delta$
-\State For each $x_i$, find its $k$ nearest neighbours; set $\rho_i = \min_{j \in \text{NN}(i)} \|x_i - x_j\|$
-\State Choose $\sigma_i$ so that $\sum_{j \in \text{NN}(i)} \exp\bigl(-(\|x_i - x_j\| - \rho_i) / \sigma_i\bigr) = \log_2 k$
-\State Compute directed edge weights: $w_{j|i} = \exp\bigl(-\max(0,\, \|x_i - x_j\| - \rho_i) / \sigma_i\bigr)$
-\State Symmetrise: $w_{ij} = w_{j|i} + w_{i|j} - w_{j|i} \cdot w_{i|j}$ \Comment{Fuzzy union of local neighbourhoods}
-\State Initialise low-dimensional coordinates $Y$ (e.g.\ via spectral embedding)
+
+\State Build a weighted $k$-nearest-neighbour graph.
+For each $x_i$, set $\rho_i = \min_{j \in \text{NN}(i)} \|x_i - x_j\|$ and choose $\sigma_i$ so that
+\[
+  \sum_{j \in \text{NN}(i)} \exp\!\bigl(-(\|x_i - x_j\| - \rho_i) / \sigma_i\bigr) = \log_2 k
+\]
+
+\State Compute directed edge weights:
+\[
+  w_{j|i} = \exp\!\bigl(-\max(0,\, \|x_i - x_j\| - \rho_i) / \sigma_i\bigr)
+\]
+Symmetrise: $w_{ij} = w_{j|i} + w_{i|j} - w_{j|i} \cdot w_{i|j}$
+
+\State Initialise low-D coordinates $Y$ via spectral embedding
+
 \Repeat
-    \State Compute low-D weights: $v_{ij} = \bigl(1 + a\,\|y_i - y_j\|^{2b}\bigr)^{-1}$, where $a, b$ are derived from $\delta$
-    \State Gradient step: minimise fuzzy set cross-entropy $\mathcal{L} = \sum_{ij}\bigl[ w_{ij}\log\frac{w_{ij}}{v_{ij}} + (1-w_{ij})\log\frac{1-w_{ij}}{1-v_{ij}} \bigr]$
+
+    \State Compute low-D weights:
+    \[
+      v_{ij} = \bigl(1 + a\,\|y_i - y_j\|^{2b}\bigr)^{-1}
+    \]
+
+    \State Gradient step: minimise
+    \[
+      \mathcal{L} = \sum_{ij}\Bigl[ w_{ij}\log\frac{w_{ij}}{v_{ij}} + (1-w_{ij})\log\frac{1-w_{ij}}{1-v_{ij}} \Bigr]
+    \]
+
 \Until{convergence}
 \end{algorithmic}
 \end{algorithm}
 
-\newthought{Key parameters.} \texttt{n\_neighbors}, similar to perplexity and typically set between 15 and 200, controls how much local versus global pattern is preserved.
-\texttt{min\_dist}, typically 0.1 to 0.5, controls how tightly points cluster in the embedding.
 
-\vspace{2.5em}
 
-\newthought{Choosing a method} depends on what you want to preserve and what comes next.
 
-\begin{table*}[ht]
-\centering
-\begin{tabular}{p{0.12\textwidth}p{0.1\textwidth}p{0.12\textwidth}p{0.45\textwidth}}
-    \toprule
-    \textbf{Method} & \textbf{Linear} & \textbf{Scalable} & \textbf{Best use} \\
-    \midrule
-    PCA   & Yes & Yes    & Preprocessing, denoising, linear pattern \\
-    ICA   & Yes & Yes    & Source separation, statistical independence \\
-    t-SNE & No  & Medium & Visualization of small datasets ($n < 10\,000$) \\
-    UMAP  & No  & Yes    & Visualization of large datasets, more global pattern \\
-    \bottomrule
-\end{tabular}
-\vspace{2em}
-\caption{Comparison of dimensionality reduction methods. None of the non-linear methods are appropriate for preprocessing features for downstream learning.}
-\label{tab:dim_reduction_methods}
-\end{table*}
+
+
+
+
 
 
 % ==============================================================================================
@@ -724,68 +1030,301 @@ Step through the arithmetic slowly.
 
 \vspace{1em}
 
-\newthought{Given centred data}
-$X = \begin{pmatrix} 2 & 1 \\ 1 & 2 \\ -1 & -2 \\ -2 & -1 \end{pmatrix}$,
-compute the covariance matrix $\Sigma$, find its eigenvalues and eigenvectors, and determine what fraction of variance PC1 explains.
+% ---------------------------------------------------------------------------
+% Exercise 1: PCA by hand on the canonical six points
+% ---------------------------------------------------------------------------
 
-The covariance matrix:
+\begin{marginfigure}
+\centering
+\begin{tikzpicture}[scale=1]
+    \begin{axis}[
+        xmin=0, xmax=10,
+        ymin=0, ymax=10,
+        width=\textwidth,
+        height=\textwidth,
+        axis line style={draw=none},
+        tick style={black, thick},
+        xtick={1,2,3,6,8},
+        ytick={1,2,3,7,8,9},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside,
+        tick pos=left,
+        xlabel={$x^{(1)}$},
+        ylabel={$x^{(2)}$},
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+        (1,2) (2,3) (3,1)
+    };
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (6,8) (8,7) (8,9)
+    };
+    \node[font=\tiny, anchor=south east] at (axis cs:1,2) {$x_1$};
+    \node[font=\tiny, anchor=south east] at (axis cs:2,3) {$x_2$};
+    \node[font=\tiny, anchor=north]      at (axis cs:3,1) {$x_3$};
+    \node[font=\tiny, anchor=south west] at (axis cs:6,8) {$x_4$};
+    \node[font=\tiny, anchor=north west] at (axis cs:8,7) {$x_5$};
+    \node[font=\tiny, anchor=south west] at (axis cs:8,9) {$x_6$};
+    \end{axis}
+\end{tikzpicture}
+\caption{The canonical six points from Chapters~3 and~4.
+Cluster~A: $x_1{=}(1,2)$, $x_2{=}(2,3)$, $x_3{=}(3,1)$.
+Cluster~B: $x_4{=}(6,8)$, $x_5{=}(8,7)$, $x_6{=}(8,9)$.}
+\label{fig:pca_exercise_scatter}
+\end{marginfigure}
+
+\newthought{Given the canonical six points} $x_1{=}(1,2)$, $x_2{=}(2,3)$, $x_3{=}(3,1)$, $x_4{=}(6,8)$, $x_5{=}(8,7)$, $x_6{=}(8,9)$, centre the data, compute the covariance matrix $\Sigma$, find its eigenvalues and eigenvectors, and determine what fraction of variance PC1 explains.
+
+\newthought{Centering.} PCA requires zero-mean data. Compute the sample mean:
 \begin{align*}
-    \Sigma &= \frac{1}{4} X^T X \\
-           &= \frac{1}{4} \begin{pmatrix} 10 & 8 \\ 8 & 10 \end{pmatrix} \\
-           &= \begin{pmatrix} 2.5 & 2 \\ 2 & 2.5 \end{pmatrix}
+    \bar{x} &= \frac{1}{6}\sum_{i=1}^{6} x_i \\
+             &= \left(\frac{28}{6},\; \frac{30}{6}\right) \\
+             &= \left(\frac{14}{3},\; 5\right)
 \end{align*}
 
-Eigenvalues from $\det(\Sigma - \lambda I) = 0$:
+Subtract $\bar{x}$ from each point. Here is the full calculation for $x_1$:
 \begin{align*}
-    (2.5 - \lambda)^2 - 4 &= 0 \\
-    \lambda_1 &= 4.5 \\
-    \lambda_2 &= 0.5
+    \tilde{x}_1 &= x_1 - \bar{x} \\
+                 &= \left(1 - \tfrac{14}{3},\; 2 - 5\right) \\
+                 &= \left(-\tfrac{11}{3},\; -3\right)
 \end{align*}
 
-Eigenvectors: $v_1 = (1,1)/\sqrt{2}$, $v_2 = (1,-1)/\sqrt{2}$.
-Explained variance by PC1:
+\vspace{3.5em}
+Compute the remaining five yourself, then verify against the table below.
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.07\textwidth}p{0.12\textwidth}p{0.16\textwidth}}
+    \toprule
+    \textbf{Point} & \textbf{Original} & \textbf{Centred $\tilde{x}_i$} \\
+    \midrule
+    $x_1$ & $(1,\, 2)$   & $(-11/3,\; -3)$ \\
+    $x_2$ & $(2,\, 3)$   & $(-8/3,\; -2)$ \\
+    $x_3$ & $(3,\, 1)$   & $(-5/3,\; -4)$ \\
+    $x_4$ & $(6,\, 8)$   & $(4/3,\; 3)$ \\
+    $x_5$ & $(8,\, 7)$   & $(10/3,\; 2)$ \\
+    $x_6$ & $(8,\, 9)$   & $(10/3,\; 4)$ \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Centred data. The second coordinate centres cleanly ($\bar{x}^{(2)}{=}5$); the first introduces thirds ($\bar{x}^{(1)}{=}14/3$).}
+\label{tab:pca_centred}
+\end{table*}
+
+
+\newpage
+\newthought{The covariance matrix.} $\Sigma = \tilde{X}^T \tilde{X} / n$. Here is the full calculation for $\Sigma_{11}$:
 \begin{align*}
-    \frac{\lambda_1}{\lambda_1 + \lambda_2} &= \frac{4.5}{5} \\
-                                             &= 90\%
+    \Sigma_{11} &= \frac{1}{6}\sum_{i=1}^{6} \bigl(\tilde{x}_i^{(1)}\bigr)^2 \\
+                &= \frac{1}{6}\left[\frac{121}{9} + \frac{64}{9} + \frac{25}{9} + \frac{16}{9} + \frac{100}{9} + \frac{100}{9}\right] \\
+                &= \frac{1}{6} \cdot \frac{426}{9} \\
+                &= \frac{71}{9} \\
+                &\approx 7.89
 \end{align*}
 
-Now derive the projection of each data point onto PC1 yourself, then verify that the projected points have variance $4.5$.
+Compute $\Sigma_{12}$ and $\Sigma_{22}$ yourself. The full matrix:
+\begin{align*}
+    \Sigma &= \begin{pmatrix} 71/9 & 47/6 \\ 47/6 & 29/3 \end{pmatrix}
+            \approx \begin{pmatrix} 7.89 & 7.83 \\ 7.83 & 9.67 \end{pmatrix}
+\end{align*}
+
+\marginnote{$\Sigma_{12} = 47/6 \approx 7.83$: both features are strongly positively correlated, as expected from the scatter plot where both coordinates increase together from cluster~A to cluster~B.}
+
+\newthought{Eigenvalues.} Apply the formula from the theory section with $a = 71/9$, $b = 47/6$, $c = 29/3$:
+\begin{align*}
+    a + c &= \frac{71}{9} + \frac{29}{3} \\
+           &= \frac{158}{9} \\
+           &\approx 17.56 \\[6pt]
+    (a - c)^2 + 4b^2 &= \left(\frac{-16}{9}\right)^{\!2} + 4\left(\frac{47}{6}\right)^{\!2} \\
+                       &= \frac{256}{81} + \frac{2209}{9} \\
+                       &= \frac{20137}{81} \\
+                       &\approx 248.6
+\end{align*}
+
+So:
+\begin{align*}
+    \lambda &= \frac{17.56 \pm \sqrt{248.6}}{2} \\
+            &\approx \frac{17.56 \pm 15.77}{2}
+\end{align*}
+
+$\lambda_1 \approx 16.66$ and $\lambda_2 \approx 0.89$.
+
+\newthought{Eigenvector for $\lambda_1 \approx 16.66$.}
+Solve $(a - \lambda_1)\,w^{(1)} + b\,w^{(2)} = 0$:
+\begin{align*}
+    (7.89 - 16.66)\,w^{(1)} + 7.83\,w^{(2)} &= 0 \\
+    -8.77\,w^{(1)} + 7.83\,w^{(2)} &= 0 \\
+    w^{(2)} &= \frac{8.77}{7.83}\,w^{(1)} \\
+            &\approx 1.12\,w^{(1)}
+\end{align*}
+
+\begin{align*}
+    \|w_1\| & = \sqrt{1^2 + 1.12^2} \\ 
+           & = \sqrt{2.25} \\
+           & = 1.50,\\
+    w_1    & \approx \frac{1}{1.50}\begin{pmatrix}1 \\[3pt] 1.12\end{pmatrix}\\
+           & \approx \begin{pmatrix}0.67 \\[3pt] 0.75\end{pmatrix}.
+    \end{align*}
+
+\newthought{Eigenvector for $\lambda_2 \approx 0.89$.}
+Solve $(a - \lambda_2)\,w^{(1)} + b\,w^{(2)} = 0$:
+\begin{align*}
+    7.00\,w^{(1)} + 7.83\,w^{(2)} &= 0 \\
+    w^{(2)} &\approx -0.89\,w^{(1)}
+\end{align*}
+
+Normalising: $w_2 \approx \begin{pmatrix} 0.75 \\ -0.67 \end{pmatrix}$.
+
+\marginnote{Verify orthogonality: \\
+$w_1^T w_2 = (0.67)(0.75) + (0.75)(-0.67) = 0$. \checkmark}
+
+\newthought{Explained variance by PC1:}
+\begin{align*}
+    \frac{\lambda_1}{\lambda_1 + \lambda_2} &\approx \frac{16.66}{17.56} \\
+                                              &\approx 95\%
+\end{align*}
+
+\marginnote{\newthought{Geometric interpretation.} PC1 points roughly along the direction 
+from cluster~A (bottom left) to cluster~B (top right). The two clusters 
+that are visible in two dimensions can be separated using a single principal component.}
+
 
 \vspace{2.5em}
 
-\newthought{Choosing a threshold.} A dataset has eigenvalues: 100, 50, 20, 10, 5, 3, 2, 1, 0.5, 0.5 (total ${=}192$).
-How many components explain 90\% of the variance?
-How many for 99\%?
-Sketch the cumulative explained variance curve and identify the elbow.
+% ---------------------------------------------------------------------------
+% Exercise 2: PCA projection and reconstruction
+% ---------------------------------------------------------------------------
 
-\marginnote{Cumulative sums: 100, 150, 170, 180, 185, 188, 190, 191, 191.5, 192.\\[4pt]90\% threshold: $\geq 172.8$, so 3 components.\\99\% threshold: $\geq 190.1$, so 7 components.}
+\newthought{Project and reconstruct.}
+Using the eigenvectors from the previous exercise, project each of the six centred points onto PC1,
+reconstruct them in the original space, and compute the reconstruction error.
+
+
+\newpage
+\newthought{Projection onto PC1.} For each centred point $\tilde{x}_i$, the coordinate on PC1 is $z_i = \tilde{x}_i^T w_1$.
+Here is the full calculation for $x_1$:
+
+\begin{align*}
+    z_1 &= \tilde{x}_1^T w_1 \\
+        &= (-3.67)(0.67) + (-3)(0.75) \\
+        &= -2.46 - 2.25 \\
+        &= -4.71
+\end{align*}
+
+Compute $z_2$ through $z_6$ yourself, then verify against the table below.
+
+\newthought{Reconstruction.} Each projected point maps back to 2D via $\hat{x}_i = z_i \cdot w_1$.
+For $x_1$:
+\begin{align*}
+    \hat{x}_1 &= -4.71 \cdot \begin{pmatrix} 0.67 \\ 0.75 \end{pmatrix} \\
+              &= \begin{pmatrix} -3.16 \\ -3.53 \end{pmatrix}
+\end{align*}
+
+\newthought{Reconstruction error:}
+\begin{align*}
+    \|\tilde{x}_1 - \hat{x}_1\|^2 &= (-3.67 + 3.16)^2 + (-3.00 + 3.53)^2 \\
+                                    &= (-0.51)^2 + (0.53)^2 \\
+                                    &= 0.26 + 0.28 \\
+                                    &= 0.54
+\end{align*}
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.07\textwidth}p{0.14\textwidth}p{0.10\textwidth}p{0.16\textwidth}p{0.16\textwidth}}
+    \toprule
+    \textbf{Point} & \textbf{Centred $\tilde{x}_i$} & \textbf{$z_i$} & \textbf{Reconstructed $\hat{x}_i$} & \textbf{$\|\tilde{x}_i - \hat{x}_i\|^2$} \\
+    \midrule
+    $x_1$ & $(-3.67,\, -3)$   & $-4.71$ & $(-3.16,\, -3.53)$ & $0.54$ \\
+    $x_2$ & $(-2.67,\, -2)$   & $-3.29$ & $(-2.20,\, -2.47)$ & $0.44$ \\
+    $x_3$ & $(-1.67,\, -4)$   & $-4.12$ & $(-2.76,\, -3.09)$ & $2.02$ \\
+    $x_4$ & $(1.33,\, 3)$     & $3.14$  & $(2.10,\, 2.36)$   & $1.01$ \\
+    $x_5$ & $(3.33,\, 2)$     & $3.73$  & $(2.50,\, 2.80)$   & $1.33$ \\
+    $x_6$ & $(3.33,\, 4)$     & $5.23$  & $(3.50,\, 3.92)$   & $0.04$ \\
+    \midrule
+    & & & \textbf{Total} & $\mathbf{5.38}$ \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{PCA projection onto PC1 and reconstruction for the canonical six points. The total error $\approx n \cdot \lambda_2 = 6 \times 0.89 = 5.34$ (the small difference is rounding in intermediate steps). Point $x_3$ has the largest error because it sits furthest from the PC1 direction; $x_6$ has almost none because it lies nearly on PC1.}
+\label{tab:pca_projection_reconstruction}
+\end{table*}
+
 
 \vspace{2.5em}
 
-\newthought{t-SNE interpretation trap.} You run t-SNE on a dataset and observe: cluster A has diameter 10 units, cluster B has diameter 5 units, and the distance between clusters is 20 units.
-What can you conclude?
-What can you not conclude?
+% ---------------------------------------------------------------------------
+% Exercise 3: Na\"ive feature selection vs PCA
+% ---------------------------------------------------------------------------
 
-Think carefully: t-SNE preserves local neighbourhood, not global geometry.
-Cluster sizes and between-cluster distances in the 2D plot tell you nothing about the original space.
+\newthought{Na\"ive feature selection vs PCA.}
+Using the same six centred points, compare the reconstruction error of na\"ive feature selection with PCA.
+
+\newthought{Drop $x^{(2)}$ (keep $x^{(1)}$).} The reconstruction is $\hat{x}_i = (\tilde{x}_i^{(1)},\, 0)$.
+For $x_1$:
+\begin{align*}
+    \|\tilde{x}_1 - \hat{x}_1\|^2 &= (-3.67-(-3.67))^2 + (-3-0)^2 \\
+                                    &= 0 + 9 \\
+                                    &= 9
+\end{align*}
+
+\newthought{Drop $x^{(1)}$ (keep $x^{(2)}$).} The reconstruction is $\hat{x}_i = (0,\, \tilde{x}_i^{(2)})$.
+For $x_1$:
+\begin{align*}
+    \|\tilde{x}_1 - \hat{x}_1\|^2 &= (-3.67-0)^2 + (-3-(-3))^2 \\
+                                    &= 13.47 + 0 \\
+                                    &= 13.47
+\end{align*}
+
+Compute the remaining errors yourself, then verify against the table.
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.07\textwidth}p{0.15\textwidth}p{0.15\textwidth}p{0.15\textwidth}}
+    \toprule
+    \textbf{Point} & \textbf{Drop $x^{(2)}$} & \textbf{Drop $x^{(1)}$} & \textbf{PCA (PC1)} \\
+    \midrule
+    $x_1$ & $9.00$  & $13.44$ & $0.54$ \\
+    $x_2$ & $4.00$  & $7.11$  & $0.44$ \\
+    $x_3$ & $16.00$ & $2.78$  & $2.02$ \\
+    $x_4$ & $9.00$  & $1.78$  & $1.01$ \\
+    $x_5$ & $4.00$  & $11.11$ & $1.33$ \\
+    $x_6$ & $16.00$ & $11.11$ & $0.04$ \\
+    \midrule
+    \textbf{Total} & $\mathbf{58.00}$ & $\mathbf{47.33}$ & $\mathbf{5.38}$ \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Reconstruction error comparison. The na\"ive variance ranking correctly picks $x^{(2)}$ ($\text{Var}(x^{(2)}) \approx 9.67 > \text{Var}(x^{(1)}) \approx 7.89$), yet PCA still reduces the error by a factor of ${\approx}\,9$.}
+\label{tab:naive_vs_pca}
+\end{table*}
+
+The na\"ive approach gets the ranking right: $x^{(2)}$ does carry more variance than $x^{(1)}$.
+But neither coordinate axis aligns with the direction the data actually varies along.
+PCA constructs that direction from the data and achieves roughly nine times less error.
 
 
-% ============================= CODE ===============================
 
-\marginnote{\newthought{Code} will be provided as a Python notebook.
+% ---------------------------------------------------------------------------
+% Exercise 6: Coding exercise
+% ---------------------------------------------------------------------------
+
+\marginnote{\newthought{Code} is provided as a Python notebook.
 Use it as a starting point, break things, and observe what changes.}
 
-\newthought{A coffee aroma dataset to explore.}
-You are given 200 aroma fingerprints in 50 dimensions, four brewing varieties.
-Apply PCA, retaining enough components to explain 95\% of variance.
-Scatter-plot the first two principal components, colour-coded by variety.
-Run t-SNE and UMAP on the same data and compare the three embeddings.
+\newthought{The Code excercises load} 1\,000 handwritten digits from MNIST: 784 pixels each, ten classes.
+In code, you will apply three preprocessing stages:
+discard uninformative pixels via a variance threshold,
+centre the data by subtracting the per-feature mean (without centring, PC1 aligns with the mean intensity rather than with the dominant direction of variation),
+and eigendecompose the covariance matrix to project onto the top two components.
+Then compare the PCA projection with t-SNE (sweeping perplexity) and UMAP (sweeping neighbourhood size).
 
 \newthought{What to observe.}
-PCA preserves global pattern: the four varieties form elongated regions that reflect their actual distances in the original space.
-t-SNE compresses each variety into a tight ball; distances between balls are arbitrary.
-UMAP may show clearer cluster separation than t-SNE while better preserving global topology.
-Reconstruction error from PCA tells you whether 50 dimensions were truly needed.
+PCA preserves global geometry: The ten digit classes form broad, overlapping regions whose distances reflect the original space.
+Because PCA is linear, it cannot untangle classes that live on a curved manifold; overlap in the 2D plot is a direct consequence.
+t-SNE compresses each class into a tight ball, but distances between balls are arbitrary and change with the random seed.
+UMAP produces similarly tight clusters while retaining more of the global arrangement.
+Both nonlinear methods are sensitive to their main hyperparameter; the sweep makes this visible.
+
 
 
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}
@@ -811,15 +1350,25 @@ Reconstruction error from PCA tells you whether 50 dimensions were truly needed.
     \item No non-linear method should be used as a preprocessing step for downstream learning; use PCA or SVD for that purpose.
 \end{itemize}
 
-\marginnote{\newthought{The fundamental limit} of every method in this chapter: each input is mapped to a single point. There is no way to say how uncertain that mapping is, or to generate new plausible inputs by sampling from the compressed space.}
+\marginnote{\newthought{The fundamental limit} of PCA and ICA is
+linearity; they cannot capture curved structure. t-SNE and UMAP learn
+nonlinear embeddings, but are designed for visualization, not for
+learning a reusable mapping.}
 
-\newthought{PCA compresses each input to a single point.}
-Given two coffee aroma profiles that differ only in a small measurement noise, their PCA projections land at two nearby points with no indication of how reliably they were placed there.
-There is no principled way to generate a new profile by sampling from the compressed space, and no way to interpolate smoothly between two known profiles.
+\newthought{PCA and ICA can only rotate and scale axes.}
+When the underlying structure is nonlinear, no linear map can recover it.
+t-SNE and UMAP solve this for visualization, but neither learns a
+parametric encoder that can be applied to new data or reused as a
+preprocessing step.
 
-\marginnote{\newthought{Teaser.} Can we replace the single compressed point with a distribution, so that sampling from the latent space generates new, plausible data?}
-\newthought{Variational Autoencoders} replace the single point with a distribution.
-The encoder no longer outputs coordinates but outputs a mean and a variance, turning compression into probabilistic inference.
-Every point in the latent space corresponds to something meaningful, and sampling from it generates new, plausible data.
+\marginnote{\newthought{Teaser.} If we replace the fixed eigenvector
+projection with a learned, nonlinear encoder, can we get a compact
+representation that generalises to unseen inputs?}
+\newthought{Autoencoders} learn both the compression and the
+reconstruction from data. The encoder is a neural network that maps
+$x_i$ to a low-dimensional code $z_i$; the decoder maps $z_i$ back to
+$\hat{x}_i$. Variational Autoencoders go one step further: the encoder
+outputs not a single point but a mean $\mu$ and a variance $\sigma^2$,
+turning the code into a distribution from which new data can be sampled.
 
 \marginnote{\newthought{feedback}}

@@ -293,6 +293,9 @@ Discrete codes sidestep posterior collapse entirely and enable autoregressive pr
 This enables controlled generation: sample $z$, specify $c$, and decode.
 
 
+% TODO: Knowledge Distillation is only conceptually linked to VAEs ("both compress").
+% Consider moving this brief to Ch8 (Self-Supervised Learning) or Ch11 (Self-Training and Ensembles),
+% where teacher-student dynamics are a more natural fit.
 \section{Brief: Knowledge Distillation}\index{knowledge distillation}
 
 \marginnote{\newthought{Distillation} transfers knowledge from a large teacher to a small student.}
@@ -323,43 +326,203 @@ Step through the arithmetic slowly.
 
 \vspace{1em}
 
-\newthought{ELBO derivation.} Starting from $\log p(x) = \log \int p(x,z)\, dz$, derive the ELBO by introducing $q(z|x)$ via importance sampling, applying Jensen's inequality, and simplifying to reconstruction + KL form.
+% ---------------------------------------------------------------------------
+% Exercise 1: ELBO derivation
+% ---------------------------------------------------------------------------
+
+\newthought{ELBO derivation.} Starting from $\log p(x) = \log \int p(x,z)\, dz$, derive the ELBO.
+Work through it in four steps.
+
+\newthought{Step 1:} introduce $q(z|x)$ by multiplying and dividing inside the integral:
+\begin{align*}
+    \log p(x) &= \log \int \frac{q(z|x)}{q(z|x)}\, p(x,z)\, dz \\
+              &= \log\, \mathbb{E}_{q(z|x)} \left[ \frac{p(x,z)}{q(z|x)} \right]
+\end{align*}
+
+\newthought{Step 2:} apply Jensen's inequality, $\log \mathbb{E}[X] \geq \mathbb{E}[\log X]$:
+\begin{align*}
+    \log p(x) &\geq \mathbb{E}_{q(z|x)} \left[ \log \frac{p(x,z)}{q(z|x)} \right]
+\end{align*}
+
+Complete Steps 3 and 4 yourself: split $p(x,z) = p(x|z)\,p(z)$ and rearrange to obtain the ELBO in reconstruction + KL form.
+Verify that you arrive at:
+\begin{align*}
+    \text{ELBO} &= \underbrace{\mathbb{E}_{q(z|x)}[\log p(x|z)]}_{\text{Reconstruction}} - \underbrace{D_{\text{KL}}\!\bigl(q(z|x) \,\|\, p(z)\bigr)}_{\text{Regularisation}}
+\end{align*}
+
+\marginnote{\newthought{Why a lower bound?} Jensen's inequality introduces a gap: $\log p(x) = \text{ELBO} + D_{\text{KL}}(q \| p(z|x))$. The gap is the KL divergence between the approximate and true posterior. Maximising the ELBO simultaneously improves reconstruction and pushes $q$ toward the true posterior.}
+
 
 \vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise 2: KL divergence by hand
+% ---------------------------------------------------------------------------
 
 \newthought{KL divergence by hand.}
-Compute $D_{\text{KL}}\!\bigl(\mathcal{N}(\mu, \sigma^2) \,\|\, \mathcal{N}(0, 1)\bigr)$ for three settings: first $\mu{=}0,\, \sigma{=}1$; then $\mu{=}1,\, \sigma{=}1$; then $\mu{=}0,\, \sigma{=}2$.
+Compute $D_{\text{KL}}\!\bigl(\mathcal{N}(\mu, \sigma^2) \,\|\, \mathcal{N}(0, 1)\bigr)$ for three settings.
+Use the closed form $D_{\text{KL}} = \tfrac{1}{2}(\mu^2 + \sigma^2 - \log \sigma^2 - 1)$.
 
-\marginnote{Using $D_{\text{KL}} = \tfrac{1}{2}(\mu^2 + \sigma^2 - \log \sigma^2 - 1)$:%
+\newthought{Setting (i):} $\mu{=}0,\, \sigma{=}1$ (the posterior matches the prior exactly).
 \begin{align*}
-    \text{(i)}\quad & \tfrac{1}{2}(0 + 1 - 0 - 1) \\
-                    &= 0 \\[4pt]
-    \text{(ii)}\quad & \tfrac{1}{2}(1 + 1 - 0 - 1) \\
-                     &= 0.5 \\[4pt]
-    \text{(iii)}\quad & \tfrac{1}{2}(0 + 4 - \log 4 - 1) \\
-                      &\approx 0.81
-\end{align*}%
-}
+    D_{\text{KL}} &= \tfrac{1}{2}(0^2 + 1^2 - \log 1^2 - 1) \\
+                  &= \tfrac{1}{2}(0 + 1 - 0 - 1) \\
+                  &= 0
+\end{align*}
 
-Verify that the first setting gives zero, as expected when the approximate posterior matches the prior exactly.
-What does each non-zero value tell you about how the approximate posterior deviates from the prior?
+As expected: when $q(z|x)$ exactly matches $p(z)$, the KL divergence is zero.
+
+\newthought{Setting (ii):} $\mu{=}1,\, \sigma{=}1$ (shifted mean, same spread).
+\begin{align*}
+    D_{\text{KL}} &= \tfrac{1}{2}(1^2 + 1^2 - \log 1^2 - 1) \\
+                  &= \tfrac{1}{2}(1 + 1 - 0 - 1) \\
+                  &= 0.5
+\end{align*}
+
+The encoder shifted its mean away from zero. The prior penalises this: a shifted Gaussian wastes probability mass in regions the prior considers unlikely.
+
+\newthought{Setting (iii):} $\mu{=}0,\, \sigma{=}2$ (correct mean, too wide).
+Compute this yourself, then verify:
+
+\begin{align*}
+    D_{\text{KL}} &= \tfrac{1}{2}(0^2 + 2^2 - \log 2^2 - 1) \\
+                  &= \tfrac{1}{2}(0 + 4 - 1.386 - 1) \\
+                  &\approx 0.81
+\end{align*}
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.10\textwidth}p{0.08\textwidth}p{0.08\textwidth}p{0.10\textwidth}p{0.35\textwidth}}
+    \toprule
+    \textbf{Setting} & \textbf{$\mu$} & \textbf{$\sigma$} & \textbf{$D_{\text{KL}}$} & \textbf{Deviation from prior} \\
+    \midrule
+    (i)   & 0 & 1 & 0    & None (exact match) \\
+    (ii)  & 1 & 1 & 0.50 & Shifted mean \\
+    (iii) & 0 & 2 & 0.81 & Too wide \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{KL divergence for three encoder settings. A wider posterior (iii) costs more than a shifted one (ii) because spreading probability mass away from the prior is more expensive than translating it.}
+\label{tab:kl_comparison}
+\end{table*}
+
 
 \vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise 3: Reparameterisation
+% ---------------------------------------------------------------------------
 
 \newthought{Reparameterisation.} Why can we not directly backpropagate through $z \sim \mathcal{N}(\mu, \sigma^2)$?
-Write out the reparameterised form, then verify that $\partial z / \partial \mu = 1$ and $\partial z / \partial \sigma = \epsilon$.
+Write out the reparameterised form, then verify the gradients.
 
-\marginnote{Sampling is a stochastic operation with no gradient. The reparameterisation $z = \mu + \sigma\, \epsilon$ moves the randomness to $\epsilon$, which is independent of the parameters.}
+\newthought{The problem:} sampling $z \sim \mathcal{N}(\mu, \sigma^2)$ is a stochastic operation with no gradient.
+The parameters $\mu$ and $\sigma$ determine the distribution, but the sample itself has no differentiable relationship to them.
+
+\newthought{The fix:} reparameterise as $z = \mu + \sigma\, \epsilon$ where $\epsilon \sim \mathcal{N}(0, 1)$.
+Now $z$ is a deterministic function of $\mu$, $\sigma$, and $\epsilon$.
+The randomness lives in $\epsilon$, which does not depend on the parameters.
+
+\newthought{Numerical forward pass.} Let $\mu{=}0.5$, $\sigma{=}1.2$, and suppose $\epsilon{=}-0.3$ is sampled:
+\begin{align*}
+    z &= \mu + \sigma \cdot \epsilon \\
+      &= 0.5 + 1.2 \times (-0.3) \\
+      &= 0.5 - 0.36 \\
+      &= 0.14
+\end{align*}
+
+\newthought{Verify the gradients:}
+\begin{align*}
+    \frac{\partial z}{\partial \mu} &= 1 \\[4pt]
+    \frac{\partial z}{\partial \sigma} &= \epsilon \\
+                                       &= -0.3
+\end{align*}
+
+Both are well-defined scalars.
+Without reparameterisation, these gradients would not exist: backpropagation would stop at the sampling step and the encoder would receive no learning signal.
+
 
 \vspace{2.5em}
 
-\newthought{Posterior collapse.} Consider a VAE trained with $\beta{=}10$.
-The KL term goes to zero for every input, and the reconstructions are blurry.
-Diagnose what has happened and propose two remedies.
+% ---------------------------------------------------------------------------
+% Exercise 4: ELBO evaluation by the numbers
+% ---------------------------------------------------------------------------
+
+\newthought{ELBO evaluation by the numbers.}
+Combine the KL computation from the previous exercises with a concrete reconstruction to evaluate the full ELBO loss.
+
+\newthought{Setup.} Consider a 1D VAE with encoder output $\mu{=}1,\, \sigma{=}1$ and input $x{=}3$.
+After sampling and decoding, the reconstruction is $\hat{x}{=}2.7$.
+
+\newthought{Reconstruction loss} (squared error):
+\begin{align*}
+    \mathcal{L}_{\text{recon}} &= (x - \hat{x})^2 \\
+                                &= (3 - 2.7)^2 \\
+                                &= 0.09
+\end{align*}
+
+\newthought{KL term} (from Setting (ii) above):
+\begin{align*}
+    D_{\text{KL}} &= 0.50
+\end{align*}
+
+\newthought{Total loss:}
+\begin{align*}
+    \mathcal{L} &= \mathcal{L}_{\text{recon}} + D_{\text{KL}} \\
+                &= 0.09 + 0.50 \\
+                &= 0.59
+\end{align*}
+
+\marginnote{\newthought{The trade-off is visible.} The reconstruction error is small (the decoder did a decent job), but the KL penalty is five times larger (the encoder strayed from the prior). A well-trained VAE balances both terms.}
+
+Now compute the loss for a second configuration: $\mu{=}0,\, \sigma{=}1$, $x{=}3$, $\hat{x}{=}2.0$.
+Which term dominates?
+What does this tell you about the reconstruction-regularisation balance?
+
+\newthought{Second configuration:}
+\begin{align*}
+    \mathcal{L}_{\text{recon}} &= (3 - 2.0)^2 \\
+                                &= 1.00 \\[4pt]
+    D_{\text{KL}} &= 0 \quad \text{(Setting (i): matches prior exactly)} \\[4pt]
+    \mathcal{L} &= 1.00 + 0 \\
+                &= 1.00
+\end{align*}
+
+The encoder obeys the prior perfectly ($D_{\text{KL}}{=}0$), but the reconstruction suffers.
+The first configuration ($\mathcal{L}{=}0.59$) achieves a better total loss by accepting some KL cost in exchange for much better reconstruction.
+
 
 \vspace{2.5em}
 
-% ============================= CODE ===============================
+% ---------------------------------------------------------------------------
+% Exercise 5: Posterior collapse
+% ---------------------------------------------------------------------------
+
+\newthought{Posterior collapse.} Consider a VAE trained with $\beta{=}10$ in the loss $\mathcal{L} = \mathcal{L}_{\text{recon}} + \beta \cdot D_{\text{KL}}$.
+After training, you observe that $D_{\text{KL}} \approx 0$ for every input, and the reconstructions are blurry averages.
+Diagnose what has happened.
+
+\newthought{The diagnosis:} with $\beta{=}10$, the KL penalty is ten times more expensive than reconstruction.
+The cheapest way to minimise the loss is to set $q(z|x) = p(z) = \mathcal{N}(0, I)$ for every input.
+The encoder ignores $x$ entirely: $\mu \to 0$, $\sigma \to 1$.
+
+\marginnote{\newthought{Verify.} If $\mu{=}0$ and $\sigma{=}1$ for all inputs, then $D_{\text{KL}}{=}0$ (Setting (i) from the KL exercise). The KL term contributes nothing. The decoder receives the same distribution regardless of $x$, so it learns to output the mean of the training data.}
+
+\newthought{The latent code carries no information.} Sampling $z \sim \mathcal{N}(0, I)$ produces the same distribution whether the input is a ``3'' or an ``8''.
+The decoder cannot distinguish inputs, so it reconstructs the average digit: a blurry blob.
+
+\newthought{Two remedies.}
+\begin{itemize}
+    \item \textbf{KL annealing:} start training with $\beta{=}0$ (autoencoder mode), then slowly raise $\beta$ toward 1. The encoder first learns to use the latent space, then gradually accepts the regularisation.
+    \item \textbf{Free bits:} allow each latent dimension to use at least $\lambda$ nats of KL before penalising. This guarantees the encoder encodes at least some information per dimension.
+\end{itemize}
+
+
+\vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise 6: Coding exercise
+% ---------------------------------------------------------------------------
 
 \marginnote{\newthought{Code} will be provided as a Python notebook.
 Use it as a starting point, break things, and observe what changes.}
