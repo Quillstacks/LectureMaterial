@@ -618,8 +618,12 @@ into a script that any future VM can run end to end, without you remembering any
 
 \marginnote{\newthought{Without shipping anything yet,} we already have two machines that talk to each other, a secure door, and a known good state to fall back on.}
 
-\marginnote{\newthought{Teaser.} Every command we ran today was reproducible, but none of it was reproduced.
-How do we capture the steps so that any fresh VM can be brought to the same state without human memory?}
-\newthought{So far, we owned the box.} The next step is to own the history of every change we make to it.
-In the next chapter we put code and configuration under version control with Git and GitHub,
-turn today's manual setup into a script, and make what we just did something a teammate, or a fresh VM, can replay from scratch.
+\marginnote{\newthought{Teaser.} You and a classmate both want to improve PixelWise at the same time.
+How do you work on the same codebase without overwriting each other's changes,
+review what the other person did, and merge the results safely?}
+\newthought{Milestone.} So far, we own the machine.
+The next step is to own the way we build software on it.
+In the next chapter we introduce Git and GitHub: not just a version history,
+but the collaboration layer that lets a team branch, review, and merge work
+in parallel. It is the tool that turns two developers editing the same file
+from a disaster into a workflow.

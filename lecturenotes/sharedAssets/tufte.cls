@@ -9,7 +9,8 @@
 \LoadClass[a5paper]{tufte-book}
 
 % Set up hyperref with colored links
-\hypersetup{colorlinks}
+% Override tufte-common bookmarksdepth=section to show only chapters in PDF bookmarks
+\hypersetup{colorlinks, bookmarksdepth=chapter}
 
 %%
 % Package imports

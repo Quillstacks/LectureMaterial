@@ -4,7 +4,7 @@
 
 \index{dependencies}\index{virtualenv}\index{pip}\index{project structure}
 \chapter{Package the Stack: Dependencies \& Project Structure}
-\newthought{Reproducibility starts before you write a single line of application code.}
+\newthought{Works on my machine.}
 
 % ==============================================================================
 % SESSION A: THEORY
@@ -12,12 +12,19 @@
 
 \section{The Why}
 
+Block~2 left us with a PixelWise repository on GitHub and a server that has Git and Python installed.
+But those packages were installed by hand, one \texttt{sudo apt install} at a time.
+If the VM is rebuilt, or a new team member joins, nobody remembers what to install or in which order.
+
 \newthought{``Works on my machine''} is the most dangerous sentence in software engineering.
 Your colleague clones the repo, runs the code, and gets an \texttt{ImportError}. You installed
 \texttt{scikit-learn} months ago and forgot. They did not. The code is correct; the environment is wrong.
 
-Dependency management solves this: declare what your project needs, pin the exact versions, and
-anyone can reconstruct the identical environment in two commands.
+\newthought{Dependency management} solves this at two levels: system packages and Python packages.
+For system packages, we capture every \texttt{apt install} in a shell script called \texttt{setup-server.sh}\index{setup-server.sh}
+so any fresh VM can be provisioned identically. For Python packages, we declare what the project needs
+in a \texttt{requirements.txt}, pin the exact versions, and anyone can reconstruct the identical environment
+in two commands.
 
 \section{Virtual Environments}\index{virtualenv}\index{venv}
 
