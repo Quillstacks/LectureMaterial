@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Variational Inference}\index{VAE}\index{Variational Autoencoder}\index{ELBO}
-\newthought{Model data as distributions, not points.}
+\newthought{embeddings and latent feature spaces.}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -13,8 +13,10 @@
 
 \marginnote{\newthought{Autoencoders compress,} but VAEs generate and quantify uncertainty in a single framework.}
 
-Standard autoencoders learn a deterministic mapping: input $\to$ latent code $\to$ reconstruction.
-The latent space may be irregular, with holes where no training data maps.
+PCA finds linear projections; t-SNE and UMAP learn nonlinear embeddings for visualization.
+Neither learns a parametric encoder that generalises to unseen inputs or generates new data.
+Autoencoders close the first gap: a neural network compresses $x$ to a low-dimensional code $z$ and a second network reconstructs $\hat{x}$ from $z$.
+But the resulting latent space may be irregular, with holes where no training data maps.
 Sampling a random point from that space and decoding it may produce nonsense.
 
 \newthought{Variational Autoencoders}\index{VAE}\cite{KingmaWelling2014} answer three questions at once by replacing the deterministic bottleneck with a probabilistic one.
@@ -25,11 +27,12 @@ The decoder then samples from that distribution, and a regularisation term ensur
 \begin{itemize}
     \item derive a training objective that trades off faithful reconstruction against latent-space regularity.
     \item enable gradient-based optimisation through a stochastic sampling step that would otherwise block backpropagation.
-    \item understand which structural knobs, the KL weight, discrete versus continuous codes, conditioning variables, shape the resulting latent space and what each variant buys us.
+    \item understand how structural choices (KL weight, discrete versus continuous codes, conditioning variables) shape the resulting latent space and what each variant buys us.
 \end{itemize}
 
 
-\subsection{Hands On Experience}
+\newpage
+\subsection{Hands-On Experience}
 
 \begin{marginfigure}
 \centering
@@ -75,7 +78,7 @@ Decode each $z_t$.
 What do you expect the decoded outputs to look like along this path?
 Why might a standard autoencoder fail to produce a meaningful interpolation?
 
-\vspace{2.5em}
+\newthought{The fundamental question} is: can we turn the latent bottleneck into a proper probability distribution, so that every point in the latent space decodes to something meaningful and we can generate new data by sampling?
 
 \newthought{The Learning Objectives} of this lecture:
 \begin{itemize}
@@ -105,51 +108,65 @@ And there is no measure of how uncertain a given representation is.
 \begin{figure}
 \centering
 \begin{tikzpicture}
-    % Autoencoder latent space
     \begin{axis}[
-        name=ae,
-        title={Autoencoder},
-        xlabel={$z_1$}, ylabel={$z_2$},
-        xmin=-3, xmax=3, ymin=-3, ymax=3,
-        width=0.4\textwidth,
-        height=0.4\textwidth,
+        xlabel={$z_1$},
+        ylabel={$z_2$},
+        xmin=-3, xmax=3,
+        ymin=-3, ymax=3,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick=\empty, ytick=\empty,
+        xtick={-2,0,2},
+        ytick={-2,0,2},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
         tick align=outside,
         tick pos=left,
     ]
     \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
         (-2,2) (-1.8,1.5) (2,-1) (1.5,-0.5) (0,2.5) (-2,-2)
     };
-    \node[font=\small] at (axis cs:0,0) {?};
+    \node[font=\small, black!40] at (axis cs:0,0) {?};
     \end{axis}
+\end{tikzpicture}
+\caption{Autoencoder latent space. Six inputs map to six scattered points. The centre of the space contains no training encodings; decoding a $z$ sampled from that region is undefined.}
+\label{fig:ae_latent}
+\end{figure}
 
-    % VAE latent space
+\begin{figure}
+\centering
+\begin{tikzpicture}
     \begin{axis}[
-        at={(ae.east)}, anchor=west, xshift=1cm,
-        title={VAE},
-        xlabel={$z_1$}, ylabel={$z_2$},
-        xmin=-3, xmax=3, ymin=-3, ymax=3,
-        width=0.4\textwidth,
-        height=0.4\textwidth,
+        xlabel={$z_1$},
+        ylabel={$z_2$},
+        xmin=-3, xmax=3,
+        ymin=-3, ymax=3,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
         axis line style={draw=none},
         tick style={black, thin},
-        xtick=\empty, ytick=\empty,
+        xtick={-2,0,2},
+        ytick={-2,0,2},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
         tick align=outside,
         tick pos=left,
     ]
-    \draw[black!15, fill=black!5] (axis cs:0,0) circle[radius=2];
+    \draw[black!20, thin] (axis cs:0,0) circle[radius=1];
+    \draw[black!20, thin] (axis cs:0,0) circle[radius=2];
     \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
         (-1,1) (-0.5,0.8) (1,-0.5) (0.8,-0.3) (0,1.2) (-1,-1)
         (0.3,0.5) (-0.7,-0.3) (0.5,0) (-0.2,0.7)
     };
     \end{axis}
 \end{tikzpicture}
-\caption{Autoencoder: sparse, irregular latent space with holes between encodings. VAE: regularised, filled latent space where every region decodes to something meaningful.}
-\label{fig:ae_vs_vae}
+\caption{VAE latent space. The KL regularisation pushes encodings toward the standard normal prior (circles at $1\sigma$ and $2\sigma$). Points fill the space; every region decodes to something meaningful.}
+\label{fig:vae_latent}
 \end{figure}
 
+
+\newpage
 
 \section{The Evidence Lower Bound}\index{ELBO}\index{evidence lower bound}
 
@@ -169,8 +186,8 @@ The posterior $p_\theta(z|x)$ is equally intractable.
 
 \begin{align*}
     \log p_\theta(x) &= \log \int p_\theta(x|z)\, p(z) \, dz \\
-    &= \log \int \frac{q_\phi(z|x)}{q_\phi(z|x)}\, p_\theta(x|z)\, p(z) \, dz \\
-    &= \log \mathbb{E}_{q_\phi(z|x)} \left[ \frac{p_\theta(x|z)\, p(z)}{q_\phi(z|x)} \right]
+                     &= \log \int \frac{q_\phi(z|x)}{q_\phi(z|x)}\, p_\theta(x|z)\, p(z) \, dz \\
+                     &= \log \mathbb{E}_{q_\phi(z|x)} \left[ \frac{p_\theta(x|z)\, p(z)}{q_\phi(z|x)} \right]
 \end{align*}
 
 \newthought{Applying Jensen's inequality,} $\log \mathbb{E}[X] \geq \mathbb{E}[\log X]$, yields a lower bound on the log-evidence:
@@ -188,9 +205,47 @@ The posterior $p_\theta(z|x)$ is equally intractable.
 \marginnote{\newthought{ELBO} stands for Evidence Lower BOund. Maximising the ELBO approximately maximises $\log p(x)$.}
 
 \newthought{The two terms trade off against each other.}
-The reconstruction term rewards an encoder--decoder pair that faithfully reconstructs $x$ from a sampled $z$.
+The reconstruction term rewards an encoder and decoder pair that faithfully reconstructs $x$ from a sampled $z$.
 The KL term penalises encoder distributions that stray far from the prior $p(z) = \mathcal{N}(0, I)$, ensuring the latent space remains regular.
 
+\begin{figure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$z$},
+        ylabel={density},
+        xmin=-4, xmax=5,
+        ymin=0, ymax=0.45,
+        width=0.5\textwidth,
+        height=0.4\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-3,-1,0,1,3},
+        ytick={0.1,0.2,0.3,0.4},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+        samples=80,
+        domain=-4:5,
+    ]
+    % Prior N(0,1)
+    \addplot[black, thick] {exp(-x^2/2) / sqrt(2*pi)};
+    \node[font=\small, anchor=south west] at (axis cs:1.2,0.25) {$p(z)$};
+    % Shifted posterior N(2,1)
+    \addplot[black!55, thick, densely dashed] {exp(-(x-2)^2/2) / sqrt(2*pi)};
+    \node[font=\small, black!55, anchor=south west] at (axis cs:2.8,0.18) {$q_1$};
+    % Widened posterior N(0,2)
+    \addplot[black!55, thick, densely dotted] {exp(-x^2/8) / sqrt(2*pi*4)};
+    \node[font=\small, black!55, anchor=south] at (axis cs:-2.5,0.12) {$q_2$};
+    \end{axis}
+\end{tikzpicture}
+\caption{The KL penalty in action. $p(z) = \mathcal{N}(0,1)$ is the prior (solid). $q_1 = \mathcal{N}(2,1)$ (dashed) is shifted; $q_2 = \mathcal{N}(0,4)$ (dotted) is widened. Both deviations cost KL, but spreading mass away from the prior ($q_2$, $D_{\text{KL}}{=}0.81$) costs more than translating it ($q_1$, $D_{\text{KL}}{=}0.50$, evaluated in Exercise~2).}
+\label{fig:kl_penalty}
+\end{figure}
+
+
+\newpage
 
 \section{The Reparameterisation Trick}\index{reparameterisation trick}
 
@@ -210,29 +265,37 @@ Gradients flow through $\mu$ and $\sigma$ as usual.
 
 \begin{figure}
 \centering
-\begin{tikzpicture}[node distance=1.5cm, auto]
-    \node[draw, rectangle, minimum width=1.5cm] (x) {$x$};
-    \node[draw, rectangle, right of=x, xshift=1cm, minimum width=1.5cm] (enc) {Encoder};
-    \node[draw, rectangle, above right of=enc, yshift=0.3cm, minimum width=1cm] (mu) {$\mu$};
-    \node[draw, rectangle, below right of=enc, yshift=-0.3cm, minimum width=1cm] (sigma) {$\sigma$};
-    \node[draw, circle, right of=mu, xshift=1.5cm, yshift=-0.7cm] (times) {$\times$};
-    \node[draw, circle, above of=times, yshift=-0.5cm] (plus) {$+$};
-    \node[right of=times, xshift=0.5cm] (eps) {$\epsilon \sim \mathcal{N}(0,I)$};
-    \node[draw, rectangle, right of=plus, xshift=1.5cm, minimum width=1cm] (z) {$z$};
-    \node[draw, rectangle, right of=z, xshift=1cm, minimum width=1.5cm] (dec) {Decoder};
-    \node[draw, rectangle, right of=dec, xshift=1cm, minimum width=1.5cm] (xhat) {$\hat{x}$};
-    \draw[->] (x) -- (enc);
-    \draw[->] (enc) -- (mu);
-    \draw[->] (enc) -- (sigma);
-    \draw[->] (mu) -- (plus);
-    \draw[->] (sigma) -- (times);
-    \draw[->] (eps) -- (times);
-    \draw[->] (times) -- (plus);
-    \draw[->] (plus) -- (z);
-    \draw[->] (z) -- (dec);
-    \draw[->] (dec) -- (xhat);
+\begin{tikzpicture}[
+    box/.style={draw, thin, rectangle, minimum width=1.2cm, minimum height=0.6cm, font=\footnotesize},
+    op/.style={draw, thin, circle, inner sep=1.5pt, font=\footnotesize},
+    arr/.style={->, thin},
+    node distance=1.4cm,
+]
+    % Main flow
+    \node[box]                                              (x)     {$x$};
+    \node[box, right of=x, xshift=0.2cm]                   (enc)   {Encoder};
+    \node[box, right of=enc, xshift=0.3cm, yshift=0.6cm]   (mu)    {$\mu$};
+    \node[box, right of=enc, xshift=0.3cm, yshift=-0.6cm]  (sigma) {$\sigma$};
+    \node[op,  right of=sigma, xshift=0.2cm]                (times) {$\odot$};
+    \node[op,  right of=mu, xshift=0.2cm]                   (plus)  {$+$};
+    \node[box, right of=plus]                               (z)     {$z$};
+    \node[box, right of=z]                                  (dec)   {Decoder};
+    \node[box, right of=dec, xshift=0.2cm]                  (xhat)  {$\hat{x}$};
+    % Epsilon input
+    \node[font=\footnotesize] at ([yshift=-0.7cm]times.south) (eps) {$\epsilon \sim \mathcal{N}(0,I)$};
+    % Arrows
+    \draw[arr] (x) -- (enc);
+    \draw[arr] (enc) -- (mu);
+    \draw[arr] (enc) -- (sigma);
+    \draw[arr] (mu) -- (plus);
+    \draw[arr] (sigma) -- (times);
+    \draw[arr] (eps) -- (times);
+    \draw[arr] (times) -- (plus);
+    \draw[arr] (plus) -- (z);
+    \draw[arr] (z) -- (dec);
+    \draw[arr] (dec) -- (xhat);
 \end{tikzpicture}
-\caption{VAE architecture with reparameterisation trick: $z = \mu + \sigma \odot \epsilon$. The stochasticity enters through $\epsilon$; all other arrows carry deterministic, differentiable operations.}
+\caption{VAE architecture with reparameterisation trick: $z = \mu + \sigma \odot \epsilon$. Stochasticity enters through $\epsilon$; all other arrows carry deterministic, differentiable operations.}
 \label{fig:vae_reparam}
 \end{figure}
 
@@ -262,13 +325,90 @@ Gradients flow through $\mu$ and $\sigma$ as usual.
 Given two data points $x_1$ and $x_2$, encode them to $z_1 = \mu_\phi(x_1)$ and $z_2 = \mu_\phi(x_2)$, interpolate as $z_t = (1{-}t)\,z_1 + t\,z_2$, and decode each $z_t$ to obtain $\hat{x}_t = g_\theta(z_t)$.
 Because the latent space is regularised, the decoded path transitions smoothly between the two inputs.
 
+\begin{figure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$z_1$},
+        ylabel={$z_2$},
+        xmin=-3, xmax=3,
+        ymin=-3, ymax=3,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-2,0,2},
+        ytick={-2,0,2},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+    ]
+    % Prior circles
+    \draw[black!20, thin] (axis cs:0,0) circle[radius=1];
+    \draw[black!20, thin] (axis cs:0,0) circle[radius=2];
+    % Encodings as small ellipses
+    \draw[black, thick] (axis cs:-1.5,1.2) ellipse[x radius=0.25, y radius=0.35];
+    \draw[black, thick] (axis cs:1.5,-0.8) ellipse[x radius=0.3, y radius=0.25];
+    % Means
+    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {(-1.5,1.2) (1.5,-0.8)};
+    \node[font=\small, anchor=south east] at (axis cs:-1.5,1.2) {$z_1$};
+    \node[font=\small, anchor=north west] at (axis cs:1.5,-0.8) {$z_2$};
+    % Interpolation path
+    \addplot[black!55, thick, densely dashed] coordinates {(-1.5,1.2) (1.5,-0.8)};
+    % Intermediate points
+    \addplot[only marks, mark=*, mark size=1.5pt, black!55] coordinates {
+        (-0.9,0.72) (-0.3,0.24) (0.3,-0.24) (0.9,-0.72)
+    };
+    \node[font=\tiny, black!55, anchor=south] at (axis cs:0.3,-0.24) {$z_t$};
+    \end{axis}
+\end{tikzpicture}
+\caption{Latent interpolation. Two inputs encode to $z_1$ and $z_2$ (ellipses show the encoder uncertainty). The dashed line interpolates $z_t = (1{-}t)\,z_1 + t\,z_2$; each $z_t$ is decoded to produce a smooth transition. Because the latent space is regularised, no point along the path falls into a hole.}
+\label{fig:latent_interpolation}
+\end{figure}
+
 \newthought{Generation} is equally straightforward: sample $z \sim \mathcal{N}(0, I)$ and decode $\hat{x} = g_\theta(z)$.
 The regularisation ensures that every region of the prior generates plausible data.
 
 
+\newpage
+
 \section{VAE Variants}\index{beta-VAE@$\beta$-VAE}\index{VQ-VAE}\index{conditional VAE}
 
 \marginnote{\newthought{$\beta$-VAE} trades reconstruction fidelity for disentanglement by scaling the KL term.}
+
+\begin{marginfigure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$z_1$},
+        ylabel={$z_2$},
+        xmin=-3, xmax=3,
+        ymin=-3, ymax=3,
+        width=\marginparwidth,
+        height=\marginparwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-2,0,2},
+        ytick={-2,0,2},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        tick align=outside,
+        tick pos=left,
+    ]
+    % Prior circles
+    \draw[black!20, thin] (axis cs:0,0) circle[radius=1];
+    \draw[black!20, thin] (axis cs:0,0) circle[radius=2];
+    % All posteriors collapsed to the same blob at origin
+    \draw[black, thick] (axis cs:0.05,0.03) ellipse[x radius=0.15, y radius=0.18];
+    \draw[black, thick] (axis cs:-0.03,0.05) ellipse[x radius=0.14, y radius=0.16];
+    \draw[black, thick] (axis cs:0.02,-0.04) ellipse[x radius=0.16, y radius=0.15];
+    \node[font=\tiny, black!55, anchor=west] at (axis cs:0.3,0.3) {all $q(z|x)$};
+    \end{axis}
+\end{tikzpicture}
+\caption{Posterior collapse. With high $\beta$, all encoder distributions collapse to the prior: $q(z|x) \approx \mathcal{N}(0,I)$ for every input. The latent code carries no information about $x$.}
+\label{fig:posterior_collapse}
+\end{marginfigure}
 
 \newthought{$\beta$-VAE}\cite{Higgins2017} increases the weight on the KL term:
 
@@ -324,7 +464,7 @@ Higher $T$ yields a softer distribution that reveals more about the teacher's le
 \newthought{Computing by hand} builds intuition for what the ELBO actually measures.
 Step through the arithmetic slowly.
 
-\vspace{1em}
+\vspace{2.5em}
 
 % ---------------------------------------------------------------------------
 % Exercise 1: ELBO derivation
@@ -539,6 +679,8 @@ The grid of decoded samples should show smooth transitions between digit types.
 Increasing $\beta$ should sharpen the cluster boundaries but blur the reconstructions.
 
 
+\vspace{2.5em}
+
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}
 
 \newthought{Self-Reflection} questions to guide your thinking:
@@ -562,13 +704,13 @@ Increasing $\beta$ should sharpen the cluster boundaries but blur the reconstruc
     \item Knowledge distillation is a complementary compression strategy: it transfers a teacher's soft predictions into a smaller student network.
 \end{itemize}
 
-\marginnote{\newthought{The fundamental limit} of a generative model: it can tell you what the data looks like, but not how much to trust what it says about data it has never seen.}
+\marginnote{\newthought{The root of VAE blindness.} A generative model can tell you what the data looks like, but not how much to trust what it says about data it has never seen.}
 
 \newthought{A VAE trained on coffee aroma profiles} will reconstruct familiar profiles faithfully and assign them high ELBO.
 A contaminated sample, one the model has never seen, will reconstruct poorly and land in a low-density region of the latent space.
-The model knows something is wrong, but it cannot quantify how uncertain it is, or decide what to do about it.
+The model signals that something is off, but it cannot quantify how uncertain it is, or decide what to do about it.
 
 \newthought{Uncertainty estimation} fills this gap.
-The next chapter develops tools for quantifying what a model does and does not know, distinguishing irreducible noise from reducible ignorance, and shows how uncertainty estimates enable anomaly detection, out-of-distribution detection, and graceful degradation in deployed systems.
+The next chapter develops tools for quantifying what a model does and does not know, distinguishing irreducible noise from reducible ignorance, and showing how uncertainty estimates enable anomaly detection, out-of-distribution flagging, and graceful degradation in deployed systems.
 
-\marginnote{\newthought{feedback}}
+\marginnote{\newthought{Teaser.} A VAE assigns a reconstruction error to every input. Is a high error sufficient to declare an input anomalous, or do we need a principled measure of what the model does not know?}
