@@ -94,6 +94,8 @@ This is zero-shot classification: the model was never trained to distinguish dog
 
 \newthought{Feature extraction} freezes the pre-trained network and trains only a new classifier head. Fine-tuning unfreezes some or all layers and trains with a small learning rate. Full fine-tuning trains the entire network but risks catastrophic forgetting\index{catastrophic forgetting}.
 
+\marginnote{\newthought{Fine-tuning vs.\ freezing.} When the target task is close to the source task, the backbone features can be used as-is (frozen). When the domains differ, fine-tuning the backbone with a small learning rate adapts the features while preserving the structure learned during pretraining.}
+
 \subsection{When Transfer Fails}\index{negative transfer}
 
 \newthought{Negative transfer} occurs when performance is worse than training from scratch. This happens when the source and target domains are very different, or when pre-trained features are harmful for the target task.
