@@ -1,18 +1,62 @@
 % !TEX root = ../notes_missingsemester.tex
-% Block 4: Integrate the Model — From Artefact to Interface
+% Block 4: Integrate the Model
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \index{model integration}\index{classifier}\index{MNIST}\index{inference}
-\chapter{Integrate the Model: From Artefact to Interface}
-\newthought{Your ML course teaches you to train models. This block teaches you to make one work inside a software system.}
+\chapter{Integrate the Model}
+\newthought{Your ML course teaches you to train models. This block teaches you to ship one.}
 
 % ==============================================================================
 % SESSION A: THEORY
 % ==============================================================================
 
+% -----------------------------------------------------------------------------
+\section{The Why}
+
+\marginnote{\newthought{PixelWise} now has a scaffold, pinned dependencies, a provisioned server,
+and a \texttt{.env.example} that documents its configuration contract.
+But the \texttt{app/} directory is empty. Before we can build an API or a frontend,
+we need the core capability: a trained model that can classify a handwritten digit.}
+
+Block~3 left us with a reproducible environment on both machines. The virtual environment
+is ready, the dependencies are pinned, and the project structure is in place. But there is no
+application logic yet. PixelWise cannot classify anything.
+
+\newthought{The gap between a trained model and a working system} is larger than most students expect.
+A \texttt{.pkl} file sitting in a folder is not a product. It needs to be loaded safely, called with
+the exact input format it was trained on, and wrapped in an interface that the rest of the application
+can depend on. Get any of these wrong and the model predicts silently wrong: no error, just garbage.
+
+\newthought{This block bridges that gap.} We take a pre-trained digit classifier, integrate it into the
+PixelWise codebase, and verify that it works end to end before any API or frontend code exists.
+
+% -----------------------------------------------------------------------------
+\subsection{Hands On Experience}
+
+\newthought{Consider this scenario:} you download a model file from a colleague, drop it into your project,
+and write a quick script that calls \texttt{model.predict(image)}. It runs without errors. The predictions
+look reasonable. You ship it. Two weeks later, a user reports that the app never predicts the digit 0.
+You check: the model was trained on digits 1 to 9 only. Nobody documented this. Nobody checked.
+
+\marginnote{\newthought{Silent failures} are the signature bug of ML systems. The code runs, the model
+returns a prediction, but the answer is wrong. Unlike a crash, nobody notices until the damage is done.}
+
+\newthought{This fourth block} integrates a trained model into PixelWise and builds the inference layer.
+By the end you will have
+\begin{itemize}
+    \item understood what a model file is and why it is not source code,
+    \item loaded the model safely and verified its class contract at startup,
+    \item implemented a batch-first inference interface,
+    \item written a smoke test that proves end-to-end correctness,
+    \item and documented the model's capabilities and limitations in a model card.
+\end{itemize}
+
+
+\newpage
+% -----------------------------------------------------------------------------
 \section{What a Model File Actually Is}\index{pickle}\index{joblib}
 
-\newthought{A \texttt{.pkl} file is a build artefact,} not source code. You distribute it, you do not commit it.
+\newthought{A \texttt{.pkl} file is a build artefact,} not source code. You distribute it; you do not commit it.
 Just as a compiled binary is produced by a compiler, a model file is produced by a training script. The training
 script is source code; the model file is output.
 
@@ -20,10 +64,18 @@ script is source code; the model file is output.
 pipeline trained on MNIST digits 1 to 9 (9 classes, ${\sim}$54\,000 training samples, public domain).
 Class 0 is intentionally held back; students can add it later without collecting any new data.}
 
+\begin{verbatim}
+import joblib
+model = joblib.load("models/digit_classifier_v1.pkl")
+print(type(model))
+# <class 'sklearn.pipeline.Pipeline'>
+print(model.classes_)
+# ['1' '2' '3' '4' '5' '6' '7' '8' '9']
+\end{verbatim}
+
 \newthought{The training script} (\texttt{train.py}) is provided as supplementary lecture material. Students who
 want to understand how the artefact was produced can run it: MNIST downloads automatically via
-\texttt{sklearn.datasets.fetch\_openml}, training takes ${\sim}$30 seconds on CPU. Proper training practices
-(learning rate schedules, regularisation, early stopping, GPU considerations) would double the length of this course.
+\texttt{sklearn.datasets.fetch\_openml}, training takes ${\sim}$30 seconds on CPU.
 
 \marginnote{For further reading on training practices:\\
 Karpathy, \emph{A Recipe for Training Neural Networks}:
@@ -31,52 +83,65 @@ Karpathy, \emph{A Recipe for Training Neural Networks}:
 Google, \emph{Rules of Machine Learning}:
 \url{https://developers.google.com/machine-learning/guides/rules-of-ml}}
 
-\subsection{The Deserialisation Risk}
-
 \newthought{Loading a \texttt{.pkl} from an untrusted source can execute arbitrary code.}
-\texttt{pickle}\index{pickle} and \texttt{joblib}\index{joblib} deserialise objects by reconstructing them—including
+\texttt{pickle}\index{pickle} and \texttt{joblib}\index{joblib} deserialise objects by reconstructing them, including
 any code embedded in the file. Only load artefacts you produced or received from a trusted source.
 
+\marginnote{Safer alternatives exist: ONNX\index{ONNX} stores only weights and graph structure, no executable code.
+SafeTensors does the same for PyTorch. For this course, \texttt{joblib} is sufficient because we control the
+training pipeline end to end.\\
+ONNX: \url{https://onnx.ai/}\\
+SafeTensors: \url{https://huggingface.co/docs/safetensors}}
+
+
+% -----------------------------------------------------------------------------
+\bigskip
 \section{Honouring the Model Contract}\index{train/serve skew}
 
 \newthought{Every model was trained on inputs in a specific format.} Violate that format and it predicts
-silently wrong—no error, just garbage output. This is called \textbf{train/serve skew}\index{train/serve skew}
+silently wrong: no error, just garbage output. This is called train/serve skew\index{train/serve skew}
 and it is the most common production ML bug.
 
 \newthought{The MNIST model expects:}
 \begin{itemize}
-    \item A 28$\times$28 greyscale image
-    \item Pixel values normalised to $[0, 1]$
-    \item Flattened to a 784-element vector
+    \item a 28$\times$28 greyscale image,
+    \item pixel values normalised to $[0, 1]$,
+    \item flattened to a 784-element vector.
 \end{itemize}
 
-\subsection{Binarization}\index{binarization}
+\newthought{The canvas in the browser produces uint8 values} (0 to 255). Converting to binary (0/1)
+reduces payload size, removes noise, and matches training-time preprocessing exactly:
 
-\newthought{The canvas in the browser produces uint8 values} (0–255). Converting to binary (0/1)
-reduces payload size, removes noise, and matches training-time preprocessing exactly. Binarized digits
-are cleaner inputs—show the difference visually: a raw digit with anti-aliased grey edges versus the
-same digit binarized to sharp black-and-white.
+\begin{verbatim}
+import numpy as np
+raw = np.array(...)        # (28, 28) uint8
+binary = (raw > 128).astype(float)  # 0s and 1s
+flat = binary.reshape(1, -1)        # (1, 784)
+\end{verbatim}
 
-\subsection{The sklearn Pipeline}\index{sklearn!Pipeline}
+\marginnote{\newthought{Binarization}\index{binarization} is aggressive but effective for MNIST.
+Anti-aliased grey edges become sharp black and white. The model was trained on binarized inputs,
+so serving raw greyscale would introduce train/serve skew.}
 
-\newthought{The sklearn Pipeline} bundles preprocessing and model into one serialised object. Load it once
-and the preprocessing is guaranteed to match training. No separate normalisation step to forget.
+\newthought{The sklearn Pipeline}\index{sklearn!Pipeline} bundles preprocessing and model into one serialised object.
+Load it once and the preprocessing is guaranteed to match training. No separate normalisation step to forget.
 
 \marginnote{scikit-learn\index{scikit-learn}: \url{https://scikit-learn.org/}\\
 joblib\index{joblib}: \url{https://joblib.readthedocs.io/}\\
 NumPy\index{NumPy}: \url{https://numpy.org/}}
 
+
+% -----------------------------------------------------------------------------
+\bigskip
 \section{Designing the Inference Interface}\index{inference interface}
 
 \newthought{Before writing any code, design the contract.} Start with the class roster, then the function signatures.
-
-\subsection{The Class Dictionary}
 
 \newthought{A named constant} makes the valid output set explicit and independent of the model file:
 
 \begin{verbatim}
 CLASSES = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
-# must match model.classes_ — verified at startup
+# must match model.classes_, verified at startup
 # note: "0" is intentionally absent in v1
 \end{verbatim}
 
@@ -84,45 +149,30 @@ This list belongs in the code, not only in the model. The frontend, the DB schem
 reference it. If the model is swapped for one trained on different classes, the assertion fires loudly
 at startup rather than returning silently wrong labels.
 
-\subsection{Batch-First Design}\index{batch inference}
+\marginnote{\newthought{Batch-first design.}\index{batch inference} What happens when 50 students submit a drawing
+at the same second? If the server processes each request individually, the model is called 50 times
+with a $(1, 784)$ array. If it batches them, the model is called once with a $(50, 784)$ array.
+sklearn's \texttt{predict\_proba} is natively vectorised, so the cost is nearly identical.
+Design around batch; single-user is a special case.}
 
-\newthought{Scalability question:} what happens when 50 students submit a drawing at the same second?
-If the server processes each request one at a time, the model is called 50 times with a $(1, 784)$ array each.
-If it batches them, the model is called once with a $(50, 784)$ array—sklearn's \texttt{predict\_proba}
-is natively vectorised, so the cost is nearly identical.
-
-\newthought{Design around batch;} single-user is a special case:
-
-\begin{description}
-    \item[\texttt{classify\_batch} (core)] Input: $(N, 28, 28)$ uint8 array. Output: list of $N$ result dicts.
-    Called by the Block~5 API.
-    \item[\texttt{classify} (wrapper)] Input: $(28, 28)$ uint8 array. Output: single result dict.
-    Used by \texttt{predict.py} for smoke testing.
-\end{description}
-
-\subsection{The Function Signatures}
+\newthought{The function signatures:}
 
 \begin{verbatim}
 def classify_batch(images: np.ndarray) -> list[dict]:
     """
     Args:
-        images: (N, 28, 28) uint8 numpy array, values 0-255
+        images: (N, 28, 28) uint8, values 0-255
     Returns:
-        List of N dicts, each:
-        {
-            "prediction": str,       # element of CLASSES
-            "confidence": float,     # probability of top class
-            "scores": dict[str, float]  # prob per class
-        }
-    Raises:
-        ValueError: if shape != (N, 28, 28)
+        List of N dicts:
+        {"prediction": str, "confidence": float,
+         "scores": dict[str, float]}
     """
     if images.ndim != 3 or images.shape[1:] != (28, 28):
         raise ValueError(
             f"Expected (N,28,28), got {images.shape}")
     arr = (images > 128).astype(float).reshape(
-        len(images), -1)                    # binarize + flatten
-    probs = _pipeline.predict_proba(arr)    # (N, 9)
+        len(images), -1)
+    probs = _pipeline.predict_proba(arr)
     return [
         {"prediction": CLASSES[p.argmax()],
          "confidence": float(p.max()),
@@ -131,150 +181,212 @@ def classify_batch(images: np.ndarray) -> list[dict]:
     ]
 
 def classify(image: np.ndarray) -> dict:
-    """Convenience wrapper — single image."""
+    """Single image convenience wrapper."""
     return classify_batch(image[np.newaxis])[0]
 \end{verbatim}
 
-\marginnote{The API in Block~5 always calls \texttt{classify\_batch}, even for a single drawing—it
+\newthought{Load \texttt{\_pipeline} once at module level:}
+
+\begin{verbatim}
+import joblib, os
+_pipeline = joblib.load(os.getenv("MODEL_PATH"))
+assert list(_pipeline.classes_) == CLASSES
+\end{verbatim}
+
+Deserialising on every request kills throughput. The model stays in memory for the lifetime of the process.
+The assertion fires at startup if the model's classes do not match the code constant.
+
+\marginnote{The API in Block~5 always calls \texttt{classify\_batch}, even for a single drawing: it
 passes a $(1, 28, 28)$ array. When a request queue is added later, no signature changes are needed.}
 
-\newthought{Load \texttt{\_pipeline} once at module level}—deserialising on every request kills throughput.
-The model stays in memory for the lifetime of the process.
 
+% -----------------------------------------------------------------------------
+\bigskip
 \section{The Model Card}\index{model card}\index{MODELCARD.md}
 
 \newthought{A model card is the documentation artefact} that links a model to its provenance and limitations.
-It is an established standard (Google, HuggingFace\marginnote{Model Cards (Google):
+
+\marginnote{Model Cards (Google):
 \url{https://modelcards.withgoogle.com/}\\
-HuggingFace Model Cards: \url{https://huggingface.co/docs/hub/model-cards}}) and contains:
+HuggingFace Model Cards: \url{https://huggingface.co/docs/hub/model-cards}}
 
-\begin{description}
-    \item[Training data] MNIST digits 1–9, 9 classes, ${\sim}$54k train / ${\sim}$9k test samples, public domain. Class 0 withheld.
-    \item[Capabilities] Predict handwritten digits 1–9. Expected accuracy ${\sim}$92\% (LogisticRegression baseline).
-    \item[Known failures] 6/9 confusion, 3/8 confusion, messy or rotated digits.
-    \item[Benchmarks] Accuracy per class on MNIST test set (provided alongside the model).
-    \item[Intended use] Drawn digits from 28$\times$28 canvas. Out-of-scope: photographed digits, non-digit characters.
-\end{description}
+\begin{verbatim}
+# MODELCARD.md: digit_classifier_v1
 
-When \texttt{v2} is deployed via the Block~8 feature flag, the model card gets updated—traceability across versions.
+## Training Data
+MNIST digits 1-9, ~54k train / ~9k test, public domain.
+Class 0 withheld intentionally.
+
+## Capabilities
+Predict handwritten digits 1-9.
+Expected accuracy: ~92% (LogisticRegression baseline).
+
+## Known Failures
+6/9 confusion, 3/8 confusion, messy or rotated digits.
+
+## Intended Use
+28x28 canvas drawings. Out of scope: photos, non-digits.
+\end{verbatim}
+
+When \texttt{v2} is deployed via the Block~8 feature flag, the model card gets updated, providing
+traceability across versions.
+
 
 % ==============================================================================
 % SESSION B: HANDS-ON
 % ==============================================================================
 
 \newpage
-\section{Workshop}
+% -----------------------------------------------------------------------------
+\section{Exercise: The Model Artefact}\index{exercises}
 
-\marginnote{If your VM is broken, restore the \texttt{B3-complete} snapshot.
-At the end of this session, take a snapshot named \texttt{B4-complete}.}
+\marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
+Work through them yourself first, break things, discuss, this is not a time trial.
+If your VM ends up in a state you cannot recover, restore the \texttt{B3-complete} snapshot and start over.
+At the end of the session, take a snapshot named \texttt{B4-complete}, your safety net for the next block.}
 
-\begin{enumerate}
-    \item \textbf{Download and inspect the model:} Place \texttt{digit\_classifier\_v1.pkl} (provided)
-    in \texttt{models/}. Inspect it in a Python shell:
-    \begin{verbatim}
-    import joblib
-    model = joblib.load("models/digit_classifier_v1.pkl")
-    print(type(model))
-    print(model.classes_)
-    \end{verbatim}
-    What type is it? What classes does it predict?
+\newthought{Place the model file.} Copy \texttt{digit\_classifier\_v1.pkl} (provided) into \texttt{models/}.
+Confirm that \texttt{.gitignore} excludes \texttt{*.pkl} so the artefact stays out of version control.
 
-    \item \textbf{Experiment with binarization:} Load a sample MNIST digit, display the raw pixel array
-    versus the binarized version. Observe that the digit structure is preserved and noise is eliminated:
-    \begin{verbatim}
-    from sklearn.datasets import fetch_openml
-    import numpy as np
-    X, y = fetch_openml("mnist_784", version=1,
-        return_X_y=True, as_frame=False)
-    sample = X[0].reshape(28, 28).astype(np.uint8)
-    binary = (sample > 128).astype(float)
-    print(sample[:5, :5])    # raw values
-    print(binary[:5, :5])    # 0s and 1s
-    \end{verbatim}
+\newthought{Inspect it in a Python shell:}
 
-    \item \textbf{Write \texttt{app/classifier.py}:} Implement the module with the class constant,
-    module-level model loading, the startup assertion, \texttt{classify\_batch}, and \texttt{classify}:
-    \begin{verbatim}
-    CLASSES = ["1","2","3","4","5","6","7","8","9"]
+\begin{verbatim}
+source .venv/bin/activate
+python3
+>>> import joblib
+>>> model = joblib.load("models/digit_classifier_v1.pkl")
+>>> print(type(model))
+>>> print(model.classes_)
+\end{verbatim}
 
-    _pipeline = joblib.load(os.getenv("MODEL_PATH"))
-    assert list(_pipeline.classes_) == CLASSES, \
-        f"Model/CLASSES mismatch: {_pipeline.classes_}"
-    \end{verbatim}
-    The assertion is the key teaching moment: it fires at startup. A swapped model with different
-    classes is caught the moment the service starts, not when a user gets a wrong digit.
+What type is it? What classes does it predict? Does it include class 0?
 
-    \item \textbf{Write \texttt{predict.py} as a smoke test:} Load 5 MNIST test samples, call
-    \texttt{classify\_batch()}, print predictions versus ground truth:
-    \begin{verbatim}
-    from app.classifier import classify_batch
-    import numpy as np
 
-    # Load 5 test samples (provided or via fetch_openml)
-    images = ...  # (5, 28, 28) uint8
-    results = classify_batch(images)
-    for r, true_label in zip(results, true_labels):
-        print(f"Predicted: {r['prediction']} "
-              f"(conf: {r['confidence']:.2f}), "
-              f"True: {true_label}")
-    \end{verbatim}
-    Frame it explicitly: this is the CLI version of what the API will do in Block~5—\texttt{POST /classify}
-    calls \texttt{classify\_batch} with a $(1, 28, 28)$ array.
+% -----------------------------------------------------------------------------
+\bigskip
+\section{Exercise: Preprocessing and Binarization}\index{exercises}
 
-    \item \textbf{Update \texttt{.env} and \texttt{.env.example}:} Add the model path:
-    \begin{verbatim}
-    MODEL_PATH=models/digit_classifier_v1.pkl
-    \end{verbatim}
+\newthought{Load a sample MNIST digit} and compare raw versus binarized:
 
-    \item \textbf{Write \texttt{models/MODELCARD.md}:} Document the model following the structure
-    from the theory section: dataset, input format, performance, known failures, version, date.
+\begin{verbatim}
+from sklearn.datasets import fetch_openml
+import numpy as np
 
-    \item \textbf{Commit:} Stage and commit the new files—but not the \texttt{.pkl}:
-    \begin{verbatim}
-    git add app/classifier.py predict.py \
-        models/MODELCARD.md .env.example
-    git commit -m "Add classifier module and model card"
-    git push
-    \end{verbatim}
+X, y = fetch_openml("mnist_784", version=1,
+    return_X_y=True, as_frame=False)
+sample = X[0].reshape(28, 28).astype(np.uint8)
+binary = (sample > 128).astype(float)
+print(sample[:5, :5])    # raw values
+print(binary[:5, :5])    # 0s and 1s
+\end{verbatim}
 
-    \item \textbf{Take a snapshot} of both VMs. Name them \texttt{B4-complete}.
-\end{enumerate}
+Observe that the digit structure is preserved and noise is eliminated.
+The model was trained on binarized inputs; serving raw greyscale would break the contract.
 
-\subsection{Optional Challenge: Add the Missing 0}\index{model versioning}
+
+% -----------------------------------------------------------------------------
+\bigskip
+\section{Exercise: The Classifier Module}\index{exercises}
+
+\newthought{Write \texttt{app/classifier.py}.} Implement the module with the class constant,
+module-level model loading, the startup assertion, \texttt{classify\_batch}, and \texttt{classify}.
+
+\begin{verbatim}
+CLASSES = ["1","2","3","4","5","6","7","8","9"]
+
+_pipeline = joblib.load(os.getenv("MODEL_PATH"))
+assert list(_pipeline.classes_) == CLASSES, \
+    f"Model/CLASSES mismatch: {_pipeline.classes_}"
+\end{verbatim}
+
+The assertion is the key teaching moment: it fires at startup. A swapped model with different
+classes is caught the moment the service starts, not when a user gets a wrong digit.
+
+\newthought{Write \texttt{predict.py} as a smoke test.} Load 5 MNIST test samples, call
+\texttt{classify\_batch()}, print predictions versus ground truth:
+
+\begin{verbatim}
+from app.classifier import classify_batch
+import numpy as np
+
+images = ...  # (5, 28, 28) uint8
+results = classify_batch(images)
+for r, true_label in zip(results, true_labels):
+    print(f"Predicted: {r['prediction']} "
+          f"(conf: {r['confidence']:.2f}), "
+          f"True: {true_label}")
+\end{verbatim}
+
+This is the CLI version of what the API will do in Block~5: \texttt{POST /classify}
+calls \texttt{classify\_batch} with a $(1, 28, 28)$ array.
+
+\newthought{Update \texttt{.env} and \texttt{.env.example}:}
+
+\begin{verbatim}
+MODEL_PATH=models/digit_classifier_v1.pkl
+\end{verbatim}
+
+
+% -----------------------------------------------------------------------------
+\bigskip
+\section{Exercise: The Model Card}\index{exercises}
+
+\newthought{Write \texttt{models/MODELCARD.md}.} Document the model following the structure
+from the theory section: dataset, input format, performance, known failures, version, date.
+
+\newthought{Commit the new files,} but not the \texttt{.pkl}:
+
+\begin{verbatim}
+git add app/classifier.py predict.py \
+    models/MODELCARD.md .env.example
+git commit -m "Add classifier module and model card"
+git push
+\end{verbatim}
+
+\newthought{Take a snapshot} of both VMs. Name them \texttt{B4-complete}.
+
+
+% -----------------------------------------------------------------------------
+\bigskip
+\section{Optional: Add the Missing 0}\index{model versioning}
 
 \newthought{The digit class ``0'' was intentionally excluded from v1.} To produce v2: add \texttt{"0"} to
 \texttt{CLASSES}, include MNIST's class-0 samples in the training split, re-run \texttt{train.py}, save as
 \texttt{digit\_classifier\_v2.pkl}. The assertion will break the moment v2 is loaded against v1's
-\texttt{CLASSES}—fix it by updating the constant. Update \texttt{MODELCARD.md}: document that v2 covers
+\texttt{CLASSES}; fix it by updating the constant. Update \texttt{MODELCARD.md}: document that v2 covers
 all 10 digits and note any accuracy change.
 
 \marginnote{This challenge connects directly to Block~8: v2 is deployed via the feature flag, and Block~9's
-analytics compare v1 vs v2 performance. No data collection needed—MNIST has the 0s already.}
+analytics compare v1 vs v2 performance. No data collection needed, MNIST has the 0s already.}
 
-\subsection{Teaser: Could We Have Spotted the Missing Class?}
-
-\newthought{Think about it before reading the hints:}
+\newthought{Could we have spotted the missing class at runtime?}
 \begin{itemize}
-    \item \textbf{Class distribution in the DB:} after a few hundred predictions, a missing class is invisible—the
-    model never predicts it, users never see an error, the DB just never accumulates any 0s. Would you have noticed?
-    \item \textbf{Confidence as a signal:} when the model sees an input it was not trained on, it is often less certain.
-    A systematic drop in average confidence or a spike in low-confidence predictions could indicate out-of-distribution
-    inputs. It is a weak signal, but it is a runtime signal that requires no labelled data.
-    \item \textbf{Confidence thresholds:} return \texttt{null} when \texttt{confidence < threshold}. The volume of
-    rejected predictions is itself a monitoring signal.
+    \item After a few hundred predictions, a missing class is invisible: the model never predicts it,
+    users never see an error, the DB just never accumulates any 0s.
+    \item When the model sees an input it was not trained on, it is often less certain. A systematic drop
+    in average confidence could indicate out-of-distribution inputs: a weak signal, but a runtime signal
+    that requires no labelled data.
+    \item Returning null when \texttt{confidence < threshold} turns low confidence into a monitoring signal:
+    the volume of rejected predictions is itself a metric.
 \end{itemize}
 
-These questions do not have quick answers. Systematic detection of silent model failures—uncertainty estimation,
-distribution shift, missing classes—is the domain of \textbf{MLOps}\index{MLOps}. This surface is intentionally
-shallow here; it is covered in depth in dedicated courses.
+\marginnote{Systematic detection of silent model failures, including uncertainty estimation, distribution shift,
+and missing classes, is the domain of MLOps\index{MLOps}. This surface is intentionally shallow here;
+dedicated courses cover it in depth.}
 
+
+% -----------------------------------------------------------------------------
+\bigskip
 \section{Security Thread}
 
-\newthought{Never load a \texttt{.pkl} from an untrusted source}—\texttt{joblib}/\texttt{pickle}
+\newthought{Never load a \texttt{.pkl} from an untrusted source:} \texttt{joblib}/\texttt{pickle}
 deserialisation executes arbitrary code. \texttt{MODEL\_PATH} comes from \texttt{.env}, never
-hardcoded—so swapping the model in production requires only an env var change, not a code change.
+hardcoded, so swapping the model in production requires only an env var change, not a code change.
 Training data and model artefacts are not committed to Git.
 
+
+\newpage
+% -----------------------------------------------------------------------------
 \section{Self-Reflection and Recap}
 
 \newthought{Reflection questions:}
@@ -285,6 +397,20 @@ Training data and model artefacts are not committed to Git.
     \item Why is the \texttt{.pkl} file in \texttt{.gitignore} but \texttt{MODELCARD.md} is committed?
     \item How would you detect that the model is missing a class it should predict?
 \end{itemize}
+
+\newthought{Recap:}
+\begin{itemize}
+    \item A \texttt{.pkl} file is a build artefact, not source code. Never commit it to Git.
+    \item Train/serve skew is the most common production ML bug. The startup assertion catches class mismatches immediately.
+    \item Batch-first design scales from one user to $N$ with no code changes.
+    \item \texttt{MODELCARD.md} documents capabilities, limitations, and provenance.
+    \item \texttt{predict.py} proves end-to-end correctness before any API exists.
+\end{itemize}
+
+\marginnote{\newthought{Teaser.} The classifier module works, but it is trapped in a Python script.
+To let the frontend call it, we need an API. In the next block we wrap \texttt{classify\_batch}
+in a FastAPI endpoint, define the HTTP contract, and make PixelWise respond to its first
+\texttt{POST /classify} request.}
 
 \newthought{Milestone:} \texttt{app/classifier.py} exposes a batch-first inference interface that scales
 from one student to $N$ concurrent users with no code changes. \texttt{predict.py} proves it works

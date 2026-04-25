@@ -246,7 +246,7 @@ That is what PCA, and later t-SNE and UMAP, will do.
 \vspace{1.5em}
 \section{A Na\"ive Baseline: Variance-Based Feature Selection}\index{feature selection}\index{variance}
 
-\marginnote{\newthought{The simplest idea:} rank each feature by how much it varies, then drop the ones that barely move.}
+\marginnote{\newthought{Feature selection} falls into three families: \emph{filter} methods score features independently of any model (e.g.\ mutual information, variance thresholding), \emph{wrapper} methods evaluate subsets by training a predictor, and \emph{embedded} methods perform selection inside the learning objective (e.g.\ $\ell_1$ regularisation). Wrapper and embedded methods require labels; filters may or may not. Without labels we are limited to unsupervised proxies such as variance.}
 
 \newthought{When axes align with the signal} consider the most straightforward way to reduce dimensions: 
 measure the variance of each original feature independently and keep only those with the highest variance.\\

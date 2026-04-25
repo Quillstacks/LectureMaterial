@@ -99,6 +99,43 @@ This is zero-shot classification: the model was never trained to distinguish dog
 \newthought{Negative transfer} occurs when performance is worse than training from scratch. This happens when the source and target domains are very different, or when pre-trained features are harmful for the target task.
 
 
+\subsection{Backbones and Pretraining Datasets}\index{backbone}
+
+\marginnote{\newthought{A backbone} is an encoder trained on one task, then reused as a feature extractor for another. It supplies representations; a lightweight head on top supplies predictions.}
+
+\newthought{Generalisation}\index{generalisation} is the reason transfer works.
+A bottlenecked encoder must compress, and compression requires ignoring idiosyncratic noise in favour of shared structure.
+A $k$-dimensional embedding with $k \ll d$ cannot memorise individual inputs; it must discover regularities that hold across the training distribution.
+Those regularities, the semantic features, are precisely what a downstream model needs to perform well on new, unseen data.
+
+\newthought{The quality of transferred features depends on the source dataset.}
+A backbone is only as general as the data it was trained on.
+Across domains, a small number of large-scale datasets have become the standard foundations for pretraining.
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.14\textwidth}p{0.10\textwidth}p{0.10\textwidth}p{0.38\textwidth}}
+    \toprule
+    \textbf{Dataset} & \textbf{Modality} & \textbf{Scale} & \textbf{What the backbone learns} \\
+    \midrule
+    ImageNet \citealt{Deng2009ImageNet} & Images & 14M images & Edges, textures, object parts, and category-level semantics. The de facto starting point for visual feature extractors. \\
+    The Pile \citealt{Gao2020Pile} & Text & 825 GB text & Syntax, coreference, factual associations, and discourse structure from books, academic papers, web text, and code. \\
+    LibriSpeech \citealt{Panayotov2015LibriSpeech} & Audio & 1000 h audio & Phoneme boundaries, prosody, and speaker-invariant representations from read English speech. \\
+    Kinetics-700 \citealt{Carreira2022Kinetics700} & Video & 650k clips & Temporal dynamics, motion patterns, and action semantics from short video clips spanning 700 human action classes. \\
+    ShapeNet \citealt{Chang2015ShapeNet} & 3D shapes & 51k models & Surface geometry, part decomposition, and pose-invariant structure from annotated CAD models across 55 object categories. \\
+    LAION-5B \citealt{Schuhmann2022LAION5B} & Image + text & 5.8B pairs & Joint visual and linguistic semantics from web-crawled image-caption pairs; the foundation behind open multimodal models. \\
+    CheXpert \citealt{Irvin2019CheXpert} & Medical images & 224k X-rays & Anatomical landmarks, pathology signatures, and radiological texture patterns from labelled chest radiographs. \\
+    ZINC \citealt{Sterling2015ZINC} & Molecular graphs & 250k molecules & Bond topology, functional-group motifs, and drug-likeness features from curated small-molecule structures. \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Large-scale pretraining datasets across modalities. Each dataset provides the raw material for a backbone to learn general-purpose features that transfer to downstream tasks within (and sometimes across) its modality.}
+\label{tab:pretraining_datasets}
+\end{table*}
+
+\marginnote{\newthought{Modality matters.} An ImageNet backbone transfers well to satellite imagery or medical photos, but poorly to molecular graphs or audio spectrograms. Choosing the right source dataset and modality is the first design decision in any transfer learning pipeline.}
+
+
 \section{Zero-Shot Learning}\index{zero-shot learning}
 
 \marginnote{Zero-shot: classify without any training examples of that class.}
