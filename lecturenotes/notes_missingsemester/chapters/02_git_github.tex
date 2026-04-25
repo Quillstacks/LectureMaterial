@@ -376,24 +376,126 @@ delete the file in a later commit. The old commit still contains it. \texttt{.gi
 % -----------------------------------------------------------------------------
 \section{Exercise: Setting Up Git and the Repository}\index{exercises}
 
-\marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
-Work through them yourself first, break things, discuss, this is not a time trial.
-If your VM ends up in a state you cannot recover, restore the \texttt{B1-complete} snapshot and start over.
-At the end of the session, take a snapshot named \texttt{B2-complete}, your safety net for the next block.}
+\marginnote{\newthought{At the end of the sessions}, take a snapshot named \texttt{B2-complete}, your safety net for the next block.}
 
-\newthought{Create a GitHub account} if you do not have one. Then configure your Git identity on the \texttt{dev} VM:
+\newthought{Create a GitHub account} if you do not have one. Then open a terminal on the \texttt{dev} VM.
+
+\marginnote{\newthought{Opening a terminal on Ubuntu.}\index{Ubuntu!terminal}
+The fastest way is the keyboard shortcut \texttt{Ctrl+Alt+T}, which launches
+the default terminal emulator. Alternatives: press the \texttt{Super} key
+(the Windows key) and type ``terminal'', or right-click on the desktop
+and choose ``Open Terminal''. Inside a terminal you can open another tab
+with \texttt{Ctrl+Shift+T} and a fresh window with \texttt{Ctrl+Alt+T} again.}
+
+\newthought{Install Git.}\index{Git!install} Ubuntu does not ship with Git by default,
+so install it through the package manager. It does not matter which directory you run this
+in, \texttt{apt} installs system-wide:
+
+\marginnote{\texttt{sudo}\index{sudo} runs the command with administrator privileges, which
+\texttt{apt} needs to write to system directories. You will be asked for your password the first
+time. \texttt{apt update} refreshes the package index so you get the current version;
+\texttt{apt install -y} installs without prompting for confirmation.}
+
+\begin{verbatim}
+sudo apt update
+sudo apt install -y git
+git --version              # confirm the install succeeded
+\end{verbatim}
+
+\newthought{Configure your Git identity:}
 
 \begin{verbatim}
 git config --global user.name "Your Name"
 git config --global user.email "your@email.com"
 \end{verbatim}
 
-Generate an SSH key and add it to GitHub so you can push over SSH.
-
-\newthought{Initialise the PixelWise repo} on the \texttt{dev} VM:
+\newthought{Generate an SSH key.}\index{SSH!key}\index{SSH!keygen}
+SSH keys authenticate you to GitHub from the command line, replacing the password prompt
+on every push and pull. Before generating, check whether a key already exists so you do not
+overwrite one you rely on for another server:
 
 \begin{verbatim}
+ls ~/.ssh/
+\end{verbatim}
+
+\marginnote{\newthought{Rings a bell?}\index{SSH!key}
+You generated an \texttt{id\_ed25519} key in Block~1 to log in to the \texttt{prod} VM
+without a password. That same key is sitting in \texttt{\textasciitilde/.ssh/} now,
+which is exactly why \texttt{ls} matters before the next step: accepting the default
+path would overwrite the production key and lock you out of the server.}
+
+If you see a file called \texttt{id\_ed25519}, that path is already in use. Either reuse it
+for GitHub as well, or generate a new key under a distinct filename so both keep working.
+Otherwise, generate the default key pair on the \texttt{dev} VM:
+\marginnote{\newthought{Multiple SSH keys?}\index{SSH!config}
+If you keep one key for production servers and another for GitHub, tell SSH which to use
+for each host with an \texttt{\textasciitilde/.ssh/config} entry:
+\\[0.5em]
+\texttt{Host github.com}\\
+\texttt{\quad HostName github.com}\\
+\texttt{\quad User git}\\
+\texttt{\quad IdentityFile \textasciitilde/.ssh/id\_ed25519\_github}\\
+\texttt{\quad IdentitiesOnly yes}
+\\[0.5em]
+Then \texttt{chmod 600 \textasciitilde/.ssh/config}. Without
+\texttt{IdentitiesOnly}, SSH may offer the wrong key first and GitHub will reject the
+connection after a handful of auth failures.}
+\begin{verbatim}
+ssh-keygen -t ed25519 -C "your@email.com"
+\end{verbatim}
+
+The tool prompts for a file location. If \texttt{\textasciitilde/.ssh/id\_ed25519} does not yet
+exist, press Enter to accept the default; if it does, type a distinct path such as
+\texttt{\textasciitilde/.ssh/id\_ed25519\_github} so the existing key is preserved.
+It then prompts for a passphrase, optional but recommended, it encrypts the private key on
+disk so a stolen key file is not immediately usable.
+
+
+
+\marginnote{\newthought{What just happened?}\index{SSH!public key}\index{SSH!private key}
+\texttt{ssh-keygen} created two files in \texttt{\textasciitilde/.ssh/}.
+\texttt{id\_ed25519} is the private key: never share it, never commit it, never copy it
+to another machine without good reason.
+\texttt{id\_ed25519.pub} is the public key, safe to share, this is the file you paste into GitHub.
+The \texttt{-t ed25519} flag picks a modern signature algorithm; the \texttt{-C} comment
+labels the key so you can recognise it later when you have several.}
+
+\newthought{Add the public key to GitHub.} Print it to the terminal and select the entire output,
+beginning with \texttt{ssh-ed25519} and ending with the comment:
+
+\begin{verbatim}
+cat ~/.ssh/id_ed25519.pub
+\end{verbatim}
+
+In GitHub, navigate to Settings, then SSH and GPG keys, then New SSH key. Give it a
+recognisable title like \texttt{pixelwise-dev-vm} so you know which machine it belongs to,
+paste the public key into the Key field, and save.
+
+\newthought{Test the connection:}
+
+\begin{verbatim}
+ssh -T git@github.com
+\end{verbatim}
+
+The first time, SSH asks whether to trust GitHub's host fingerprint. Type \texttt{yes}.
+If the key is set up correctly, GitHub responds with
+\texttt{Hi <username>! You've successfully authenticated, but GitHub does not provide shell access.}
+The message about shell access sounds like an error but is the intended response: GitHub
+only allows Git operations over SSH, not interactive shells.
+
+\newthought{Initialise the PixelWise repo} on the \texttt{dev} VM. Pick a stable working
+directory, your home folder is the natural place, so the project does not get lost in
+\texttt{/tmp} or buried under \texttt{Downloads}:
+
+\marginnote{\texttt{cd \textasciitilde} jumps to your home directory from anywhere.
+\texttt{pwd} prints the current path so you can confirm where you are before
+running \texttt{git init}. Avoid initialising a repo inside \texttt{/tmp}, on a
+mounted USB drive, or inside another existing Git repository.}
+
+\begin{verbatim}
+cd ~                          # start from your home directory
 mkdir pixelwise && cd pixelwise
+pwd                           # confirm: /home/<user>/pixelwise
 git init
 \end{verbatim}
 
@@ -401,6 +503,7 @@ Write a \texttt{README.md} with a one-line project description.
 
 
 % -----------------------------------------------------------------------------
+\vspace{2em}
 \section{Exercise: Staging, Committing, and .gitignore}\index{exercises}
 
 \newthought{Write a \texttt{.gitignore}.} Create a \texttt{.gitignore} file that excludes
@@ -418,7 +521,7 @@ git commit -m "Add project README and .gitignore"
 
 Run \texttt{git log} to see your first commit. Run \texttt{git status} to confirm the working directory is clean.
 
-\marginnote{\newthought{The habit to build:} after every commit, run \texttt{git status} and \texttt{git log --oneline}
+\marginnote{\newthought{The habit to build:} after every commit, run \texttt{git status} and \texttt{git log -{}-oneline}
 to confirm what just happened. It takes two seconds and prevents surprises.}
 
 
@@ -428,19 +531,34 @@ to confirm what just happened. It takes two seconds and prevents surprises.}
 
 \newthought{Create a feature branch} and make a change to \texttt{README.md}:
 
+\marginnote{\newthought{Editing files in the terminal.}\index{nano}
+\texttt{nano README.md} opens the file in a simple terminal editor.
+The bar at the bottom of the screen lists the shortcuts, where \texttt{\^{}} stands for
+the \texttt{Ctrl} key: \texttt{Ctrl+O} writes the file to disk, \texttt{Ctrl+X} exits,
+and \texttt{Ctrl+G} shows full help. Vim and VS~Code over Remote~SSH work just as well
+if you prefer them.}
+
 \begin{verbatim}
 git checkout -b feature-readme
-# edit README.md: add a project description line
+nano README.md          # add a project description line
 git add README.md
 git commit -m "Add project description to README"
 \end{verbatim}
 
 \newthought{Switch back to \texttt{main}} and edit the same line differently:
 
+\marginnote{\newthought{\texttt{main} or \texttt{master}?}\index{Git!default branch}
+Older Git versions called the default branch \texttt{master}. Since 2020, the convention has
+shifted to \texttt{main}, and GitHub creates new repositories with \texttt{main} by default.
+If \texttt{git checkout main} reports that the branch does not exist, run \texttt{git branch}
+to see what your repo actually calls it. To bring an existing repository in line with the
+new convention, rename in place with \texttt{git branch -m master main}, then set the default
+for future \texttt{git init} runs with
+\texttt{git config -{}-global init.defaultBranch main}.}
+
 \begin{verbatim}
 git checkout main
-# edit README.md: add a different description
-#   on the same line
+nano README.md          # edit the same line, but differently
 git add README.md
 git commit -m "Add alternative description to README"
 \end{verbatim}
@@ -451,16 +569,37 @@ git commit -m "Add alternative description to README"
 git merge feature-readme
 \end{verbatim}
 
-Git will report a conflict. Open \texttt{README.md}, find the conflict markers
-(\texttt{<<<<<<< HEAD}, \texttt{=======}, \texttt{>>>>>>>}), choose the correct version,
-remove the markers, then complete the merge:
+Git reports a conflict and pauses the merge. Open \texttt{README.md} with
+\texttt{nano README.md}. You will see a block that looks like this:
+
+\begin{verbatim}
+<<<<<<< HEAD
+... your text on main
+=======
+... text from feature-readme
+>>>>>>> feature-readme
+\end{verbatim}
+
+\marginnote{\newthought{\texttt{git status} during a merge.}\index{Git!status}
+While the merge is paused, \texttt{git status} reports ``You have unmerged paths''
+and lists every file with conflict markers still in it. Run it any time to remind
+yourself which files still need to be resolved before you can finish the merge.}
+
+\texttt{HEAD} marks the version sitting on the branch you are currently on,
+in this case \texttt{main}. The lines after \texttt{=======} are what \texttt{feature-readme}
+is bringing in. Choosing the correct version means deciding what the file should look like
+once both changes are reconciled. You have three options: keep only the \texttt{HEAD} side,
+keep only the incoming side, or write a merged version that combines parts of both.
+Then delete all three marker lines, \texttt{<<<<<<< HEAD}, \texttt{=======},
+and \texttt{>>>>>>> feature-readme}, so the file contains only the resolved content.
+Save with \texttt{Ctrl+O} and exit with \texttt{Ctrl+X}, then complete the merge:
 
 \begin{verbatim}
 git add README.md
 git commit -m "Resolve merge conflict in README"
 \end{verbatim}
 
-Verify with \texttt{git log --oneline --graph} that both branches are now integrated.
+Verify with \texttt{git log -{}-oneline -{}-graph} that both branches are now integrated.
 
 
 % -----------------------------------------------------------------------------
@@ -470,11 +609,14 @@ Verify with \texttt{git log --oneline --graph} that both branches are now integr
 
 \begin{verbatim}
 git tag -a v0.1 -m "initial server setup"
-git push --tags
 \end{verbatim}
 
+\marginnote{\newthought{Why no \texttt{git push} yet?}\index{Git!push}
+Tags live locally until you push them. We have not configured a remote yet, that happens
+in the next exercise. Once the remote exists, \texttt{git push -{}-tags} ships every local
+tag to GitHub, where it appears under the repository's ``Releases'' tab.}
+
 Verify the tag exists with \texttt{git tag -l} and inspect it with \texttt{git show v0.1}.
-Confirm the tag appears on GitHub under the repository's ``Releases'' tab.
 
 \newthought{Install \texttt{tig},} a terminal-based Git browser:
 
@@ -492,30 +634,55 @@ to explore commits, branches, and tags with a graphical interface.}
 
 
 % -----------------------------------------------------------------------------
-\newpage
 \section{Exercise: Remotes, Push, and Clone}\index{exercises}
 
-\newthought{Connect to GitHub.} Create a repository on GitHub, add it as a remote, and push:
+\newthought{Connect to GitHub.} Create a repository on GitHub, add it as a remote, push the
+commits, then push the tag you created in the previous exercise:
+
+\marginnote{\newthought{Replace \texttt{user} with your GitHub username.}\index{GitHub!username}
+The \texttt{user} placeholder in the remote URL is just a stand-in. Substitute your own
+GitHub handle, the one shown in your profile URL at \texttt{github.com/<your-handle>},
+so the URL points at the repository under your account. The same goes for the \texttt{git clone}
+URL on the server below. Pushing to a \texttt{user/pixelwise} that you do not own will fail.}
 
 \begin{verbatim}
 git remote add origin git@github.com:user/pixelwise.git
 git push -u origin main
+git push --tags
 \end{verbatim}
 
-Verify on GitHub that your commits, tags, and \texttt{.gitignore} are all visible.
+Verify on GitHub that your commits, \texttt{.gitignore}, and the \texttt{v0.1} tag under the
+``Releases'' tab are all visible.
 
 \newthought{Clone to the server.} SSH into the server and clone PixelWise to its permanent home:
 
+\marginnote{\newthought{SSH into \texttt{prod} again.}\index{SSH!login}
+From the \texttt{dev} VM, open a session to \texttt{prod} the same way you did in Block~1:
+\\[0.5em]
+\texttt{ssh produser@192.168.56.11}
+\\[0.5em]
+The key-based login from Block~1 is still in place, no password should be required. Once
+you are on \texttt{prod}, the prompt changes to \texttt{produser@prod}, and the commands
+below run on the server. Type \texttt{exit} when you are done to return to \texttt{dev}.}
+
 \begin{verbatim}
 sudo mkdir -p /opt/pixelwise
-sudo chown student:student /opt/pixelwise
-git clone git@github.com:user/pixelwise.git /opt/pixelwise
+sudo chown produser:produser /opt/pixelwise
+git clone https://github.com/user/pixelwise.git /opt/pixelwise
 \end{verbatim}
 
-PixelWise now lives on both machines. Run \texttt{git log --oneline} on the server to confirm the full history arrived.
+\marginnote{\newthought{Why HTTPS on \texttt{prod}, SSH on \texttt{dev}?}\index{Git!HTTPS clone}
+\texttt{dev} pushes commits back to GitHub, so it needs the SSH key you registered earlier.
+\texttt{prod} only ever pulls, it is a deployment target, never an authoring machine.
+HTTPS clone of a public repository requires no key, no token, no extra setup, which matches
+how real deployment servers usually have read-only access to the source repository.
+If your repository is private or you later need to push from \texttt{prod}, generate a second
+SSH key on \texttt{prod} and register it on GitHub the same way you did on \texttt{dev}.}
 
-\newthought{Take a snapshot} of both VMs. Name them \texttt{B2-complete}.
+PixelWise now lives on both machines. Run \texttt{git log -{}-oneline} on the server to confirm the full history arrived.
 
+
+\newpage
 % -----------------------------------------------------------------------------
 \section{Self-Reflection and Recap}
 

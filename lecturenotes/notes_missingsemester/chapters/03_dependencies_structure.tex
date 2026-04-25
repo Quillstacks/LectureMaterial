@@ -311,8 +311,38 @@ that pins every transitive dependency. You commit both files; the lock file is y
 
 \marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
 Work through them yourself first, break things, discuss, this is not a time trial.
-If your VM ends up in a state you cannot recover, restore the \texttt{B2-complete} snapshot and start over.
+If your VM ends up in a state you cannot recover, restore your own \texttt{B2-complete} VM snapshot
+or follow the tag catch-up below.
 At the end of the session, take a snapshot named \texttt{B3-complete}, your safety net for the next block.}
+
+\newthought{Catching up via the reference tag.}\index{Git!tag}\index{recovery}
+If you joined late, missed the previous block, or your VM is in a state you cannot recover,
+you do not need to redo every prior exercise. The course maintains a public reference
+repository at \url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
+Restore the distributed \texttt{B1-complete} VM image, complete the Block~2 Git identity and SSH
+key setup so the VM has your credentials, then clone the reference repository at the
+\texttt{v0.1} tag, which marks the end of Block~2:
+
+\begin{verbatim}
+cd ~
+git clone --branch v0.1 https://github.com/schutera/pixelwise.git
+cd pixelwise
+git switch -c main
+git remote set-url origin git@github.com:<you>/pixelwise.git
+\end{verbatim}
+
+You are now at the state where Block~2 ended, ready to start Block~3.
+
+\marginnote{\newthought{Why a tag, not a VM snapshot?}\index{Git!tag}
+The reference repository carries a tag at the end of every block: \texttt{v0.1} for Block~2,
+\texttt{v0.2} for Block~3, and so on, all visible at
+\url{https://github.com/schutera/pixelwise/tags}.
+Each tag points at a specific commit, so checking out a tag rewinds the working tree to the
+exact state the block ended on. The tag carries no credentials, only the project history.
+You then repoint \texttt{origin} at your own GitHub repository so future pushes go to your
+account, not the reference one. From this block onwards, \texttt{setup-server.sh} and
+\texttt{requirements.txt} reproduce the system and Python environments on top, so a fresh VM goes
+from empty to running by combining the \texttt{B1-complete} image, the reference tag, and the scripts.}
 
 \newthought{Write \texttt{setup-server.sh}.} On the \texttt{dev} VM, inside the PixelWise repo,
 create a shell script that captures the system packages you installed manually in earlier blocks.
