@@ -7,7 +7,9 @@
 % 2. Cosine similarity for semantic similarity in NLP - also in embeddings?
 % 3. Do the calculations on paper, make a recording of it, and link to it in the margin note. Share it with students (flipped classroom style).
 % 4. Repurpose the plots from the jupyter notebooks in the script. e.g. showing clusterings for dense point clouds.
-
+% 5. Add a full page on elbow methods, if not here then in the next block Kneedle (Satopaa et al., 2011) — the standard algorithmic elbow finder. Normalise both axes to $[0,1]$, compute the difference between the curve and the diagonal connecting endpoints, find the maximum. Works on any monotone-curving curve. Implementation: kneed Python package.
+% Maximum curvature — the elbow is where the curve bends most sharply: $\kappa(k) = \frac{|y''|}{(1 + y'^2)^{3/2}}$ is maximal. Analytical when you have a fitted model of $y(k)$, numerical otherwise.
+% L-method — connect first and last points with a straight line, pick the $k$ whose perpendicular distance from that line is largest. Equivalent to Kneedle in spirit.
 
 
 

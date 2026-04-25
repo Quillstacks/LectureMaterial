@@ -316,9 +316,24 @@ For vision:
 \label{fig:mae}
 \end{figure}
 
+\subsection{Knowledge Distillation}\index{knowledge distillation}
+
+\marginnote{\newthought{Distillation} transfers knowledge from a large teacher to a small student.}
+
+\newthought{Knowledge distillation}\cite{HintonDistillation2015} compresses a large teacher model into a smaller student by training the student to match the teacher's soft output distributions rather than hard labels.
+
+\newthought{Soft labels} are produced by scaling the teacher's logits with a temperature $T$:
+
+\begin{align*}
+    p_i^{(T)} &= \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}
+\end{align*}
+
+Higher $T$ yields a softer distribution that reveals more about the teacher's learned structure. The student trains to match these soft targets, inheriting not just the teacher's predictions but the structure of its uncertainty across classes.
+
+
 \subsection{Data2Vec}\index{Data2Vec}
 
-\newthought{Data2Vec} generalises masked prediction across modalities, including vision, speech, and text, using a single framework with teacher-student distillation~\cite{Baevski2022Data2Vec}.
+\newthought{Data2Vec} generalises masked prediction across modalities, including vision, speech, and text, using a single framework with teacher-student distillation~\cite{Baevski2022Data2Vec}. Rather than predicting raw pixels, audio samples, or tokens, the student predicts the teacher's latent representations of masked inputs, applying the distillation idea above to self-supervised pretraining.
 
 
 \section{Cross-Modal Self-Supervision}\index{CLIP}

@@ -1,9 +1,20 @@
 % !TEX root = ../notes_unsupervisedlearning.tex
 % Chapter 6: Variational Inference and VAEs
+
+
+
+
+% TODO: Add an image at why deep learning which shows the different semantic levels of the representation, 
+% and how they compose to capture complex structure with fewer parameters than a shallow network.
+% also maybe add a little break out into loss landscape engineering (numeric?)
+% 
+%
+%
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Variational Inference}\index{VAE}\index{Variational Autoencoder}\index{ELBO}
-\newthought{Model data as distributions, not points.}
+\newthought{embeddings and latent feature spaces.}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -11,32 +22,386 @@
 
 \section{The Why}\index{variational inference}\index{latent variable model}
 
-\marginnote{\newthought{Autoencoders compress,} but VAEs generate and quantify uncertainty in a single framework.}
+\marginnote{\newthought{Plato's cave allegory}\cite{Plato380BC} describes prisoners who see only shadows on a wall,
+never the objects that cast them. The shadows are high dimensional and entangled; the true forms behind them are few and independent. Dimensionality reduction, as we have seen, tries to recover those forms from the shadows. This chapter asks two follow-up questions: can we organise the recovered forms into a structured, reusable feature space, and once we have that space, can we cast new, plausible shadows we have never observed?}
 
-Standard autoencoders learn a deterministic mapping: input $\to$ latent code $\to$ reconstruction.
-The latent space may be irregular, with holes where no training data maps.
-Sampling a random point from that space and decoding it may produce nonsense.
+\newthought{The central problem of unsupervised learning} is representation learning\index{representation learning}:
+finding a mapping from raw observations to a latent feature space in which the underlying
+factors of variation become explicit.
+Bengio, Courville, and Vincent\cite{Bengio2013} argue that the
+quality of a representation determines the success of any downstream task, and that a good
+representation disentangles the factors that explain the data.
 
-\newthought{Variational Autoencoders}\index{VAE}\cite{KingmaWelling2014} answer three questions at once by replacing the deterministic bottleneck with a probabilistic one.
-Instead of encoding each input to a single point, the encoder outputs a distribution.
-The decoder then samples from that distribution, and a regularisation term ensures the latent space is well-structured.
+\newthought{PCA gave us a first answer:} project onto the directions of maximum variance.
+But PCA is linear; it cannot recover structure that lies on a curved manifold.
+What we lack is a parametric encoder
+that can be applied to new, unseen data or reused as a feature extractor on nonlinear feature spaces.
 
-\newthought{In order to move from deterministic compression to probabilistic latent spaces} we have good reason to find ways to,
+\newthought{Autoencoders}\index{autoencoder} close that gap.
+Hinton and Salakhutdinov\cite{Hinton2006} showed that a neural network can learn a nonlinear,
+low-dimensional embedding $z$ from which a second network reconstructs $\hat{x}$,
+outperforming PCA on complex data.
+The encoder $\theta_E\colon \mathbb{R}^d \to \mathbb{R}^k$ and the decoder
+$\theta_D\colon \mathbb{R}^k \to \mathbb{R}^d$ are trained jointly to minimise
+reconstruction error $\|x - \theta_D(\theta_E(x))\|^2$.
+The bottleneck forces the network to discover a compact representation.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small, align=center},
+    block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                  minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt},
+    arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+]
+    \node[block] (input) {$x \in \mathbb{R}^d$};
+    \node[font=\footnotesize, anchor=west, text width=1.6cm, align=left]
+        at ([xshift=4pt]input.east) {\textsc{raw\\observation}};
+
+    \node[block, below=24pt of input, fill=black!8] (hidden) {$z \in \mathbb{R}^k$};
+    \node[font=\footnotesize, anchor=west, text width=1.6cm, align=left]
+        at ([xshift=4pt]hidden.east) {\textsc{learned\\representation}};
+
+    \node[block, below=24pt of hidden] (output) {$\hat{x} \in \mathbb{R}^d$};
+    \node[font=\footnotesize, anchor=west, text width=1.6cm, align=left]
+        at ([xshift=4pt]output.east) {\textsc{reconstruction}};
+
+    \draw[arr] (input.south) -- node[left, font=\tiny, xshift=-1pt] {$\theta_E$} (hidden.north);
+    \draw[arr] (hidden.south) -- node[left, font=\tiny, xshift=-1pt] {$\theta_D$} (output.north);
+\end{tikzpicture}
+\caption{Autoencoder architecture. The encoder $\theta_E$ maps the input to a low-dimensional representation; the decoder $\theta_D$ reconstructs the input from it. The bottleneck forces the network to discover a compact latent feature space.}
+\label{fig:autoencoder_architecture}
+\end{figure}
+
+
+\newthought{Structure requires a probabilistic formulation.}
+
+\marginnote{\newthought{A prior} is the distribution we assume over the latent space before seeing any data.}
+
+If we replace the deterministic bottleneck with a distribution,
+and regularise that distribution toward a known prior,
+the latent space becomes smooth and complete:
+every region maps to a plausible output, and nearby embeddings correspond to similar inputs.
+Kingma and Welling\cite{KingmaWelling2014} formalised this idea as the Variational Autoencoder\index{VAE},
+deriving a principled training objective from variational inference that balances
+faithful reconstruction against latent space regularity.
+
+\newthought{All of this must happen without labels.}
+Supervised learning can organise a feature space by asking ``which class does this input belong to?'' and adjusting representations until the answer is easy to read off.
+An unsupervised model has no such signal.
+Instead, it must derive structure from the data alone, using two complementary pressures: the requirement to reconstruct the input faithfully, and the requirement to keep the latent space close to a known prior.
+Reconstruction forces the embedding to retain information; the prior forces the embedding to be organised.
+Neither pressure requires a human to annotate a single example.
+
+\newthought{In order to move from reconstruction-only embeddings to well-organised latent feature spaces} we have good reason to find ways to,
 \begin{itemize}
-    \item derive a training objective that trades off faithful reconstruction against latent-space regularity.
-    \item enable gradient-based optimisation through a stochastic sampling step that would otherwise block backpropagation.
-    \item understand which structural knobs, the KL weight, discrete versus continuous codes, conditioning variables, shape the resulting latent space and what each variant buys us.
+    \item formulate a learning objective that rewards both faithful reconstruction and a smooth, regular latent space.
+    \item train a model that outputs distributions rather than points, so that the latent space has no undefined gaps.
+    \item control how much structure the latent space carries, and understand how that choice affects the quality of the learned representation.
 \end{itemize}
 
 
-\subsection{Hands On Experience}
 
-\begin{marginfigure}
+
+
+
+
+
+% ---------------------------------------------------------------------------
+\newpage
+\subsection{Hands-On Experience}
+
+\newthought{Form groups of two:} an encoder and a decoder.
+Prepare five digit cards showing \textbf{0}, \textbf{1}, \textbf{3}, \textbf{7}, and \textbf{8}.
+Shuffle them face down on the table.
+
+\marginnote{\newthought{Scoring.}
+After the decoder guesses, flip the card.
+Correct digit $= 0$, wrong digit $= 1$.
+Sum over all rounds: that is your reconstruction loss.}
+
+\newthought{Step 1: Design your features.}
+The encoder picks two properties of digit shapes and writes them down.
+These are your two latent features $z^{(1)}$ and $z^{(2)}$.
+For example: $z^{(1)} =$ ``number of closed loops'' (0 has one, 8 has two, 1 has none)
+and $z^{(2)} =$ ``has a straight vertical stroke'' (1 yes, 7 yes, 0 no); make sure to come up with your own
+The decoder does not see these definitions.
+
+\newthought{Step 2: Play.}
+Each round, the encoder flips one card, looks at the digit, and writes two numbers
+$(z^{(1)}, z^{(2)})$ on a slip of paper.
+The decoder receives only the slip and guesses which digit it is.
+Then reveal the card.
+The decoder now knows: ``the embedding $(1, 0)$ meant the digit 3.''
+Round by round, the decoder builds a mental map of what the embeddings mean.
+When all five cards are done, shuffle and keep going.
+
+\newthought{Step 3: Observe.}
+In early rounds, the decoder guesses blindly.
+With each reveal, the decoder learns what the embeddings mean.
+At some point the reconstruction loss drops to zero: the decoder has learned
+the encoder's representation from examples alone.
+
+\newthought{Step 4: Record and compare.}
+Plot your five embeddings in the coordinate system below.
+
+\begin{figure}
 \centering
 \begin{tikzpicture}
     \begin{axis}[
-        xlabel={$z_1$},
-        ylabel={$z_2$},
+        xlabel={$z^{(1)}$},
+        ylabel={$z^{(2)}$},
+        xmin=-3, xmax=3,
+        ymin=-3, ymax=3,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis line style={draw=none},
+        tick style={black, thick},
+        xtick={-2,-1,0,1,2},
+        ytick={-2,-1,0,1,2},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+    ]
+    \end{axis}
+\end{tikzpicture}
+\caption{Your latent space. Plot the five digit embeddings at the coordinates $(z^{(1)}, z^{(2)})$ your encoder chose.}
+\label{fig:handson_latent}
+\end{figure}
+
+\marginnote{
+\begin{itemize}
+    \item How many rounds did the decoder need before reconstructions became reliable?
+    \item Which digits did the decoder confuse most often? What does that tell you about your feature choice?
+\end{itemize}}
+
+\newthought{Step 5: Swap decoders.}
+Find another group. Send your decoder to them, take theirs.
+Play one more pass with the swapped decoder.
+
+The swapped decoder has learned a different codebook: in their group, $(1, 0)$ might have meant ``7,''
+in yours it means ``3.'' The reconstruction loss jumps back up.
+The problem is not that either representation is wrong; both worked within their own group.
+The problem is that nothing forced the two groups to organise their embeddings the same way.
+
+
+\newthought{Step 6: Shrink the bottleneck.}
+Drop to a single latent feature $z^{(1)}$.
+The encoder must pick the one property that matters most; the decoder has only one number to work with.
+Play a full pass and record the new reconstruction loss.
+
+\newthought{Step 7: Discretise.}
+Go back to two features, but restrict each to binary values (0 or 1).
+The encoder can no longer spread digits across a continuous range and must find features that cleanly partition the digit set with just two bits.
+
+\newthought{Step 8: Add digits.}
+Keep two binary features, but add the cards \textbf{2}, \textbf{4}, \textbf{5}, and \textbf{9}.
+A representation that separated five digits may collapse when it must also distinguish eight.
+But the extra classes also expose ad hoc feature choices: properties that happened to work for a small set get overwhelmed, and the encoder is pressured toward genuinely structural features (loops, strokes, intersections) that scale.
+
+\newthought{Step 9: Swap decoders again.}
+Find a different group than in Step~5. Exchange decoders and play one pass with the expanded digit set.
+Compare the reconstruction loss to the Step~5 swap: did the stress tests in Steps 6 to 8 push both groups toward more compatible representations.
+\marginnote{After each decoder swap, collect the chosen latent features from all groups on the board. Are the feature sets converging across the room? Which features survived the stress tests and which were abandoned?}
+
+\newthought{Each step hurts reconstruction} but forces the encoder to find features
+that generalise across inputs rather than overfit to a narrow set.
+This tension between reconstruction fidelity and generalisation through 
+compression or broader coverage
+is exactly the trade-off that the VAE formalises.
+And a trade-off you know from supervised learning as well, overfitting versus generalization.
+
+\marginnote{\newthought{Two objectives, one game.}
+Steps 2 to 4 trained the reconstruction part: the decoder learned to recover digits from embeddings.
+Steps 5 and 9 exposed the missing regularisation: without a shared convention for what the embeddings mean,
+a new decoder cannot read them.
+Steps 6 to 8 showed that compression and broader coverage force better features.
+A VAE adds exactly this second pressure: it forces every encoder to arrange its embeddings
+according to a shared prior, so that any decoder can use them.}
+
+\newthought{This is the representation learning problem.}
+Every choice of features defines a different geometry: different neighbours, different distances.
+Within one encoder-decoder pair, reconstruction works.
+Across pairs, the embeddings are incompatible.
+
+\newthought{The fundamental question} is: can we add a shared convention to the latent space,
+so that the embeddings are not only good for reconstruction but also follow a common structure
+that any decoder could interpret?
+
+
+
+
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item The Autoencoder Training Cycle. Architecture, forward pass, reconstruction loss, backpropagation, and what the bottleneck forces the network to learn.
+    \item From Autoencoders to VAEs. Why reconstruction alone leaves the latent space unstructured, and what a probabilistic formulation buys us.
+    \item The Evidence Lower Bound. The training objective that balances faithful reconstruction against latent space regularity.
+    \item The Reparameterisation Trick. How to backpropagate through a stochastic sampling step.
+    \item VAE Training and Bottleneck Design. Practical choices that shape the latent space: loss functions, latent dimensionality, and numerical stability.
+    \item Exploring the Latent Space. Interpolation and generation as tests of representation quality.
+    \item VAE Variants. How they each change one structural assumption.
+    \item Feature Extraction, Transfer, and Distillation. Using the trained encoder as a backbone for downstream tasks.
+\end{itemize}
+
+
+
+
+
+
+
+% ==============================================================================================
+% BLOCK 2: MAIN THEORY
+% ==============================================================================================
+
+% ---------------------------------------------------------------------------
+\newpage
+
+\section{The Autoencoder}\index{autoencoder}\index{reconstruction loss}
+
+Follows the notion of a bottleneck architecture: an encoder that compresses the input into a low-dimensional embedding, 
+and a decoder that reconstructs the input from that embedding. Due to the bottleneck, the encoder must learn to extract the most salient features of the input, 
+and the decoder must learn to use those features to reconstruct the input as losslessly as possible.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\small, align=center},
+        block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                      minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt},
+        arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+        gradarr/.style={-{Triangle[length=4pt, width=4pt, fill=black!30]}, thick, black!30, densely dashed},
+    ]
+        \node[block] (input) {$x \in \mathbb{R}^d$};
+        \node[block, below=24pt of input, fill=black!8] (hidden) {$z \in \mathbb{R}^k$};
+        \node[block, below=24pt of hidden] (output) {$\hat{x} \in \mathbb{R}^d$};
+        \node[font=\small, below=18pt of output] (loss) {$\mathcal{L} = \|x - \hat{x}\|^2$};
+    
+        % Forward arrows
+        \draw[arr] (input.south) -- node[left, font=\tiny, xshift=-1pt] {$\theta_E$} (hidden.north);
+        \draw[arr] (hidden.south) -- node[left, font=\tiny, xshift=-1pt] {$\theta_D$} (output.north);
+        \draw[arr] (output.south) -- (loss.north);
+    
+        % Gradient arrows (right side, dashed)
+        \draw[gradarr] ([xshift=10pt]loss.north) -- ([xshift=10pt]output.south);
+        \draw[gradarr] ([xshift=10pt]output.north) -- ([xshift=10pt]hidden.south);
+        \draw[gradarr] ([xshift=10pt]hidden.north) -- ([xshift=10pt]input.south);
+    \end{tikzpicture}
+    \caption{Autoencoder training cycle. Solid arrows: forward pass ($x \to z \to \hat{x} \to \mathcal{L}$). Dashed arrows: gradient flow back through decoder and encoder.}
+    \label{fig:ae_training_cycle}
+    \end{figure}
+
+    \marginnote{\newthought{Notation.} $\theta_E$ denotes the encoder; $\theta_D$ denotes the decoder. Both are neural networks trained jointly.}
+
+
+\newthought{The encoder} $\theta_E\colon \mathbb{R}^d \to \mathbb{R}^k$ compresses a $d$-dimensional input $x$ into a $k$-dimensional embedding $z$, with $k \ll d$.
+
+\newthought{The decoder} $\theta_D\colon \mathbb{R}^k \to \mathbb{R}^d$ takes $z$ and attempts to reconstruct the original input as $\hat{x}$.
+
+\marginnote{\newthought{Backpropagation} is the backbone of supervised learning, and it applies here unchanged.
+The loss $\mathcal{L}$ depends on $\theta_D$ (through $\hat{x}$) and on $\theta_E$ (through $z$, which feeds into $\hat{x}$).
+The chain rule gives:
+\begin{align*}
+    \frac{\partial \mathcal{L}}{\partial \theta_D} &= \frac{\partial \mathcal{L}}{\partial \hat{x}} \cdot \frac{\partial \hat{x}}{\partial \theta_D}
+\end{align*}
+for the decoder, and
+\begin{align*}
+    \frac{\partial \mathcal{L}}{\partial \theta_E} &= \frac{\partial \mathcal{L}}{\partial \hat{x}} \cdot \frac{\partial \hat{x}}{\partial z} \cdot \frac{\partial z}{\partial \theta_E}
+\end{align*}
+for the encoder. The gradient signal flows from the loss, through the decoder, through $z$, and into the encoder. Both networks are updated from the same single loss.
+
+\newthought{The parameter update} applies standard gradient descent (or a variant such as Adam):
+\begin{align*}
+    \theta_E &\leftarrow \theta_E - \eta \, \frac{\partial \mathcal{L}}{\partial \theta_E} \\[4pt]
+    \theta_D &\leftarrow \theta_D - \eta \, \frac{\partial \mathcal{L}}{\partial \theta_D}
+\end{align*}
+where $\eta$ is the learning rate. One forward pass, one backward pass, one update: that is a single training step. Repeating this over minibatches and epochs, the encoder and decoder co-adapt until the reconstruction error converges.
+}
+\newthought{The forward pass} maps a single training example through both networks.
+Given an input $x$, the encoder produces the embedding:
+\begin{align*}
+    z &= \theta_E(x)
+\end{align*}
+The decoder then reconstructs:
+\begin{align*}
+    \hat{x} &= \theta_D(z) \\
+            &= \theta_D(\theta_E(x))
+\end{align*}
+
+
+
+
+\newthought{The reconstruction loss} measures how accurate the decoder reconstructs the input.
+The standard choice is the mean squared error over all dimensions:
+\begin{align*}
+    \mathcal{L}(\theta_E, \theta_D;\, x) &= \|x - \hat{x}\|^2 \\
+                                          &= \sum_{j=1}^{d} (x_j - \hat{x}_j)^2
+\end{align*}
+
+
+
+\newthought{The bottleneck.} Because $k \ll d$, the embedding $z$ cannot simply copy $x$. 
+The encoder must decide which aspects of the input to preserve and which to discard. 
+This forced compression is what generalizes the encoder into a feature extractor.\cite{Hinton2006}
+%\cite{ZeilerFergus2014}
+
+\marginnote{\newthought{Why deep (learning)?} Each layer applies a linear transformation followed by a nonlinear activation. 
+A single hidden layer can in principle approximate any function, but may need impractically many neurons and is hard to learn. 
+Deeper networks compose simple nonlinearities into increasingly abstract features: the first layer detects edges, the second combines edges into textures, the third recognises parts. Each layer reuses the representations below it,
+so the network expresses complex structure with far fewer parameters than a shallow one.
+Hinton and Salakhutdinov showed that a deep autoencoder with the same total capacity as a shallow
+one produces qualitatively better embeddings, because hierarchical composition is a more efficient way to represent the kind of structure found in real data.}
+
+
+\newthought{The trained encoder is a feature extractor, or dimensionality reducer.}
+Once training converges, the decoder can be discarded.
+The encoder alone maps any new input $x$ to an embedding $z$ that captures the factors of variation learned during training.
+This embedding can serve as input to a classifier, a clustering algorithm, or a retrieval system.
+The autoencoder has learned a representation; the question is whether that representation is generalized.
+
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\small, align=center},
+        block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                      minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt},
+        arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+    ]
+        \node[block] (input) {$x \in \mathbb{R}^d$};
+        \node[block, below=24pt of input, fill=black!8] (hidden) {$z \in \mathbb{R}^k$};
+
+        \draw[arr] (input.south) -- node[left, font=\tiny, xshift=-1pt] {$\theta_E$} (hidden.north);
+    \end{tikzpicture}
+   % \caption{Encoding: the encoder maps an observation $x$ to a latent embedding $z$ with $k \ll d$.}
+    \label{fig:encoding}
+    \end{figure}
+
+\newthought{Connection to PCA.}
+    If the encoder and decoder are both linear (no activation functions) and the loss is MSE, the autoencoder recovers the same subspace as PCA\cite{Baldi1989}.
+    The $k$ embedding dimensions span the top-$k$ principal component directions.
+    Adding nonlinear activations allows the network to capture structure that PCA cannot: curved manifolds, discrete clusters, hierarchical features.
+
+%-----------------------------------------------------------------------------
+\newpage
+
+\section{From Autoencoders to Variational Autoencoders}\index{autoencoder} \index{VAE}
+
+\marginnote{\newthought{Standard autoencoders} learn $x \to z \to \hat{x}$, minimising $\|x - \hat{x}\|^2$.}
+
+\newthought{The latent space has no geometric guarantees.}
+The objective only rewards reconstruction; nothing constrains how embeddings are arranged.
+Nearby points may decode to unrelated outputs, gaps between embeddings are undefined, and the layout can change arbitrarily across training runs.
+The representation captures enough to reconstruct, but it does not organise the factors of variation in a way that supports interpolation, sampling, or transfer.
+
+
+\index{ELBO}\index{evidence lower bound}
+
+\marginnote{%
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$z^{(1)}$},
+        ylabel={$z^{(2)}$},
         xmin=-3, xmax=3,
         ymin=-3, ymax=3,
         width=\marginparwidth,
@@ -47,267 +412,535 @@ The decoder then samples from that distribution, and a regularisation term ensur
         ytick={-2,0,2},
         xticklabel style={font=\tiny},
         yticklabel style={font=\tiny},
+        xlabel style={font=\tiny},
+        ylabel style={font=\tiny},
         tick align=outside,
         tick pos=left,
     ]
-    % Standard normal prior
-    \draw[black!40, thin] (axis cs:0,0) circle[radius=1];
-    \draw[black!40, thin] (axis cs:0,0) circle[radius=2];
-    % Encoded distributions
-    \draw[black, thick] (axis cs:-1,1) ellipse[x radius=0.3, y radius=0.5];
-    \draw[black, thick] (axis cs:1,-0.5) ellipse[x radius=0.4, y radius=0.3];
-    \draw[black, thick] (axis cs:0.5,1.5) ellipse[x radius=0.35, y radius=0.4];
-    % Labels
-    \node[font=\tiny, black!55] at (axis cs:2.3,2.3) {$p(z)$};
-    \node[font=\tiny] at (axis cs:-1.8,0.5) {$q(z|x)$};
-    \end{axis}
-\end{tikzpicture}
-\caption{VAE latent space: each input encodes to a distribution (ellipses), regularised toward the prior (circles).}
-\label{fig:vae_latent_intro}
-\end{marginfigure}
-
-\newthought{Imagine} you have a 2D latent space with a standard normal prior $p(z) = \mathcal{N}(0, I)$.
-
-Sample $z_1 = (1, 0)$ and $z_2 = (-1, 0)$.
-Interpolate: $z_t = (1{-}t)\, z_1 + t\, z_2$ for $t \in [0, 1]$.
-Decode each $z_t$.
-
-What do you expect the decoded outputs to look like along this path?
-Why might a standard autoencoder fail to produce a meaningful interpolation?
-
-\vspace{2.5em}
-
-\newthought{The Learning Objectives} of this lecture:
-\begin{itemize}
-    \item Derive the Evidence Lower Bound and explain how its two terms trade off reconstruction against regularisation.
-    \item Implement the reparameterisation trick to enable gradient-based training through a stochastic bottleneck.
-    \item Distinguish VAE variants, $\beta$-VAE, VQ-VAE, and conditional VAE, by the structural assumption each changes.
-\end{itemize}
-
-
-% ==============================================================================================
-% BLOCK 2: MAIN THEORY
-% ==============================================================================================
-
-\newpage
-
-\section{From Autoencoders to VAEs}\index{autoencoder}
-
-\marginnote{\newthought{Standard autoencoders} learn $x \to z \to \hat{x}$, minimising $\|x - \hat{x}\|^2$.}
-
-\newthought{A standard autoencoder} consists of an encoder $f_\phi\colon x \mapsto z$, a decoder $g_\theta\colon z \mapsto \hat{x}$, and a reconstruction loss $\mathcal{L} = \|x - g_\theta(f_\phi(x))\|^2$.
-
-\newthought{Three problems emerge} once we look beyond reconstruction.
-The latent space may contain holes, regions where no training point maps, and decoding a $z$ from such a region may produce nonsense.
-There is no principled way to sample new data from the latent space.
-And there is no measure of how uncertain a given representation is.
-
-\begin{figure}
-\centering
-\begin{tikzpicture}
-    % Autoencoder latent space
-    \begin{axis}[
-        name=ae,
-        title={Autoencoder},
-        xlabel={$z_1$}, ylabel={$z_2$},
-        xmin=-3, xmax=3, ymin=-3, ymax=3,
-        width=0.4\textwidth,
-        height=0.4\textwidth,
-        axis line style={draw=none},
-        tick style={black, thin},
-        xtick=\empty, ytick=\empty,
-        tick align=outside,
-        tick pos=left,
-    ]
-    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
-        (-2,2) (-1.8,1.5) (2,-1) (1.5,-0.5) (0,2.5) (-2,-2)
-    };
-    \node[font=\small] at (axis cs:0,0) {?};
-    \end{axis}
-
-    % VAE latent space
-    \begin{axis}[
-        at={(ae.east)}, anchor=west, xshift=1cm,
-        title={VAE},
-        xlabel={$z_1$}, ylabel={$z_2$},
-        xmin=-3, xmax=3, ymin=-3, ymax=3,
-        width=0.4\textwidth,
-        height=0.4\textwidth,
-        axis line style={draw=none},
-        tick style={black, thin},
-        xtick=\empty, ytick=\empty,
-        tick align=outside,
-        tick pos=left,
-    ]
-    \draw[black!15, fill=black!5] (axis cs:0,0) circle[radius=2];
-    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+    % Prior circles
+    \draw[black!25, thin, dashed] (axis cs:0,0) circle[radius=1];
+    \draw[black!25, thin, dashed] (axis cs:0,0) circle[radius=2];
+    % Encoder distributions: 1-sigma circles around means (KL pushes toward isotropic prior)
+    \draw[black!40, thick, dotted] (axis cs:-1,1) circle[radius=0.7];
+    \draw[black!40, thick, dotted] (axis cs:-0.5,0.8) circle[radius=0.7];
+    \draw[black!40, thick, dotted] (axis cs:1,-0.5) circle[radius=0.7];
+    \draw[black!40, thick, dotted] (axis cs:0.8,-0.3) circle[radius=0.7];
+    \draw[black!40, thick, dotted] (axis cs:0,1.2) circle[radius=0.7];
+    \draw[black!40, thick, dotted] (axis cs:-1,-1) circle[radius=0.7];
+    \draw[black!40, thick, dotted] (axis cs:0.3,0.5) circle[radius=0.7];
+    \draw[black!40, thick, dotted] (axis cs:-0.7,-0.3) circle[radius=0.7];
+    \draw[black!40, thick, dotted] (axis cs:0.5,0) circle[radius=0.7];
+    \draw[black!40, thick, dotted] (axis cs:-0.2,0.7) circle[radius=0.7];
+    % Means
+    \addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
         (-1,1) (-0.5,0.8) (1,-0.5) (0.8,-0.3) (0,1.2) (-1,-1)
         (0.3,0.5) (-0.7,-0.3) (0.5,0) (-0.2,0.7)
     };
     \end{axis}
 \end{tikzpicture}
-\caption{Autoencoder: sparse, irregular latent space with holes between encodings. VAE: regularised, filled latent space where every region decodes to something meaningful.}
-\label{fig:ae_vs_vae}
-\end{figure}
+VAE latent space. Each small circle is one input's encoder distribution $q_{\theta_E}(z|x_i)$; the dot marks its mean $\mu$. The large dashed circles show the prior $p(z) = \mathcal{N}(0,I)$ at $1\sigma$ and $2\sigma$. The KL term pushes each small circle toward unit variance and its mean toward the origin, so that the mixture of all encoder distributions approximates the prior.
+\label{fig:vae_latent}}
 
 
-\section{The Evidence Lower Bound}\index{ELBO}\index{evidence lower bound}
 
-\marginnote{\newthought{The goal} is to maximise $\log p(x)$, but marginalising over $z$ is intractable.}
 
-\newthought{We want to model data with latent variables.}
-The marginal likelihood of an observation $x$ requires integrating over all possible latent codes:
-
-\begin{align*}
-    p_\theta(x) &= \int p_\theta(x|z)\, p(z) \, dz
-\end{align*}
-
-This integral is intractable for complex decoders.
-The posterior $p_\theta(z|x)$ is equally intractable.
-
-\newthought{Variational inference}\index{variational inference} sidesteps the intractable posterior by introducing a tractable approximation $q_\phi(z|x)$, parameterised by an encoder network.
+\newthought{To fix this, we add a constraint.}
+In a plain autoencoder, the encoder's output layer produces a single vector $z \in \mathbb{R}^k$: one fixed point per input.
+In a Variational Autoencoder, the output layer produces two vectors instead: a mean $\mu \in \mathbb{R}^k$ and a variance $\sigma^2 \in \mathbb{R}^k$.
+Together they define a Gaussian distribution over the latent space:
 
 \begin{align*}
-    \log p_\theta(x) &= \log \int p_\theta(x|z)\, p(z) \, dz \\
-    &= \log \int \frac{q_\phi(z|x)}{q_\phi(z|x)}\, p_\theta(x|z)\, p(z) \, dz \\
-    &= \log \mathbb{E}_{q_\phi(z|x)} \left[ \frac{p_\theta(x|z)\, p(z)}{q_\phi(z|x)} \right]
+    q_{\theta_E}(z|x) &= \mathcal{N}(\mu,\, \sigma^2)
 \end{align*}
 
-\newthought{Applying Jensen's inequality,} $\log \mathbb{E}[X] \geq \mathbb{E}[\log X]$, yields a lower bound on the log-evidence:
+During training, we do not pass $\mu$ directly to the decoder.
+Instead we sample from that distribution:
 
 \begin{align*}
-    \log p_\theta(x) &\geq \mathbb{E}_{q_\phi(z|x)} \left[ \log p_\theta(x|z) + \log p(z) - \log q_\phi(z|x) \right]
+    z &= \mu + \sigma \cdot \epsilon, \quad \epsilon \sim \mathcal{N}(0, I)
 \end{align*}
 
-\newthought{Rearranging gives the ELBO:}
+So the decoder sees a slightly different $z$ every time, even for the same input.
 
-\begin{align*}
-    \text{ELBO}(\theta, \phi;\, x) &= \underbrace{\mathbb{E}_{q_\phi(z|x)}[\log p_\theta(x|z)]}_{\text{Reconstruction}} - \underbrace{D_{\text{KL}}\!\bigl(q_\phi(z|x) \,\|\, p(z)\bigr)}_{\text{Regularisation}}
-\end{align*}
-
-\marginnote{\newthought{ELBO} stands for Evidence Lower BOund. Maximising the ELBO approximately maximises $\log p(x)$.}
-
-\newthought{The two terms trade off against each other.}
-The reconstruction term rewards an encoder--decoder pair that faithfully reconstructs $x$ from a sampled $z$.
-The KL term penalises encoder distributions that stray far from the prior $p(z) = \mathcal{N}(0, I)$, ensuring the latent space remains regular.
-
-
-\section{The Reparameterisation Trick}\index{reparameterisation trick}
-
-\marginnote{\newthought{Sampling is not differentiable.} The reparameterisation trick moves the stochasticity outside the computational graph.}
-
-\newthought{To optimise the ELBO} we need gradients through the expectation $\mathbb{E}_{q_\phi(z|x)}[\cdot]$.
-Sampling from $q_\phi(z|x)$ blocks gradient flow because the sample operation has no derivative with respect to $\phi$.
-
-\newthought{The fix:} instead of sampling $z \sim \mathcal{N}(\mu_\phi(x),\, \sigma_\phi^2(x))$ directly, reparameterise as
-
-\begin{align*}
-    z &= \mu_\phi(x) + \sigma_\phi(x) \odot \epsilon, \quad \epsilon \sim \mathcal{N}(0, I)
-\end{align*}
-
-Now the randomness lives in $\epsilon$, which does not depend on $\phi$.
-Gradients flow through $\mu$ and $\sigma$ as usual.
 
 \begin{figure}
-\centering
-\begin{tikzpicture}[node distance=1.5cm, auto]
-    \node[draw, rectangle, minimum width=1.5cm] (x) {$x$};
-    \node[draw, rectangle, right of=x, xshift=1cm, minimum width=1.5cm] (enc) {Encoder};
-    \node[draw, rectangle, above right of=enc, yshift=0.3cm, minimum width=1cm] (mu) {$\mu$};
-    \node[draw, rectangle, below right of=enc, yshift=-0.3cm, minimum width=1cm] (sigma) {$\sigma$};
-    \node[draw, circle, right of=mu, xshift=1.5cm, yshift=-0.7cm] (times) {$\times$};
-    \node[draw, circle, above of=times, yshift=-0.5cm] (plus) {$+$};
-    \node[right of=times, xshift=0.5cm] (eps) {$\epsilon \sim \mathcal{N}(0,I)$};
-    \node[draw, rectangle, right of=plus, xshift=1.5cm, minimum width=1cm] (z) {$z$};
-    \node[draw, rectangle, right of=z, xshift=1cm, minimum width=1.5cm] (dec) {Decoder};
-    \node[draw, rectangle, right of=dec, xshift=1cm, minimum width=1.5cm] (xhat) {$\hat{x}$};
-    \draw[->] (x) -- (enc);
-    \draw[->] (enc) -- (mu);
-    \draw[->] (enc) -- (sigma);
-    \draw[->] (mu) -- (plus);
-    \draw[->] (sigma) -- (times);
-    \draw[->] (eps) -- (times);
-    \draw[->] (times) -- (plus);
-    \draw[->] (plus) -- (z);
-    \draw[->] (z) -- (dec);
-    \draw[->] (dec) -- (xhat);
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\small, align=center},
+        block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                      minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt},
+        arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+        gradarr/.style={-{Triangle[length=4pt, width=4pt, fill=black!30]}, thick, black!30, densely dashed},
+    ]
+        \node[block] (input) {$x \in \mathbb{R}^d$};
+        \node[block, below=24pt of input] (musigma) {$\mu_{\theta_E}(x),\; \sigma_{\theta_E}(x)$};
+        \node[block, below=24pt of musigma, fill=black!8] (z) {$z \sim \mathcal{N}(\mu, \sigma^2)$};
+        \node[block, below=24pt of z] (output) {$\hat{x} \in \mathbb{R}^d$};
+        \node[font=\small, below=18pt of output] (loss) {$\mathcal{L} = \|x - \hat{x}\|^2 + \mathcal{L}_{\text{KL}}$};
+    
+        % Forward arrows
+        \draw[arr] (input.south) -- node[left, font=\tiny, xshift=-1pt] {$\theta_E$} (musigma.north);
+        \draw[arr] (musigma.south) -- (z.north);
+        \draw[arr] (z.south) -- node[left, font=\tiny, xshift=-1pt] {$\theta_D$} (output.north);
+        \draw[arr] (output.south) -- (loss.north);
+    
+        % Gradient arrows (right side, dashed)
+        \draw[gradarr] ([xshift=10pt]loss.north) -- ([xshift=10pt]output.south);
+        \draw[gradarr] ([xshift=10pt]output.north) -- ([xshift=10pt]z.south);
+        \draw[gradarr] ([xshift=10pt]z.north) -- ([xshift=10pt]musigma.south);
+        \draw[gradarr] ([xshift=10pt]musigma.north) -- ([xshift=10pt]input.south);
+    \end{tikzpicture}
+    \caption{VAE architecture. Compare with Figure~\ref{fig:ae_training_cycle}: the deterministic bottleneck is replaced by distribution parameters $\mu, \sigma$ and a stochastic sample. The loss combines reconstruction fidelity with KL regularisation toward the prior.}
+    \label{fig:vae_architecture}
+    \end{figure}
+
+\newthought{We enforce that by adding a loss} a KL divergence $\mathcal{L}_{\text{KL}}(q_{\theta_E}(z|x) \| p(z))$, computed for each input separately.
+It measures how far that input's encoder distribution $\mathcal{N}(\mu, \sigma^2)$ is from the prior $p(z) = \mathcal{N}(0, I)$.
+The KL between two Gaussians penalises two things: a mean $\mu$ that is far from the origin, and a variance $\sigma^2$ that deviates from one.
+So for each input, the KL term pulls the mean toward zero and the variance toward unity.
+\marginnote{\vspace{1em}%
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$z$},
+        ylabel={density},
+        xmin=-4, xmax=5,
+        ymin=0, ymax=0.45,
+        width=\marginparwidth,
+        height=0.8\marginparwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-2,0,2},
+        ytick={0.2,0.4},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        xlabel style={font=\tiny},
+        ylabel style={font=\tiny},
+        tick align=outside,
+        tick pos=left,
+        samples=80,
+        domain=-4:5,
+    ]
+    % Prior N(0,1)
+    \addplot[black, thick] {exp(-x^2/2) / sqrt(2*pi)};
+    \node[font=\tiny, anchor=south east] at (axis cs:-0.8,0.35) {$p(z)$};
+    % Shifted posterior N(2,1)
+    \addplot[black!55, thick, densely dashed] {exp(-(x-2)^2/2) / sqrt(2*pi)};
+    \node[font=\tiny, black!55, anchor=south west] at (axis cs:3.2,0.25) {$q_1$};
+    % Widened posterior N(0,2)
+    \addplot[black!55, thick, densely dotted] {exp(-x^2/8) / sqrt(2*pi*4)};
+    \node[font=\tiny, black!55, anchor=south] at (axis cs:-2.5,0.12) {$q_2$};
+    \end{axis}
 \end{tikzpicture}
-\caption{VAE architecture with reparameterisation trick: $z = \mu + \sigma \odot \epsilon$. The stochasticity enters through $\epsilon$; all other arrows carry deterministic, differentiable operations.}
-\label{fig:vae_reparam}
-\end{figure}
+\newthought{KL penalty.} $p(z) = \mathcal{N}(0,1)$ is the prior (solid). $q_1 = \mathcal{N}(2,1)$ (dashed) is shifted; $q_2 = \mathcal{N}(0,4)$ (dotted) is widened. Spreading mass ($q_2$, $\mathcal{L}_{\text{KL}}{=}0.81$) costs more than translating it ($q_1$, $\mathcal{L}_{\text{KL}}{=}0.50$, evaluated in Exercise~2).
+\label{fig:kl_penalty}}
 
 
-\section{VAE Training}\index{VAE!training}
 
-\marginnote{\newthought{The encoder} outputs $\mu_\phi(x)$ and $\log \sigma^2_\phi(x)$; the decoder outputs reconstruction parameters; the prior is $p(z) = \mathcal{N}(0, I)$.}
+\newthought{If the KL term acted alone,} every input would collapse onto the same distribution $\mathcal{N}(0, I)$, and the decoder could not tell any two inputs apart.
+The reconstruction term fights back: it needs different inputs to have distinguishable embeddings, so it pushes their means apart.
+Training finds a compromise.
+Each input gets a distribution that is close to the prior but not identical to it: the means spread out just enough for the decoder to reconstruct, and the variances stay close to one.
+When all these slightly shifted, roughly unit-variance Gaussians are added together, their aggregate approximates the prior.
+That is how the prior fills in the gaps between embeddings and gives the latent space its geometric structure.
+Together they turn the encoder into a feature extractor whose embeddings are both informative and geometrically well behaved: 
+nearby embeddings correspond to similar inputs, and every region of the space is meaningful.
 
-\newthought{For a Gaussian decoder with fixed variance,} the ELBO simplifies to a concrete loss:
-
-\begin{align*}
-    \mathcal{L}(\theta, \phi;\, x) &= \|x - \hat{x}\|^2 + D_{\text{KL}}\!\bigl(q_\phi(z|x) \,\|\, p(z)\bigr)
-\end{align*}
-
-\newthought{The KL term has a closed form} when both distributions are Gaussian:
-
-\begin{align*}
-    D_{\text{KL}}\!\bigl(\mathcal{N}(\mu, \sigma^2) \,\|\, \mathcal{N}(0, 1)\bigr) &= \tfrac{1}{2} \sum_j \bigl( \mu_j^2 + \sigma_j^2 - \log \sigma_j^2 - 1 \bigr)
-\end{align*}
-
-\marginnote{\newthought{Numerical stability.} In practice the encoder outputs $\log \sigma^2$ rather than $\sigma$ directly, avoiding negative-variance issues and improving gradient behaviour.}
+\marginnote{\newthought{The result} is a latent space where geometric proximity reflects semantic similarity.}
 
 
-\section{Exploring the Latent Space}\index{latent interpolation}\index{generation}
-
-\newthought{Latent interpolation} reveals the structure that the VAE has learned.
-Given two data points $x_1$ and $x_2$, encode them to $z_1 = \mu_\phi(x_1)$ and $z_2 = \mu_\phi(x_2)$, interpolate as $z_t = (1{-}t)\,z_1 + t\,z_2$, and decode each $z_t$ to obtain $\hat{x}_t = g_\theta(z_t)$.
-Because the latent space is regularised, the decoded path transitions smoothly between the two inputs.
-
-\newthought{Generation} is equally straightforward: sample $z \sim \mathcal{N}(0, I)$ and decode $\hat{x} = g_\theta(z)$.
-The regularisation ensures that every region of the prior generates plausible data.
 
 
+
+\vspace{1.5em}
 \section{VAE Variants}\index{beta-VAE@$\beta$-VAE}\index{VQ-VAE}\index{conditional VAE}
 
-\marginnote{\newthought{$\beta$-VAE} trades reconstruction fidelity for disentanglement by scaling the KL term.}
-
-\newthought{$\beta$-VAE}\cite{Higgins2017} increases the weight on the KL term:
-
+\newthought{$\beta$-VAE}\cite{Higgins2017} scales up the KL term to pressure the encoder to use the latent space efficiently.
+The loss reweights the with a single hyperparameter:
 \begin{align*}
-    \mathcal{L}_\beta &= \text{Reconstruction} + \beta \cdot D_{\text{KL}}
+    \mathcal{L}_\beta &= \text{Reconstruction} + \beta \cdot \mathcal{L}_{\text{KL}}
 \end{align*}
 
-With $\beta > 1$ the model is pressured to use the latent space efficiently, often leading to disentangled\index{disentanglement} representations where each latent dimension corresponds to a single factor of variation.
-
+\vspace{1.0em}
 \newthought{VQ-VAE}\index{VQ-VAE}\cite{vanDenOord2017} replaces continuous latents with discrete codes from a learned codebook.
-Each encoder output $z_e$ is snapped to the nearest codebook entry:
-
+Each encoder output $z_e$ is snapped to the nearest codebook entry, giving reconstructional structure:
 \begin{align*}
     z_q &= \arg\min_{e_k \in \text{codebook}} \|z_e - e_k\|
 \end{align*}
 
-\marginnote{\newthought{VQ-VAE} enables powerful autoregressive priors, such as PixelCNN, over the discrete codes.}
-
-Discrete codes sidestep posterior collapse entirely and enable autoregressive priors that capture complex dependencies between code positions.
-
-\newthought{Conditional VAE}\cite{Sohn2015} adds a conditioning variable $c$, such as a class label, to both encoder $q_\phi(z|x, c)$ and decoder $p_\theta(x|z, c)$.
-This enables controlled generation: sample $z$, specify $c$, and decode.
-
-
-\section{Brief: Knowledge Distillation}\index{knowledge distillation}
-
-\marginnote{\newthought{Distillation} transfers knowledge from a large teacher to a small student.}
-
-\newthought{Knowledge distillation}\cite{HintonDistillation2015} compresses a large teacher model into a smaller student by training the student to match the teacher's soft output distributions rather than hard labels.
-
-\newthought{Soft labels} are produced by scaling the teacher's logits with a temperature $T$:
-
+\vspace{1.0em}
+\newthought{Conditional VAE}\cite{Sohn2015} feeds a conditioning variable $c$, such as a class label, into both encoder and decoder.
+The model now learns conditional distributions, which enables directed generation:
 \begin{align*}
-    p_i^{(T)} &= \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}
+    q_{\theta_E}(z|x, c), \quad p_{\theta_D}(x|z, c)
 \end{align*}
 
-Higher $T$ yields a softer distribution that reveals more about the teacher's learned structure.
 
-\newthought{The connection to VAEs} is conceptual: both methods learn compressed representations that preserve essential information, one in the latent space, the other in the student's weights.
+
+
+
+
+
+
+
+% ---------------------------------------------------------------------------
+\newpage
+
+\section{The Reparameterisation Trick}\index{reparameterisation trick}
+
+\newthought{How do we now the distribution of the current embedding space?}
+Our model now reconstructs data in two steps: draw $z$ from the prior, then decode.
+To measure how well the model explains an observation $x$, we would need to sum over all possible 
+embeddings $z$ and check which ones decode close to $x$:
+
+\marginnote{\newthought{In words.} The probability that the model generates $x$ equals, 
+summed over every possible latent $z$, the probability that the decoder produces $x$ given that $z$, 
+weighted by the prior probability of drawing that $z$ in the first place. 
+Each $z$ is one possible explanation; the integral combines all of them.}
+\begin{align*}
+    p_{\theta_D}(x) &= \int p_{\theta_D}(x|z)\, p(z) \, dz
+\end{align*}
+
+
+\newthought{Spoiler. We can't.} 
+This integral has no closed form and the latent space is too high-dimensional to sum over by brute force.
+Instead of summing over all of latent space, the encoder $q_{\theta_E}(z|x)$ output is used as an estimate, for each input $x$, 
+where useful embeddings $z$ for $x$ live. 
+We sample only from that region\cite{KingmaWelling2014}, turning an impossible integral
+into a practical expectation over a handful of samples.
+
+\vspace{2.5em}
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\small, align=center},
+        block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                      minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt},
+        arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+        gradarr/.style={-{Triangle[length=4pt, width=4pt, fill=black!30]}, thick, black!30, densely dashed},
+    ]
+        \node[block] (input) {$x \in \mathbb{R}^d$};
+        \node[block, below=20pt of input] (musigma) {$\mu_{\theta_E}(x),\; \sigma_{\theta_E}(x)$};
+    
+        % Reparameterisation: mu + sigma * epsilon
+        \node[block, below=20pt of musigma, fill=black!8] (z) {$z = \mu + \sigma \odot \epsilon$};
+        \node[draw=black, thick, circle, minimum size=0.7cm, inner sep=0pt, font=\small] (eps) at ([xshift=-50pt]z.west) {$\epsilon$};
+        \node[font=\tiny, below=1pt of eps] {$\mathcal{N}(0, I)$};
+        \draw[arr] (eps.east) -- (z.west);
+    
+        \node[block, below=20pt of z] (output) {$\hat{x} \in \mathbb{R}^d$};
+        \node[font=\small, below=16pt of output] (loss) {$\mathcal{L} = \|x - \hat{x}\|^2 + \mathcal{L}_{\text{KL}}$};
+    
+        % Forward arrows
+        \draw[arr] (input.south) -- node[left, font=\tiny, xshift=-1pt] {$\theta_E$} (musigma.north);
+        \draw[arr] (musigma.south) -- (z.north);
+        \draw[arr] (z.south) -- node[left, font=\tiny, xshift=-1pt] {$\theta_D$} (output.north);
+        \draw[arr] (output.south) -- (loss.north);
+    
+        % Gradient arrows (right side, dashed)
+        \draw[gradarr] ([xshift=10pt]loss.north) -- ([xshift=10pt]output.south);
+        \draw[gradarr] ([xshift=10pt]output.north) -- ([xshift=10pt]z.south);
+        \draw[gradarr] ([xshift=10pt]z.north) -- ([xshift=10pt]musigma.south);
+        \draw[gradarr] ([xshift=10pt]musigma.north) -- ([xshift=10pt]input.south);
+    \end{tikzpicture}
+    \caption{Reparameterised VAE or \textbf{Kingma's view}. Compare with Figure~\ref{fig:vae_architecture}: 
+    the stochastic sample is replaced by $z = \mu + \sigma \odot \epsilon$ where $\epsilon$ carries the randomness and ‚is drawn from a fixed distribution. 
+    Gradients (dashed) flow through $\mu$ and $\sigma$ without passing through the random sample.}
+    \label{fig:vae_reparam}
+    \end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+% ---------------------------------------------------------------------------
+\newpage
+\section{Designing the Bottleneck}\index{bottleneck design}\index{latent dimensionality}
+
+\newthought{The latent dimensionality $k$} is the most consequential hyperparameter in a VAE.
+It controls the capacity of the information channel between encoder and decoder:
+how many bits of information about $x$ can pass through $z$.
+
+
+\marginnote{%
+\centering
+\begin{tikzpicture}
+    \node[rectangle, draw=black, thick, rounded corners=2pt,
+          minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt,
+          fill=black!8, font=\small, align=center] {$z \in \mathbb{R}^k$};
+\end{tikzpicture}\\[2pt]
+The bottleneck embedding. The dimensionality $k$ controls how much information passes from encoder to decoder.}
+
+\newthought{Too few dimensions} and the encoder cannot represent the factors of variation in the data.
+Reconstruction quality degrades because the embedding lacks the capacity to distinguish meaningfully different inputs.
+Two inputs that differ in important ways may map to nearly identical latent vectors,
+and the decoder produces a blurred average of what those embeddings could mean.
+
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\small, align=center},
+    ]
+        \begin{axis}[
+            xlabel={Latent dimensionality $k$},
+            ylabel={Loss},
+            xmin=0, xmax=68,
+            clip=false,
+            ymin=0, ymax=5.5,
+            width=0.5\textwidth,
+            height=0.4\textwidth,
+            axis line style={draw=none},
+            tick style={black, thin},
+            xtick={4,16,32,64},
+            ytick={1,2,3,4,5},
+            xticklabel style={font=\small},
+            yticklabel style={font=\small},
+            tick align=outside,
+            tick pos=left,
+            domain=2:68,
+            samples=80,
+        ]
+        % Reconstruction loss: decreases with k
+        \addplot[black, thick] {3.5*exp(-0.08*x) + 0.4};
+        \node[font=\footnotesize, anchor=west, xshift=4pt] at (axis cs:68,0.42) {$\mathcal{L}_R$};
+        % KL term: increases with k (more active dims)
+        \addplot[black!55, thick, densely dashed] {2.0*(1 - exp(-0.08*x))};
+        \node[font=\footnotesize, black!55, anchor=west, xshift=4pt] at (axis cs:68,1.99) {$\mathcal{L}_{\text{KL}}$};
+        % Total loss: L-shaped (saturates at floor)
+        \addplot[black, thick, densely dotted] {1.5*exp(-0.08*x) + 2.4};
+        \node[font=\footnotesize, anchor=west, xshift=4pt] at (axis cs:68,2.41) {$\mathcal{L}_{\text{total}}$};
+        % Too-few regime: markers on all three curves at small k
+        \addplot[only marks, mark=o, mark size=3pt, thick, black] coordinates {(4, 2.94) (4, 0.55) (4, 3.49)};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Bottleneck too small. At $k{=}4$, reconstruction loss is large ($\mathcal{L}_R \approx 2.9$) because the few active dimensions cannot encode all factors of variation. Each active dimension carries a lot of signal, but only a handful of them are paying KL ($\mathcal{L}_{\text{KL}} \approx 0.55$). The total ($\circ$ on the dotted curve) sits high because reconstruction error dominates.}
+    \label{fig:bottleneck_too_few}
+    \end{figure}
+
+\newthought{Too many dimensions} and the model faces the opposite problem.
+With excess capacity, the encoder can encode each training point precisely without needing to discover shared structure.
+The KL term penalises unused dimensions toward the prior, but is blended out by the reconstruction success. 
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\small, align=center},
+    ]
+        \begin{axis}[
+            xlabel={Latent dimensionality $k$},
+            ylabel={Loss},
+            xmin=0, xmax=68,
+            clip=false,
+            ymin=0, ymax=5.5,
+            width=0.5\textwidth,
+            height=0.4\textwidth,
+            axis line style={draw=none},
+            tick style={black, thin},
+            xtick={4,16,32,64},
+            ytick={1,2,3,4,5},
+            xticklabel style={font=\small},
+            yticklabel style={font=\small},
+            tick align=outside,
+            tick pos=left,
+            domain=2:68,
+            samples=80,
+        ]
+        \addplot[black, thick] {3.5*exp(-0.08*x) + 0.4};
+        \node[font=\footnotesize, anchor=west, xshift=4pt] at (axis cs:68,0.42) {$\mathcal{L}_R$};
+        \addplot[black!55, thick, densely dashed] {2.0*(1 - exp(-0.08*x))};
+        \node[font=\footnotesize, black!55, anchor=west, xshift=4pt] at (axis cs:68,1.99) {$\mathcal{L}_{\text{KL}}$};
+        \addplot[black, thick, densely dotted] {1.5*exp(-0.08*x) + 2.4};
+        \node[font=\footnotesize, anchor=west, xshift=4pt] at (axis cs:68,2.41) {$\mathcal{L}_{\text{total}}$};
+        % Too-many regime: markers on all three curves at large k
+        \addplot[only marks, mark=o, mark size=3pt, thick, black] coordinates {(64, 0.42) (64, 1.99) (64, 2.41)};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Bottleneck too large. At $k{=}64$, reconstruction loss has saturated near its floor ($\mathcal{L}_R \approx 0.42$) and the KL cost has saturated near its ceiling ($\mathcal{L}_{\text{KL}} \approx 1.99$): adding more dimensions changes neither term, because extra dimensions collapse to the prior and pay no KL. The total ($\circ$ on the dotted curve) sits at the plateau. The cost of $k$ too large is therefore wasted parameters and slower training, not a higher loss.}
+    \label{fig:bottleneck_too_many}
+\end{figure}
+
+
+
+\newthought{The information bottleneck principle}\cite{Tishby2000} provides a theoretical lens.
+The optimal embedding retains all information in $x$ that is relevant to reconstruction.
+The latent dimensionality $k$ sets the ceiling on how much can be stored;
+the KL weight determines how aggressively the model compresses toward that ceiling to discarding weak representations.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small, align=center},
+]
+    \begin{axis}[
+        xlabel={Latent dimensionality $k$},
+        ylabel={Loss},
+        xmin=0, xmax=68,
+        clip=false,
+        ymin=0, ymax=5.5,
+        width=0.5\textwidth,
+        height=0.4\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={4,16,32,64},
+        ytick={1,2,3,4,5},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+        domain=2:68,
+        samples=80,
+    ]
+    % Reconstruction loss: decreases with k
+    \addplot[black, thick] {3.5*exp(-0.08*x) + 0.4};
+    \node[font=\footnotesize, anchor=west, xshift=4pt] at (axis cs:68,0.42) {$\mathcal{L}_R$};
+    % KL term: increases with k (more active dims)
+    \addplot[black!55, thick, densely dashed] {2.0*(1 - exp(-0.08*x))};
+    \node[font=\footnotesize, black!55, anchor=west, xshift=4pt] at (axis cs:68,1.99) {$\mathcal{L}_{\text{KL}}$};
+    % Total loss: U-shaped
+    \addplot[black, thick, densely dotted] {1.5*exp(-0.08*x) + 2.4};
+    \node[font=\footnotesize, anchor=west, xshift=4pt] at (axis cs:68,2.41) {$\mathcal{L}_{\text{total}}$};
+    % Sweet spot: o mark at the minimum of total loss (~k=33)
+    \addplot[only marks, mark=o, mark size=3pt, thick, black] coordinates {(32, 2.52)};
+    \end{axis}
+\end{tikzpicture}
+\caption{Bottleneck sizing trade-off. Reconstruction loss (solid) falls as $k$ grows; the KL cost (dashed) rises until the data's information has been encoded, then plateaus as additional dimensions collapse to the prior. The total (dotted) is L-shaped: it drops sharply, then flattens. A good $k$ sits near the elbow ($\circ$ at $k{=}32$), where the marginal gain per added dimension has fallen below what the extra parameters and training time cost.}
+\label{fig:bottleneck_tradeoff}
+\end{figure}
+
+\marginnote{\newthought{Active-unit criterion.} A latent dimension $j$ is called active if
+\begin{align*}
+    \mathcal{L}_{\text{KL}}\!\bigl(q(z_j|x) \,\|\, p(z_j)\bigr) &> \delta
+\end{align*}
+for a meaningful fraction of the training data.}
+
+\newthought{Active units.}
+Inactive dimensions have collapsed to the prior, as there is no potential reconstruction gain contributed by their information.
+Monitoring the number of active units during training reveals how much of the latent capacity the model actually uses\cite{BurdaGrosseSalakhutdinov2016}.
+
+\newthought{This reading only holds in a particular regime.}
+The active-unit count is meaningful when $k$ is rather large that some dimensions could afford to drop, 
+and when the reconstruction loss is competitive with the KL pull.
+The diagnostic is really a measure of how many dimensions the reconstruction loss can keep alive against the KL pull.
+So cross-dimension activity comparisons are needed.
+\marginnote{\newthought{Rule of thumb.} For input dimensionality $d$, a reasonable starting point is $k$ on the order of $\sqrt{d}$ 
+for tabular and pixel data. Text is a special case: vocabulary size makes $d$ huge ($30\text{k}+$ tokens), but semantic information for sentence-level text VAEs, start at $k{\approx}32{-}128$.}
+
+\marginnote{\newthought{Two exceptions} where the protocol does not apply. For visualisation, set $k{=}2$ or $k{=}3$ outright and accept the fidelity loss; the goal is a readable scatter, not optimal reconstruction. For very large models, where a single training run is expensive, pick a $k$ from a comparable published architecture and skip the sweep entirely.}
+\newthought{A practical protocol} for choosing $k$:
+\begin{itemize}
+    \item Start with a generously large $k$. Adding capacity rarely hurts validation reconstruction; it just stops helping past the elbow.
+    \item Train once and read off the effective capacity. The number of active dimensions is a direct estimate of the data's information ceiling.
+    \item Use validation reconstruction, not training loss, as the model-selection signal to be sensitive to overfitting.
+\end{itemize}
+
+
+\newthought{Beyond dimensionality,} the structure of the prior itself shapes what the latent space can express.
+The standard choice $p(z) = \mathcal{N}(0, I)$ assumes the latent factors are independent and identically scaled.
+When the true factors of variation have different scales, correlations, or discrete structure, a mismatched prior forces the encoder to waste capacity compensating for the mismatch.
+\marginnote{\newthought{KL annealing}\cite{Bowman2016} ramps the KL weight from zero over the first $N$ epochs, letting the encoder learn useful representations before regularisation kicks in and prevents posterior collapse.}
+
+
+
+\iffalse
+\marginnote{\newthought{Free bits}\cite{Kingma2016} guarantee a minimum information rate per latent dimension by clamping each dimension's KL contribution: $\mathcal{L}_{\text{KL}}^{(j)} = \max(\lambda,\, \mathcal{L}_{\text{KL}}(q(z_j|x) \| p(z_j)))$. Dimensions below the threshold $\lambda$ incur no gradient from the KL term, preventing the regulariser from silencing them before they have learned to encode useful features.}
+
+\newthought{Spectral normalisation}\cite{Miyato2018} constrains the Lipschitz constant of both encoder and decoder by normalising each weight matrix by its largest singular value.
+This prevents the encoder from amplifying small input perturbations into large latent displacements, and prevents the decoder from producing high-frequency artefacts from smooth latent trajectories.
+The result is a more stable training dynamic and a latent space where distances are more meaningful.
+
+\marginnote{\newthought{Cyclical annealing}\cite{Fu2019} repeats the KL warm-up schedule multiple times during training rather than annealing once. Each cycle resets the KL weight to zero, allowing the encoder to reorganise its representations before the regulariser tightens again. This often yields better reconstruction and higher active-unit counts than a single linear anneal.}
+
+\newthought{Wasserstein regularisation}\cite{Tolstikhin2018} offers an alternative to per-example KL.
+Instead of requiring every individual encoding to resemble the prior, the Wasserstein Autoencoder (WAE) matches the aggregate posterior $q(z) = \mathbb{E}_{p(x)}[q(z|x)]$ to the prior using a distributional distance.
+This relaxes the per-example constraint: individual encodings may look nothing like a Gaussian, as long as the overall distribution of embeddings does.
+The result is a latent space that is globally well organised without forcing every input through the same narrow distributional template.
+\fi
+
+
+
+
+
+% ---------------------------------------------------------------------------
+\newpage
+\section{Exploring the Latent Space}\index{latent interpolation}\index{generation}
+
+\newthought{Latent interpolation} reveals the structure that the VAE has learned.
+Given two data points $x_1$ and $x_2$, encode, interpolate in the latent space, then decode each step:
+\begin{align*}
+    z_1         &= \mu_{\theta_E}(x_1) \\
+    z_2         &= \mu_{\theta_E}(x_2) \\
+    z_t         &= (1{-}t)\,z_1 + t\,z_2 \\
+    \hat{x}_t   &= \theta_D(z_t)
+\end{align*}
+Because the latent space is regularised, the decoded path transitions smoothly between the two inputs\cite{White2016}.
+Smooth interpolation is the simplest test of whether the encoder has learned a genuinely continuous feature space rather than a scattered collection of embeddings.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={$z^{(1)}$},
+        ylabel={$z^{(2)}$},
+        xmin=-3, xmax=3,
+        ymin=-3, ymax=3,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick={-2,0,2},
+        ytick={-2,0,2},
+        xticklabel style={font=\small},
+        yticklabel style={font=\small},
+        tick align=outside,
+        tick pos=left,
+    ]
+    % Prior circles (1-sigma and 2-sigma)
+    \draw[black!25, thin, dashed] (axis cs:0,0) circle[radius=1];
+    \draw[black!25, thin, dashed] (axis cs:0,0) circle[radius=2];
+     % Slerp waypoints with grayscale gradient z_a (light) -> z_b (dark)
+    \addplot[only marks, mark=*, mark size=2pt, black!20] coordinates {(-1.06, 1.06)};
+    \addplot[only marks, mark=*, mark size=2pt, black!35] coordinates {(-0.31, 1.47)};
+    \addplot[only marks, mark=*, mark size=2pt, black!50] coordinates {( 0.54, 1.40)};
+    \addplot[only marks, mark=*, mark size=2pt, black!65] coordinates {( 1.21, 0.88)};
+    \addplot[only marks, mark=*, mark size=2pt, black!80] coordinates {( 1.50, 0.08)};
+    \addplot[only marks, mark=*, mark size=2pt, black]    coordinates {( 1.30,-0.75)};
+    \node[font=\small, anchor=south east] at (axis cs:-1.06, 1.06) {$z_a$};
+    \node[font=\small, anchor=north west] at (axis cs: 1.30,-0.75) {$z_b$};
+    \node[font=\small, black!55, anchor=south west] at (axis cs:0.54, 1.40) {$z_t$};
+    \end{axis}
+\end{tikzpicture}
+\caption{Latent interpolation. Two inputs encode to $z_a$ and $z_b$. Linear interpolation (lerp, dashed) 
+cuts through the low-density middle of the prior; in high dimensions this region is empty under $\mathcal{N}(0, I)$ 
+and decoded midpoints look unnatural. Spherical linear interpolation (slerp, solid arc) follows the high-density shell 
+at roughly $\|z\| \approx \sqrt{d}$, keeping every $z_t$ on-distribution. Each waypoint is decoded to produce a smooth transition.}
+\label{fig:latent_interpolation}
+\end{figure}
+
+\marginnote{\newthought{Welcome to generative AI.} A trained decoder paired with a tractable prior is, in essence, a generative model: draw a vector from a Gaussian, run it through the network, and a new sample falls out the other side. Everything that followed in the field, from diffusion models to large image and video generators, builds on the same trick of learning a mapping from a simple prior to a complex data distribution.}
+
+\newthought{Generation} is equally straightforward: sample from the prior and decode.
+\begin{align*}
+    z         &\sim \mathcal{N}(0, I) \\
+    \hat{x}   &= \theta_D(z)
+\end{align*}
+The regularisation ensures that every region of the prior generates plausible data.
+The same property that makes the encoder a reliable feature extractor, a latent space with no dead zones, is what makes generation possible.
+
+
+
+
+
+
+
+
+
+
 
 
 % ==============================================================================================
@@ -318,94 +951,420 @@ Higher $T$ yields a softer distribution that reveals more about the teacher's le
 
 \section{Examples \& Exercises}\index{examples}\index{exercises}
 
-\newthought{Computing by hand} builds intuition for what the ELBO actually measures.
-Step through the arithmetic slowly.
+\newthought{The exercises start with a few numerical passes} to fix the mechanics, then a set of concept and diagnostic prompts that target the key ideas of the chapter one at a time, and finally a hands-on notebook on MNIST.
+Worked solutions for the compute exercises are in the body; concept exercises carry the answer in a margin note. Try it yourself first, then check.
 
-\vspace{1em}
+% ---------------------------------------------------------------------------
+% Exercise 1: VAE loss by the numbers
+% ---------------------------------------------------------------------------
 
-\newthought{ELBO derivation.} Starting from $\log p(x) = \log \int p(x,z)\, dz$, derive the ELBO by introducing $q(z|x)$ via importance sampling, applying Jensen's inequality, and simplifying to reconstruction + KL form.
+\newthought{VAE loss by the numbers.}
+For a 1D VAE with encoder output $\mu{=}1$, $\sigma{=}1$ on input $x{=}3$ with reconstruction $\hat{x}{=}2.7$, compute the total loss $\mathcal{L} = \mathcal{L}_R + \mathcal{L}_{\text{KL}}$ using squared error and the Gaussian KL closed form $\tfrac{1}{2}(\mu^2 + \sigma^2 - \log \sigma^2 - 1)$.
+
+\newthought{Reconstruction loss.}
+\begin{align*}
+    \mathcal{L}_R &= (x - \hat{x})^2 \\
+                  &= (3 - 2.7)^2 \\
+                  &= 0.3^2 \\
+                  &= 0.09
+\end{align*}
+
+\newthought{KL term.}
+\begin{align*}
+    \mathcal{L}_{\text{KL}} &= \tfrac{1}{2}(\mu^2 + \sigma^2 - \log \sigma^2 - 1) \\
+                            &= \tfrac{1}{2}(1 + 1 - \log 1 - 1) \\
+                            &= \tfrac{1}{2}(1 + 1 - 0 - 1) \\
+                            &= \tfrac{1}{2}(1) \\
+                            &= 0.50
+\end{align*}
+
+\newthought{Total loss.}
+\begin{align*}
+    \mathcal{L} &= \mathcal{L}_R + \mathcal{L}_{\text{KL}} \\
+                &= 0.09 + 0.50 \\
+                &= 0.59
+\end{align*}
+
+\newthought{Second configuration: $\mu{=}0$, $\sigma{=}1$, $x{=}3$, $\hat{x}{=}2.0$.}
+\begin{align*}
+    \mathcal{L}_R           &= (3 - 2.0)^2 \\
+                            &= 1.00 \\[4pt]
+    \mathcal{L}_{\text{KL}} &= \tfrac{1}{2}(0 + 1 - 0 - 1) \\
+                            &= 0 \\[4pt]
+    \mathcal{L}             &= 1.00 + 0 \\
+                            &= 1.00
+\end{align*}
+
+The encoder matches the prior exactly so the KL drops to zero, but reconstruction more than triples. The first configuration achieves a lower total loss by spending some KL for a much better fit; that trade-off is what training resolves.
+
+\marginnote{\newthought{Where the trade-off lives.} Reconstruction is small in configuration one but the KL penalty is five times larger; in configuration two the KL is free but reconstruction dominates. Training finds the encoder that minimises the sum, not either term in isolation.}
+
 
 \vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise: KL divergence by hand
+% ---------------------------------------------------------------------------
 
 \newthought{KL divergence by hand.}
-Compute $D_{\text{KL}}\!\bigl(\mathcal{N}(\mu, \sigma^2) \,\|\, \mathcal{N}(0, 1)\bigr)$ for three settings: first $\mu{=}0,\, \sigma{=}1$; then $\mu{=}1,\, \sigma{=}1$; then $\mu{=}0,\, \sigma{=}2$.
+Compute $\mathcal{L}_{\text{KL}}\!\bigl(\mathcal{N}(\mu, \sigma^2) \,\|\, \mathcal{N}(0, 1)\bigr) = \tfrac{1}{2}(\mu^2 + \sigma^2 - \log \sigma^2 - 1)$ for three settings, and split each result into a shift cost $\tfrac{1}{2}\mu^2$ and a spread cost $\tfrac{1}{2}(\sigma^2 - \log\sigma^2 - 1)$.
 
-\marginnote{Using $D_{\text{KL}} = \tfrac{1}{2}(\mu^2 + \sigma^2 - \log \sigma^2 - 1)$:%
+\newthought{Setting (i): $\mu{=}0$, $\sigma{=}1$} (posterior matches the prior).
 \begin{align*}
-    \text{(i)}\quad & \tfrac{1}{2}(0 + 1 - 0 - 1) \\
-                    &= 0 \\[4pt]
-    \text{(ii)}\quad & \tfrac{1}{2}(1 + 1 - 0 - 1) \\
-                     &= 0.5 \\[4pt]
-    \text{(iii)}\quad & \tfrac{1}{2}(0 + 4 - \log 4 - 1) \\
-                      &\approx 0.81
-\end{align*}%
-}
+    \tfrac{1}{2}\mu^2                          &= 0 \\[4pt]
+    \tfrac{1}{2}(\sigma^2 - \log\sigma^2 - 1)  &= \tfrac{1}{2}(1 - 0 - 1) \\
+                                                &= 0 \\[4pt]
+    \mathcal{L}_{\text{KL}}                    &= 0 + 0 \\
+                                                &= 0
+\end{align*}
 
-Verify that the first setting gives zero, as expected when the approximate posterior matches the prior exactly.
-What does each non-zero value tell you about how the approximate posterior deviates from the prior?
+\newthought{Setting (ii): $\mu{=}1$, $\sigma{=}1$} (mean shifted, same spread).
+\begin{align*}
+    \tfrac{1}{2}\mu^2                   &= \tfrac{1}{2} \times 1 \\
+                                         &= 0.50 \\[4pt]
+    \tfrac{1}{2}(\sigma^2 - \log\sigma^2 - 1) &= \tfrac{1}{2}(1 - 0 - 1) \\
+                                         &= 0 \\[4pt]
+    \mathcal{L}_{\text{KL}}              &= 0.50 + 0 \\
+                                         &= 0.50
+\end{align*}
+
+\newthought{Setting (iii): $\mu{=}0$, $\sigma{=}2$} (correct mean, too wide).
+\begin{align*}
+    \tfrac{1}{2}\mu^2                   &= 0 \\[4pt]
+    \tfrac{1}{2}(\sigma^2 - \log\sigma^2 - 1) &= \tfrac{1}{2}(4 - \log 4 - 1) \\
+                                         &= \tfrac{1}{2}(4 - 1.386 - 1) \\
+                                         &\approx 0.81 \\[4pt]
+    \mathcal{L}_{\text{KL}}              &\approx 0 + 0.81 \\
+                                         &\approx 0.81
+\end{align*}
+
+\marginnote{\newthought{Why the asymmetry.} The shift cost is quadratic in $\mu$. The spread cost is asymmetric: it grows roughly linearly as $\sigma$ exceeds $1$, but the $-\log\sigma^2$ term blows up as $\sigma \to 0$, so narrow posteriors are the most expensive of all. Setting (iii) costs more than (ii) because spreading mass away from the prior is harder than translating it.}
+
 
 \vspace{2.5em}
 
-\newthought{Reparameterisation.} Why can we not directly backpropagate through $z \sim \mathcal{N}(\mu, \sigma^2)$?
-Write out the reparameterised form, then verify that $\partial z / \partial \mu = 1$ and $\partial z / \partial \sigma = \epsilon$.
+% ---------------------------------------------------------------------------
+% Exercise: beta-VAE balance pass
+% ---------------------------------------------------------------------------
 
-\marginnote{Sampling is a stochastic operation with no gradient. The reparameterisation $z = \mu + \sigma\, \epsilon$ moves the randomness to $\epsilon$, which is independent of the parameters.}
+\newthought{$\beta$-VAE balance pass.}
+Reuse the first configuration from \textit{VAE loss by the numbers} ($\mathcal{L}_R{=}0.09$, $\mathcal{L}_{\text{KL}}{=}0.50$) and compute the $\beta$-VAE loss $\mathcal{L}_\beta = \mathcal{L}_R + \beta \cdot \mathcal{L}_{\text{KL}}$ for $\beta \in \{0.5,\, 1,\, 4\}$.
+
+\newthought{$\beta{=}0.5$.}
+\begin{align*}
+    \mathcal{L}_{\beta=0.5} &= 0.09 + 0.5 \times 0.50 \\
+                            &= 0.09 + 0.25 \\
+                            &= 0.34
+\end{align*}
+
+\newthought{$\beta{=}1$ (standard ELBO).}
+\begin{align*}
+    \mathcal{L}_{\beta=1} &= 0.09 + 1 \times 0.50 \\
+                          &= 0.09 + 0.50 \\
+                          &= 0.59
+\end{align*}
+
+\newthought{$\beta{=}4$.}
+\begin{align*}
+    \mathcal{L}_{\beta=4} &= 0.09 + 4 \times 0.50 \\
+                          &= 0.09 + 2.00 \\
+                          &= 2.09
+\end{align*}
+
+The KL contribution to the total grows from $73\%$ ($\beta{=}0.5$) to $96\%$ ($\beta{=}4$). At $\beta{=}4$ the encoder has every incentive to shrink $\mu$ toward zero and $\sigma$ toward one, at the cost of reconstruction. At $\beta{=}0.5$ the prior pull is relaxed and the encoder can spread out for sharper reconstructions. $\beta{=}1$ is the standard ELBO balance.
+
+\marginnote{\newthought{Why $\beta$ matters.} Training does not just evaluate this loss once; it follows the gradient. Whichever term dominates the loss dominates the gradient, and that is what shapes the final encoder.}
+
 
 \vspace{2.5em}
 
-\newthought{Posterior collapse.} Consider a VAE trained with $\beta{=}10$.
-The KL term goes to zero for every input, and the reconstructions are blurry.
-Diagnose what has happened and propose two remedies.
+% ---------------------------------------------------------------------------
+% Exercise 2: Reparameterisation
+% ---------------------------------------------------------------------------
+
+\newthought{Reparameterisation.}
+For $\mu{=}0.5$, $\sigma{=}1.2$, and a sampled $\epsilon{=}-0.3$, compute the reparameterised sample $z = \mu + \sigma\, \epsilon$ and verify the gradients with respect to $\mu$ and $\sigma$.
+
+\newthought{Forward pass.}
+\begin{align*}
+    z &= \mu + \sigma \cdot \epsilon \\
+      &= 0.5 + 1.2 \times (-0.3) \\
+      &= 0.5 - 0.36 \\
+      &= 0.14
+\end{align*}
+
+\newthought{Gradients.}
+\begin{align*}
+    \frac{\partial z}{\partial \mu}    &= \frac{\partial}{\partial \mu}(\mu + \sigma \epsilon) \\
+                                       &= 1 \\[4pt]
+    \frac{\partial z}{\partial \sigma} &= \frac{\partial}{\partial \sigma}(\mu + \sigma \epsilon) \\
+                                       &= \epsilon \\
+                                       &= -0.3
+\end{align*}
+
+Both gradients are finite scalars, so $\mu$ and $\sigma$ get a clean signal from backpropagation; the randomness lives in $\epsilon$, off the gradient path.
 
 \vspace{2.5em}
 
-% ============================= CODE ===============================
+% ---------------------------------------------------------------------------
+% Exercise: KL cost asymmetry
+% ---------------------------------------------------------------------------
 
-\marginnote{\newthought{Code} will be provided as a Python notebook.
+\newthought{KL cost, by inspection.}
+Without computing, rank the following encoder distributions by KL cost against the prior $\mathcal{N}(0, 1)$, lowest first.
+
+\begin{itemize}
+    \item (i) $\mu{=}0$, $\sigma{=}1$.
+    \item (ii) $\mu{=}0$, $\sigma{=}0.3$.
+    \item (iii) $\mu{=}1.5$, $\sigma{=}1$.
+    \item (iv) $\mu{=}0$, $\sigma{=}3$.
+\end{itemize}
+
+\marginnote{\newthought{Answer.} (i) $<$ (iii) $<$ (iv) $<$ (ii). (i) matches the prior exactly so the KL is zero. (iii) only shifts the mean; the cost grows quadratically with $\mu$. (iv) is too wide but the spread cost is roughly linear in $\sigma^2$. (ii) is too narrow, and the $-\log \sigma^2$ term blows up as $\sigma \to 0$, making narrow posteriors the most expensive.}
+
+
+\vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise: AE vs VAE
+% ---------------------------------------------------------------------------
+
+\newthought{AE versus VAE: predict the embedding.}
+You train a vanilla autoencoder and a VAE with $k{=}2$ on MNIST, both to convergence, and plot the validation embeddings.
+
+\begin{itemize}
+    \item Which space concentrates encodings near the origin, and which spreads them arbitrarily across the plane?
+    \item Does proximity in the latent space imply the inputs are visually similar? Is the answer the same for both models?
+    \item If you pick a random point from a sparsely populated region and decode it, in which space is the result a plausible digit?
+    \item Why $k{=}2$ and not $k{=}10$, given that MNIST has ten digit classes?
+\end{itemize}
+
+\marginnote{\newthought{Answer.} The AE places encodings wherever reconstruction loss is lowest; the layout is arbitrary, with no global structure and large unused regions. The VAE pulls every encoding toward the prior, so the cloud concentrates near the origin and fills the unit disc. Proximity reflects visual similarity in both, because the decoder is smooth, but only the VAE gives geometric position a global meaning: any $z$ sampled from the prior decodes to something plausible, while a random point in an AE's empty region decodes to noise. $k{=}2$ is for visualisation; you plot $z^{(1)}$ against $z^{(2)}$ directly. At $k{=}10$ you would need t-SNE or UMAP to see the layout, and the differences you observe would be artefacts of the projection rather than of the AE-vs-VAE distinction.}
+
+
+\vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise: per-dimension KL
+% ---------------------------------------------------------------------------
+
+\newthought{Per-dimension KL.}
+For a $k{=}4$ VAE on a single input, the encoder outputs the parameters below (independent dimensions, prior $\mathcal{N}(0, 1)$ per dim).
+Compute $\mathcal{L}_{\text{KL}}^{(j)} = \tfrac{1}{2}(\mu_j^2 + \sigma_j^2 - \log \sigma_j^2 - 1)$ for each dimension and the total $\mathcal{L}_{\text{KL}} = \sum_j \mathcal{L}_{\text{KL}}^{(j)}$, then label each dimension active or collapsed.
+
+\newthought{Dim 1: $\mu_1{=}1.5$, $\sigma_1{=}0.5$.}
+\begin{align*}
+    \mathcal{L}_{\text{KL}}^{(1)} &= \tfrac{1}{2}(1.5^2 + 0.5^2 - \log 0.5^2 - 1) \\
+                                  &= \tfrac{1}{2}(2.25 + 0.25 + 1.386 - 1) \\
+                                  &= \tfrac{1}{2}(2.886) \\
+                                  &\approx 1.44
+\end{align*}
+
+\newthought{Dim 2: $\mu_2{=}0$, $\sigma_2{=}1$.}
+\begin{align*}
+    \mathcal{L}_{\text{KL}}^{(2)} &= \tfrac{1}{2}(0 + 1 - 0 - 1) \\
+                                  &= 0
+\end{align*}
+
+\newthought{Dim 3: $\mu_3{=}0.2$, $\sigma_3{=}0.9$.}
+\begin{align*}
+    \mathcal{L}_{\text{KL}}^{(3)} &= \tfrac{1}{2}(0.2^2 + 0.9^2 - \log 0.9^2 - 1) \\
+                                  &= \tfrac{1}{2}(0.04 + 0.81 + 0.211 - 1) \\
+                                  &= \tfrac{1}{2}(0.061) \\
+                                  &\approx 0.03
+\end{align*}
+
+\newthought{Dim 4: $\mu_4{=}-0.8$, $\sigma_4{=}0.7$.}
+\begin{align*}
+    \mathcal{L}_{\text{KL}}^{(4)} &= \tfrac{1}{2}((-0.8)^2 + 0.7^2 - \log 0.7^2 - 1) \\
+                                  &= \tfrac{1}{2}(0.64 + 0.49 + 0.713 - 1) \\
+                                  &= \tfrac{1}{2}(0.843) \\
+                                  &\approx 0.42
+\end{align*}
+
+\newthought{Total and verdict.}
+\begin{align*}
+    \mathcal{L}_{\text{KL}} &= 1.44 + 0 + 0.03 + 0.42 \\
+                            &\approx 1.89
+\end{align*}
+
+Dimensions 1 and 4 are active: large per-dim KL, $\sigma$ well below $1$, mean clearly away from zero. Dimension 2 has collapsed to the prior. Dimension 3 is borderline: nearly at the prior, contributing almost no information.
+
+\marginnote{\newthought{What the per-dim KL tells you.} Posterior collapse is a per-dimension phenomenon: a single VAE can have some dimensions active and others collapsed in the same training run. Summing the KL hides that detail; reading it per dimension exposes which axes the encoder uses and which it has given up on.}
+
+
+\vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise 3: Active units
+% ---------------------------------------------------------------------------
+
+\newthought{Counting active units.}
+A VAE with $k{=}8$ reports the following per-dimension posterior statistics, averaged over the validation set: the squared mean $\overline{\mu_j^2}$, the variance $\sigma_j^2$, and the resulting per-dimension KL $\mathcal{L}_{\text{KL}}^{(j)} = \tfrac{1}{2}(\overline{\mu_j^2} + \sigma_j^2 - \log \sigma_j^2 - 1)$.
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.10\textwidth}p{0.06\textwidth}p{0.06\textwidth}p{0.06\textwidth}p{0.06\textwidth}p{0.06\textwidth}p{0.06\textwidth}p{0.06\textwidth}p{0.06\textwidth}}
+    \toprule
+    \textbf{Dim $j$}                  & 1    & 2    & 3    & 4    & 5    & 6    & 7    & 8    \\
+    \midrule
+    $\overline{\mu_j^2}$              & 1.50 & 0.01 & 0.80 & 0.00 & 1.20 & 0.00 & 0.60 & 0.70 \\
+    $\sigma_j^2$                      & 0.12 & 0.97 & 0.31 & 0.99 & 0.18 & 1.00 & 0.41 & 0.95 \\
+    $\mathcal{L}_{\text{KL}}^{(j)}$   & 1.37 & 0.01 & 0.64 & 0.00 & 1.05 & 0.00 & 0.45 & 0.35 \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Per-dimension posterior statistics for a $k{=}8$ VAE on the validation set. Inactive dimensions have $\overline{\mu_j^2} \approx 0$ and $\sigma_j^2 \approx 1$, so their KL contribution falls to zero and they have collapsed back to the prior. Active dimensions either spread the means (large $\overline{\mu_j^2}$), tighten the variance (small $\sigma_j^2$), or both, and pay a positive KL for the information they carry.}
+\label{tab:active_units}
+\end{table*}
+
+How many dimensions are doing real work? Which ones can you remove without losing reconstruction quality? If you re-trained at $k{=}4$, would you expect the same number of active dimensions?
+
+\newthought{Answer.}
+Five active dimensions: 1, 3, 5, 7, 8, identifiable by $\mathcal{L}_{\text{KL}}^{(j)}$ well above zero. Dimensions 2, 4, 6 have $\mathcal{L}_{\text{KL}}^{(j)} \approx 0$ and have collapsed to the prior; dropping them costs nothing. Note that dim 8 looks borderline by variance alone ($\sigma_8^2 = 0.95$), but its mean spread $\overline{\mu_8^2} = 0.70$ keeps it carrying information, which is why the KL is the cleaner diagnostic. Re-training at $k{=}4$ should still yield about four to five active units, because the active count is set by the data's information content, not by $k$ once $k$ is past the elbow.
+
+
+\vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise 4: Diagnose the training run
+% ---------------------------------------------------------------------------
+
+\newthought{Diagnose the training run.}
+Three runs of the same VAE on the same data give different end-of-training behaviour. For each, name what is happening and what you would change.
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.07\textwidth}p{0.12\textwidth}p{0.14\textwidth}p{0.30\textwidth}}
+    \toprule
+    \textbf{Run} & \textbf{$\mathcal{L}_R$} & \textbf{$\mathcal{L}_{\text{KL}}$} & \textbf{Reconstructions} \\
+    \midrule
+    A    & high  & $\approx 0$  & blurry mean digit \\
+    B    & low   & high         & sharp but unrelated to input \\
+    C    & low   & moderate     & sharp and semantically sound \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Three end-of-training profiles for the same VAE on the same data. One is healthy training, one is posterior collapse, and one is a memorising encoder that bypasses the prior.}
+\label{tab:diagnose_run}
+\end{table*}
+
+\newthought{Answer.}
+\textbf{A} is posterior collapse: KL near zero means the encoder ignores $x$, so the decoder outputs the data mean. Lower $\beta$ or anneal it from zero. \textbf{B} has the encoder bypassing the prior to memorise inputs (high KL, low reconstruction, but sharp outputs that do not generalise to sampled $z$). Raise $\beta$ or check for an over-parameterised encoder. \textbf{C} is what you want: both terms contribute and reconstructions track the inputs.
+
+
+\vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise: KL annealing schedule design
+% ---------------------------------------------------------------------------
+
+\newthought{KL annealing by the numbers.}
+A linear-ramp schedule sets
+\begin{align*}
+    \beta(t) &= \min\!\left(\tfrac{t}{10},\, 1\right)
+\end{align*}
+so $\beta$ rises from $0$ at epoch $0$ to $1$ at epoch $10$ and stays at $1$ afterwards. Assume that on a fixed validation batch the encoder reports $\mathcal{L}_R{=}0.4$ and $\mathcal{L}_{\text{KL}}{=}1.2$ throughout training (the values themselves do not change, only the weight). Compute the total loss $\mathcal{L}_\beta(t) = \mathcal{L}_R + \beta(t) \cdot \mathcal{L}_{\text{KL}}$ at epochs $t \in \{1, 5, 10, 20\}$.
+
+\newthought{Epoch 1: $\beta{=}0.1$.}
+\begin{align*}
+    \mathcal{L}_\beta(1) &= 0.4 + 0.1 \times 1.2 \\
+                          &= 0.4 + 0.12 \\
+                          &= 0.52
+\end{align*}
+
+\newthought{Epoch 5: $\beta{=}0.5$.}
+\begin{align*}
+    \mathcal{L}_\beta(5) &= 0.4 + 0.5 \times 1.2 \\
+                          &= 0.4 + 0.60 \\
+                          &= 1.00
+\end{align*}
+
+\newthought{Epoch 10: $\beta{=}1$.}
+\begin{align*}
+    \mathcal{L}_\beta(10) &= 0.4 + 1 \times 1.2 \\
+                           &= 1.60
+\end{align*}
+
+\newthought{Epoch 20: $\beta{=}1$ (clamped).}
+\begin{align*}
+    \mathcal{L}_\beta(20) &= 1.60
+\end{align*}
+
+At which epoch does the KL contribution first match the reconstruction term, and what would $\mathcal{L}(t)$ look like if you set $\beta{=}1$ from the start?
+
+\marginnote{\newthought{When the terms match.} $\beta(t) \cdot \mathcal{L}_{\text{KL}} = \mathcal{L}_R$ when $\beta(t) = 0.4 / 1.2 \approx 0.33$, i.e.\ around epoch $3$ on this schedule. Without the ramp, the KL would dominate from epoch $1$, giving the encoder every incentive to ignore $x$ before it has learned a useful representation; the warm-up window buys the encoder time to first encode information, then take the regularisation pressure.}
+
+\vspace{2.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise: Reading interpolation paths
+% ---------------------------------------------------------------------------
+
+\newthought{Read the observations from the embedding space exploration.}
+You linearly interpolate between two encoded digits in latent space and decode each step. For each described path, name what the latent space tells you.
+\marginnote{\newthought{Answer.} Path 1 indicates a well-organised latent space: nearby points decode to similar digits and the regulariser has filled the region between the two encodings. Path 2 means the encoder placed the two digits far apart with empty space in between; the prior has not pulled them close enough. Path 3 means the line crosses other class regions; that is geometrically honest but suggests the chosen direction is not a meaningful axis.}
+
+\begin{itemize}
+    \item Path 1: a smooth morph from a 3 into an 8, passing through plausible intermediate shapes.
+    \item Path 2: the 3 stays fixed for half the path, then suddenly jumps to the 8.
+    \item Path 3: the path passes through several unrelated digit shapes (a 2, then a 5) before reaching the 8.
+\end{itemize}
+
+
+
+\vspace{4.5em}
+
+% ---------------------------------------------------------------------------
+% Exercise 7: Hands-on
+% ---------------------------------------------------------------------------
+
+\marginnote{\newthought{Code} is provided as a Python notebook.
 Use it as a starting point, break things, and observe what changes.}
+\marginnote{1\,000 MNIST digits\\784 pixels each\\ten classes\\[4pt]implement: linear AE, KL divergence, reparameterisation trick}
 
-\newthought{An MNIST digit dataset to explore.}
-Train a VAE with a 2D latent space on MNIST.
-Scatter-plot the latent encodings colour-coded by digit class.
-Sample a grid of points from the latent space, decode them, and display the resulting digits.
-Interpolate between two digits in latent space and display the decoded path.
+\newthought{An MNIST subset to explore.} You are given the same thousand handwritten digits as in the previous chapter. Implement three pieces from scratch in numpy: a linear autoencoder, the closed-form KL divergence to a standard normal prior, and the reparameterisation trick $z = \mu + \sigma \odot \varepsilon$. Sweep $k$ on the linear AE and inspect the reconstruction curve, then compare precomputed AE and VAE embeddings at $k{=}2$ and at $k \in \{2, 8, 32\}$. Optionally lift a $k{=}16$ VAE: bar-chart its per-dimension KL using your own implementation, and decode an interpolation between an encoded 0 and an encoded 1.
 
-\newthought{What to observe.}
-Digit classes should form overlapping but distinguishable clusters in the 2D latent space.
-The grid of decoded samples should show smooth transitions between digit types.
-Increasing $\beta$ should sharpen the cluster boundaries but blur the reconstructions.
+\newthought{What to observe.} The linear AE elbow matches the PCA reconstruction curve, confirming that a tied-weight linear AE is PCA in disguise. The AE and VAE scatters at $k{=}2$ differ in geometry: AE encodings spread arbitrarily with large empty regions, VAE encodings concentrate near the origin and fill the unit disc. Active units saturate well below the chosen $k$. The interpolation passes through plausible intermediate digits, showing that the latent space is genuinely continuous.
 
+\vspace{2.5em}
 
+% ---------------------------------------------------------------------------
+\newpage
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}
 
 \newthought{Self-Reflection} questions to guide your thinking:
 \begin{itemize}
-    \item Why does the ELBO contain two terms, and what does each one enforce?
-    \item What happens if you remove the KL term entirely and train with reconstruction loss alone?
-    \item Why does the reparameterisation trick work, and what mathematical property of the Gaussian does it exploit?
-    \item What is posterior collapse, and under what conditions does it occur?
-    \item How does $\beta$-VAE encourage disentanglement, and what is sacrificed in return?
-    \item Why does VQ-VAE avoid posterior collapse, and what new challenge does discrete quantisation introduce?
-    \item When would you choose a conditional VAE over an unconditional one?
-    \item How does the VAE latent space differ from the PCA subspace of the previous chapter, and what does the difference buy you?
+    \item What does the autoencoder bottleneck force the encoder to discover, and how does it relate to the PCA subspace?
+    \item Why does a deterministic autoencoder fail as a generative model?
+    \item In the Gaussian KL, why is a narrow posterior more expensive than a shifted or widened one?
+    \item When would you reach for $\beta$-VAE, VQ-VAE, or a conditional VAE over the plain VAE?
+    \item Why does the reparameterisation trick work, and what does it exploit about the Gaussian?
+    \item What is posterior collapse, and which design lever brings it on most often?
+    \item How does the active-unit count tell you whether $k$ is set correctly?
+    \item Why does sampling $z \sim \mathcal{N}(0, I)$ and decoding produce plausible new data in a VAE but not in a plain autoencoder?
 \end{itemize}
 
 \newthought{Recap} of Key Concepts:
 \begin{itemize}
-    \item VAEs learn probabilistic latent representations by maximising the ELBO, which trades off reconstruction fidelity against regularisation toward the prior.
-    \item The reparameterisation trick enables gradient-based training by expressing the stochastic sample as a deterministic function of the parameters plus independent noise.
-    \item The closed-form KL for Gaussians makes training efficient; in practice the encoder outputs $\log \sigma^2$ for numerical stability.
-    \item $\beta$-VAE increases the KL weight to encourage disentanglement at the cost of reconstruction quality; VQ-VAE replaces continuous latents with discrete codes to enable autoregressive priors.
-    \item Knowledge distillation is a complementary compression strategy: it transfers a teacher's soft predictions into a smaller student network.
+    \item Autoencoders learn a nonlinear $\theta_E, \theta_D$ through a bottleneck; linear AE recovers PCA, nonlinear goes beyond it.
+    \item VAEs replace the point embedding with $q(z|x)$ regularised toward a prior, giving a continuous, generative latent space.
+    \item The Gaussian KL trades a quadratic shift cost against an asymmetric spread cost; narrow posteriors cost the most.
+    \item $\beta$-VAE buys disentanglement, VQ-VAE buys discrete codes, conditional VAE buys controlled generation.
+    \item The reparameterisation trick $z = \mu + \sigma \odot \varepsilon$ keeps the sample differentiable in $\mu$ and $\sigma$.
+    \item Active-unit count diagnoses bottleneck use; KL warm-up is the standard fix for posterior collapse.
+    \item Sampling $z \sim p(z)$ and decoding generates new data; smooth interpolation tests latent continuity.
 \end{itemize}
 
-\marginnote{\newthought{The fundamental limit} of a generative model: it can tell you what the data looks like, but not how much to trust what it says about data it has never seen.}
+\marginnote{\newthought{The root of model blindness.} Any model can tell you what it has learned, but not how much to trust what it says about inputs it has never seen.}
 
-\newthought{A VAE trained on coffee aroma profiles} will reconstruct familiar profiles faithfully and assign them high ELBO.
-A contaminated sample, one the model has never seen, will reconstruct poorly and land in a low-density region of the latent space.
-The model knows something is wrong, but it cannot quantify how uncertain it is, or decide what to do about it.
+\newthought{Unsupervised deep learning} is at root the project of modelling what counts as familiar, and the VAE does this directly: low reconstruction error and high prior likelihood under $p(z)$ mean an input resembles the training data.
+Yet every model trained on finite data, generative or not, has a blind spot for inputs outside its experience: a VAE's error rises on unfamiliar inputs and a classifier's softmax stays peaked on adversarial ones, but neither flags the gap in any principled way.
 
-\newthought{Uncertainty estimation} fills this gap.
-The next chapter develops tools for quantifying what a model does and does not know, distinguishing irreducible noise from reducible ignorance, and shows how uncertainty estimates enable anomaly detection, out-of-distribution detection, and graceful degradation in deployed systems.
+\newthought{Uncertainty estimation} turns familiarity into a principled tool, and it is itself an unsupervised problem: knowing where a model's knowledge ends depends on the learned distribution of inputs, not on a held-out label.
+The next chapter develops model-agnostic methods for separating irreducible noise from reducible ignorance, and uses them for anomaly detection, out-of-distribution flagging, and graceful degradation in deployment.
 
-\marginnote{\newthought{feedback}}
+\marginnote{\newthought{Teaser.} How does a model trained without labels know when a new input falls outside the structure it has learned?}
+
+\marginnote{\newthought{Feedback.}}
+\clearpage

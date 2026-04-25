@@ -25,6 +25,7 @@
 \usepackage{textcase}
 \usepackage{enumitem}
 \usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepackage{float}
@@ -103,33 +104,29 @@
 \part{Geometry of Pattern}
 
 % Lecture 1: Foundations
-\input{chapters/01_foundations}
+%\input{chapters/01_foundations}
 
 % Lecture 2: Centroid Clustering
-\input{chapters/02_centroid_clustering}
+%\input{chapters/02_centroid_clustering}
 
 % Lecture 3: Hierarchical Clustering
-\input{chapters/03_hierarchical_clustering}
+%\input{chapters/03_hierarchical_clustering}
 
 % Lecture 4: Density and Graph-Based Clustering
-\input{chapters/04_density_graph_clustering}
+%\input{chapters/04_density_graph_clustering}
 
 
 % ======================================================================
 % ACT II: LEARNING TO REPRESENT Pattern
 % ======================================================================
 
-% \part{Representing Pattern}
+\part{Representing Pattern}
 
 % Lecture 5: Dimensionality Reduction
-% \input{chapters/05_dimensionality_reduction}
-
-
-% Where GAN, where free labels and proxies? E.g. Sensors such as depth? Or text and next token? Or video? 
-
+\input{chapters/05_dimensionality_reduction}
 
 % Lecture 6: Variational Inference
-%\input{chapters/06_variational_inference}
+\input{chapters/06_variational_inference}
 
 % Lecture 7: Uncertainty Estimation
 %\input{chapters/07_uncertainty_estimation}
@@ -142,7 +139,7 @@
 
 %\part{Epistemic Pattern}
 
-% Lecture 8: Self-Supervised Learning
+% Lecture 8: Self-Supervised Learning (Contrastive vs Generative, Proxies, Auxiliary Sensors)
 %\input{chapters/08_self_supervised_learning}
 
 % Lecture 9: Zero-Shot, Few-Shot, and Transfer Learning
@@ -158,7 +155,8 @@
 % Lecture 10: Weak Supervision and Labeling Functions
 %\input{chapters/10_weak_supervision}
 
-% Lecture 11: Self-Training and Ensemble Methods (maybe this needs to be at self-supervised learning) where GAN?
+% Lecture 11: Self-Training and Ensemble Methods 
+% (maybe this needs to be at self-supervised learning) 
 %\input{chapters/11_self_training_ensembles}
 
 % Lecture 12: Interactive and Imitation Learning

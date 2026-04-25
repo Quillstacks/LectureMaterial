@@ -4,25 +4,97 @@
 
 \index{Git}\index{GitHub}\index{version control}
 \chapter{Version Everything: Git \& GitHub}
-\newthought{No zip files. No \texttt{final\_v2\_FINAL.py}. No excuses.}
+\newthought{Git a Life.}
 
 % ==============================================================================
 % SESSION A: THEORY
 % ==============================================================================
 
+% -----------------------------------------------------------------------------
 \section{The Why}
 
-\newthought{You have been there.} A folder full of copies: \texttt{report.py}, \texttt{report\_v2.py},
-\texttt{report\_final.py}, \texttt{report\_FINAL\_fixed.py}. Which one is current? Which one works?
-What changed between them? Nobody knows, including you, two weeks from now.
 
-Version control\index{version control} solves this permanently. Every change is recorded, annotated, and reversible.
-You can see exactly what changed, when, by whom, and why. You can go back to any previous state.
-You can work on multiple ideas in parallel without them interfering with each other.
+\marginnote{\newthought{PixelWise} needs to live on two machines.
+Right now there is no reliable way to move code from \texttt{dev} to \texttt{prod}
+and keep both in sync. Git gives us exactly that: a shared history
+that either machine can pull from, so deployment becomes a deliberate, testable, repeatable step
+instead of manual file copying.}
 
+Block~1 gave us two machines and a way to reach one from the other.
+We can write code on \texttt{dev} and, eventually, deploy it to \texttt{prod}.
+But nothing yet records what changed between deployments, who changed it, or how to undo a mistake.
+The moment two people touch the same file, the same function,
+or one experiment needs to coexist with another,
+the workflow breaks down entirely.
+
+\newthought{Version control}\index{version control} solves an entire family of problems at once.
+It records every change with a message, a timestamp, and an author,
+so the full history of a project is always available.
+It lets you return to any previous state in seconds,
+turning risky experiments into cheap, reversible ones.
+
+\newthought{Parallel development} becomes natural.
+Multiple people work on the same codebase without overwriting each other's changes.
+A new feature, a bug fix, and a refactor can all proceed simultaneously on isolated branches
+and be integrated later with explicit, reviewable merge steps.
+
+\newthought{Downtime shrinks} as a direct consequence.
+Developers merge through a guided review step that catches conflicts and errors
+before they reach \texttt{main}, deploying only code that has already been integrated and verified.
+When something still slips through, you can roll back to the last known-good state in a single command
+instead of debugging under pressure while users wait.
+
+\newthought{Combined with a hosting platform} like GitHub\marginnote{GitHub: \url{https://github.com}},
+version control becomes the backbone of code review,
+continuous integration, issue tracking, and project management, built around 
+the software development process.
+
+
+
+
+% -----------------------------------------------------------------------------
+\subsection{Hands On Experience}
+
+\newthought{Consider this scenario:} you and a classmate are both improving the PixelWise classifier.
+You rewrite the data loader; your classmate changes the model architecture.
+You each work on your own laptop for a few hours, then try to combine the results.
+Without a system for tracking changes, combining means copying files back and forth,
+comparing line by line, and hoping nothing was lost. Worse still, if both of
+you would have worked on the same machine, overwriting each others files as you go.
+
+\marginnote{\newthought{Every team} that ships software uses version control.
+It is not an optional workflow preference; it is the infrastructure
+that makes collaborative, iterative development possible at any scale.
+As projects grows, interface contracts\index{interface contracts}, clear agreements 
+on inputs, outputs,
+and responsibilities between components, will become increasingly important.
+Version control lays the foundation by making every change visible and reviewable,
+so contracts can be enforced rather than assumed.}
+
+\newthought{Git is that system.} It tracks exactly what changed in every file, 
+when, and by whom.
+It lets you branch off to try an idea, or build a feature without disturbing stable code,
+merge branches back together with full visibility into conflicts,
+and review each other's contributions before they reach the shared codebase.
+The design principle is simple: never lose work, and never wonder what happened.
+
+\newthought{This second block} introduces Git and GitHub as the version control layer for PixelWise.
+By the end you will have
+\begin{itemize}
+    \item understood the Git data model and why it makes history tamper-proof,
+    \item practised the staging workflow of editing, staging, and committing changes,
+    \item created branches, merged them, and resolved conflicts,
+    \item pushed code to a remote repository on GitHub and collaborated through pull requests,
+    \item and configured SSH-based authentication so Git operations are seamless from both VMs.
+\end{itemize}
+
+
+\newpage
+% -----------------------------------------------------------------------------
 \section{The Git Data Model}\index{Git!data model}
 
-\newthought{Git is not a backup tool.} It is a content-addressable filesystem with a version history layered on top.
+\newthought{Git is not a backup tool.} It is a content-addressable 
+filesystem with a version history layered on top.
 Understanding the data model makes every command intuitive.
 
 \marginnote{Git was created by Linus Torvalds in 2005 to manage the Linux kernel source code.
@@ -36,26 +108,63 @@ Pro Git book (free): \url{https://git-scm.com/book/en/v2}}
     \item[Commit]\index{Git!commit} A snapshot of the entire project at a point in time. Contains: a pointer to the root tree,
     the author, a timestamp, a message, and a pointer to the parent commit(s).
     \item[Branch]\index{Git!branch} A lightweight, movable pointer to a commit. \texttt{main} is a branch.
-    Creating a branch is instantaneous—it just creates a new pointer.
+    Creating a branch is instantaneous; it just creates a new pointer.
     \item[HEAD]\index{Git!HEAD} A pointer to the branch you are currently on. When you commit, \texttt{HEAD} moves forward.
 \end{description}
 
-\newthought{Every commit} is identified by a SHA-1 hash—a 40-character hexadecimal string like
-\texttt{a3f2b7c...}. This hash is computed from the commit's contents. If anything changes—even a single
-character in a single file—the hash changes. This makes Git history tamper-proof.
+\newthought{Every commit} is identified by a SHA-1 hash, a 40-character hexadecimal string like
+\texttt{a3f2b7c...}. This hash is computed from the commit's contents. If anything changes, even a single
+character in a single file, the hash changes. This makes Git history tamper-proof.
 
+\newthought{Data hygiene}\index{data hygiene} follows directly from the data model.
+Because Git stores every version of every blob permanently, committing a large dataset
+means carrying it in the repository history forever, even if you delete the file later.
+A 500\,MB training set committed once, modified twice, and then removed still occupies 1.5\,GB of history.
+Repositories should contain code, configuration, and small metadata files.
+Large or frequently changing binary assets, datasets, and model weights do not belong in Git.
+
+\marginnote{\newthought{Dedicated tools} fill the gap.
+Git LFS\index{Git!LFS} replaces large files with lightweight pointers.
+Hugging Face Hub\index{Hugging Face} hosts datasets and model weights with built-in Git LFS.
+DVC\index{DVC} tracks data pipelines and links datasets to experiments.
+Weights \& Biases\index{Weights \& Biases} versions datasets alongside experiment logs.\\
+Git LFS: \url{https://git-lfs.com}\\
+Hugging Face Hub: \url{https://huggingface.co}\\
+DVC: \url{https://dvc.org}\\
+W\&B: \url{https://wandb.ai}}
+
+\vspace{1.5em}
+The \texttt{.gitignore} file, covered in its own subsection below, is the practical mechanism
+for keeping these artefacts out of the repository.
+
+
+
+
+
+% -----------------------------------------------------------------------------
+\newpage
 \section{The Staging Workflow}\index{Git!staging}
+
+\marginnote{\newthought{The napkin cycle} as easy as it gets:\\
+\texttt{git pull}\\
+\texttt{git add <files>}\\
+\texttt{git commit -m "..."}\\
+\texttt{git push}\\
+Pull the latest changes, stage your work, commit it, push it. Every other command is a variation on this loop.}
 
 \newthought{Git has three areas:}
 
-\begin{description}
-    \item[Working directory] The files on disk. What you edit.
-    \item[Staging area (index)] What you have marked for the next commit. A deliberate selection.
-    \item[Repository] The committed history. Permanent, immutable snapshots.
-\end{description}
+\begin{itemize}
+    \item \emph{Working directory}\index{Git!working directory} The files on disk. What you edit.
+    \item \emph{Staging area}\index{Git!staging area} What you have marked for the next commit. A deliberate selection.
+    \item \emph{Repository}\index{Git!repository} The committed history. Permanent, immutable snapshots.
+\end{itemize}
 
 \newthought{The core commands:}
 
+\marginnote{Write commit messages in the imperative mood: ``Add classifier module'' not ``Added classifier module.''
+The message completes the sentence ``This commit will \ldots''. Keep the first line under 72 characters.
+For a gallery of how not to do it, visit \url{https://whatthecommit.com}.}
 \begin{verbatim}
 git status              # what changed? what is staged?
 git add file.py         # stage a file for the next commit
@@ -67,9 +176,17 @@ git log                 # show commit history
 git log --oneline       # compact view: one line per commit
 \end{verbatim}
 
-\marginnote{Write commit messages in the imperative mood: ``Add classifier module'' not ``Added classifier module.''
-The message completes the sentence ``This commit will \ldots''. Keep the first line under 72 characters.}
+\marginnote{\newthought{When to commit?}
+Commit when you have completed one logical change: a bug fix, a new function, a config update.
+If you struggle to write a short commit message, you probably changed too many things at once.
+If you go hours without committing, you are accumulating risk.
+Small, frequent commits make history useful; large, rare commits make it a wall of text.}
 
+\marginnote{\texttt{(\textbackslash\quad/)}\\
+\texttt{(O.o)}\\
+\texttt{(>\quad<)} Bunny approves these changes.}
+
+% -----------------------------------------------------------------------------
 \section{Branching and Merging}\index{Git!branching}\index{Git!merging}
 
 \newthought{Branches let you work on ideas in isolation.} The \texttt{main} branch is the stable baseline.
@@ -80,21 +197,34 @@ git branch                   # list branches
 git branch feature-x         # create a new branch
 git checkout feature-x       # switch to it
 git checkout -b feature-y    # create and switch in one step
+git branch -d feature-x      # delete after merge
 \end{verbatim}
 
-\newthought{When the feature is ready,} merge it back:
+\marginnote{Delete branches after merging. Stale branches accumulate fast
+and make \texttt{git branch} unreadable. If the branch is merged, it is safe to delete;
+the history lives on in \texttt{main}.}
+
+\newthought{When the feature is ready,} merge it back and clean up:
 
 \begin{verbatim}
 git checkout main
 git merge feature-x
+git branch -d feature-x
 \end{verbatim}
 
+% -----------------------------------------------------------------------------
 \subsection{Merge Conflicts}\index{Git!merge conflict}
 
 \newthought{A merge conflict} occurs when two branches changed the same line in the same file.
-Git cannot decide which version to keep—you must resolve it manually.
+Git cannot decide which version to keep, so you must resolve it manually.
 
-\newthought{Git marks the conflict} in the file:
+\marginnote{Edit the file to keep the correct version and remove the markers.
+Then stage the resolved file with \texttt{git add file.py}
+and commit with \texttt{git commit -m "Resolve merge conflict in file.py"}.}
+
+\newthought{Git marks the conflict} in the file. The block between \texttt{<<<<<<< HEAD} and \texttt{=======}
+is what the current branch has; \texttt{HEAD} always means ``the commit you are on right now.''
+The block between \texttt{=======} and \texttt{>>>>>>> feature-x} is what the incoming branch has.
 
 \begin{verbatim}
 <<<<<<< HEAD
@@ -104,16 +234,10 @@ result = classifier.classify(x)
 >>>>>>> feature-x
 \end{verbatim}
 
-Edit the file to keep the correct version, remove the markers, then:
-
-\begin{verbatim}
-git add file.py
-git commit -m "Resolve merge conflict in file.py"
-\end{verbatim}
-
+% -----------------------------------------------------------------------------
 \section{Tags}\index{Git!tags}
 
-\newthought{A tag marks a point in history that matters}—a release, a milestone, a known-good state.
+\newthought{A tag marks a point in history that matters:} a release, a milestone, a known-good state.
 
 \begin{verbatim}
 git tag v0.1                          # lightweight tag
@@ -122,20 +246,44 @@ git push --tags                       # push tags to remote
 \end{verbatim}
 
 \marginnote{Lightweight tags are just a name pointing to a commit. Annotated tags store the tagger,
-date, and message—use them for releases. We tag \texttt{v0.1} today; the tag becomes meaningful
-when you look back at it in Block~8.}
+date, and message; use them for releases. We tag \texttt{v0.1} today; the tag becomes meaningful
+when you look back at it in Block~8.\\[0.5em]
+\texttt{tig}\index{tig} is a terminal-based Git browser that makes it easy to navigate commits, branches, and tags
+on a headless Ubuntu machine. Install with \texttt{sudo apt install tig}.\\
+\url{https://jonas.github.io/tig/}}
 
+\newthought{Semantic versioning}\index{semantic versioning} gives tag names a shared meaning.
+A version number follows the pattern \texttt{MAJOR.MINOR.PATCH}.
+Increment \texttt{PATCH} for bug fixes that do not change behaviour,
+\texttt{MINOR} for new features that remain backwards-compatible,
+and \texttt{MAJOR} when you introduce breaking changes.
+A jump from \texttt{v1.2.3} to \texttt{v1.3.0} tells users
+that something was added but nothing they depend on was removed.
+A jump to \texttt{v2.0.0} warns them to check for incompatibilities.
+
+\marginnote{Semantic Versioning: \url{https://semver.org}}
+
+% -----------------------------------------------------------------------------
 \section{Remotes and GitHub}\index{Git!remotes}\index{GitHub}
 
-\newthought{A remote} is a copy of your repository on another machine—usually GitHub.
+
+
 
 \begin{verbatim}
-git remote add origin git@github.com:user/pixelwise.git
-git push -u origin main     # push and set upstream
-git pull                     # fetch + merge from remote
-git fetch                    # fetch without merging
-git clone <url>              # copy a remote repo locally
+    git clone <url>              # copy a remote repo locally
+    # fork: copy repo to your GitHub account (GitHub UI, not a git command)
+    git remote add origin git@github.com:user/pixelwise.git
 \end{verbatim}
+
+\newthought{A remote} is a copy of your repository on another machine, usually GitHub.
+
+\newthought{Clone and fork}\index{Git!clone}\index{Git!fork} are two ways to 
+start from an existing repository.
+
+A \texttt{fork}\index{fork} is a GitHub concept, not a Git command.
+It creates a full copy of someone else's repository under your own GitHub account.
+You clone your fork locally, work on it freely, and propose changes back to the original via a pull request.
+Forking is the standard workflow for contributing to open-source projects where you do not have write access to the original repository.
 
 \marginnote{GitHub is not Git. Git is the version control system; GitHub is a hosting platform
 that adds pull requests\index{pull request}, issues\index{issues}, CI/CD, and collaboration features on top of Git.
@@ -143,12 +291,52 @@ Alternatives include GitLab and Bitbucket.\\
 GitHub: \url{https://github.com/}\\
 GitHub Docs: \url{https://docs.github.com/}}
 
+\texttt{git clone} copies a remote repository to your local machine, keeping the original as the \texttt{origin} remote.
+You can pull updates and, if you have permission, push changes back.
+
+
+
+
+
+
+
+
+% -----------------------------------------------------------------------------
 \subsection{Pull Requests}
 
-\newthought{A pull request\index{pull request}} is a proposal to merge a branch into another branch—typically a
+\newthought{Push}\index{Git!push} sends your local commits to the remote.
+Until you push, your work exists only on your machine.
+
+\newthought{Fetch}\index{Git!fetch} does the opposite: it downloads new commits from the remote
+but leaves your working directory untouched, so you can inspect what changed before merging.
+
+\newthought{Pull}\index{Git!pull} combines fetch and merge in one step,
+updating your local branch to include the remote's latest commits.
+
+\begin{verbatim}
+git push -u origin main     # push and set upstream
+git pull                     # fetch + merge from remote
+git fetch                    # fetch without merging
+\end{verbatim}
+
+\newthought{The \texttt{-u} flag}\index{Git!-u flag} links your local branch to the remote branch.
+After running \texttt{git push -u origin main} once, Git remembers the connection
+and future \texttt{git push} and \texttt{git pull} work without specifying
+the remote or branch.
+
+\newthought{A pull request\index{pull request}} is a proposal to merge a branch into another branch, typically a
 feature branch into \texttt{main}. It is the standard mechanism for code review: your changes are visible,
 reviewable, and discussable before they become part of the main codebase.
 
+\marginnote{\newthought{Pull requests and CI.}\index{continuous integration}
+Because a PR represents a well-defined set of changes that has not yet reached \texttt{main},
+it is the ideal moment to run a test suite, a linter, or any other check automatically.
+If the tests fail, the merge is blocked and \texttt{main} stays healthy.
+We will wire up this automation in a later block; for now, recognise that the PR
+is where human review and machine verification meet.}
+
+% -----------------------------------------------------------------------------
+\newpage
 \subsection{The \texttt{.gitignore} File}\index{.gitignore}
 
 \newthought{Not everything belongs in version control.} The \texttt{.gitignore} file tells Git which files
@@ -172,113 +360,341 @@ models/*.pkl
 *.swp
 \end{verbatim}
 
-\marginnote{Git history is permanent\index{Git!history}. A secret committed once is leaked forever—even if you
+\newthought{This includes all credentials:}\index{secrets} API keys, database passwords, webhook secrets,
+tokens for AI services. These live on the server in environment variables or protected
+configuration files, never in the repository.
+A leaked production database password or API key can be exploited within minutes by automated scanners.
+
+\marginnote{Git history is permanent\index{Git!history}. A secret committed once is leaked forever, even if you
 delete the file in a later commit. The old commit still contains it. \texttt{.gitignore} is your first line of defence.}
-
-\section{The Setup Script}\index{setup-server.sh}
-
-\newthought{On the server VM,} you installed packages manually in Block~1. Now capture that work in a script
-so any fresh VM can be provisioned identically:
-
-\begin{verbatim}
-#!/bin/bash
-# setup-server.sh — provision a fresh server VM
-set -euo pipefail
-
-sudo apt update
-sudo apt install -y git python3 python3-pip python3-venv curl
-\end{verbatim}
-
-\marginnote{The \texttt{set -euo pipefail} line makes the script fail immediately on any error
-(\texttt{-e}), on undefined variables (\texttt{-u}), and on pipe failures (\texttt{-o pipefail}).
-This prevents silent failures that leave the server in a half-configured state.}
-
-This is the first file you commit—version control paying for itself immediately. When a new team member
-joins or a VM is rebuilt, \texttt{bash setup-server.sh} reproduces the exact same environment.
 
 % ==============================================================================
 % SESSION B: HANDS-ON
 % ==============================================================================
 
 \newpage
-\section{Workshop}
+% -----------------------------------------------------------------------------
+\section{Exercise: Setting Up Git and the Repository}\index{exercises}
 
-\marginnote{If your VM is broken, restore the \texttt{B1-complete} snapshot and start fresh.
-At the end of this session, take a snapshot named \texttt{B2-complete}.}
+\marginnote{\newthought{At the end of the sessions}, take a snapshot named \texttt{B2-complete}, your safety net for the next block.}
 
-\begin{enumerate}
-    \item \textbf{Create a GitHub account} (if you do not have one). Configure your Git identity on the \texttt{dev} VM:
-    \begin{verbatim}
-    git config --global user.name "Your Name"
-    git config --global user.email "your@email.com"
-    \end{verbatim}
-    Generate an SSH key and add it to GitHub so you can push over SSH.
+\newthought{Create a GitHub account} if you do not have one. Then open a terminal on the \texttt{dev} VM.
 
-    \item \textbf{Install packages on the server:} SSH into the server VM and install the tools we need:
-    \begin{verbatim}
-    sudo apt update
-    sudo apt install -y git python3 python3-pip \
-        python3-venv curl
-    \end{verbatim}
-    Verify with \texttt{git --version} and \texttt{python3 --version}.
+\marginnote{\newthought{Opening a terminal on Ubuntu.}\index{Ubuntu!terminal}
+The fastest way is the keyboard shortcut \texttt{Ctrl+Alt+T}, which launches
+the default terminal emulator. Alternatives: press the \texttt{Super} key
+(the Windows key) and type ``terminal'', or right-click on the desktop
+and choose ``Open Terminal''. Inside a terminal you can open another tab
+with \texttt{Ctrl+Shift+T} and a fresh window with \texttt{Ctrl+Alt+T} again.}
 
-    \item \textbf{Write \texttt{setup-server.sh}:} Capture exactly what you just ran in a shell script.
-    Add \texttt{set -euo pipefail} at the top. This script is the reproducible record of your server setup.
+\newthought{Install Git.}\index{Git!install} Ubuntu does not ship with Git by default,
+so install it through the package manager. It does not matter which directory you run this
+in, \texttt{apt} installs system-wide:
 
-    \item \textbf{Initialise the PixelWise repo} on the \texttt{dev} VM:
-    \begin{verbatim}
-    mkdir pixelwise && cd pixelwise
-    git init
-    \end{verbatim}
-    Write a \texttt{README.md} with a one-line project description. Write a \texttt{.gitignore} covering
-    Python files, secrets, editors, data, and model artefacts.
+\marginnote{\texttt{sudo}\index{sudo} runs the command with administrator privileges, which
+\texttt{apt} needs to write to system directories. You will be asked for your password the first
+time. \texttt{apt update} refreshes the package index so you get the current version;
+\texttt{apt install -y} installs without prompting for confirmation.}
 
-    \item \textbf{First commit and push:} Stage and commit \texttt{setup-server.sh}, \texttt{README.md},
-    and \texttt{.gitignore}:
-    \begin{verbatim}
-    git add setup-server.sh README.md .gitignore
-    git commit -m "Add server setup script and project skeleton"
-    \end{verbatim}
-    Create a repository on GitHub, add it as a remote, and push:
-    \begin{verbatim}
-    git remote add origin git@github.com:user/pixelwise.git
-    git push -u origin main
-    \end{verbatim}
+\begin{verbatim}
+sudo apt update
+sudo apt install -y git
+git --version              # confirm the install succeeded
+\end{verbatim}
 
-    \item \textbf{Tag the release:} Mark this point in history:
-    \begin{verbatim}
-    git tag -a v0.1 -m "initial server setup"
-    git push --tags
-    \end{verbatim}
+\newthought{Configure your Git identity:}
 
-    \item \textbf{Clone to the server:} SSH into the server and clone PixelWise to its permanent home:
-    \begin{verbatim}
-    sudo mkdir -p /opt/pixelwise
-    sudo chown student:student /opt/pixelwise
-    git clone git@github.com:user/pixelwise.git /opt/pixelwise
-    \end{verbatim}
-    PixelWise now lives on both machines.
+\begin{verbatim}
+git config --global user.name "Your Name"
+git config --global user.email "your@email.com"
+\end{verbatim}
 
-    \item \textbf{Take a snapshot} of both VMs. Name them \texttt{B2-complete}.
-\end{enumerate}
+\newthought{Generate an SSH key.}\index{SSH!key}\index{SSH!keygen}
+SSH keys authenticate you to GitHub from the command line, replacing the password prompt
+on every push and pull. Before generating, check whether a key already exists so you do not
+overwrite one you rely on for another server:
 
-\section{Security Thread}
+\begin{verbatim}
+ls ~/.ssh/
+\end{verbatim}
 
-\newthought{\texttt{.gitignore} is a security control.}\index{.gitignore!security} Git history is permanent—a leaked
-secret committed once is leaked forever, even after deletion. \texttt{setup-server.sh} must never contain
-passwords, keys, or credentials. If a secret is accidentally committed, consider the secret compromised:
-rotate it immediately, then use tools like \texttt{git filter-branch} or BFG Repo-Cleaner to rewrite history.
+\marginnote{\newthought{Rings a bell?}\index{SSH!key}
+You generated an \texttt{id\_ed25519} key in Block~1 to log in to the \texttt{prod} VM
+without a password. That same key is sitting in \texttt{\textasciitilde/.ssh/} now,
+which is exactly why \texttt{ls} matters before the next step: accepting the default
+path would overwrite the production key and lock you out of the server.}
 
+If you see a file called \texttt{id\_ed25519}, that path is already in use. Either reuse it
+for GitHub as well, or generate a new key under a distinct filename so both keep working.
+Otherwise, generate the default key pair on the \texttt{dev} VM:
+\marginnote{\newthought{Multiple SSH keys?}\index{SSH!config}
+If you keep one key for production servers and another for GitHub, tell SSH which to use
+for each host with an \texttt{\textasciitilde/.ssh/config} entry:
+\\[0.5em]
+\texttt{Host github.com}\\
+\texttt{\quad HostName github.com}\\
+\texttt{\quad User git}\\
+\texttt{\quad IdentityFile \textasciitilde/.ssh/id\_ed25519\_github}\\
+\texttt{\quad IdentitiesOnly yes}
+\\[0.5em]
+Then \texttt{chmod 600 \textasciitilde/.ssh/config}. Without
+\texttt{IdentitiesOnly}, SSH may offer the wrong key first and GitHub will reject the
+connection after a handful of auth failures.}
+\begin{verbatim}
+ssh-keygen -t ed25519 -C "your@email.com"
+\end{verbatim}
+
+The tool prompts for a file location. If \texttt{\textasciitilde/.ssh/id\_ed25519} does not yet
+exist, press Enter to accept the default; if it does, type a distinct path such as
+\texttt{\textasciitilde/.ssh/id\_ed25519\_github} so the existing key is preserved.
+It then prompts for a passphrase, optional but recommended, it encrypts the private key on
+disk so a stolen key file is not immediately usable.
+
+
+
+\marginnote{\newthought{What just happened?}\index{SSH!public key}\index{SSH!private key}
+\texttt{ssh-keygen} created two files in \texttt{\textasciitilde/.ssh/}.
+\texttt{id\_ed25519} is the private key: never share it, never commit it, never copy it
+to another machine without good reason.
+\texttt{id\_ed25519.pub} is the public key, safe to share, this is the file you paste into GitHub.
+The \texttt{-t ed25519} flag picks a modern signature algorithm; the \texttt{-C} comment
+labels the key so you can recognise it later when you have several.}
+
+\newthought{Add the public key to GitHub.} Print it to the terminal and select the entire output,
+beginning with \texttt{ssh-ed25519} and ending with the comment:
+
+\begin{verbatim}
+cat ~/.ssh/id_ed25519.pub
+\end{verbatim}
+
+In GitHub, navigate to Settings, then SSH and GPG keys, then New SSH key. Give it a
+recognisable title like \texttt{pixelwise-dev-vm} so you know which machine it belongs to,
+paste the public key into the Key field, and save.
+
+\newthought{Test the connection:}
+
+\begin{verbatim}
+ssh -T git@github.com
+\end{verbatim}
+
+The first time, SSH asks whether to trust GitHub's host fingerprint. Type \texttt{yes}.
+If the key is set up correctly, GitHub responds with
+\texttt{Hi <username>! You've successfully authenticated, but GitHub does not provide shell access.}
+The message about shell access sounds like an error but is the intended response: GitHub
+only allows Git operations over SSH, not interactive shells.
+
+\newthought{Initialise the PixelWise repo} on the \texttt{dev} VM. Pick a stable working
+directory, your home folder is the natural place, so the project does not get lost in
+\texttt{/tmp} or buried under \texttt{Downloads}:
+
+\marginnote{\texttt{cd \textasciitilde} jumps to your home directory from anywhere.
+\texttt{pwd} prints the current path so you can confirm where you are before
+running \texttt{git init}. Avoid initialising a repo inside \texttt{/tmp}, on a
+mounted USB drive, or inside another existing Git repository.}
+
+\begin{verbatim}
+cd ~                          # start from your home directory
+mkdir pixelwise && cd pixelwise
+pwd                           # confirm: /home/<user>/pixelwise
+git init
+\end{verbatim}
+
+Write a \texttt{README.md} with a one-line project description.
+
+
+% -----------------------------------------------------------------------------
+\vspace{2em}
+\section{Exercise: Staging, Committing, and .gitignore}\index{exercises}
+
+\newthought{Write a \texttt{.gitignore}.} Create a \texttt{.gitignore} file that excludes
+Python caches, virtual environments, secret files, dataset directories, model checkpoints, and editor files.
+Verify it works: create a file called \texttt{scratch.pyc}, run \texttt{git status}, and confirm Git does not list it.
+Then remove the test file.
+
+\newthought{Make your first commit.} Stage and commit \texttt{README.md}
+and \texttt{.gitignore}:
+
+\begin{verbatim}
+git add README.md .gitignore
+git commit -m "Add project README and .gitignore"
+\end{verbatim}
+
+Run \texttt{git log} to see your first commit. Run \texttt{git status} to confirm the working directory is clean.
+
+\marginnote{\newthought{The habit to build:} after every commit, run \texttt{git status} and \texttt{git log -{}-oneline}
+to confirm what just happened. It takes two seconds and prevents surprises.}
+
+
+% -----------------------------------------------------------------------------
+\newpage
+\section{Exercise: Branching, Merging, and Conflicts}\index{exercises}
+
+\newthought{Create a feature branch} and make a change to \texttt{README.md}:
+
+\marginnote{\newthought{Editing files in the terminal.}\index{nano}
+\texttt{nano README.md} opens the file in a simple terminal editor.
+The bar at the bottom of the screen lists the shortcuts, where \texttt{\^{}} stands for
+the \texttt{Ctrl} key: \texttt{Ctrl+O} writes the file to disk, \texttt{Ctrl+X} exits,
+and \texttt{Ctrl+G} shows full help. Vim and VS~Code over Remote~SSH work just as well
+if you prefer them.}
+
+\begin{verbatim}
+git checkout -b feature-readme
+nano README.md          # add a project description line
+git add README.md
+git commit -m "Add project description to README"
+\end{verbatim}
+
+\newthought{Switch back to \texttt{main}} and edit the same line differently:
+
+\marginnote{\newthought{\texttt{main} or \texttt{master}?}\index{Git!default branch}
+Older Git versions called the default branch \texttt{master}. Since 2020, the convention has
+shifted to \texttt{main}, and GitHub creates new repositories with \texttt{main} by default.
+If \texttt{git checkout main} reports that the branch does not exist, run \texttt{git branch}
+to see what your repo actually calls it. To bring an existing repository in line with the
+new convention, rename in place with \texttt{git branch -m master main}, then set the default
+for future \texttt{git init} runs with
+\texttt{git config -{}-global init.defaultBranch main}.}
+
+\begin{verbatim}
+git checkout main
+nano README.md          # edit the same line, but differently
+git add README.md
+git commit -m "Add alternative description to README"
+\end{verbatim}
+
+\newthought{Merge and resolve the conflict.} Now merge the feature branch and observe the conflict:
+
+\begin{verbatim}
+git merge feature-readme
+\end{verbatim}
+
+Git reports a conflict and pauses the merge. Open \texttt{README.md} with
+\texttt{nano README.md}. You will see a block that looks like this:
+
+\begin{verbatim}
+<<<<<<< HEAD
+... your text on main
+=======
+... text from feature-readme
+>>>>>>> feature-readme
+\end{verbatim}
+
+\marginnote{\newthought{\texttt{git status} during a merge.}\index{Git!status}
+While the merge is paused, \texttt{git status} reports ``You have unmerged paths''
+and lists every file with conflict markers still in it. Run it any time to remind
+yourself which files still need to be resolved before you can finish the merge.}
+
+\texttt{HEAD} marks the version sitting on the branch you are currently on,
+in this case \texttt{main}. The lines after \texttt{=======} are what \texttt{feature-readme}
+is bringing in. Choosing the correct version means deciding what the file should look like
+once both changes are reconciled. You have three options: keep only the \texttt{HEAD} side,
+keep only the incoming side, or write a merged version that combines parts of both.
+Then delete all three marker lines, \texttt{<<<<<<< HEAD}, \texttt{=======},
+and \texttt{>>>>>>> feature-readme}, so the file contains only the resolved content.
+Save with \texttt{Ctrl+O} and exit with \texttt{Ctrl+X}, then complete the merge:
+
+\begin{verbatim}
+git add README.md
+git commit -m "Resolve merge conflict in README"
+\end{verbatim}
+
+Verify with \texttt{git log -{}-oneline -{}-graph} that both branches are now integrated.
+
+
+% -----------------------------------------------------------------------------
+\section{Exercise: Tags and History Browsing}\index{exercises}
+
+\newthought{Tag the release.} Mark this point in history:
+
+\begin{verbatim}
+git tag -a v0.1 -m "initial server setup"
+\end{verbatim}
+
+\marginnote{\newthought{Why no \texttt{git push} yet?}\index{Git!push}
+Tags live locally until you push them. We have not configured a remote yet, that happens
+in the next exercise. Once the remote exists, \texttt{git push -{}-tags} ships every local
+tag to GitHub, where it appears under the repository's ``Releases'' tab.}
+
+Verify the tag exists with \texttt{git tag -l} and inspect it with \texttt{git show v0.1}.
+
+\newthought{Install \texttt{tig},} a terminal-based Git browser:
+
+\begin{verbatim}
+sudo apt install -y tig
+tig
+\end{verbatim}
+
+Navigate the commit history and find your tag. Press \texttt{q} to quit.
+
+\marginnote{\newthought{VS Code} can also browse Git history visually.
+Open the PixelWise folder via \texttt{code .} or Remote SSH,
+then use the Source Control panel and the GitLens extension
+to explore commits, branches, and tags with a graphical interface.}
+
+
+% -----------------------------------------------------------------------------
+\section{Exercise: Remotes, Push, and Clone}\index{exercises}
+
+\newthought{Connect to GitHub.} Create a repository on GitHub, add it as a remote, push the
+commits, then push the tag you created in the previous exercise:
+
+\marginnote{\newthought{Replace \texttt{user} with your GitHub username.}\index{GitHub!username}
+The \texttt{user} placeholder in the remote URL is just a stand-in. Substitute your own
+GitHub handle, the one shown in your profile URL at \texttt{github.com/<your-handle>},
+so the URL points at the repository under your account. The same goes for the \texttt{git clone}
+URL on the server below. Pushing to a \texttt{user/pixelwise} that you do not own will fail.}
+
+\begin{verbatim}
+git remote add origin git@github.com:user/pixelwise.git
+git push -u origin main
+git push --tags
+\end{verbatim}
+
+Verify on GitHub that your commits, \texttt{.gitignore}, and the \texttt{v0.1} tag under the
+``Releases'' tab are all visible.
+
+\newthought{Clone to the server.} SSH into the server and clone PixelWise to its permanent home:
+
+\marginnote{\newthought{SSH into \texttt{prod} again.}\index{SSH!login}
+From the \texttt{dev} VM, open a session to \texttt{prod} the same way you did in Block~1:
+\\[0.5em]
+\texttt{ssh produser@192.168.56.11}
+\\[0.5em]
+The key-based login from Block~1 is still in place, no password should be required. Once
+you are on \texttt{prod}, the prompt changes to \texttt{produser@prod}, and the commands
+below run on the server. Type \texttt{exit} when you are done to return to \texttt{dev}.}
+
+\begin{verbatim}
+sudo mkdir -p /opt/pixelwise
+sudo chown produser:produser /opt/pixelwise
+git clone https://github.com/user/pixelwise.git /opt/pixelwise
+\end{verbatim}
+
+\marginnote{\newthought{Why HTTPS on \texttt{prod}, SSH on \texttt{dev}?}\index{Git!HTTPS clone}
+\texttt{dev} pushes commits back to GitHub, so it needs the SSH key you registered earlier.
+\texttt{prod} only ever pulls, it is a deployment target, never an authoring machine.
+HTTPS clone of a public repository requires no key, no token, no extra setup, which matches
+how real deployment servers usually have read-only access to the source repository.
+If your repository is private or you later need to push from \texttt{prod}, generate a second
+SSH key on \texttt{prod} and register it on GitHub the same way you did on \texttt{dev}.}
+
+PixelWise now lives on both machines. Run \texttt{git log -{}-oneline} on the server to confirm the full history arrived.
+
+
+\newpage
+% -----------------------------------------------------------------------------
 \section{Self-Reflection and Recap}
 
 \newthought{Reflection questions:}
 \begin{itemize}
-    \item What is the difference between \texttt{git add} and \texttt{git commit}?
-    \item Why should you never commit \texttt{.env} files or API keys?
-    \item What happens to a secret that was committed and then deleted in a later commit?
-    \item Why do we capture the server setup in a script rather than just running commands manually?
-    \item When would you use a branch instead of committing directly to \texttt{main}?
+    \item Why does changing a single character in a file produce a completely different commit hash?
+    \item What is the difference between \texttt{git add} and \texttt{git commit}, and why does Git separate the two steps?
+    \item When would you use a branch instead of committing directly to \texttt{main}, and what happens when a merge produces a conflict?
+    \item Why should you never commit \texttt{.env} files or API keys, and what is the role of pull requests in catching mistakes before they reach \texttt{main}?
+    \item Why does PixelWise use SSH keys rather than passwords for Git operations across both VMs?
 \end{itemize}
 
-\newthought{Milestone:} PixelWise lives on GitHub. Server has the repo cloned at \texttt{/opt/pixelwise}.
-\texttt{setup-server.sh} is version-controlled: provisioning is reproducible and auditable.
+\newthought{Milestone:} Your project lives on GitHub with a README, a \texttt{.gitignore}, and a tagged release.
+The server has the repo cloned at \texttt{/opt/pixelwise}. Both machines share the same history.
+In the next block we turn the manual package installs into a reproducible setup script and tackle dependency management.
