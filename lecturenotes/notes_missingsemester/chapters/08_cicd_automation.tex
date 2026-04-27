@@ -165,7 +165,7 @@ to the dev VM over SSH. The two-machine setup from Block~1 pays off again.
 pg_dump -U pixelwise pixelwise \
     > /tmp/pixelwise_$(date +%Y%m%d).sql
 rsync -avz /tmp/pixelwise_$(date +%Y%m%d).sql \
-    student@192.168.56.10:/backups/pixelwise/
+    user@192.168.56.10:/backups/pixelwise/
 \end{verbatim}
 
 \marginnote{\texttt{rsync}\index{rsync} (\url{https://rsync.samba.org/}) is efficient file sync over SSH—incremental
@@ -262,7 +262,7 @@ At the end of this session, take a snapshot named \texttt{B8-complete}.}
         > /tmp/pixelwise_$(date +\%Y\%m\%d).sql \
         && rsync -avz \
         /tmp/pixelwise_$(date +\%Y\%m\%d).sql \
-        student@192.168.56.10:/backups/pixelwise/
+        user@192.168.56.10:/backups/pixelwise/
     \end{verbatim}
     On the dev VM, create the backup directory:
     \begin{verbatim}

@@ -95,6 +95,7 @@
 
 %% Start the main matter
 \mainmatter
+\authorinrectoheader
 
 
 % ======================================================================
@@ -123,41 +124,42 @@
 \part{Representing Pattern}
 
 % Lecture 5: Dimensionality Reduction
-\input{chapters/05_dimensionality_reduction}
+%\input{chapters/05_dimensionality_reduction}
 
 % Lecture 6: Variational Inference
-\input{chapters/06_variational_inference}
+% \input{chapters/06_variational_inference}
 
 % Lecture 7: Uncertainty Estimation
-%\input{chapters/07_uncertainty_estimation}
+\input{chapters/07_uncertainty_estimation}
 
 
 % ======================================================================
-% ACT III: Pattern FROM SELF-SUPERVISION
+% ACT III: Pattern FROM INSIDE-SUPERVISION
 % ======================================================================
 
 
-%\part{Epistemic Pattern}
+\part{Epistemic Pattern}
 
-% Lecture 8: Self-Supervised Learning (Contrastive vs Generative, Proxies, Auxiliary Sensors)
-%\input{chapters/08_self_supervised_learning}
+% Lecture 8: Zero-Shot, Few-Shot, and Transfer Learning
+\input{chapters/08_zero_few_shot_transfer}
 
-% Lecture 9: Zero-Shot, Few-Shot, and Transfer Learning
-%\input{chapters/09_zero_few_shot_transfer}
+% Lecture 9: Self-Supervised Learning (now also covers self-training, pseudo-labels, FixMatch, Mean Teacher, co-training)
+%\input{chapters/09_self_supervised_learning}
 
 
 % ======================================================================
-% ACT IV: Pattern FROM IMPERFECT SUPERVISION
+% ACT IV: Pattern FROM OUTSIDE SUPERVISION
 % ======================================================================
 
-%\part{Aleatoric Pattern}
+\part{Aleatoric Pattern}
 
-% Lecture 10: Weak Supervision and Labeling Functions
+% Lecture 10: Weak Supervision and Active Learning (LFs, Snorkel, label noise, query strategies)
 %\input{chapters/10_weak_supervision}
 
-% Lecture 11: Self-Training and Ensemble Methods 
-% (maybe this needs to be at self-supervised learning) 
-%\input{chapters/11_self_training_ensembles}
+
+% Use this page on why it is not working. Maybe switch with imitation learning. 
+% Lecture 13: Reinforcement Learning Fundamentals
+%\input{chapters/13_reinforcement_learning}
 
 % Lecture 12: Interactive and Imitation Learning
 %\input{chapters/12_interactive_learning}
@@ -169,9 +171,12 @@
 
 %\part{World Pattern}
 
-% Use this page on why it is not working. Maybe switch with imitation learning. 
-% Lecture 13: Reinforcement Learning Fundamentals
-%\input{chapters/13_reinforcement_learning}
+% Lecture 11: retired. Self-training/pseudo-label content folded into chapter 9; active learning into chapter 10.
+% The file chapters/11_self_training_ensembles.tex is kept as a backup but is not built.
+% Continual & Lifelong Learning — Learning over time without forgetting; replay, regularization, model souping.
+% Causal Representation Learning — Disentangling causes from correlations; intervention-stable factors from observational data.
+% Mechanistic Interpretability & Sparse Autoencoders — SAEs as unsupervised feature discovery inside trained nets.
+% Physics informed, or in general informed (make this derived from imitation learning)
 
 % Lecture 14: World Models and Vision-Language-Action Models
 %\input{chapters/14_world_models_vla}
