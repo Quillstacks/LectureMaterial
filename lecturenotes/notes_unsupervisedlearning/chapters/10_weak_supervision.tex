@@ -253,6 +253,85 @@ where $w_i$ is based on loss value, prediction confidence, or label model confid
 \end{itemize}
 
 
+\section{Active Learning}\index{active learning}
+
+\marginnote{\newthought{Weak supervision} works with the labels you already have. Active learning chooses which labels to request next.}
+
+\newthought{Labelling functions are cheap, but human time is not.} An expert can produce a near-perfect label for any single example, yet their throughput is bounded; in industrial settings the oracle is rate limited by contract or by attention. Active learning\index{active learning}~\cite{Settles2012ActiveLearning} accepts this constraint and asks a different question, namely which input, if labelled now, would most improve the model.
+
+\newthought{Where weak supervision combined many noisy votes,} active learning escalates a single example to a clean vote. The two are complementary; they sit on the same axis of imperfect supervision but pull in opposite directions. Snorkel asks how to make do with what we have. Active learning asks what to ask for next.
+
+\newthought{The acquisition function} formalises this choice. Given a pool of unlabelled inputs $\mathcal{U}$ and a budget of $b$ queries, we score every $x \in \mathcal{U}$ by an informativeness function $a(x)$ and request labels for the top-$b$ examples. Different definitions of $a$ produce different querying behaviours.
+
+\subsection{Uncertainty Sampling}\index{uncertainty sampling}
+
+\marginnote{\newthought{Callback to chapter 7.} The predictive entropy and the margin we used for routing-to-human now drive what we ask the human about.}
+
+\newthought{Uncertainty sampling} picks the input where the model is least sure of its prediction. The predictive entropy
+\begin{equation}
+    a_{\text{ent}}(x) = -\sum_y p_\theta(y \mid x) \log p_\theta(y \mid x)
+\end{equation}
+peaks when the softmax distribution is flat. The margin
+\begin{equation}
+    a_{\text{mar}}(x) = -\bigl(p_\theta(y_1^* \mid x) - p_\theta(y_2^* \mid x)\bigr)
+\end{equation}
+focuses on the gap between the top two classes; small margins flag near-tie decisions. Both are direct consumers of the calibrated probabilities from chapter 7, which is what makes the uncertainty machinery so reusable here.
+
+\subsection{Query by Committee}\index{query by committee}
+
+\newthought{Query by committee} replaces a single model with an ensemble and queries inputs where ensemble members disagree most. Disagreement can be measured by vote entropy across the committee or by the average KL divergence between each member's predictive distribution and the ensemble mean. Deep ensembles\index{deep ensembles}~\cite{Lakshminarayanan2017} provide a clean implementation; MC Dropout from chapter 7 is the cheap stand-in when training $M$ networks is too expensive.
+
+\newthought{Disagreement is structurally different from uncertainty.} A single overconfident model can be confidently wrong; an ensemble of models trained from different seeds will spread their probability mass on inputs the data did not pin down. Query by committee therefore catches epistemic uncertainty that uncertainty sampling on a single model can miss.
+
+\subsection{Expected Model Change}\index{expected model change}
+
+\newthought{Expected model change} flips the question. Rather than asking where the model is unsure, it asks which label would shift the parameters the most. A common surrogate is the expected gradient length,
+\begin{equation}
+    a_{\text{egl}}(x) = \mathbb{E}_{y \sim p_\theta(y \mid x)} \bigl\| \nabla_\theta \mathcal{L}(x, y) \bigr\|.
+\end{equation}
+The label is hypothetical, so the expectation runs over the model's current belief. This is principled, since it directly targets parameter movement, but it is also expensive; every candidate requires a gradient evaluation per possible label. In practice it is reserved for small pools or for selecting batches in the final rounds where uncertainty has plateaued.
+
+\subsection{Pool, Stream, and Membership Query}\index{pool-based active learning}
+
+\newthought{The setting changes the algorithm.} In pool-based active learning the entire unlabelled set $\mathcal{U}$ sits on disk and we score every example before each query round; this is the standard text or image setup. In stream-based selective sampling the inputs arrive one at a time and we must decide on the spot whether to forward this one to the oracle, common in network monitoring and click streams. In membership query synthesis the learner constructs a synthetic input and asks the oracle to label it, which is powerful but often produces inputs no human can interpret. Pool-based is the default for the rest of this section.
+
+\subsection{The Cold-Start Problem}\index{cold start}
+
+\marginnote{\newthought{Cold start} is why every active-learning pipeline opens with a small random or stratified seed before the acquisition function takes over.}
+
+\newthought{Active learning has a chicken-and-egg flaw} at the start. The acquisition functions above all rely on the model's own probabilities or its own gradient. With ten labels and a freshly initialised network those probabilities are nearly uniform, so the entropy is high everywhere and the model points the oracle at random points. Worse, the calibration tools from chapter 7 also need data; an underfit model is overconfident on the training set and uniformly confused off it.
+
+\newthought{The fix is a clean seed.} A small batch of labels chosen by stratified random sampling, or by clustering on representations and picking medoids, gives the model enough signal to produce uncertainty estimates that mean something. Only then is it safe to switch over to uncertainty sampling or query by committee. Treat the first few rounds as bootstrap, not as exploitation.
+
+\subsection{Composition with Weak Supervision}
+
+\newthought{Active learning and weak supervision compose} into a hybrid pipeline that uses each for what it does well. The model fits on the probabilistic labels from Snorkel; the acquisition function flags the inputs where Snorkel and the model disagree, or where the label model itself is uncertain because too few labelling functions voted. The oracle then labels those inputs, but the human is not asked only for a label; they are asked why, and the why becomes a new labelling function. The model's uncertainty signal therefore drives both the next label request and the next labelling-function priority, closing a loop between cheap programmatic supervision and expensive human supervision.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    node distance=1.4cm,
+    every node/.style={font=\small, align=center},
+    block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                  minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt},
+    arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+]
+    \node[block] (pool) {Unlabelled Pool $\mathcal{U}$};
+    \node[block, right=of pool] (acq) {Acquisition $a(x)$};
+    \node[block, right=of acq] (oracle) {Oracle};
+    \node[block, below=of acq, fill=black!8] (model) {Model $p_\theta$};
+    \draw[arr] (pool.east) -- (acq.west);
+    \draw[arr] (acq.east) -- (oracle.west);
+    \draw[arr] (oracle.south) |- node[right, font=\tiny, pos=0.25] {labelled $(x, y)$} (model.east);
+    \draw[arr] (model.west) -| node[left, font=\tiny, pos=0.75] {$p_\theta(y \mid x)$} (acq.south);
+\end{tikzpicture}
+\caption{The active-learning loop. The model's predictive distribution feeds the acquisition function, which selects inputs from the pool for the oracle, whose labels retrain the model.}
+\label{fig:active_learning_loop}
+\end{figure}
+
+\newthought{Notice that the acquisition function} is the only place where chapter 7 and chapter 10 actually meet. Predictive entropy was a routing signal there; it is a query signal here. Same number, different downstream consumer.
+
+
 \section{Association Rules as Labeling Functions}\index{association rules}
 
 \marginnote{From Apriori to labelling: mine rules from data structure.}
@@ -293,6 +372,43 @@ Assuming independent LFs and uniform prior, compute $P(y = \text{positive})$.
 
 Two LFs both use keyword matching. Why might their errors be correlated? How does this affect the label model?
 
+\subsection{Exercise 4: Acquisition Function Bake-Off}
+
+A three-class classifier returns the following softmax probabilities over $\{c_1, c_2, c_3\}$ on six pool inputs:
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.10\textwidth}p{0.12\textwidth}p{0.12\textwidth}p{0.12\textwidth}}
+    \toprule
+    \textbf{Input} & \textbf{$p(c_1)$} & \textbf{$p(c_2)$} & \textbf{$p(c_3)$} \\
+    \midrule
+    $u_1$ & $0.80$ & $0.15$ & $0.05$ \\
+    $u_2$ & $0.45$ & $0.40$ & $0.15$ \\
+    $u_3$ & $0.34$ & $0.33$ & $0.33$ \\
+    $u_4$ & $0.60$ & $0.30$ & $0.10$ \\
+    $u_5$ & $0.50$ & $0.45$ & $0.05$ \\
+    $u_6$ & $0.95$ & $0.04$ & $0.01$ \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Predicted softmax distributions for six pool inputs. Each row sums to one.}
+\label{tab:al_pool}
+\end{table*}
+
+Your tasks: compute the predictive entropy and the margin for every input, then identify the top-2 queries that uncertainty sampling and margin sampling would each request. Comment on whether they agree.
+
+\vspace{0.5em}
+
+\newthought{Step.} For $u_2$, the entropy is
+\begin{align*}
+    a_{\text{ent}}(u_2) &= -\bigl(0.45 \log 0.45 + 0.40 \log 0.40 + 0.15 \log 0.15\bigr) \\
+                        &\approx 0.359 + 0.366 + 0.285 \\
+                        &\approx 1.010 \text{ nats}
+\end{align*}
+and the margin is $a_{\text{mar}}(u_2) = -(0.45 - 0.40) = -0.05$. Repeat for the other five inputs and rank them.
+
+\newthought{Reflect.} Suppose you also have a deep ensemble of three models that all return the same row for $u_3$ but disagree sharply on $u_5$. Which input would query by committee prefer, and why does this differ from what the single-model entropy says?
+
 
 \section{Self-Reflection and Recap}
 
@@ -306,6 +422,8 @@ Two LFs both use keyword matching. Why might their errors be correlated? How doe
     \item How does co-teaching avoid the confirmation bias that a single network would accumulate?
     \item What are the risks of distant supervision, and how would you mitigate them?
     \item Could you combine weak supervision with active learning, and if so, how?
+    \item Why is uncertainty sampling unsafe in the very first round of active learning, and what should you do instead?
+    \item When would you prefer query by committee over single-model uncertainty sampling, and what does that say about the kind of uncertainty each strategy captures?
 \end{enumerate}
 
 \vspace{1.5em}
@@ -317,14 +435,20 @@ Two LFs both use keyword matching. Why might their errors be correlated? How doe
     \item Labelling functions encode domain knowledge as noisy voters; the coverage-accuracy trade-off determines their utility in the label model.
     \item Snorkel aggregates multiple noisy sources into probabilistic labels and trains a discriminative model that generalises beyond the rules.
     \item Noise-robust training via loss correction, sample weighting, and co-teaching handles residual label errors after aggregation.
+    \item Active learning chooses which unlabelled inputs to escalate to a human oracle by scoring them with an acquisition function such as predictive entropy, margin, ensemble disagreement, or expected gradient length.
+    \item Active learning and weak supervision compose; the model's uncertainty signal both prioritises label requests and surfaces gaps that the next labelling function should cover, but the cold-start problem forces a clean seed before any acquisition function can be trusted.
 \end{itemize}
 
 \vspace{2.5em}
 
-\marginnote{\newthought{Teaser.} What if the model itself becomes the labeller, using its own confident predictions as training signal?}
+\marginnote{\newthought{Root cause.} Every method in this chapter assumed the human only ever delivers a class label, never a behaviour or a correction.}
 
-\newthought{We have used heuristics and noisy external sources for labels.} But labelling functions must be written by hand, and their coverage is inherently limited. A natural next step is to let the model label the data it is most confident about, then retrain on those self-generated labels.
+\newthought{The oracle in this chapter was a labelling oracle.} A medical-triage classifier trained with Snorkel and refined by uncertainty sampling can ask the radiologist whether a lesion is benign or malignant, but it cannot ask the radiologist how she would have moved the probe, nor can it watch her decide when to stop scanning. For sequential tasks, robotic manipulation, dialogue, surgical assistance, the informative supervision is not a label on a single input but a trajectory of decisions across time. A label-only oracle cannot transmit that.
 
-\newthought{The next chapter explores self-training,} where the model's own predictions become pseudo-labels, and consistency regularisation forces stable predictions under augmentation.
+\newthought{Interactive and imitation learning broaden the oracle.} Rather than querying for a label, the next chapter queries for a demonstration, a correction, or a reward. Active learning and weak supervision generalise here in the obvious way; the acquisition function still picks the most informative state to ask about, but what comes back is an action sequence, not a class. The cold-start problem reappears in a sharper form, because covariate shift means a partly trained imitator drifts into states the demonstrator never visited.
+
+\marginnote{\newthought{Teaser.} If the oracle no longer hands you a label but takes the wheel, what exactly are you learning?}
+
+\newthought{The next chapter explores interactive and imitation learning,} where behaviour cloning, DAgger-style correction, and inverse reinforcement learning extend the active-learning idea from labels to whole policies.
 
 \marginnote{\newthought{feedback}}

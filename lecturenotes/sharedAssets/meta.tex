@@ -109,14 +109,25 @@ See the license for details.\index{license}
 }
 
 %%
-% Page header: show author name on every page (verso and recto).
-% Must patch \mainmatter because tufte-book resets \fancyhead inside it.
+% Page header: keep tufte-book's native two-side alternation
+% (verso LE shows the book title, recto RO shows the current chapter
+% title via \chaptermark/\leftmark) and add the author name to the
+% verso only, so the author surfaces on every other page without
+% disturbing the chapter title on recto.
 %%
 \let\tufte@orig@mainmatter\mainmatter
 \renewcommand{\mainmatter}{%
   \tufte@orig@mainmatter
   \fancyhead[LE]{\thepage\quad\smallcaps{\newlinetospace{\plaintitle}}\quad\smallcaps{\defaultauthor}}%
-  \fancyhead[RO]{\smallcaps{\defaultauthor}\quad\smallcaps{\newlinetospace{\plaintitle}}\quad\thepage}%
+}
+%%
+% Helper for the main file: call AFTER \mainmatter to add the author to
+% the recto chapter header. Kept outside \renewcommand{\mainmatter} so
+% that the inner \renewcommand{\chaptermark} sees its parameter as #1
+% rather than ##1, which works cleanly with \markboth.
+%%
+\newcommand{\authorinrectoheader}{%
+  \renewcommand{\chaptermark}[1]{\markboth{##1\quad\smallcaps{\defaultauthor}}{}}%
 }
 
 %%
