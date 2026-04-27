@@ -2,8 +2,8 @@
 % Chapter 7: Uncertainty Estimation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Knowing What You Don't Know}\index{Uncertainty Estimation}\index{Anomaly Detection}\index{OOD Detection}
-\newthought{A model that cannot express doubt is dangerous.}
+\chapter{Uncertainty Estimation}\index{Uncertainty Estimation}\index{Anomaly Detection}\index{OOD Detection}
+\newthought{Knowing what you don't know.}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -13,14 +13,14 @@
 
 \marginnote{\newthought{Confidence without calibration} is the fastest route to silent failure.}
 
-\newthought{In the previous chapters} we learned to compress high-dimensional data into lower-dimensional representations and to generate new samples from learned latent spaces.
-Neither capability answers a critical question: how much should we trust what the model has learned?
-A VAE that reconstructs a familiar coffee aroma profile faithfully tells us nothing about what it would do with a contaminated sample it has never seen.
+\newthought{In the previous chapter} we built a latent space whose density tells us where the training data lives. A VAE assigns high likelihood to inputs near the embeddings it has seen, and low likelihood to those far from them. That density is already an unsupervised signal of familiarity. What it does not give us is a principled way to act on the gap between familiar and unfamiliar, nor a way to separate genuinely ambiguous inputs from inputs the model has simply never seen.
 
-\newthought{Uncertainty estimation} closes this gap.
+\newthought{Uncertainty estimation} closes the gap.
 It asks: given a model trained on finite data under specific assumptions, how reliable are its outputs for a particular input?
-The answer matters wherever consequences are real: medical diagnosis, autonomous driving, fraud detection, manufacturing quality control.
+The answer matters wherever consequences are real, including medical diagnosis, autonomous driving, fraud detection, and manufacturing quality control.\index{deployed ML}
 A model that cannot express doubt will eventually be confidently wrong, and no downstream safeguard can compensate for an uncertainty signal that was never produced.
+
+\marginnote{\newthought{The supervisory signal} comes from the data itself: the model's own variance across forward passes, the density of training examples nearby, the reconstruction loss of an autoencoder. No labels are needed to know that an input is unfamiliar.}
 
 \newthought{In order to move from confident predictions to calibrated ones} we have good reason to find ways to,
 \begin{itemize}
@@ -29,7 +29,7 @@ A model that cannot express doubt will eventually be confidently wrong, and no d
     \item act on uncertainty estimates in practice, routing unreliable predictions to human reviewers and detecting inputs the model was never trained to handle.
 \end{itemize}
 
-\subsection{Hands On Experience}
+\subsection{Hands-On Experience}
 
 \begin{marginfigure}
 \centering
@@ -68,12 +68,41 @@ A model that cannot express doubt will eventually be confidently wrong, and no d
 \label{fig:uncertainty_intro}
 \end{marginfigure}
 
-\newthought{Given} a cluster of training points, consider the three grey candidates.
-How confident should a model be about each one?
-What sources of uncertainty are at play, noise in the data or gaps in the model's experience?
-How would you decide when the model's judgment can be trusted and when a human should intervene?
+\newthought{Given} a cluster of training points and three grey candidates, ask yourself a few questions before reading on. How confident should a model be about each one? Which of the three is hardest to call, and is the difficulty due to noise in the data or to gaps in the model's experience? At what point would you stop trusting the model's judgment and pass the decision to a human?
 
-\vspace{2.5em}
+\newthought{Form groups of five.} Each member is one network in an ensemble. The group will play four short games that turn the chapter's main ideas into a physical experiment.
+
+\marginnote{\newthought{Materials.}
+A pen and a small slip of paper for each member, plus one shared sheet for the group's tally.}
+
+\newthought{Step 1: Train.}
+Agree on a one-sentence rule that maps a number to a binary label, for example ``hot if greater than the threshold, cold otherwise''. Each member privately picks their own threshold uniformly between $4$ and $6$ and writes it on a slip of paper. The slips are hidden from the rest of the group; the small disagreement between members is what makes you an ensemble of similar but not identical models.
+
+\newthought{Step 2: In-distribution predictions.}
+The instructor calls out a number well inside the range, say $3$ or $7$. Every member shouts their prediction at the same moment. Tally agreement on the shared sheet, then repeat for two more in-distribution numbers. The ensemble converges; this is the regime where its mean prediction is reliable.
+
+\newthought{Step 3: Out-of-distribution predictions.}
+Now the instructor calls a number far from anything the group trained on, say $100$ or $-50$. Every member must still answer, but pay attention to how they answer: hesitation, half jokes, contradictory shouts. Tally agreement again. The variance has jumped, even though no member has more or less training than before. This jump is epistemic uncertainty, and it is the actionable kind: it would shrink if the group were allowed to extend its training range.
+
+\marginnote{
+\begin{itemize}
+    \item Which inputs were unanimous, and why?
+    \item For the OOD inputs, did anyone pick a confident wrong answer? What would have stopped them?
+\end{itemize}}
+
+\newthought{Step 4: Aleatoric input.}
+The instructor calls out a number sitting on the boundary, $5.0$ when the allowed thresholds were uniform on $[4, 6]$. Members will split, but extending the training range would not help; this disagreement is irreducible noise on the input itself. It is aleatoric, and the right response is not ``collect more data'' but ``communicate the ambiguity downstream''.
+
+\newthought{Step 5: Monte Carlo dropout.}
+Pick one member to be the ``input'' and the other four to be a single network. For each round, randomly close the eyes of two of the four; only the open-eyed members vote. Run five rounds with different random closures and record the votes. The variance across rounds is the MC Dropout uncertainty. Familiar inputs leave the rounds in agreement; unusual ones scatter them.
+
+\marginnote{\newthought{One model, many sub-models.}
+Step 5 turns a single network into an ensemble at test time by sampling sub-networks; Steps 2 to 4 used a real ensemble of independently trained members. Both estimate epistemic uncertainty by sampling models rather than data.}
+
+\newthought{Step 6: Threshold for action.}
+On the shared sheet, plot the agreement level against each input from Steps 2 to 5. Where would you place a threshold above which a prediction is shipped automatically and below which it is routed to a human reviewer? Now imagine the human reviewer charges fifty euros per case; does the threshold change? What if a wrong shipped answer would shut down a production line for an hour?
+
+\newthought{The fundamental question} is whether a model can know that it does not know. A confident wrong answer is a quiet failure; a flagged unknown is a recoverable one. Everything in this chapter, from variance across dropout masks to reconstruction error from a VAE, is one way of turning the boundary of the training distribution into a usable signal.
 
 \newthought{The Learning Objectives} of this lecture:
 \begin{itemize}
@@ -102,16 +131,27 @@ No model, however powerful, can eliminate aleatoric uncertainty.
 A model trained on summer temperatures has high epistemic uncertainty about winter; show it winter data and the uncertainty decreases.
 Epistemic uncertainty is the actionable kind; it tells us where the model needs more evidence.
 
+\marginnote{\newthought{A coffee analogy.} A trained barista cannot tell two identical-looking espressos apart by sight: that ambiguity is aleatoric, baked into the inputs. Show the same barista an unfamiliar single-origin and the hesitation is epistemic, an experience gap that more cups would close.}
+
 \newthought{The practical consequence} is that these two sources call for different responses.
 High aleatoric uncertainty means the problem is inherently hard at that point; the best strategy is to acknowledge the ambiguity and communicate it downstream.
 High epistemic uncertainty means the model has not seen enough relevant data; the best strategy is to collect more data, or to flag the prediction as unreliable.
+
+\newthought{The total predictive uncertainty} decomposes into the two contributions:
+\begin{align*}
+    \underbrace{\mathbb{V}\bigl[y \mid x\bigr]}_{\text{total}}
+        &= \underbrace{\mathbb{E}_\theta\!\bigl[\mathbb{V}[y\mid x, \theta]\bigr]}_{\text{aleatoric}}
+        \,+\, \underbrace{\mathbb{V}_\theta\!\bigl[\mathbb{E}[y\mid x, \theta]\bigr]}_{\text{epistemic}}
+\end{align*}
+
+The aleatoric term is the average noise level the model expects across plausible parameter settings $\theta$; the epistemic term is the disagreement among those settings about the mean prediction. The two methods that follow, MC Dropout and deep ensembles, both estimate the second term by sampling from a distribution over models.
 
 
 \section{Quantifying Epistemic Uncertainty}\index{Monte Carlo Dropout}\index{deep ensembles}
 
 \marginnote{\newthought{Knowing what you do not know} is essential for safe deployment.}
 
-\newthought{Monte Carlo Dropout}\cite{GalGhahramani2016} estimates epistemic uncertainty by running $T$ forward passes with dropout enabled at test time.
+\newthought{Monte Carlo Dropout}\cite{GalGhahramani2016} estimates epistemic uncertainty by running $T$ forward passes with dropout enabled at test time. In standard inference dropout is switched off; here we keep it on, so each pass uses a different randomly thinned sub-network.\index{dropout}
 
 \begin{algorithm}[H]
 \caption{MC Dropout for Uncertainty}
@@ -129,6 +169,18 @@ High variance across passes indicates that the model is unsure about this input.
 Each dropout mask produces a different sub-network, so the collection of forward passes approximates a posterior over model weights.
 Inputs well-represented in the training data will produce consistent predictions across masks; inputs far from the training distribution will produce scattered, disagreeing predictions.
 
+\marginnote{\newthought{Practical detail.} In PyTorch, \texttt{model.eval()} disables dropout. To run MC Dropout you instead leave the dropout layers in training mode while still freezing batch-norm statistics.}
+
+\begin{verbatim}
+def mc_dropout(model, x, T=30):
+    model.eval()                          # freeze BN
+    for m in model.modules():
+        if isinstance(m, nn.Dropout):
+            m.train()                     # keep dropout on
+    preds = torch.stack([model(x) for _ in range(T)])
+    return preds.mean(0), preds.var(0)
+\end{verbatim}
+
 \newthought{Deep ensembles}\index{deep ensembles}\cite{Lakshminarayanan2017} take the idea further by training $M$ independent models and aggregating their predictions:
 
 \begin{align*}
@@ -136,17 +188,54 @@ Inputs well-represented in the training data will produce consistent predictions
 \end{align*}
 
 Disagreement among ensemble members signals uncertainty.
-Unlike MC Dropout, each ensemble member is initialised and trained independently, so the diversity of predictions is driven by genuine differences in the learned representations rather than by random masking.
+Unlike MC Dropout, each ensemble member is initialised and trained independently, so the diversity of predictions is driven by genuine differences in the learned representations rather than by random masking. The price is $M$ times the training cost; the payoff is sharper, better-calibrated uncertainty, with $M{=}5$ to $10$ usually enough in practice.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small, align=center},
+    block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                  minimum width=1.6cm, minimum height=0.7cm, inner sep=4pt},
+    sample/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                   minimum width=1.6cm, minimum height=0.7cm, inner sep=4pt, fill=black!8},
+    arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+]
+    \node[block] (x) at (0, 0) {$x$};
+
+    \node[sample] (m1) at (3.0, 1.6) {$f_{\theta_1}$};
+    \node[sample] (m2) at (3.0, 0.6) {$f_{\theta_2}$};
+    \node[font=\large] at (3.0, -0.3) {$\vdots$};
+    \node[sample] (m3) at (3.0, -1.4) {$f_{\theta_T}$};
+
+    \node[block] (y1) at (5.6, 1.6) {$\hat{y}_1$};
+    \node[block] (y2) at (5.6, 0.6) {$\hat{y}_2$};
+    \node[block] (y3) at (5.6, -1.4) {$\hat{y}_T$};
+
+    \node[block, minimum width=2.4cm, minimum height=1.4cm] (agg) at (8.6, 0.1) {$\bar{y},\;\text{Var}(\hat{y})$};
+
+    \draw[arr] (x.east) -- (m1.west);
+    \draw[arr] (x.east) -- (m2.west);
+    \draw[arr] (x.east) -- (m3.west);
+    \draw[arr] (m1.east) -- (y1.west);
+    \draw[arr] (m2.east) -- (y2.west);
+    \draw[arr] (m3.east) -- (y3.west);
+    \draw[arr] (y1.east) -- (agg.west);
+    \draw[arr] (y2.east) -- (agg.west);
+    \draw[arr] (y3.east) -- (agg.west);
+\end{tikzpicture}
+\caption{Sampling-based epistemic uncertainty. The same input $x$ is passed through $T$ samples from a distribution over models: dropout sub-networks for MC Dropout, independently trained members for a deep ensemble. The mean of the $T$ predictions is the point estimate; their variance is the epistemic uncertainty signal.}
+\label{fig:uncertainty_sampling}
+\end{figure}
 
 
 \section{Application: Anomaly Detection}\index{Anomaly Detection}\index{outlier detection}
 
-\marginnote{\newthought{One of the most direct applications} of uncertainty estimation is anomaly detection: when a model assigns high uncertainty to an input, it is effectively saying that this does not look like what it was trained on.}
+\marginnote{\newthought{One direct application} of uncertainty estimation is anomaly detection: when a model assigns high uncertainty to an input, it is effectively saying that this does not look like what it was trained on.}
 
 \newthought{Anomaly detection}\cite{Chandola2009} asks whether individual observations deviate from a learned notion of normal.
-The methods in this section can be understood as different ways of measuring how uncertain the model is about an input: through distributional assumptions, through proximity in feature space, or through reconstruction fidelity.
+The methods in this section can be understood as different ways of measuring how uncertain the model is about an input, through distributional assumptions, through proximity in feature space, or through reconstruction fidelity.
 
-\subsection{Types of Anomalies}\index{point anomaly}\index{contextual anomaly}\index{collective anomaly}
+\newthought{Three kinds of anomalies}\index{point anomaly}\index{contextual anomaly}\index{collective anomaly} appear in practice, and each calls for a different score.
 
 \newthought{Point anomalies} are individual instances that are anomalous with respect to the rest of the data.
 A single fraudulent transaction amid millions of legitimate ones is a point anomaly.
@@ -220,9 +309,10 @@ A sequence of login attempts from 100 different countries within one hour is an 
 \end{figure}
 
 
-\subsection{Statistical Methods}\index{Z-score}\index{GMM!anomaly detection}
+\vspace{1.5em}
+\newthought{Statistical methods}\index{Z-score}\index{GMM!anomaly detection} assume a distribution and flag low-probability points.
 
-\marginnote{\newthought{Parametric methods} assume a distribution and flag low-probability points.}
+\marginnote{\newthought{Parametric methods} are fast and interpretable when the distributional assumption holds, brittle when it does not.}
 
 \newthought{The Z-score} is the simplest anomaly score for univariate data:
 
@@ -250,9 +340,10 @@ The number of components $K$ must be chosen carefully; too few and normal variat
 \end{align*}
 
 
-\subsection{Proximity-Based Methods}\index{k-NN distance}\index{Local Outlier Factor}
+\vspace{1.5em}
+\newthought{Proximity-based methods}\index{k-NN distance}\index{Local Outlier Factor} make precise the intuition that anomalies are far from their neighbours, with density either ignored or compensated for.
 
-\marginnote{\newthought{Anomalies are far} from their neighbours. Distance and density make this precise.}
+\marginnote{\newthought{Distance and density.} k-NN ranks by distance alone; LOF asks whether the local density looks like that of the surroundings.}
 
 \newthought{$k$-NN distance} assigns each point an anomaly score equal to its distance to its $k$-th nearest neighbour:
 
@@ -310,7 +401,8 @@ LOF $\approx 1$ means the point sits at a density similar to its neighbours; LOF
 \end{figure}
 
 
-\subsection{Reconstruction-Based Methods}\index{reconstruction error}\index{VAE!anomaly detection}
+\vspace{1.5em}
+\newthought{Reconstruction-based methods}\index{reconstruction error}\index{VAE!anomaly detection} use a generative model trained on normal data and turn its reconstruction loss into an anomaly score. This is exactly the bridge from the previous chapter: a VAE that places an input far from its prior, or that reconstructs it poorly, is telling us the input does not belong.
 
 \marginnote{\newthought{If the model cannot reconstruct it,} it has probably never seen anything like it.}
 
@@ -414,35 +506,67 @@ Step through the arithmetic slowly.
 
 \vspace{1em}
 
+\newthought{Z-score on a sensor reading.} Daily mean temperatures over a week read $\{19, 21, 20, 22, 19, 20, 35\}$\,\textdegree{}C. Compute the Z-score of the last reading and decide whether it crosses the conventional $|z|{>}3$ threshold.
+
+\marginnote{%
+\begin{align*}
+    \mu &= \tfrac{19+21+20+22+19+20+35}{7} \\
+        &= 22.3 \\[4pt]
+    \sigma &\approx 5.42 \\[4pt]
+    z_7 &= \tfrac{35 - 22.3}{5.42} \\
+        &\approx 2.34
+\end{align*}%
+Below the conventional threshold of $3$, but $35$\,\textdegree{}C{} is clearly outside the typical week's spread. Heavy-tailed or small-sample data routinely produces this kind of false negative; the Z-score is a starting point, not a verdict.}
+
+\vspace{2.5em}
+
 \newthought{LOF by hand.}
-Given five points $x_1{=}(0,0)$, $x_2{=}(1,0)$, $x_3{=}(0,1)$, $x_4{=}(1,1)$, $x_5{=}(5,5)$ with $k{=}2$, compute the 2-distance for each point and determine which has the highest LOF.
+Given five points $x_1{=}(0,0)$, $x_2{=}(1,0)$, $x_3{=}(0,1)$, $x_4{=}(1,1)$, $x_5{=}(5,5)$ with $k{=}2$, compute the 2-distance (the distance to the second-nearest neighbour) for each point and decide which has the highest LOF.
 
-\marginnote{Points $x_1$--$x_4$ form a tight cluster with inter-point distances $\approx 1$. Point $x_5$ is far from all others, distance to nearest $\approx 5.7$. Its LOF will be $\gg 1$.}
+The four cluster points have a $2$-distance of approximately $1.41$ each, since the second nearest neighbour sits at the diagonal of the unit square:
+\begin{align*}
+    d_2(x_1) &= d(x_1, x_4) \\
+             &= \sqrt{1^2 + 1^2} \\
+             &= 1.41
+\end{align*}
+
+For $x_5{=}(5,5)$, the nearest cluster point is $x_4{=}(1,1)$:
+\begin{align*}
+    d(x_5, x_4) &= \sqrt{4^2 + 4^2} \\
+                &= 5.66
+\end{align*}
+
+The second nearest cluster point is either $x_2$ or $x_3$, both at distance $\sqrt{4^2 + 5^2} \approx 6.40$. So $d_2(x_5) \approx 6.40$, more than four times the cluster's $2$-distance. The local reachability density of $x_5$ is correspondingly low while its neighbours' densities stay high, so $\text{LOF}_2(x_5) \gg 1$ and the four cluster points sit at $\text{LOF}_2 \approx 1$.
+
+\marginnote{\newthought{Why $k$-NN distance also catches this.} With one isolated outlier and a single dense cluster, simple $k$-NN distance is enough. LOF earns its keep when two clusters of different density coexist; see Figure~\ref{fig:lof_example}.}
 
 \vspace{2.5em}
 
-\newthought{Reconstruction anomaly.} You train an autoencoder on MNIST digits 0--8.
-At test time, you present digit 9.
-What reconstruction error do you expect?
-Under what circumstances might the autoencoder still produce a low error, and what does that tell you about the limits of reconstruction-based detection?
+\newthought{Reconstruction anomaly.} You train an autoencoder on MNIST digits 0 to 8. At test time, you present digit 9. What reconstruction error do you expect? Under what circumstances might the autoencoder still produce a low error, and what does that tell you about the limits of reconstruction-based detection?
 
-\marginnote{The model never learned to encode or decode 9, so the error should be high. However, the autoencoder may reconstruct 9 as a visually similar digit, such as 4 or 7, producing only moderate error. This is a failure mode of reconstruction-based methods.}
+\marginnote{The model never learned to encode or decode 9, so the error should be high. However, the autoencoder may reconstruct 9 as a visually similar digit such as 4 or 7, producing only moderate error. This is a failure mode of reconstruction-based methods.}
 
 \vspace{2.5em}
 
-\newthought{MC Dropout uncertainty.} A classifier with dropout produces the following softmax outputs for a single input across $T{=}5$ forward passes:
+\newthought{MC Dropout uncertainty.} A classifier with dropout produces the following softmax outputs for a single input across $T{=}5$ forward passes.
 
-\begin{center}
-\begin{tabular}{ccc}
-Pass & $p(\text{cat})$ & $p(\text{dog})$ \\
-\hline
-1 & 0.9 & 0.1 \\
-2 & 0.4 & 0.6 \\
-3 & 0.7 & 0.3 \\
-4 & 0.5 & 0.5 \\
-5 & 0.8 & 0.2 \\
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.06\textwidth}p{0.12\textwidth}p{0.12\textwidth}}
+    \toprule
+    \textbf{Pass} & \textbf{$p(\text{cat})$} & \textbf{$p(\text{dog})$} \\
+    \midrule
+    1 & 0.9 & 0.1 \\
+    2 & 0.4 & 0.6 \\
+    3 & 0.7 & 0.3 \\
+    4 & 0.5 & 0.5 \\
+    5 & 0.8 & 0.2 \\
+    \bottomrule
 \end{tabular}
-\end{center}
+\vspace{2em}
+\caption{MC Dropout softmax outputs across $T{=}5$ forward passes for a single input.}
+\label{tab:mcdropout_passes}
+\end{table*}
 
 Compute the predictive mean and variance for $p(\text{cat})$.
 Would you trust this prediction? At what variance threshold would you route this input to a human reviewer?
@@ -454,8 +578,31 @@ Would you trust this prediction? At what variance threshold would you route this
     \text{Var} &= \tfrac{1}{5}\sum_t (p_t - 0.66)^2 \\
                &\approx 0.034
 \end{align*}%
-The mean leans toward cat, but the variance is substantial; pass 2 disagrees strongly. This input sits in a region of high epistemic uncertainty, and routing it to a human reviewer would be prudent.
-}
+The mean leans toward cat, but the variance is substantial and pass~2 disagrees strongly. This input sits in a region of high epistemic uncertainty, and routing it to a human reviewer would be prudent.}
+
+\vspace{2.5em}
+
+\newthought{Picking a threshold under class imbalance.} You have $980$ normal points and $20$ injected anomalies. An anomaly score gives the following confusion at three thresholds.
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.10\textwidth}p{0.10\textwidth}p{0.12\textwidth}p{0.10\textwidth}p{0.10\textwidth}}
+    \toprule
+    \textbf{Threshold} & \textbf{TP} & \textbf{FP} & \textbf{Precision} & \textbf{Recall} \\
+    \midrule
+    low     & 19 & 200 & 0.087 & 0.95 \\
+    medium  & 14 & 30  & 0.318 & 0.70 \\
+    high    & 6  & 2   & 0.750 & 0.30 \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Confusion at three thresholds on $980$ normal and $20$ anomalous points.}
+\label{tab:threshold_choice}
+\end{table*}
+
+Which threshold would you ship for fraud screening with downstream human review? Which for autonomous shutdown of a high-throughput line? The point is that a single ROC-AUC number hides the cost asymmetry; choosing a threshold is choosing which mistake you can live with.
+
+\marginnote{\newthought{Cheap review favours high recall.} If a human checks every flagged transaction, the low threshold catches $19/20$ anomalies at the cost of $200$ false alarms. \newthought{Expensive shutdown favours high precision.} Stopping a production line on a false positive is costly, so the high threshold and a $0.30$ recall is a defensible trade if other safeguards exist.}
 
 \vspace{2.5em}
 
@@ -495,21 +642,19 @@ No single method dominates across all anomaly types.
 
 \newthought{Recap} of Key Concepts:
 \begin{itemize}
-    \item Uncertainty comes in two forms: aleatoric, which is irreducible noise in the data, and epistemic, which reflects the model's ignorance and shrinks with more data.
-    \item MC Dropout and deep ensembles quantify epistemic uncertainty by measuring disagreement across multiple predictions; high variance flags inputs the model has not learned to handle.
-    \item Anomaly detection applies uncertainty reasoning through statistical, proximity-based, and reconstruction-based scores; the type of anomaly, whether point, contextual, or collective, determines which method is appropriate.
-    \item OOD detection formalises the question of whether an input belongs to the training distribution at all; energy-based scores outperform naive softmax confidence.
-    \item Graceful degradation, combining confidence thresholds, human handoff, fail-safe defaults, and distribution-shift monitoring, turns uncertainty estimates into a practical safety net.
+    \item Aleatoric uncertainty is irreducible noise in the data; epistemic uncertainty reflects the model's ignorance and shrinks with more data. Only the second is actionable.
+    \item MC Dropout approximates a posterior over weights by leaving dropout on at test time; deep ensembles do the same with $M$ independently trained models, at a higher training cost but sharper, better-calibrated outputs.
+    \item Anomaly detection turns uncertainty into a usable score via statistical, proximity-based, or reconstruction-based methods. The type of anomaly, point, contextual, or collective, determines which family fits.
+    \item OOD detection asks whether an input is in the training distribution at all. Softmax confidence is unreliable on far inputs; energy and ODIN exploit the unnormalised logits to do better.
+    \item A practical safety net stacks confidence thresholds, human handoff, fail-safe defaults, and distribution-shift monitoring. Each compensates for what the others miss.
 \end{itemize}
 
-\marginnote{\newthought{The fundamental limit} of every method in this chapter: each relies on a model of normal trained without labels. When the boundary of normal is ambiguous, no uncertainty estimate can substitute for domain knowledge.}
+\marginnote{\newthought{The root of model blindness.} Every method in this chapter inherits its notion of normal from the training data; when that notion is wrong or shifts, the detector degrades silently.}
 
-\newthought{Every uncertainty method in this chapter} inherits the model of normality from the training data.
-If the training set itself contains unlabelled anomalies, or if the notion of normal shifts over time, the detector silently degrades.
+\newthought{The shared limitation} across MC Dropout, ensembles, anomaly scores, and OOD detectors is that each defines unfamiliar with respect to the training distribution it inherits. If the training set itself contains unlabelled anomalies, or if the notion of normal drifts over time, the detector loses its reference and starts certifying as familiar what should have been flagged. The $9$ that an autoencoder trained on $0$ to $8$ reconstructs as a $7$ is the smallest version of this problem; large pretrained models on shifting web data are the largest.
 
-\marginnote{\newthought{Teaser.} Can we learn representations directly from the structure of the data, using the data itself as supervision, so that clustering, anomaly detection, and downstream tasks all benefit?}
-\newthought{Self-supervised learning} addresses this brittleness from the other direction.
-Instead of modelling what is normal and flagging what is not, it learns representations directly from the structure of the data, using the data itself as supervision.
-Those representations can then serve as features for clustering, anomaly detection, or any downstream task, closing the loop on the unsupervised pipeline.
+\newthought{Self-supervised learning} attacks the same blindness from the opposite direction. Instead of asking which inputs are unfamiliar relative to a fixed training set, it builds representations whose structure comes from the data itself, organised by augmentations, masking, or contrastive pairs rather than by labels. Those representations then feed every downstream task, including the clustering of Part~I and the anomaly detection of this chapter, on a single shared backbone.
+
+\marginnote{\newthought{Teaser.} Can the data supervise itself?}
 
 \marginnote{\newthought{feedback}}

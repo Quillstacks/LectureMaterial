@@ -9,20 +9,15 @@
 % BLOCK 1: INTRODUCTION
 %═══════════════════════════════════════════════════════════════════════
 
-\section{The Why}
+\section{The Why}\index{self-supervised learning}\index{representation learning}
 
-\marginnote{Unlabeled data is abundant; labels are scarce and expensive.}
+\marginnote{\newthought{Unlabeled data is abundant;} labels are scarce and expensive.}
 
-The deep learning revolution was built on labeled data. But labeling is expensive:
-\begin{itemize}
-    \item ImageNet required 14 million images and years of human annotation effort
-    \item Medical imaging annotations cost \$50--500 per expert label
-    \item Autonomous driving scenes demand hours of 3D labeling per frame
-\end{itemize}
+\newthought{In the previous chapter} we treated unfamiliarity as a signal: a model knows it does not know when its predictions disagree across forward passes, when a point sits far from its neighbours, or when a VAE cannot reconstruct it. Each method inherits its notion of normal from the labelled or curated training set it was given. The bottleneck is the training set itself.
 
-Meanwhile, unlabeled data is virtually unlimited: the internet holds billions of images, trillions of text tokens, and endless video.
+\newthought{Labels are expensive.} ImageNet took fourteen million images and years of human annotation. Medical imaging labels run from fifty to five hundred dollars per expert pass. A single autonomous driving scene takes hours of 3D box drawing per frame. Meanwhile unlabelled data is essentially unlimited: the web holds billions of images, trillions of text tokens, and endless video.
 
-\newthought{Self-supervised learning}\index{self-supervised learning} extracts supervision from the data itself by designing pretext tasks\index{pretext task}, auxiliary tasks whose labels come for free from data structure.
+\newthought{Self-supervised learning} closes that gap by extracting supervision from the data itself. We design pretext tasks\index{pretext task}, auxiliary objectives whose labels come for free from the structure of the input: predict the rotation that was applied, the patch that was masked, the next token in the sequence. The model has to understand the data well enough to solve them, and the representations it builds along the way carry over to downstream tasks where labels are scarce.
 
 \newthought{In order to move from expensive manual annotation to learning from raw data} we have good reason to find ways to,
 \begin{itemize}
@@ -33,32 +28,70 @@ Meanwhile, unlabeled data is virtually unlimited: the internet holds billions of
 
 \begin{figure}
 \centering
-\begin{tikzpicture}[node distance=1.2cm]
-    \node[draw, rectangle] (data) {Unlabeled Data};
-    \node[draw, rectangle, right of=data, xshift=2cm] (pretext) {Pretext Task};
-    \node[draw, rectangle, right of=pretext, xshift=2cm] (repr) {Representations};
-    \node[draw, rectangle, right of=repr, xshift=2cm] (down) {Downstream Task};
+\begin{tikzpicture}[
+    every node/.style={font=\small, align=center},
+    block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                  minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt},
+    arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+]
+    \node[block] (data) {Unlabelled data};
+    \node[block, right=14pt of data] (pretext) {Pretext task};
+    \node[block, right=14pt of pretext, fill=black!8] (repr) {Representations};
+    \node[block, right=14pt of repr] (down) {Downstream task};
 
-    \draw[->] (data) -- node[above] {\small design} (pretext);
-    \draw[->] (pretext) -- node[above] {\small learn} (repr);
-    \draw[->] (repr) -- node[above] {\small transfer} (down);
+    \draw[arr] (data) -- node[above, font=\footnotesize] {design} (pretext);
+    \draw[arr] (pretext) -- node[above, font=\footnotesize] {learn} (repr);
+    \draw[arr] (repr) -- node[above, font=\footnotesize] {transfer} (down);
 \end{tikzpicture}
-\caption{Self-supervised learning pipeline: design pretext task $\to$ learn representations $\to$ transfer to downstream tasks.}
+\caption{Self-supervised learning pipeline: design a pretext task on unlabelled data, learn representations from it, then transfer those representations to downstream tasks where labels are scarce.}
 \label{fig:ssl_pipeline}
 \end{figure}
 
-\subsection{Hands On Experience}
+\subsection{Hands-On Experience}
 
-Consider an image. Design a pretext task:
-\begin{enumerate}
-    \item Rotate the image by $0°, 90°, 180°, 270°$. Train a classifier to predict rotation.
-    \item Split into patches, shuffle them. Train to predict correct arrangement.
-    \item Convert to grayscale. Train to predict original colors.
-\end{enumerate}
+\newthought{Consider} a single image and three pretext tasks the model could be asked to solve. For each one, sketch the input it sees, the label it is asked to predict, and what the model would have to understand about the image to succeed.
 
-\marginnote{The pretext task should be hard enough to require understanding image structure.}
+\begin{itemize}
+    \item Rotate the image by $0^\circ, 90^\circ, 180^\circ, 270^\circ$ and predict the rotation angle.
+    \item Split the image into nine patches, shuffle them, and predict the original arrangement.
+    \item Convert the image to grayscale and predict the original colours.
+\end{itemize}
 
-Each task forces the model to understand image structure, including object shapes, semantics, and texture, to succeed. The learned features transfer to real tasks like classification.
+\marginnote{\newthought{A pretext task} should be hard enough to require understanding image structure, easy enough that the model can actually learn it.}
+
+\newthought{Form groups of three} and pick one of the three pretext tasks above. Each group also needs a printed photograph or magazine page that can be cut, rotated, and marked up; choose an image that contains a recognisable object rather than an abstract pattern.
+
+\marginnote{\newthought{Scoring.}
+For every round, the receiving group writes down their answer and a one-sentence description of how they reached it. Correct answer $= 0$, wrong answer $= 1$. At the end, tally the strategies: how many were content based, and how many exploited a shortcut?}
+
+\newthought{Step 1: Apply the augmentation.}
+Perform the chosen task on your photo. Rotate it to one of the four angles, cut it into nine patches and shuffle them, or hide the colours and keep only a grayscale copy. Pass the augmented version to a neighbouring group; keep the original hidden.
+
+\newthought{Step 2: Predict.}
+The receiving group has sixty seconds to recover the rotation angle, the patch order, or the original colours. They write down both their answer and the strategy they used to reach it.
+
+\newthought{Step 3: Reveal the shortcut.}
+Compare answers and strategies. A page number in the corner gave away the rotation. A continuous colour gradient solved the jigsaw without parsing any object. The fact that skies are blue and grass is green made the colourisation guessable without recognising what was in the image. A pretext task is only as informative as the shortcuts it leaves available.
+
+\marginnote{
+\begin{itemize}
+    \item Which strategy did the receiving group rely on?
+    \item Would the same strategy work on a different image, or did it exploit something specific to this one?
+\end{itemize}}
+
+\newthought{Step 4: Foreclose the shortcut.}
+Modify the augmentation so the obvious shortcut is gone. Crop the corner that revealed orientation. Pick patches whose seams cut through textured regions instead of along clean edges. Choose a photo without sky or grass for the colourisation game. Pass the new version to a different group and run the prediction again.
+
+\newthought{Step 5: Two views.}
+Now switch from prediction to contrast. Each group prepares two non-overlapping crops of their original image, for example a top half and a bottom half, or two random patches taken from far apart in the frame. Pool every crop in the room into a single pile. The challenge is to pair the two crops that came from the same image and to push apart crops that came from different images.
+
+\newthought{Step 6: Reflect.}
+Crops from the same image share lighting, palette, and recurring textures, and a model that only matches on those low level cues will solve the easy version of the game and fail on a real test set. The crops that pair correctly when the cues are stripped away are the ones whose match relies on the actual content of the image. This is exactly the pressure that contrastive learning puts on a representation.
+
+\marginnote{\newthought{Two paradigms, one principle.}
+Steps 1 to 4 are predictive: the supervision is what was hidden. Steps 5 and 6 are contrastive: the supervision is which views belong together. Both turn the structure of unlabelled data into a free training signal, with no annotator in the loop.}
+
+\newthought{The fundamental question}, then, is not whether each task is solvable but what shortcut a lazy model could take. The rest of this chapter is about choosing pretext signals whose only winning strategy is to learn a transferable representation, and about diagnosing the failure modes that appear when the shortcut wins.
 
 \newthought{The Learning Objectives} of this lecture:
 \begin{itemize}
@@ -76,251 +109,231 @@ Each task forces the model to understand image structure, including object shape
 
 \marginnote{A pretext task creates pseudo-labels from data structure.}
 
-\newthought{Early self-supervised methods} designed clever pretext tasks:
+\newthought{Early self-supervised methods} designed clever pretext tasks by hand. Each one builds a pseudo-label out of an operation we can apply to the data and then ask the model to invert.
 
-\begin{table}
+\begin{table*}[ht]
 \centering
-\begin{tabular}{ll}
-\toprule
-\textbf{Task} & \textbf{Supervision Signal} \\
-\midrule
-Rotation prediction & Predict rotation angle (0/90/180/270) \\
-Jigsaw puzzle & Predict patch permutation \\
-Colorization & Predict colors from grayscale \\
-Inpainting & Predict missing image regions \\
-Context prediction & Predict relative position of patches \\
-\bottomrule
+\begin{tabular}{p{0.20\textwidth}p{0.50\textwidth}}
+    \toprule
+    \textbf{Task} & \textbf{Supervision signal} \\
+    \midrule
+    Rotation prediction  & Predict the applied rotation angle ($0^\circ, 90^\circ, 180^\circ, 270^\circ$). \\
+    Jigsaw puzzle        & Predict the permutation of shuffled patches. \\
+    Colourisation        & Predict the original colours from a grayscale input. \\
+    Inpainting           & Predict the pixels in a masked region. \\
+    Context prediction   & Predict the relative position of two patches. \\
+    \bottomrule
 \end{tabular}
-\caption{Classic pretext tasks for images.}
+\vspace{2em}
+\caption{Classic handcrafted pretext tasks for images. Each one converts a free operation on the data into a label the model can learn from.}
 \label{tab:pretext_tasks}
-\end{table}
+\end{table*}
 
-\newthought{The limitation} of handcrafted pretext tasks is that their performance does not always correlate with downstream task performance. We need more principled approaches.
+\newthought{The limitation} of handcrafted pretext tasks is that their performance does not reliably correlate with downstream performance. A model can become very good at predicting rotation while learning a representation that captures little of what makes the image semantically interesting. The next sections move from clever tasks to more principled objectives.
 
 
 \section{Contrastive Learning}\index{contrastive learning}
 
-\marginnote{Core idea: pull similar things together, push different things apart.}
+\marginnote{\newthought{Core idea.} Pull similar things together, push different things apart.}
 
-\newthought{Contrastive learning} learns representations by creating positive pairs, augmented views of the same sample, and negative pairs, views of different samples, then training to distinguish positives from negatives.
+\newthought{Contrastive learning} replaces the handcrafted pretext task with a single, generic objective. From every sample we build a positive pair, two augmented views of the same image, and a set of negative pairs drawn from other images. The model is asked to identify which view among the candidates belongs to the anchor.
 
-\subsection{InfoNCE Loss}\index{InfoNCE}
-
-Given an anchor $x$, positive $x^+$, and negatives $\{x^-_k\}$:
+\newthought{The InfoNCE loss}\index{InfoNCE} formalises this as a softmax cross-entropy over the candidates. Given an anchor $x$, its positive view $x^+$, and a set of negatives $\{x^-_k\}$, all encoded into embeddings $z$, the loss is:
 
 \begin{equation}
     \mathcal{L}_{\text{InfoNCE}} = -\log \frac{\exp(\text{sim}(z, z^+) / \tau)}{\exp(\text{sim}(z, z^+) / \tau) + \sum_k \exp(\text{sim}(z, z^-_k) / \tau)}
 \end{equation}
 
-where $\text{sim}(u, v) = u \cdot v / (\|u\| \|v\|)$ is cosine similarity and $\tau$ is temperature~\cite{vanDenOord2018InfoNCE}.
+where $\text{sim}(u, v) = u \cdot v / (\|u\|\,\|v\|)$ is cosine similarity and $\tau$ is the temperature~\cite{vanDenOord2018InfoNCE}. Lower $\tau$ sharpens the softmax, making the loss focus on the hardest negatives; higher $\tau$ softens it, treating all negatives more uniformly.
 
 \begin{figure}
 \centering
-\begin{tikzpicture}[scale=0.9]
-    % Original image
-    \node[draw, rectangle, minimum width=1.5cm, minimum height=1.5cm] (orig) at (0,0) {$x$};
+\begin{tikzpicture}[
+    every node/.style={font=\small, align=center},
+    block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                  minimum width=1.2cm, minimum height=0.7cm, inner sep=4pt},
+    emb/.style={circle, draw=black, thick, minimum size=0.8cm, inner sep=1pt},
+    arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+]
+    \node[block] (orig) at (0,0) {$x$};
 
-    % Augmentations
-    \node[draw, rectangle, minimum width=1cm, minimum height=1cm] (aug1) at (3,1) {$x_1$};
-    \node[draw, rectangle, minimum width=1cm, minimum height=1cm] (aug2) at (3,-1) {$x_2$};
+    \node[block] (aug1) at (2.8,1) {$x_1$};
+    \node[block] (aug2) at (2.8,-1) {$x_2$};
 
-    % Encoders
-    \node[draw, rectangle] (enc1) at (5,1) {$f$};
-    \node[draw, rectangle] (enc2) at (5,-1) {$f$};
+    \node[block] (enc1) at (5,1) {$f$};
+    \node[block] (enc2) at (5,-1) {$f$};
 
-    % Representations
-    \node[draw, circle] (z1) at (7,1) {$z_1$};
-    \node[draw, circle] (z2) at (7,-1) {$z_2$};
+    \node[emb, fill=black!8] (z1) at (7,1) {$z_1$};
+    \node[emb, fill=black!8] (z2) at (7,-1) {$z_2$};
 
-    % Arrows
-    \draw[->] (orig) -- node[above, sloped] {\small aug} (aug1);
-    \draw[->] (orig) -- node[below, sloped] {\small aug} (aug2);
-    \draw[->] (aug1) -- (enc1);
-    \draw[->] (aug2) -- (enc2);
-    \draw[->] (enc1) -- (z1);
-    \draw[->] (enc2) -- (z2);
+    \draw[arr] (orig) -- node[above, sloped, font=\footnotesize] {aug} (aug1);
+    \draw[arr] (orig) -- node[below, sloped, font=\footnotesize] {aug} (aug2);
+    \draw[arr] (aug1) -- (enc1);
+    \draw[arr] (aug2) -- (enc2);
+    \draw[arr] (enc1) -- (z1);
+    \draw[arr] (enc2) -- (z2);
 
-    % Similarity
-    \draw[<->, black, thick] (z1) -- node[right] {\small maximize} (z2);
+    \draw[{Triangle[length=4pt, width=4pt, fill=black!70]}-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70]
+        (z1) -- node[right, font=\footnotesize] {pull} (z2);
 
-    % Negative
-    \node[draw, circle, black!55] (zneg) at (7,-3) {$z^-$};
-    \draw[<->, black!55, thick, dashed] (z1) -- node[right] {\small minimize} (zneg);
+    \node[emb, draw=black!55] (zneg) at (7,-3) {$z^-$};
+    \draw[{Triangle[length=4pt, width=4pt, fill=black!40]}-{Triangle[length=4pt, width=4pt, fill=black!40]}, thick, black!40, densely dashed]
+        (z1) -- node[right, font=\footnotesize] {push} (zneg);
 \end{tikzpicture}
-\caption{Contrastive learning: augmented views of the same image should have similar representations.}
+\caption{Contrastive learning. Two augmented views $x_1, x_2$ of the same input $x$ pass through a shared encoder $f$ and are pulled together in embedding space; an embedding $z^-$ from a different input is pushed away.}
 \label{fig:contrastive_learning}
 \end{figure}
 
 
-\section{SimCLR}\index{SimCLR}
+\vspace{1.5em}
+\newthought{SimCLR}\index{SimCLR}\cite{Chen2020SimCLR} turns this into a clean training recipe. Each minibatch of $N$ images is doubled to $2N$ augmented views, and every other view in the batch is treated as a negative.
 
-\marginnote{\newthought{SimCLR.} Simple Contrastive Learning of Visual Representations~\cite{Chen2020SimCLR}.}
-
-\newthought{SimCLR} is a simple and effective contrastive framework:
+\marginnote{\newthought{Simple Contrastive Learning} of Visual Representations: encoder, projection head, augmentation, batch.}
 
 \begin{algorithm}[H]
 \caption{SimCLR}
 \begin{algorithmic}[1]
+\Require Encoder $f$, projection head $g$, augmentation distribution $\mathcal{T}$, temperature $\tau$
 \For{each minibatch of $N$ images}
-    \State Generate $2N$ augmented views (2 per image)
-    \For{each positive pair $(i, j)$}
-        \State $z_i = g(f(x_i))$ \Comment{Encoder + projection head}
-        \State $z_j = g(f(x_j))$
-        \State Treat other $2(N-1)$ views as negatives
-        \State Compute InfoNCE loss
+    \State Sample two augmentations per image to get $2N$ views
+    \For{each positive pair $(i, j)$ from the same image}
+        \State $z_i \gets g(f(x_i))$
+        \State $z_j \gets g(f(x_j))$
+        \State Treat the other $2(N-1)$ views as negatives
+        \State Backpropagate the InfoNCE loss
     \EndFor
 \EndFor
 \end{algorithmic}
 \end{algorithm}
 
 \newthought{Key ingredients} of SimCLR:
-\begin{enumerate}
-    \item Strong augmentations: random crop, color jitter, Gaussian blur
-    \item Projection head: MLP after encoder; discarded after training
-    \item Large batch sizes: more negatives improve performance (4096+)
-    \item Temperature: $\tau = 0.1$ works well
-\end{enumerate}
-
-
-\section{MoCo}\index{MoCo}
-
-\marginnote{\newthought{MoCo.} Momentum Contrast~\cite{He2020MoCo}.}
-
-SimCLR needs huge batches for enough negatives. MoCo\index{momentum encoder} uses a queue of negatives instead:
-
 \begin{itemize}
-    \item Maintain a queue of recent embeddings as negatives
-    \item Use a momentum encoder, a slowly updated copy, for consistency
-    \item Update: $\theta_k \gets m \theta_k + (1-m) \theta_q$ where $m = 0.999$
+    \item Strong augmentations: random crop, colour jitter, Gaussian blur. Without them, the model takes shortcuts.
+    \item Projection head $g$: a small MLP placed after the encoder during training and discarded afterwards. The contrastive loss runs on the projected space; downstream tasks use the encoder output.
+    \item Large batch size: more negatives in each minibatch sharpen the contrast, but require thousands of in-batch examples to be effective.
+    \item Temperature $\tau \approx 0.1$ in practice; lower values overemphasise hard negatives, higher values wash the loss out.
 \end{itemize}
 
-\newthought{The benefit} is that MoCo works with small batches of 256 and is memory-efficient.
+\vspace{1.5em}
+\newthought{MoCo}\index{MoCo}\cite{He2020MoCo} relaxes the large-batch requirement by storing negatives in a queue rather than recomputing them every step. A momentum encoder\index{momentum encoder} produces the keys that fill this queue, and is updated as a slow exponential moving average of the query encoder:
+
+\marginnote{\newthought{Momentum Contrast.} A queue of recent keys plus a slowly updated key encoder gives consistency without huge batches.}
+
+\begin{align*}
+    \theta_k &\leftarrow m\, \theta_k + (1 - m)\, \theta_q
+\end{align*}
+
+with $m \approx 0.999$. The queue stores $K$ recent key embeddings, providing a large negative set that does not need to fit in a single forward pass; MoCo trains effectively at batch sizes around $256$ where SimCLR would need $4{,}000$ or more.
 
 
 \section{Non-Contrastive Methods}\index{non-contrastive learning}
 
 \marginnote{Surprising finding: you don't need negatives!}
 
-\subsection{BYOL: Bootstrap Your Own Latent}\index{BYOL}
+\newthought{BYOL}\index{BYOL}\cite{Grill2020BYOL}, Bootstrap Your Own Latent, learns without negative pairs at all. Two networks run in parallel: an online network with encoder, projector, and a small predictor head, and a target network of the same shape but without the predictor. The target is a momentum copy of the online encoder, updated as in MoCo. The loss is the mean squared error between the online prediction and the target projection of a different augmented view:
 
-\newthought{BYOL} learns without negative pairs~\cite{Grill2020BYOL}:
-\begin{enumerate}
-    \item Online network: encoder $\to$ projector $\to$ predictor
-    \item Target network: encoder $\to$ projector, updated via momentum
-    \item Loss: MSE between online prediction and target projection
-\end{enumerate}
+\begin{align*}
+    \mathcal{L}_{\text{BYOL}} &= \|q_\theta(z_1) - \text{sg}(z'_2)\|^2
+\end{align*}
 
-\begin{equation}
-    \mathcal{L}_{\text{BYOL}} = \|q_\theta(z_1) - \text{sg}(z'_2)\|^2
-\end{equation}
+where $\text{sg}$ is the stop-gradient, blocking backpropagation through the target. The asymmetry between the two branches is what keeps the system from collapsing onto a single constant embedding.
 
-where $\text{sg}$ means stop-gradient, preventing backpropagation through the target.
+\vspace{1.0em}
+\newthought{SimSiam}\index{SimSiam}\cite{Chen2021SimSiam} simplifies further by dropping the momentum encoder entirely; both branches share weights, only the predictor and the stop-gradient differ:
 
-\subsection{SimSiam: Simple Siamese}\index{SimSiam}
+\begin{align*}
+    \mathcal{L}_{\text{SimSiam}} &= -\tfrac{1}{2}\!\left( \text{sim}(p_1, \text{sg}(z_2)) + \text{sim}(p_2, \text{sg}(z_1)) \right)
+\end{align*}
 
-\newthought{SimSiam} is even simpler, requiring no momentum encoder~\cite{Chen2021SimSiam}:
-\begin{equation}
-    \mathcal{L} = -\frac{1}{2} \left( \text{sim}(p_1, \text{sg}(z_2)) + \text{sim}(p_2, \text{sg}(z_1)) \right)
-\end{equation}
-
-\subsection{Why Don't They Collapse?}\index{representation collapse}
-
-\marginnote{Without negatives, why doesn't everything map to a constant?}
-
-Several hypotheses:
+\vspace{1.0em}
+\newthought{Why don't they collapse?}\index{representation collapse} Without negatives, nothing in the loss obviously prevents both branches from mapping every input to the same vector. The empirical answer is that three design choices conspire to break symmetry:
 \begin{itemize}
-    \item Asymmetry: the predictor network breaks symmetry
-    \item Stop-gradient: prevents both branches from collapsing together
-    \item BatchNorm: implicitly creates a contrastive signal within each batch
+    \item the predictor on only one branch, so the two outputs cannot be directly identified.
+    \item the stop-gradient, which freezes one branch as a target and stops the gradient from collapsing both at once.
+    \item batch normalisation, which centres and rescales activations within each batch and so implicitly contrasts each sample against the others.
 \end{itemize}
 
 
 \section{Masked Prediction}\index{masked prediction}
 
-\marginnote{Mask part of the input; predict the masked part.}
+\marginnote{\newthought{Mask part of the input;} predict the masked part.}
 
-\subsection{BERT: Masked Language Modeling}\index{BERT}\index{masked language modeling}
+\newthought{Masked prediction} sits across the room from contrastive learning. Instead of comparing two views of an input, the model sees a single corrupted view and is asked to recover what was hidden. The pretext task is reconstruction; the only label is the original input itself.
 
-\newthought{BERT} pioneered masked prediction for language~\cite{Devlin2019BERT}:
-\begin{enumerate}
-    \item Mask 15\% of tokens randomly
-    \item Of masked: 80\% [MASK], 10\% random, 10\% unchanged
-    \item Train to predict original tokens
-\end{enumerate}
+\vspace{1.0em}
+\newthought{BERT}\index{BERT}\index{masked language modeling}\cite{Devlin2019BERT} pioneered masked prediction for language. The recipe is mechanical:
+\begin{itemize}
+    \item Mask $15\%$ of input tokens uniformly at random.
+    \item Of those, replace $80\%$ with a special \texttt{[MASK]} token, $10\%$ with a random token, and leave $10\%$ unchanged. The mix prevents the model from only learning to fill in \texttt{[MASK]} and forces it to attend to context everywhere.
+    \item Train the model to predict the original token at each masked position from the surrounding context.
+\end{itemize}
 
-\begin{equation}
-    \mathcal{L}_{\text{MLM}} = -\sum_{i \in \text{masked}} \log p(x_i | x_{\backslash i})
-\end{equation}
+\begin{align*}
+    \mathcal{L}_{\text{MLM}} &= -\sum_{i \in \text{masked}} \log p(x_i \mid x_{\backslash i})
+\end{align*}
 
-\subsection{MAE: Masked Autoencoders}\index{MAE}\index{masked autoencoder}
+\vspace{1.0em}
+\newthought{MAE}\index{MAE}\index{masked autoencoder}\cite{He2022MAE} carries the same idea over to vision, with one structural twist. Images are split into patches, typically $16{\times}16$ pixels, and $75\%$ of them are masked at random. Only the visible patches are passed to the transformer encoder; a lightweight decoder then receives the encoded visible tokens together with shared learnable mask tokens at the missing positions and reconstructs raw pixels. Encoding only the visible patches makes pretraining cheap; the high masking ratio forces the model to learn long-range structure rather than local interpolation.
 
-\marginnote{\newthought{MAE.} Mask 75\% of image patches, reconstruct pixels~\cite{He2022MAE}.}
-
-For vision:
-\begin{enumerate}
-    \item Divide image into patches, e.g.\ 16$\times$16
-    \item Mask 75\% of patches randomly
-    \item Encode visible patches with a transformer
-    \item Decode with mask tokens to reconstruct pixels
-\end{enumerate}
+\marginnote{\newthought{Masked Autoencoders} mask $75\%$ of patches, encode only the visible ones, and reconstruct pixels with a small decoder.}
 
 \begin{figure}
 \centering
-\begin{tikzpicture}[scale=0.6]
-    % Original image grid
-    \foreach \i in {0,1,2,3} {
-        \foreach \j in {0,1,2,3} {
-            \draw (\i,\j) rectangle (\i+1,\j+1);
+\begin{tikzpicture}[
+    every node/.style={font=\small, align=center},
+    block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                  minimum width=1.4cm, minimum height=0.7cm, inner sep=4pt},
+    cell/.style={draw=black, thick},
+    masked/.style={fill=black!20},
+    arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+]
+    % Masked input grid (4x4, 0.4cm per cell, total 1.6cm)
+    \begin{scope}[shift={(0,0)}]
+        \foreach \i in {0,...,3} {
+            \foreach \j in {0,...,3} {
+                \draw[cell] (\i*0.4, \j*0.4) rectangle (\i*0.4+0.4, \j*0.4+0.4);
+            }
         }
-    }
-    \node at (2,-0.5) {Original};
-
-    % Masked version
-    \begin{scope}[xshift=6cm]
-    \foreach \i in {0,1,2,3} {
-        \foreach \j in {0,1,2,3} {
-            \draw (\i,\j) rectangle (\i+1,\j+1);
+        % Mask 12 of 16 patches (75 percent)
+        \foreach \pos in {(0,0),(1,0),(3,0),(2,1),(3,1),(0,2),(1,2),(2,2),(3,2),(0,3),(2,3),(3,3)} {
+            \fill[masked] \pos++(0.0,0.0) rectangle ++(0.4,0.4);
         }
-    }
-    % Fill masked patches
-    \fill[black!20] (0,0) rectangle (1,1);
-    \fill[black!20] (1,0) rectangle (2,1);
-    \fill[black!20] (2,1) rectangle (3,2);
-    \fill[black!20] (0,2) rectangle (1,3);
-    \fill[black!20] (1,2) rectangle (2,3);
-    \fill[black!20] (2,2) rectangle (3,3);
-    \fill[black!20] (3,2) rectangle (4,3);
-    \fill[black!20] (0,3) rectangle (1,4);
-    \fill[black!20] (2,3) rectangle (3,4);
-    \fill[black!20] (3,3) rectangle (4,4);
-    \fill[black!20] (3,0) rectangle (4,1);
-    \fill[black!20] (3,1) rectangle (4,2);
-    \node at (2,-0.5) {75\% masked};
+        \node[font=\footnotesize, anchor=north] at (0.8, -0.05) {masked input};
     \end{scope}
 
-    % Arrow
-    \draw[->, thick] (10.5,2) -- (12,2) node[midway, above] {Encode};
-    \draw[->, thick] (13,2) -- (14.5,2) node[midway, above] {Decode};
+    % Encoder block
+    \node[block] (enc) at (3.2, 0.8) {encoder\\$f$};
 
-    % Reconstructed
-    \begin{scope}[xshift=15cm]
-    \foreach \i in {0,1,2,3} {
-        \foreach \j in {0,1,2,3} {
-            \draw (\i,\j) rectangle (\i+1,\j+1);
+    % Latent embedding
+    \node[block, fill=black!8, minimum width=0.7cm] (z) at (5.0, 0.8) {$z$};
+
+    % Decoder block
+    \node[block] (dec) at (6.6, 0.8) {decoder\\$g$};
+
+    % Reconstructed grid
+    \begin{scope}[shift={(8.0,0)}]
+        \foreach \i in {0,...,3} {
+            \foreach \j in {0,...,3} {
+                \draw[cell] (\i*0.4, \j*0.4) rectangle (\i*0.4+0.4, \j*0.4+0.4);
+            }
         }
-    }
-    \node at (2,-0.5) {Reconstructed};
+        \node[font=\footnotesize, anchor=north] at (0.8, -0.05) {reconstructed};
     \end{scope}
+
+    % Triangle arrows
+    \draw[arr] (1.65, 0.8) -- (enc.west);
+    \draw[arr] (enc.east) -- (z.west);
+    \draw[arr] (z.east) -- (dec.west);
+    \draw[arr] (dec.east) -- (8.0, 0.8);
 \end{tikzpicture}
-\caption{MAE: mask most patches, reconstruct pixels.}
+\caption{MAE: $75\%$ of patches are masked, the encoder $f$ runs only on the visible patches and produces a compact embedding $z$, and a small decoder $g$ reconstructs the pixels of the full image using the encoded tokens together with shared learnable mask placeholders.}
 \label{fig:mae}
 \end{figure}
 
-\subsection{Knowledge Distillation}\index{knowledge distillation}
+\vspace{1.5em}
+\newthought{Knowledge distillation}\index{knowledge distillation}\cite{HintonDistillation2015} appears here because the next method depends on it. A large teacher model is compressed into a smaller student by training the student to match the teacher's soft output distribution rather than hard labels.
 
 \marginnote{\newthought{Distillation} transfers knowledge from a large teacher to a small student.}
-
-\newthought{Knowledge distillation}\cite{HintonDistillation2015} compresses a large teacher model into a smaller student by training the student to match the teacher's soft output distributions rather than hard labels.
 
 \newthought{Soft labels} are produced by scaling the teacher's logits with a temperature $T$:
 
@@ -330,24 +343,23 @@ For vision:
 
 Higher $T$ yields a softer distribution that reveals more about the teacher's learned structure. The student trains to match these soft targets, inheriting not just the teacher's predictions but the structure of its uncertainty across classes.
 
-
-\subsection{Data2Vec}\index{Data2Vec}
-
-\newthought{Data2Vec} generalises masked prediction across modalities, including vision, speech, and text, using a single framework with teacher-student distillation~\cite{Baevski2022Data2Vec}. Rather than predicting raw pixels, audio samples, or tokens, the student predicts the teacher's latent representations of masked inputs, applying the distillation idea above to self-supervised pretraining.
+\vspace{1.0em}
+\newthought{Data2Vec}\index{Data2Vec}\cite{Baevski2022Data2Vec} generalises masked prediction across modalities, including vision, speech, and text, using a single framework with teacher-student distillation. Rather than predicting raw pixels, audio samples, or tokens, the student predicts the teacher's latent representations of masked inputs, applying the distillation idea above to self-supervised pretraining. The same loss therefore trains the same architecture on three different signals, all without modality-specific design choices.
 
 
 \section{Cross-Modal Self-Supervision}\index{CLIP}
 
-\marginnote{\newthought{CLIP.} Contrastive Language-Image Pre-training~\cite{Radford2021CLIP}.}
+\marginnote{\newthought{Contrastive Language-Image} Pre-training pairs an image encoder and a text encoder so that captions and images live in the same space.}
 
-\newthought{CLIP} learns joint image-text representations from web data:
+\newthought{CLIP}\cite{Radford2021CLIP} learns joint image-text representations from web data. The supervision signal is the noisy correspondence between an image and its caption: across a batch of $N$ image-caption pairs, the diagonal of the $N{\times}N$ similarity matrix should score higher than the off-diagonal entries.
+
 \begin{itemize}
-    \item Train on 400M image-caption pairs from the web
-    \item Contrastive loss: match images with their captions
-    \item Result: powerful zero-shot transfer to new tasks
+    \item Trained on roughly $400$ million image-caption pairs scraped from the web.
+    \item Contrastive InfoNCE loss applied symmetrically across the image and text directions.
+    \item The result is a shared embedding space that supports zero-shot transfer: classify a new image by comparing it to the text embedding of each candidate label.
 \end{itemize}
 
-This bridges to the next chapter on zero-shot learning.
+This bridges directly to the next chapter, where these joint embeddings carry classification, retrieval, and grounding to tasks the model was never explicitly trained on.
 
 
 %═══════════════════════════════════════════════════════════════════════
@@ -355,63 +367,113 @@ This bridges to the next chapter on zero-shot learning.
 %═══════════════════════════════════════════════════════════════════════
 
 \newpage
-\section{Examples \& Exercises}
+\section{Examples \& Exercises}\index{examples}\index{exercises}
 
-\subsection{Exercise 1: Design a Pretext Task}
+\newthought{Computing by hand} builds the intuition that no library call can replace. Step through the arithmetic slowly.
 
-Propose a self-supervised pretext task for:
-\begin{enumerate}
-    \item Audio data, e.g.\ speech recordings
-    \item Time series, e.g.\ sensor readings
-    \item Graphs, e.g.\ molecular structures
-\end{enumerate}
+\vspace{1em}
 
-\subsection{Exercise 2: InfoNCE Loss}
+\newthought{InfoNCE by hand.} A single anchor $z$ has cosine similarities $\text{sim}(z, z^+){=}0.9$ to its positive view and $\text{sim}(z, z^-_1){=}0.3$, $\text{sim}(z, z^-_2){=}0.1$ to two negatives. Compute the InfoNCE loss at temperature $\tau{=}0.5$.
 
-Given embeddings with cosine similarities:
-\begin{itemize}
-    \item $\text{sim}(z, z^+) = 0.9$
-    \item $\text{sim}(z, z^-_1) = 0.3$, $\text{sim}(z, z^-_2) = 0.1$
-\end{itemize}
+Plug into the definition and start with the scaled similarities:
 
-Compute InfoNCE loss with $\tau = 0.5$.
+\begin{align*}
+    s^+ &= \tfrac{0.9}{0.5} \\
+        &= 1.8 \\
+    s^-_1 &= \tfrac{0.3}{0.5} \\
+        &= 0.6 \\
+    s^-_2 &= \tfrac{0.1}{0.5} \\
+        &= 0.2
+\end{align*}
 
-\subsection{Exercise 3: Augmentation Ablation}
+Exponentiate and sum:
 
-Why is random cropping important in SimCLR? What would happen without it?
+\begin{align*}
+    \exp(s^+) &\approx 6.05 \\
+    \exp(s^-_1) &\approx 1.82 \\
+    \exp(s^-_2) &\approx 1.22 \\[4pt]
+    \text{denominator} &= 6.05 + 1.82 + 1.22 \\
+                       &= 9.09
+\end{align*}
 
+The loss is the negative log of the positive's share:
 
-\section{Self-Reflection and Recap}
+\begin{align*}
+    \mathcal{L}_{\text{InfoNCE}} &= -\log\!\tfrac{6.05}{9.09} \\
+                                  &= -\log(0.665) \\
+                                  &\approx 0.41
+\end{align*}
 
-\newthought{Self-Reflection.}
-
-\begin{enumerate}
-    \item Why is the projection head discarded after training in SimCLR?
-    \item What prevents collapse in non-contrastive methods like BYOL and SimSiam?
-    \item How does the masking ratio in MAE affect what the model must learn?
-    \item When would contrastive learning outperform masked prediction, and vice versa?
-    \item How does the choice of augmentation define what the representation becomes invariant to?
-    \item What failure modes arise when the pretext task is too easy or too hard?
-    \item Why does cross-modal pre-training as in CLIP enable zero-shot transfer?
-\end{enumerate}
-
-\vspace{1.5em}
-
-\newthought{Recap.}
-
-\begin{itemize}
-    \item Self-supervision creates labels from data structure; contrastive methods pull positive pairs together and push negatives apart via the InfoNCE loss.
-    \item Non-contrastive methods such as BYOL and SimSiam avoid collapse through asymmetry and stop-gradient, eliminating the need for large negative batches.
-    \item Masked prediction reconstructs hidden input tokens or patches, forcing the model to capture long-range dependencies; BERT applies this to language and MAE to vision.
-    \item The choice of augmentation determines the invariances of the learned representation; augmentations that are too weak yield shortcut features.
-\end{itemize}
+\marginnote{\newthought{Effect of $\tau$.} If you redo the calculation at $\tau{=}0.1$ the positive's share jumps to roughly $1.0$ and the loss falls toward zero; at $\tau{=}1$ the three candidates look more equal and the loss climbs above $0.7$. Lower $\tau$ rewards the model only when the positive sits clearly above the negatives.}
 
 \vspace{2.5em}
 
-\marginnote{\newthought{Teaser.} Self-supervised representations are powerful, but can we use them for tasks we never trained for, with no labelled examples at all?}
+\newthought{Design a pretext task.} Propose one self-supervised pretext task for each modality and name a shortcut a lazy model could exploit if you got the design wrong.
 
-\newthought{We can now learn powerful representations without labels.} But representations alone do not solve downstream tasks. When a new category or domain appears, we still need a way to bridge from pre-trained features to task performance, ideally with zero or very few labelled examples.
+\begin{itemize}
+    \item Audio, for example speech recordings.
+    \item Time series, for example sensor readings.
+    \item Graphs, for example molecular structures.
+\end{itemize}
 
-\newthought{The next chapter introduces zero-shot and few-shot learning,} where pre-trained vision-language models like CLIP classify images by matching them to text descriptions, and foundation models serve as universal building blocks for new tasks.
+\marginnote{\newthought{Reference answers.} Audio: predict the next $200$\,ms from the past second; shortcut is silence padding. Time series: predict masked timestamps; shortcut is local interpolation when masking is too short. Graphs: predict masked edges; shortcut is exploiting node degree alone.}
+
+\vspace{2.5em}
+
+\newthought{Augmentation ablation.} In SimCLR, what role does random cropping play, and what would happen if you removed it but kept colour jitter and Gaussian blur? What invariance does each augmentation buy, and which one buys the most?
+
+\marginnote{\newthought{Why crops dominate.} Random cropping forces the encoder to recognise the same object from very different views, which is the cheapest way to manufacture genuinely informative positive pairs. Without it the network learns to match colour histograms and surface texture and generalises poorly to downstream tasks.}
+
+\vspace{2.5em}
+
+\newthought{BYOL collapse check.} You disable the predictor head in BYOL and keep everything else identical. The training loss drops faster than usual, but downstream accuracy is near random. What happened, and which design lever would you reintroduce first?
+
+\marginnote{\newthought{Symmetry collapse.} Without the predictor, the two branches become identical and the loss is minimised by mapping every input to a single point, the trivial constant solution. The predictor head is the asymmetry that prevents this; restore it before tuning anything else.}
+
+\vspace{2.5em}
+
+% ============================= CODE ===============================
+
+\marginnote{\newthought{Code} will be provided as a Python notebook.\\Use it as a starting point, break things, and observe what changes.}
+\marginnote{$5{,}000$ unlabelled coffee photos\\$224{\times}224$ pixels each\\two augmentations per image\\[4pt]ResNet18 encoder, $128$-dim projection, $\tau{=}0.1$}
+
+\newthought{A coffee imagery dataset to explore.} You are given $5{,}000$ unlabelled coffee photos and asked to pretrain a SimCLR encoder. Implement the augmentation pipeline (random crop, colour jitter, Gaussian blur), the projection head, and the symmetric InfoNCE loss. Train for a fixed budget. Then freeze the encoder and use a linear probe on a small labelled subset of $200$ images, four classes (espresso, latte, drip, cold brew), to evaluate the representation. Sweep the temperature $\tau \in \{0.05, 0.1, 0.5\}$ and the batch size $N \in \{128, 512\}$ and chart linear-probe accuracy.
+
+\newthought{What to observe.} The augmentation pipeline matters most: drop random cropping and accuracy collapses to near random, even at large batch sizes. Lower $\tau$ improves accuracy until it underflows, at which point the loss saturates and training stalls. Larger batches give a clean, monotonic improvement that flattens after a few hundred negatives, demonstrating why MoCo's queue is worth the engineering for small-batch settings.
+
+
+\section{Self-Reflection and Recap}\index{reflection}\index{recap}
+
+\newthought{Self-Reflection} questions to guide your thinking:
+
+\begin{itemize}
+    \item Why is the projection head discarded after training in SimCLR, and what does that say about where the useful representation actually lives?
+    \item What prevents collapse in non-contrastive methods like BYOL and SimSiam, and which design lever fails first if you remove it?
+    \item How does the masking ratio in MAE affect what the model must learn, and why does $75\%$ work better in vision than $15\%$ does in language?
+    \item When would you reach for contrastive learning over masked prediction, and when the other way around?
+    \item How does the choice of augmentation define what the representation becomes invariant to, and what shortcuts open up if augmentations are too weak?
+    \item What failure modes arise when the pretext task is too easy, and what happens when it is too hard?
+    \item Why does cross-modal pretraining as in CLIP enable zero-shot transfer when single-modality pretraining does not?
+    \item How does the unsupervised story so far, similarity, clustering, dimensionality reduction, generative latent spaces, uncertainty, self-supervision, hold together as a single thread?
+\end{itemize}
+
+\newthought{Recap} of Key Concepts:
+
+\begin{itemize}
+    \item Self-supervision turns the structure of unlabelled data into a learning signal. Pretext tasks were the first attempt; contrastive, non-contrastive, and masked-prediction objectives now dominate.
+    \item Contrastive methods optimise InfoNCE: pull augmented views of the same input together, push views from different inputs apart. SimCLR pays for negatives in batch size; MoCo pays for them with a queue and a momentum encoder.
+    \item Non-contrastive methods (BYOL, SimSiam) avoid negatives entirely. Asymmetry, stop-gradient, and batch normalisation conspire to prevent collapse, with no single mechanism the whole story.
+    \item Masked prediction reconstructs hidden tokens (BERT) or hidden patches (MAE), forcing the model to capture long-range dependencies; Data2Vec unifies the recipe across vision, speech, and text using teacher-student distillation.
+    \item Augmentation choices define the invariances of the learned representation; cropping is the workhorse in vision and the only augmentation whose removal collapses downstream accuracy on its own.
+    \item CLIP turns the noisy correspondence between web images and captions into a shared embedding space, and that joint space is the foundation for zero-shot transfer.
+\end{itemize}
+
+\marginnote{\newthought{The root of representation hunger.} Every method in this chapter delivers features without labels, but no method tells you how to use those features when the downstream task contains a class or a domain the encoder has never seen.}
+
+\newthought{The shared limitation} of every method in this chapter is that learning the representation and using the representation are still two different problems. SimCLR and MAE produce a backbone whose embeddings are rich, geometrically organised, and transferable; what they do not provide is a recipe for adapting that backbone to a downstream class the encoder was not exposed to. Pretraining ends at the backbone; the gap to a usable classifier remains.
+
+\newthought{Zero-shot and few-shot learning} close that gap. They take the shared embedding space that CLIP, MAE, or any other self-supervised model leaves behind and turn it into a classifier on the fly: in zero-shot by writing the class as a text prompt and embedding it alongside the image, in few-shot by anchoring the prediction in a handful of labelled examples. The next chapter develops both directions.
+
+\marginnote{\newthought{Teaser.} Can the same backbone classify a class it has never been trained on?}
 
 \marginnote{\newthought{feedback}}
