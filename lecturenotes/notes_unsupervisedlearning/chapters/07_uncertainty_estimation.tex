@@ -11,64 +11,91 @@
 
 \section{The Why}\index{uncertainty estimation}
 
-\marginnote{\newthought{Neural networks} are trained to predict, and they do so with impressive accuracy on familiar data, which makes them particularly misleading on unfamiliar data.}
 
-\newthought{In the previous chapter} we learned to compress high-dimensional data into structured latent spaces and to draw new samples from those spaces.
-The Variational Autoencoder mapped each input to an embedding, decoded it back, and could even synthesise plausible new samples from the prior.
-Neither capability told us how much we should trust those outputs for any particular input.
-A reconstruction looks the same whether the input lay in the heart of the training distribution or far from any encoded neighbour in feature space; the model has no built-in way to communicate its own uncertainty.
 
-\marginnote{\newthought{The long tail.}\cite{Koopman2018HeavyTail} Real-world data is heavy-tailed: a small number of common situations cover most of the volume, but a long tail of rare configurations refuses to vanish no matter how much data is collected. Autonomous vehicles see most of the road most of the time and meet the unusual every few hours, and a model that is confident on the head will be confident on the tail by default.}
+\newthought{In the previous chapter} we learned to compress high-dimensional data into structured latent spaces and embeddings\index{embedding}\index{feature space}
+and even to draw new samples from those spaces. Closing we even explored and stepped through the latent feature space itself.
+Neither capability told us how much we should trust those embeddings or outputs for any particular input.
+A reconstruction\index{reconstruction error} looks the same whether the embedding lay in the heart of the training distribution or far from any encoded
+neighbour in feature space; the model has no built-in way to communicate its own uncertainty.
 
-\newthought{Models trained on finite data are confident outside their training distribution by default.}
-The softmax of a classifier sums to one regardless of whether the input is a familiar digit or a sample drawn from pure noise.
-The decoder of a VAE produces a smooth output regardless of whether the latent code corresponds to a region the encoder ever visited.
-Confidence is a number the model returns; it is not a flag that the model has actually seen anything like this input before, nor a measure of how far the input sits from the embeddings of the training data.
 
-\newthought{Silent failure is the natural consequence.}
-A model that cannot express doubt will eventually be confidently wrong, and no downstream safeguard can compensate for an uncertainty signal that was never produced in the first place.
-The classifier returns its prediction, the planner trusts it, the actuator executes; the loop closes around the wrong answer with no visible alarm.
 
-\newthought{Acting under uncertainty} is what turns a raw doubt signal into a deployable safety net.
-Three operational layers compose to keep the loop open.
-Human-in-the-loop puts a reviewer on the critical path: the model emits a prediction with an uncertainty score, and the system stalls until the reviewer accepts or overrides.
-Human-on-the-loop runs the model autonomously and escalates only flagged cases, so the reviewer steers without blocking the average prediction.
-Fail-safe defaults are the conservative action taken when the model has flagged the input as outside its competence and no reviewer is available.
-Behind all three is monitoring, the slow loop that watches the distribution of scores over time and alerts when the input world has drifted from the world the model was trained on.
-A complementary thread is explainability\index{explainable AI}\cite{Ribeiro2016LIME}: when a flagged decision is shown to a reviewer, surfacing the features or training neighbours that drove the prediction tells them where to look, so calibration tells the reviewer when to look and explanation tells them what to look at.
+\marginnote{\newthought{Neural networks} are trained to predict, and they do so with impressive accuracy on familiar data, 
+which makes them particularly misleading on unfamiliar data.}
 
-\newthought{Confidence is not correctness.}
-Neural networks calibrate poorly on out-of-distribution inputs by design: the softmax normalises to sum to one whether the input is a training-set image or a frame from a film the network has never seen.
-Adversarial inputs lift the problem to a sharper edge, where the model is high-confidence wrong on imperceptible perturbations.
-The cure is not to make the model more confident; it is to make the model honest about what it does not know, so that confidence and accuracy track each other on a calibration plot rather than drifting apart.
-A complementary route is to train a small head whose only job is to predict whether the main model will be right on the current input, turning the model's own likelihood of being correct into a learned routing signal that sends the cases it is likely to mishandle to a reviewer before they cause damage.
+\newthought{The Confidence Value and Prediction Probabilities are ambiguous.}
+Neural networks calibrate poorly on out-of-distribution inputs by design: the softmax\index{softmax confidence} normalises to sum to one.
+Confidence collapses to a measure of similarity within the known domain itself and fails out-of-domain distributions.
+As a consequence we need to establish ways to determine the actual confidence we have in a model.
 
-\marginnote{\newthought{Calibration plot.}\cite{Guo2017Calibration} Bin predictions by stated confidence, then plot mean confidence on the horizontal axis against empirical accuracy on the vertical. The diagonal is perfect calibration; modern deep classifiers typically sit above the diagonal, which is to say they are systematically overconfident.}
+\marginnote{\newthought{Adversarial inputs}\index{adversarial inputs} lift the problem to a sharper edge, where the model
+is high-confidence wrong on imperceptible perturbations.}
 
-\newthought{Different sources of uncertainty call for different responses.}
-Some uncertainty is irreducible noise in the data and will not shrink with any amount of training.
-Some uncertainty reflects gaps in what the model has been shown and shrinks the moment relevant data arrives.
-Treating the two the same wastes effort and conceals the actionable signal under the inevitable one.
 
-\marginnote{\newthought{ODD and drift.}\index{operational design domain}\index{distribution shift} The operational design domain names the conditions under which a system was designed to work, namely the slice of the world the training data covered. ODD detection asks at runtime whether the current input falls inside that slice. Data drift is the slow change in input statistics over time; model drift is the resulting decoupling of stated confidence from empirical accuracy. Both bend the calibration plot away from the diagonal long before the operator notices.}
 
-\newthought{Uncertainty estimation closes the gap.}
-It asks: given a model trained on finite data under specific assumptions, how reliable are its outputs for a particular input, and what kind of unreliability is at play?
-The answer turns a single output into a distribution over outputs, a single confidence number into a structured signal that downstream code can route on.
-A close cousin of the same problem is anomaly detection trained as one-class learning\index{one-class learning}: deliberately fit only normal data, then flag any input the model finds unusual without ever showing it a labelled anomaly.
-The same uncertainty signal that powers calibration also powers detection of inputs the training distribution never covered, which is the regime where labels are rare and the events that matter most are the ones nobody has annotated.
+% Move this into the theory main block on a later run next year.
+\newthought{Calibration}\index{calibration}\cite{Guo2017Calibration}. In a supervised setting the accuracy of the model is known, and using that information
+the confidence can be calibrated by the actual accuracy in a specific confidence bin.
 
-\newthought{In order to move from confident predictions to calibrated ones} we have good reason to find ways to,
+\newthought{Confidence Head.}\index{confidence head}
+A complementary route is to train a small head whose only job is to predict
+whether the main model is actually confident to be right on the current input,
+turning the model's own likelihood of being correct into a prediction target.
+
+\newthought{Confidence by Reconstruction.}\index{reconstruction error}\index{VAE}
+In the spirit of the Variational Autoencoder Architecture, the confidence in an embedding
+gets varified when its reconstruction gets compared with its decoding. Even when out of domain samples fall within the
+latent feature space of our training data, the reconstruction collapses onto the training domain, highlighting out of domain samples.
+
+
+\marginnote{\newthought{The heavy tail of aleatoric uncertainty.}\cite{Koopman2018HeavyTail} Real-world data is heavy-tailed: A small number 
+of common situations cover most of the volume, but a long tail of rare configurations refuses to vanish no matter how 
+much data is collected. Autonomous vehicles thus have no means to have learned those rare events, 
+so at least they need to realize that they move out of domain.}
+
+\newthought{Epistemic Uncertainty.}\index{epistemic uncertainty}
+While uncertainty within the data, which is called aleatoric, is a concern the models own uncertainty is
+the focus when brought to application. Introducting noise\index{noise} into our learned parameters during inference,
+the variance\index{variance} in prediction result is measured and used as an indicator for uncertainty.
+
+
+
+% A complementary thread is explainability\index{explainable AI}\cite{Ribeiro2016LIME}: when a flagged decision is shown to a reviewer, surfacing the features or training neighbours that drove the prediction tells them where to look, so calibration tells the reviewer when to look and explanation tells them what to look at.
+
+\newthought{Application and Acting under uncertainty}. 
+Uncertainty estimations turn confidence into a signal that informs our downstream modules.
+
+
+
+\marginnote{\newthought{ODD and drift.}\index{operational design domain}\index{distribution shift} The operational design domain 
+names the conditions under which a system was designed to work, 
+namely the slice of the world the training data covered. 
+ODD detection asks at runtime whether the current input falls inside that slice. 
+Data drift is the slow change in input statistics over time; 
+model drift is the resulting decoupling of stated confidence from empirical accuracy.}
+
+\marginnote{\newthought{Anomaly Detection and On-Domain Learning.} Making a virtue of necessity. 
+We can use uncertainty estimates for anomaly detection on one-class 
+embeddings\index{one-class learning}: Deliberately fit only normal data, then flag any input the model finds unusual
+without ever showing it a labelled anomaly.} 
+
+
+
+
+
+\newthought{In order to move from overconfident predictors to uncertainty estimations} we have good reason to find ways to,
 \begin{itemize}
-    \item separate irreducible data noise from reducible model ignorance, so that each source of uncertainty triggers the right response.
-    \item quantify how much a model's predictions vary across plausible parameter settings, turning a single output into a distribution over outputs.
+    \item separate aleatoric from epistemic uncertainty, so that each source informs the predictive confidence of our model.
+    \item measure or predict model uncertainty in out of domain distributions.
     \item act on uncertainty estimates in practice, routing unreliable predictions to human reviewers, falling back to fail-safe defaults, and detecting inputs the model was never trained to handle.
 \end{itemize}
 
 
 
 
-
+\newpage
+\iffalse
 
 \subsection{Hands On Experience}
 
@@ -197,7 +224,7 @@ That signal is what powers the four capabilities above, and the rest of this cha
 
 
 
-\iffalse
+
 % ==============================================================================================
 % BLOCK 2: MAIN THEORY
 % ==============================================================================================
@@ -211,7 +238,7 @@ That signal is what powers the four capabilities above, and the rest of this cha
 \newthought{Two kinds of uncertainty} arise in any model trained on finite data.
 The distinction is not pedantic; it determines whether collecting more data will help, whether retraining is worth the effort, and whether the right response is to flag the prediction or to commission new annotations.
 
-\newthought{Aleatoric uncertainty}\index{aleatoric uncertainty} is inherent noise in the data and cannot be reduced by collecting more of it.
+\newthought{Aleatoric uncertainty}\index{aleatoric uncertainty} is inherent noise\index{noise} in the data and cannot be reduced by collecting more of it.
 A sensor with finite precision will always introduce measurement noise; the same input handed to the system twice will produce two slightly different feature vectors, and no model on either of them can eliminate the spread.
 Overlapping class boundaries are the same story: when two classes genuinely share regions of the input space, the optimal classifier is a probability, not a label, and the irreducible width of that probability is the aleatoric uncertainty.
 
@@ -285,7 +312,7 @@ Quantifying each separately lets the deployed system route correctly: aleatoric 
 \label{fig:epistemic_sparse}
 \end{figure}
 
-\marginnote{\newthought{Calibration vs confidence.} Calibration asks whether the model's stated probabilities match the empirical frequencies; a $90\%$ confidence prediction should be right $90\%$ of the time. Confidence is the raw number the model returns. A well-calibrated model can still be uncertain; a confident model can still be miscalibrated.}
+\marginnote{\newthought{Calibration vs confidence.}\index{calibration} Calibration asks whether the model's stated probabilities match the empirical frequencies; a $90\%$ confidence prediction should be right $90\%$ of the time. Confidence is the raw number the model returns. A well-calibrated model can still be uncertain; a confident model can still be miscalibrated.}
 
 \newthought{The practical consequence} is that these two sources call for different responses.
 High aleatoric uncertainty means the problem is inherently hard at that point; the best strategy is to acknowledge the ambiguity and communicate it downstream so a human, or a redundant sensor, can decide.
@@ -304,7 +331,7 @@ The next subsection asks how to measure epistemic uncertainty when all we have i
 Two methods do most of the work in practice: Monte Carlo Dropout, which uses a single trained network with dropout enabled at test time, and Deep Ensembles, which trains several independent networks and aggregates their predictions.
 Both produce a distribution over predictions for a given input, from which a mean and a variance can be read off.
 
-\newthought{Monte Carlo Dropout}\index{Monte Carlo Dropout}\cite{GalGhahramani2016} estimates epistemic uncertainty by running $T$ forward passes through the trained network with dropout enabled at test time.
+\newthought{Monte Carlo Dropout}\index{Monte Carlo Dropout}\index{dropout}\cite{GalGhahramani2016} estimates epistemic uncertainty by running $T$ forward passes through the trained network with dropout enabled at test time.
 Each dropout mask zeroes out a different subset of activations, producing a different sub-network.
 The collection of $T$ predictions approximates a posterior over network weights; the spread across passes is an estimate of how much the prediction would change under plausible alternative weights.
 
@@ -378,7 +405,7 @@ Inputs well-represented in the training data produce consistent predictions acro
 \end{figure}
 
 \newthought{Each dropout mask produces a different sub-network} drawn from a Bernoulli distribution over which activations are kept.
-Gal and Ghahramani showed that this matches a variational approximation to a Bayesian neural network with a specific prior over weights, so MC Dropout can be read as a cheap, after-the-fact approximation of a posterior we never explicitly trained.
+Gal and Ghahramani showed that this matches a variational approximation\index{variational inference} to a Bayesian neural network\index{Bayesian neural network} with a specific prior over weights, so MC Dropout can be read as a cheap, after-the-fact approximation of a posterior we never explicitly trained.
 The mean prediction is the posterior predictive mean; the variance is the posterior predictive variance.
 
 \newthought{Deep ensembles}\index{deep ensembles}\cite{Lakshminarayanan2017} take the idea further by training $M$ independent models and aggregating their predictions:
@@ -430,7 +457,7 @@ Deep Ensembles cost $M$ full training runs and $M$ forward passes at inference; 
 
 \marginnote{\newthought{A practical protocol.} Pick MC Dropout when only one training run is affordable, when inference latency is loose, and when the network already uses dropout. Pick Deep Ensembles when accuracy and calibration are critical, training compute is available, and you can serve $M$ inference passes per query. For very large models where neither is affordable, use a small ensemble of $M{=}3$ to $M{=}5$ networks, each with MC Dropout at inference, to combine the two diversities cheaply.}
 
-\marginnote{\newthought{The hard part is calibration.} Even a well-quantified variance can be miscalibrated if the model overestimates its certainty. Temperature scaling, Platt scaling, and isotonic regression are post-hoc corrections that align stated probabilities with empirical frequencies. None of them shrink epistemic uncertainty; they make the estimate honest.}
+\marginnote{\newthought{The hard part is calibration.}\index{calibration} Even a well-quantified variance can be miscalibrated if the model overestimates its certainty. Temperature scaling\index{temperature scaling}, Platt scaling\index{Platt scaling}, and isotonic regression\index{isotonic regression} are post-hoc corrections that align stated probabilities with empirical frequencies. None of them shrink epistemic uncertainty; they make the estimate honest.}
 
 \newthought{With epistemic uncertainty quantified,} we have a number per input that says how much the model would disagree with itself under reasonable variation.
 The next question is what to do with that number: how does a variance translate into a decision?
@@ -540,7 +567,7 @@ The first family fits a distribution to the training data and flags points the d
 Flag as anomalous if $|z_i| > 3$ or another chosen threshold.
 The method assumes normality; heavy-tailed data will produce many false positives because the tails of a Gaussian decay much faster than those of a power law, so the $|z| > 3$ threshold flags too aggressively in heavy-tailed regimes.
 
-\newthought{Gaussian Mixture Model likelihood} extends the parametric idea to multimodal data.
+\newthought{Gaussian Mixture Model likelihood}\index{Gaussian Mixture Model} extends the parametric idea to multimodal data.
 Fit a GMM and compute the likelihood of each observation under the mixture:
 
 \begin{align*}
@@ -577,7 +604,7 @@ The number of components $K$ must be chosen carefully; too few and normal variat
 \label{fig:gmm_density}
 \end{marginfigure}
 
-\newthought{Extreme Value Theory}\index{Extreme Value Theory} handles heavy-tailed distributions by modelling the tail explicitly via the Generalised Pareto Distribution:
+\newthought{Extreme Value Theory}\index{Extreme Value Theory}\index{Generalised Pareto Distribution} handles heavy-tailed distributions by modelling the tail explicitly via the Generalised Pareto Distribution:
 
 \begin{align*}
     F(x) &= 1 - \left(1 + \frac{\xi\, x}{\sigma}\right)^{-1/\xi}
@@ -601,7 +628,7 @@ The second family drops the parametric assumption and reads off anomaly scores d
 Points far from their neighbours score high.
 The method is simple and effective but sensitive to the choice of $k$ and to varying cluster densities; in a dataset with both dense and sparse regions, a single global threshold either misses anomalies in the dense region or flags everything in the sparse region.
 
-\newthought{Local Outlier Factor}\cite{Breunig2000} accounts for varying density by comparing each point's local reachability density to that of its neighbours:
+\newthought{Local Outlier Factor}\index{Local Outlier Factor}\cite{Breunig2000} accounts for varying density by comparing each point's local reachability density to that of its neighbours:
 
 \begin{align*}
     \mathrm{LOF}_k(x) &= \frac{1}{|N_k(x)|} \sum_{y \in N_k(x)} \frac{\mathrm{lrd}_k(y)}{\mathrm{lrd}_k(x)}
@@ -653,7 +680,7 @@ The third family reuses the bottleneck idea from chapter 6: train a model to rec
 
 \marginnote{\newthought{If the model cannot reconstruct it,} it has probably never seen anything like it. Reconstruction error is the most direct readout of representational familiarity.}
 
-\newthought{Autoencoder reconstruction error} provides a natural anomaly score.
+\newthought{Autoencoder reconstruction error}\index{autoencoder}\index{reconstruction error} provides a natural anomaly score.
 Train an autoencoder on normal data only, then score each test point by how poorly it reconstructs:
 
 \begin{align*}
@@ -663,7 +690,7 @@ Train an autoencoder on normal data only, then score each test point by how poor
 High reconstruction error indicates the model has not learned to represent this type of input.
 The score is interpretable in the same units as the input space, which makes thresholding straightforward.
 
-\newthought{VAE log-likelihood} refines the idea by using the negative ELBO from chapter 6 as the anomaly score:
+\newthought{VAE log-likelihood}\index{VAE!anomaly detection}\index{ELBO}\index{KL divergence} refines the idea by using the negative ELBO from chapter 6 as the anomaly score:
 
 \begin{align*}
     \mathrm{score}(x) &= -\mathrm{ELBO}(x) \\
@@ -709,11 +736,11 @@ The fourth family handles the special case where the input may not even be drawn
 \newthought{Where anomaly detection asks whether a point deviates from the training distribution,} out-of-distribution detection frames this as a binary decision problem: in-distribution or out.
 The distinction matters because OOD methods are designed for the regime where the input is so far from the training data that the model's learned representations may be entirely unreliable.
 
-\newthought{Softmax confidence} is the naive baseline: flag inputs where $\max_k\, p(y{=}k \mid x)$ is low.
+\newthought{Softmax confidence}\index{softmax confidence} is the naive baseline: flag inputs where $\max_k\, p(y{=}k \mid x)$ is low.
 The problem is that neural networks are often confidently wrong on OOD data; the softmax normalises to sum to one regardless of how far the input is from any training example.
 A flat softmax means the model is unsure between known classes; a peaked softmax says nothing about whether the input is a known class at all.
 
-\newthought{ODIN}\index{ODIN}\cite{LiangODIN2018} improves on softmax confidence by combining temperature scaling with input perturbation:
+\newthought{ODIN}\index{ODIN}\index{temperature scaling}\cite{LiangODIN2018} improves on softmax confidence by combining temperature scaling with input perturbation:
 
 \begin{align*}
     \tilde{x} &= x - \epsilon \cdot \mathrm{sign}\!\bigl(\nabla_x \log p(y{=}\hat{y} \mid x;\, T)\bigr)
@@ -721,7 +748,7 @@ A flat softmax means the model is unsure between known classes; a peaked softmax
 
 The temperature $T$ flattens the softmax during scoring, and the perturbation pushes the input slightly toward what the network expected; in-distribution inputs respond to the perturbation by rising in confidence, OOD inputs do not.
 
-\newthought{Energy-based OOD detection}\index{energy score}\cite{LiuEnergy2020} uses the free energy of the logits directly:
+\newthought{Energy-based OOD detection}\index{energy score}\index{free energy}\cite{LiuEnergy2020} uses the free energy of the logits directly:
 
 \begin{align*}
     E(x) &= -\log \sum_k \exp\!\bigl(f_k(x)\bigr)
@@ -799,7 +826,7 @@ At inference the network simply predicts class $K{+}1$ for inputs that look like
 The trade-off is unflattering once you spell it out: the misc class only catches what was put into it.
 Anything operators did not anticipate, the network never sees a label for, so the OOD problem has not been solved, only reframed as an in-distribution problem with a new class whose recall is bounded by the imagination of whoever assembled the training set.
 
-\newthought{A separate detector head} pushes the same idea one rung further by training an auxiliary binary head on top of the existing backbone\cite{Chandola2009}, with the explicit job of predicting in-distribution membership rather than class identity.
+\newthought{A separate detector head}\index{detector head}\index{one-class learning} pushes the same idea one rung further by training an auxiliary binary head on top of the existing backbone\cite{Chandola2009}, with the explicit job of predicting in-distribution membership rather than class identity.
 The head can be a one-class classifier fit on the training features, a small two-class network using a curated outlier set as negatives, or a logistic readout on a fixed penultimate layer.
 This is essentially the learn-the-likelihood-of-being-correct idea pushed one step further, instead of predicting whether the prediction is correct, the head predicts whether the prediction even applies.
 The route is cheap to add because the backbone is reused, but the detector inherits whatever blind spots the backbone has already baked in, and its quality is set almost entirely by where the boundary data come from.
@@ -829,7 +856,7 @@ None of the three dominates in general, and a deployed system often runs two of 
 \newthought{Every uncertainty method inherits the model's notion of normal from the training data.}
 Failure modes follow predictably from where that inheritance breaks: the data shifts over time, the calibration drifts, the model is structurally blind to certain anomalies, the threshold is hard to set.
 
-\newthought{Distribution shift} is the most common and the hardest to detect.
+\newthought{Distribution shift}\index{distribution shift} is the most common and the hardest to detect.
 A fraud detector trained on last year's transactions starts the new year well-calibrated, but consumer behaviour drifts, new payment products appear, fraud schemes evolve.
 The detector keeps working as designed; it just no longer works for the world it now lives in.
 The variance of MC Dropout still reflects what the model saw in training, not what the world looks like today, and the gap grows silently until losses force a relabel.
@@ -861,16 +888,16 @@ The variance of MC Dropout still reflects what the model saw in training, not wh
 \label{fig:distribution_drift}
 \end{figure}
 
-\newthought{Calibration drift} compounds the shift problem.
+\newthought{Calibration drift}\index{calibration!drift} compounds the shift problem.
 Even when the underlying classes do not change, a model deployed long enough sees its predicted probabilities decouple from empirical frequencies as the input distribution drifts.
 A $90\%$ confidence prediction may correspond to $90\%$ accuracy at deployment time and to $70\%$ accuracy six months later; without periodic recalibration on fresh labelled data, the uncertainty signal becomes a number that no longer means what it says.
 
-\newthought{Reconstruction-based blindness} hits a different surface.
+\newthought{Reconstruction-based blindness}\index{failure modes!reconstruction} hits a different surface.
 An autoencoder trained on MNIST digits zero through eight will reconstruct a held-out nine surprisingly well, because nines share local strokes with fours and sevens that the model has learned to encode.
 The reconstruction error is moderate, the threshold sees nothing unusual, and the anomaly slips through.
 The failure is not in the score; it is in the assumption that visual similarity equals familiarity.
 
-\newthought{The threshold problem} is the practical headache that haunts every method.
+\newthought{The threshold problem}\index{threshold!anomaly detection} is the practical headache that haunts every method.
 In the absence of labelled anomalies, where exactly do we draw the line above which an input is flagged?
 Set the threshold too tight and every input is flagged, drowning the operator in noise.
 Set it too loose and real anomalies slip through.
@@ -898,11 +925,11 @@ The $k$-distance plot from chapter 4 had its own version of this; here we sweep 
     \node[font=\small, black!30, anchor=west] at (axis cs:0.7,0.65) {random};
     \end{axis}
 \end{tikzpicture}
-\caption{Receiver operating characteristic for an anomaly detector. The curve sweeps the threshold from strict (low FPR, low TPR) to loose (high FPR, high TPR). The open marker is one operating point chosen by domain cost: a false positive costs a human review; a false negative costs an undetected anomaly.}
+\caption{Receiver operating characteristic\index{ROC curve} for an anomaly detector. The curve sweeps the threshold from strict (low FPR, low TPR) to loose (high FPR, high TPR). The open marker is one operating point chosen by domain cost: a false positive costs a human review; a false negative costs an undetected anomaly.}
 \label{fig:roc_curve}
 \end{figure}
 
-\marginnote{\newthought{Stability analysis.} Re-train the same detector on bootstrap subsamples of the training set and compare the flagged sets. Stable flags suggest genuine anomalies; flags that appear in only a few re-runs reflect detector variance, not signal. Stability is also a useful drift detector: a sudden drop in flag stability over time often precedes calibration failure.}
+\marginnote{\newthought{Stability analysis.}\index{stability analysis} Re-train the same detector on bootstrap subsamples of the training set and compare the flagged sets. Stable flags suggest genuine anomalies; flags that appear in only a few re-runs reflect detector variance, not signal. Stability is also a useful drift detector: a sudden drop in flag stability over time often precedes calibration failure.}
 
 \newthought{When uncertainty estimates struggle,} the shared root cause is always the same: every method models normality from the training data, and the training data drifts.
 The cure is operational: monitor the score distributions over time, recalibrate periodically, accept that no detector is permanent.
@@ -918,25 +945,25 @@ Deployed ML systems must handle the inevitable cases they cannot confidently res
 Four strategies compose into a practical safety net.
 They are not alternatives but layers; a well-engineered deployment uses all four together.
 
-\newthought{Confidence thresholds} are the first layer.
+\newthought{Confidence thresholds}\index{confidence threshold} are the first layer.
 The system acts autonomously only on predictions above a calibrated confidence level; everything else is escalated.
 Picking the threshold is the practical work, and it is rarely a single number across all classes.
 A medical triage classifier may demand $95\%$ confidence on positive predictions (acting on a positive ties up specialist time) and only $80\%$ on negative ones (a missed positive is far costlier than an over-cautious flag).
 The threshold is a cost decision, not a statistical one.
 
-\newthought{Human handoff} is the second layer.
+\newthought{Human handoff}\index{human handoff} is the second layer.
 Route uncertain or high-stakes cases to human reviewers.
 Consider a radiology pipeline: an MRI image is fed to the model, MC Dropout returns a tumour probability with high epistemic variance because the lesion sits at the boundary between two morphologies the model has seen separately but never together.
 The system does not return a yes/no decision; it queues the image for radiologist review with the model's prediction and uncertainty surfaced as context.
 The radiologist confirms or overrides; the new label feeds back into the next training round, and the model's epistemic variance on similar images drops over time.
 
-\newthought{Fail-safe defaults} are the third layer.
+\newthought{Fail-safe defaults}\index{fail-safe defaults} are the third layer.
 When uncertain, take the conservative action.
 Consider an autonomous vehicle approaching an intersection where the lane-marking model returns high uncertainty: weather has worn the markings, the model has not seen this exact configuration.
 The system does not guess at lane geometry; it falls back to a conservative behaviour like reducing speed and centering on the visible road edge until the uncertainty drops or a human driver intervenes.
 The fail-safe is the action that costs least if the model is wrong.
 
-\newthought{Monitoring} is the fourth layer, and the one most often skipped.
+\newthought{Monitoring}\index{monitoring} is the fourth layer, and the one most often skipped.
 Track prediction confidence and anomaly scores over time, alerting when the score distribution shifts or the variance grows.
 Drift in the input distribution shows up first as drift in the uncertainty distribution; a fraud detector whose mean confidence falls slowly over a quarter is telling you that the input distribution has moved, often weeks before the false-negative rate becomes visible.
 
@@ -1269,43 +1296,44 @@ The autoencoder catches structural anomalies that are close in distance but stru
 No single method dominates across all anomaly types; the practical recipe is to ensemble them and route on agreement, falling back to human review when methods disagree.
 
 \fi
-\section{Self-Reflection and Recap}\index{reflection}\index{recap}
-
 \newthought{Self-Reflection} questions to guide your thinking:
 \begin{itemize}
-    \item What is the difference between aleatoric and epistemic uncertainty, and which one can MC Dropout estimate?
-    \item When would you prefer deep ensembles over MC Dropout, and what are the trade-offs in compute and quality?
-    \item What distinguishes a point anomaly from a contextual one, and why does the distinction matter for method choice?
-    \item Why does the Z-score fail on heavy-tailed or multimodal data, and what alternatives exist?
-    \item When does $k$-NN distance fail in a way that LOF handles, and what is the underlying mechanism?
-    \item Why might an autoencoder trained on normal data reconstruct an anomaly with low error, and how would you mitigate this?
-    \item Why is high softmax confidence not a reliable indicator that an input is in-distribution, and what does the energy score see that softmax does not?
-    \item How does distribution shift cause an uncertainty detector to silently degrade, and what are the operational signals that the detector is no longer trustworthy?
-    \item Why should a deployed model include both a fail-safe default and a human-handoff mechanism, and how do you decide which branch is appropriate for a given uncertainty level?
+    \item Why does softmax turn confidence into a similarity score within the training distribution rather than an absolute correctness estimate?
+    \item Why is high softmax confidence on an adversarial perturbation the same failure mode as overconfidence out of domain, not a separate one?
+    \item In a reliability diagram, why does the gap at the heaviest bin determine the user-visible failure mode of a deployed system?
+    \item Why does histogram binning close the in-domain ECE almost completely while leaving the out-of-domain ECE almost untouched?
+    \item How does histogram binning differ in assumption and applicability from a separately trained confidence head?
+    \item How does MC Dropout turn a single trained network into an estimator of predictive variance, and what assumption links that variance to epistemic uncertainty?
+    \item Which kind of out-of-domain input is structurally invisible to MC Dropout, and why?
+    \item In a DeVries-Taylor confidence head, every hint towards the label costs $-\log c$. Why does that loss alone tend to saturate at $c\!\to\!1$, and what does outlier exposure add that closes the loophole?
+    \item Why can the reconstruction error of a one-class VAE flag an out-of-domain input even when its latent embedding falls inside the training cloud, and what kind of input slips through that signal?
+    \item Why do VAE reconstruction error and VAE latent geometry tend to confuse the same out-of-domain inputs, and what does that say about geometric vs semantic OOD detection?
+    \item What separates aleatoric from epistemic uncertainty, and which of the two is reduced by collecting more training data?
+    \item Why does the heavy tail of real-world data imply that the epistemic component cannot be driven to zero, and what does that mean for safety-critical deployment?
+    \item How do data drift and model drift, defined relative to the operational design domain, decouple stated confidence from empirical accuracy at runtime?
+    \item Why can a one-class generator serve as an anomaly detector without ever observing a labelled anomaly, and what does that imply for the choice of objective?
+    \item On what axes would you compare softmax, calibration, MC Dropout, a confidence head, and a VAE OOD score when picking one for a concrete deployment?
 \end{itemize}
 
 \newthought{Recap} of Key Concepts:
 \begin{itemize}
-    \item Uncertainty comes in two forms: aleatoric, which is irreducible noise in the data, and epistemic, which reflects the model's ignorance and shrinks as more data arrives. Only the latter is actionable through more training data.
-    \item MC Dropout and deep ensembles both quantify epistemic uncertainty by measuring disagreement across multiple predictions. MC Dropout is cheap to deploy on a single trained network; deep ensembles cost $M$ training runs but produce more reliable uncertainty estimates on truly novel inputs.
-    \item Scoring methods turn uncertainty into decisions through statistical, proximity, and reconstruction families, plus OOD-specific scores. The type of anomaly, point, contextual, or collective, dictates which family is appropriate, and the threshold is a cost decision rather than a statistical one.
-    \item Energy-based OOD detection separates in- from out-of-distribution inputs more reliably than softmax confidence because energy is not normalised; the absolute scale of the logits carries information that the softmax discards.
-    \item Every uncertainty method inherits its model of normal from the training data, and that data drifts. Calibration, distribution shift, and reconstruction blindness are predictable failure modes that operational monitoring is designed to catch before they cause silent failures.
-    \item Graceful degradation composes confidence thresholds, fail-safe defaults, human handoff, and monitoring into a safety net. A deployed model that can refuse to answer the cases it should refuse on is more trustworthy than one that always answers.
+    \item Softmax encodes similarity within the training distribution, not correctness, and so fails out of domain and on adversarial inputs.
+    \item ECE measures the gap between stated confidence and empirical accuracy; histogram binning closes it on the distribution it was fit on but does not transfer.
+    \item Uncertainty splits into aleatoric (irreducible noise) and epistemic (model ignorance); MC Dropout and a confidence head estimate the latter, and only the latter shrinks under more training data.
+    \item A one-class VAE turns reconstruction error and latent geometry into OOD signals, and inherits a blind spot whenever the unknown looks geometrically like the known.
+    \item The operational design domain delimits the input slice the model was trained for; data drift and model drift decouple stated confidence from empirical accuracy at runtime.
 \end{itemize}
 
-\marginnote{\newthought{Root cause.} Every method in this chapter inherits its notion of normal from a narrow training distribution, and the long tail of novel inputs is structurally invisible to a narrowly-trained detector.}
 
-\newthought{Every uncertainty method in this chapter} inherits its model of normality from the training data, and that data covers only a sliver of the input space the deployed model will encounter.
-A fraud detector trained on last year's transaction patterns will keep waving through this year's novel scheme until enough damage accumulates to relabel the data and retrain.
-The detector still works as designed; it just no longer works for the world it now lives in, and there is nothing inside the detector itself that flags this, because the failure lives outside the feature space it was ever shown.
+\newthought{A notion of domain.} Every method in this chapter inherits its notion of domain
+from a narrow training distribution, and the long tail of novel inputs is structurally
+invisible to a narrowly-trained detector. The data covers only an increment of the input
+space the deployed model will encounter.
 
-\newthought{Transfer learning} addresses this brittleness by widening the feature space before the task ever arrives.
-Instead of training a narrow detector on a narrow dataset, we reuse a backbone that has already been pre-trained on web-scale data, so that the long tail of any one task already sits inside the head of the backbone's representation~\cite{Radford2021CLIP}.
-Foundation models such as CLIP, GPT, and SAM push this idea to the extreme: a single representation, learned once on hundreds of millions of image-text pairs or tokens, can be reused on classification, retrieval, or segmentation tasks it was never explicitly trained for, with zero or only a handful of labelled examples.
+\newthought{Transfer learning.} In order to build ever more capable models and expand
+beyond known domains, our target is to widen the feature space before a new domain or a
+new task even arrives.
 
-\marginnote{\newthought{Teaser.} How can a sentence like ``a photo of a cat'' act as a classifier for an image the model has never seen before?}
-
-\newthought{The next chapter explores} how pre-trained vision-language models turn a text prompt into a zero-shot classifier, how few-shot fine-tuning, linear probing, and adapters reuse a frozen backbone on a new task, and what goes wrong when the source and target domains drift far enough apart that transfer becomes negative.
+\marginnote{\newthought{Teaser.} How do our embeddings need to be formalized and trained in order to generalize and transfer between tasks and domains?}
 
 \marginnote{\newthought{feedback}}

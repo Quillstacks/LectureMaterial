@@ -1,0 +1,193 @@
+% !TEX root = ../notes_unsupervisedlearning.tex
+% Chapter 13: World Models
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{World Models}\index{World Models}\index{Dreamer}\index{model-based RL}
+\newthought{Simulate, imagine, then act.}
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 1: INTRODUCTION
+%═══════════════════════════════════════════════════════════════════════
+
+\section{The Why}
+
+\marginnote{Humans imagine consequences before acting; can machines learn to do the same?}
+
+Model-free reinforcement learning learns from experience, but it is sample-inefficient, requiring millions of environment interactions; unsafe, because learning by trial and error can be dangerous in the physical world; and non-transferable, because the agent must relearn each new task from scratch.
+
+\newthought{Model-based RL}\index{model-based RL} learns a model of the world, enabling planning by simulating actions before taking them, imagination by generating synthetic experience for training, and sample efficiency by learning from fewer real interactions.
+
+\newthought{In order to move from trial and error to planning in imagination} we have good reason to find ways to,
+\begin{itemize}
+    \item learn dynamics models that predict future states and rewards from current states and actions, enabling mental simulation.
+    \item drive exploration via intrinsic motivation so that the agent seeks novel states even when extrinsic rewards are sparse.
+    \item constrain the model with physics priors so that errors do not compound unchecked over long planning horizons.
+\end{itemize}
+
+\subsection{Hands On Experience}
+
+\begin{marginfigure}
+\begin{tikzpicture}[scale=0.7,
+    every node/.style={font=\small},
+    box/.style={draw, rectangle, rounded corners=2pt, thick, minimum height=0.8cm}]
+    \node[box, minimum width=2cm] (wm) at (0,0) {World Model};
+    \node[box] (s) at (-3,0) {$s_t, a_t$};
+    \node[box] (sp) at (3,0.5) {$\hat{s}_{t+1}$};
+    \node[box] (r) at (3,-0.5) {$\hat{r}_t$};
+
+    \draw[-latex, thick] (s) -- (wm);
+    \draw[-latex, thick] (wm) -- (sp);
+    \draw[-latex, thick] (wm) -- (r);
+
+    \draw[-latex, thick, dashed] (sp.east) to[bend left] (4.5,0) to[bend left] (wm.north);
+    \node at (5,0) {Plan};
+\end{tikzpicture}
+\caption{World model predicts next state and reward, enabling mental simulation.}
+\label{fig:world_model_intro}
+\end{marginfigure}
+
+Imagine you are learning to play a video game. After playing briefly, you can imagine what happens if you jump; you simulate different strategies in your head; you execute the best plan in the real game. This is planning with a learned model: act in imagination, then act in reality.
+
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item Explain model-based RL, describe world model architectures such as Dreamer, and identify how model errors compound over long planning horizons.
+    \item Implement curiosity-driven exploration and distinguish intrinsic from extrinsic reward signals.
+    \item Apply physics priors (Lagrangian and Hamiltonian neural networks, conservation constraints) to bound the compounding-error problem.
+\end{itemize}
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 2: MAIN THEORY
+%═══════════════════════════════════════════════════════════════════════
+
+\newpage
+\section{Model-Based Reinforcement Learning}\index{model-based RL}
+
+\marginnote{Learn a model, then plan with it.}
+
+\newthought{Learn $f_\theta$} to predict the next state and reward from the current state and action,
+\begin{equation}
+    \hat{s}_{t+1}, \hat{r}_t = f_\theta(s_t, a_t).
+\end{equation}
+Training is supervised learning on collected transitions $(s, a, r, s')$.
+
+\newthought{Model Predictive Control}\index{MPC} uses the model to plan locally. At state $s$, simulate many action sequences; evaluate cumulative reward for each; execute the first action of the best sequence; repeat at the next state.
+
+\begin{algorithm}[H]
+\caption{MPC with Learned Model}
+\begin{algorithmic}[1]
+\Require Current state $s$, model $f_\theta$, horizon $H$, samples $N$
+\For{$i = 1$ to $N$}
+    \State Sample action sequence $a_1^i, \ldots, a_H^i$
+    \State $\hat{s} \gets s$
+    \State $R_i \gets 0$
+    \For{$t = 1$ to $H$}
+        \State $\hat{s}, \hat{r} \gets f_\theta(\hat{s}, a_t^i)$
+        \State $R_i \gets R_i + \gamma^{t-1} \hat{r}$
+    \EndFor
+\EndFor
+\State \Return $a_1^{i^*}$ where $i^* = \arg\max_i R_i$
+\end{algorithmic}
+\end{algorithm}
+
+\newthought{Model error compounds:} small prediction errors accumulate roughly linearly in the horizon length $H$,
+\begin{equation}
+    \text{error at step } H \approx H \cdot \epsilon_{\text{single-step}}.
+\end{equation}
+Mitigation strategies include short planning horizons, ensemble models, frequent re-planning, and physics priors that bound the error growth structurally.
+
+
+\section{World Models}\index{world model}
+
+\marginnote{World models compress observations into latent space, then predict in latent space.}
+
+\newthought{Ha and Schmidhuber}\index{Ha-Schmidhuber world model} proposed a three-component architecture~\cite{Ha2018WorldModels}: a Vision module (V) that encodes observations to a latent embedding $z$ via a VAE; a Memory module (M), an RNN that predicts future latents; and a Controller (C), a simple policy on $(z, h)$. The key insight: train V and M on real experience, then train C entirely in imagination.
+
+\newthought{Dreamer}\index{Dreamer} extends this idea with a learned latent dynamics model and actor-critic training in imagination~\cite{Hafner2020Dreamer}. It learns four components: a representation model $p(s_t | s_{t-1}, a_{t-1}, o_t)$, a transition model $p(s_t | s_{t-1}, a_{t-1})$, a reward model $p(r_t | s_t)$, and a decoder $p(o_t | s_t)$. The actor-critic imagines trajectories using the transition model, estimates values using imagined rewards, and updates the policy to maximise imagined return.
+
+
+\section{Exploration and Curiosity}\index{curiosity}\index{intrinsic motivation}
+
+\marginnote{Sparse rewards require intrinsic motivation to explore.}
+
+\newthought{Add intrinsic reward} for visiting novel states,
+\begin{equation}
+    r_{\text{total}} = r_{\text{extrinsic}} + \beta \cdot r_{\text{intrinsic}}.
+\end{equation}
+
+\newthought{The Intrinsic Curiosity Module}\index{ICM}~\cite{Pathak2017Curiosity} uses prediction error of a forward model as the intrinsic reward,
+\begin{equation}
+    r_{\text{intrinsic}} = \|f_\theta(s_t, a_t) - s_{t+1}\|^2.
+\end{equation}
+High prediction error indicates a novel state, which yields high reward.
+
+\newthought{The noisy TV problem:} random noise is unpredictable but not interesting. The agent wastes time on inherently stochastic signals.
+
+\newthought{Random Network Distillation}\index{RND}~\cite{Burda2019RND} fixes this. A frozen random network $f$ maps states to features and a learnable network $\hat{f}$ tries to match $f$. The intrinsic reward is $\|f(s) - \hat{f}(s)\|^2$. Novel states are hard to match because $\hat{f}$ has not seen them; pure randomness in the observation does not help, because $f$ is deterministic in $s$.
+
+
+\section{Physics Priors and Compounding Error}\index{physics-informed}
+
+\marginnote{If errors compound linearly in the horizon, a structural prior is the only thing that bounds them.}
+
+\newthought{Pure data-driven dynamics models} have no notion of energy, momentum, or constraint. Train one on noisy trajectories and the learned $f_\theta$ will happily predict trajectories that gain energy, drift through walls, or violate conservation laws; the loss does not penalise it. Over a horizon of fifty steps the violations accumulate, the imagined trajectory diverges from anything physically realisable, and the actor trained on those imagined returns ships a policy that performs worse than a random baseline on the real system.
+
+\newthought{Physics-informed neural networks}\index{PINN} add a soft constraint to the loss. For a system with known dynamics $\dot{x} = g(x, u)$, train $f_\theta$ with the standard prediction loss plus a residual,
+\begin{equation}
+    \mathcal{L} = \|\hat{x}_{t+1} - x_{t+1}\|^2 + \lambda \cdot \|f_\theta(x, u) - g(x, u)\|^2.
+\end{equation}
+The residual is zero when the model agrees with the known physics; $\lambda$ trades off data fit against physical consistency.
+
+\newthought{Lagrangian and Hamiltonian neural networks}\index{Lagrangian neural network}\index{Hamiltonian neural network} go further. Rather than constrain a generic dynamics model, parameterise the Lagrangian $L_\theta(q, \dot q)$ or the Hamiltonian $H_\theta(q, p)$ and derive the dynamics from it. Energy conservation is built in by construction: the model cannot violate it because the equations of motion are not free parameters. The cost of this is rigidity; the gain is that errors no longer compound through the conservation channel.
+
+\newthought{The pedagogical punchline:} world models give you imagination; physics priors give you imagination that respects the laws of the universe. The choice between data-driven dynamics, soft PINN constraints, and hard structural priors (Lagrangian, Hamiltonian) is a choice about how much you trust your data versus how much you trust your physics.
+
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 3: STUDENT ACTIVATION
+%═══════════════════════════════════════════════════════════════════════
+
+\newpage
+\section{Examples and Exercises}
+
+\subsection{Exercise 1: World Model Design}
+
+You want to learn a world model for a driving simulator. What is the input? What should it predict? How would you train it?
+
+\subsection{Exercise 2: Curiosity Trade-offs}
+
+A robot explores a room. The TV shows random static. Why might prediction-error curiosity spend too much time watching the TV, and how does Random Network Distillation avoid this failure?
+
+\subsection{Exercise 3: When to Add Physics}
+
+You are building a world model for a quadruped robot. Which sub-problems benefit most from a physics prior, and which are better left to data?
+
+
+\section{Self-Reflection and Recap}
+
+\newthought{Self-Reflection.}
+
+\begin{enumerate}
+    \item Why is model-based RL more sample-efficient but potentially less accurate than model-free RL?
+    \item How does Dreamer use the world model to train a policy entirely in imagination?
+    \item What failure modes arise when the world model is inaccurate over long horizons?
+    \item How does RND avoid the noisy TV problem that plagues prediction-error curiosity?
+    \item When does a physics prior help and when does it hurt?
+\end{enumerate}
+
+\vspace{1.5em}
+
+\newthought{Recap.}
+
+\begin{itemize}
+    \item Model-based RL learns a dynamics model and plans in latent imagination; Dreamer trains an actor-critic entirely on imagined trajectories.
+    \item Curiosity-driven exploration adds intrinsic reward for novelty; RND avoids the noisy TV problem by using network distillation rather than prediction error.
+    \item Physics priors (PINNs, Lagrangian and Hamiltonian neural networks) bound the compounding-error problem by encoding conservation laws structurally.
+\end{itemize}
+
+\vspace{2.5em}
+
+\marginnote{\newthought{Teaser.} What if the world model is the entire internet, and the action space is anything a foundation model can emit?}
+
+\newthought{The next chapter explores Vision-Language-Action models,} where the imagined experience comes pretrained from web-scale data, and the action space stretches from motor torques to API calls.
+
+\marginnote{\newthought{feedback}}

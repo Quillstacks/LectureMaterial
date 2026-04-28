@@ -105,16 +105,16 @@
 \part{Geometry of Pattern}
 
 % Lecture 1: Foundations
-\input{chapters/01_foundations}
+%\input{chapters/01_foundations}
 
 % Lecture 2: Centroid Clustering
-\input{chapters/02_centroid_clustering}
+%\input{chapters/02_centroid_clustering}
 
 % Lecture 3: Hierarchical Clustering
-\input{chapters/03_hierarchical_clustering}
+%\input{chapters/03_hierarchical_clustering}
 
 % Lecture 4: Density and Graph-Based Clustering
-\input{chapters/04_density_graph_clustering}
+%\input{chapters/04_density_graph_clustering}
 
 
 % ======================================================================
@@ -143,7 +143,7 @@
 % Lecture 8: Zero-Shot, Few-Shot, and Transfer Learning
 \input{chapters/08_zero_few_shot_transfer}
 
-% Lecture 9: Self-Supervised Learning (now also covers self-training, pseudo-labels, FixMatch, Mean Teacher, co-training)
+% Lecture 9: Self-Supervised Learning (now also covers self-training, pseudo-labels, FixMatch, Mean Teacher, Teacher Studen Distillation, Transformer and next token prediction, co-training)
 %\input{chapters/09_self_supervised_learning}
 
 
@@ -153,33 +153,45 @@
 
 \part{Aleatoric Pattern}
 
-% Lecture 10: Weak Supervision and Active Learning (LFs, Snorkel, label noise, query strategies)
-%\input{chapters/10_weak_supervision}
-
-
-% Use this page on why it is not working. Maybe switch with imitation learning. 
-% Lecture 13: Reinforcement Learning Fundamentals
-%\input{chapters/13_reinforcement_learning}
-
-% Lecture 12: Interactive and Imitation Learning
-%\input{chapters/12_interactive_learning}
+% Lecture 10: Weak Supervision and Labeling Functions (LFs, Snorkel, label-noise correction; active learning to move here from Ch12)
+% \input{chapters/10_weak_supervision}
 
 
 % ======================================================================
 % ACT V: Pattern FROM INTERACTION
 % ======================================================================
 
-%\part{World Pattern}
+\part{World Pattern}
 
-% Lecture 11: retired. Self-training/pseudo-label content folded into chapter 9; active learning into chapter 10.
-% The file chapters/11_self_training_ensembles.tex is kept as a backup but is not built.
-% Continual & Lifelong Learning — Learning over time without forgetting; replay, regularization, model souping.
-% Causal Representation Learning — Disentangling causes from correlations; intervention-stable factors from observational data.
-% Mechanistic Interpretability & Sparse Autoencoders — SAEs as unsupervised feature discovery inside trained nets.
-% Physics informed, or in general informed (make this derived from imitation learning)
+% Lecture 11: Reinforcement Learning Fundamentals (MDPs, Bellman, Q-learning, DQN with replay, policy gradients, PPO)
+%\input{chapters/11_reinforcement_learning}
 
-% Lecture 14: World Models and Vision-Language-Action Models
-%\input{chapters/14_world_models_vla}
+% Lecture 12: Imitation Learning from Human Behaviour (BC, DAgger, IRL, RLHF/DPO)
+%\input{chapters/12_interactive_learning}
+
+% Lecture 13: World Models (model-based RL, Dreamer, curiosity, RND, physics priors)
+%\input{chapters/13_world_models}
+
+% Lecture 14: Vision-Language-Action Models: Embodiment and Agency (OpenVLA and SmolVLA, sim-to-real with SE(3)-equivariance, frontier and scaling, orchestration and agentic tool use)
+%\input{chapters/14_vision_language_action}
+
+
+
+
+
+
+
+
+
+
+% Topics considered and intentionally not given full lectures:
+%   Continual and Lifelong Learning (replay, regularisation, model souping); could fit as
+%       a subsection inside Chapter 14 if embodied lifelong agents become the focus.
+%   Causal Representation Learning (intervention-stable factors from observational data).
+%   Mechanistic Interpretability and Sparse Autoencoders (SAE as unsupervised feature
+%       discovery inside trained nets); good topic, wrong act for the narrative arc.
+%   Physics-informed networks are folded into Chapter 13 (World Models, dynamics priors)
+%       and Chapter 14 (sim-to-real, SE(3)-equivariant policies).
 
 
 
