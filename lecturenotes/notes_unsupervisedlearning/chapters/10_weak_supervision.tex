@@ -1,0 +1,889 @@
+% !TEX root = ../notes_unsupervisedlearning.tex
+% Chapter 10: Weak Supervision and Active Learning
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Weak Supervision}\index{weak supervision}\index{Snorkel}\index{labeling functions}\index{verifier generator gap}\index{active learning}
+\newthought{Cheap many, expensive few.}
+
+%═══════════════════════════════════════════════════════════════════════
+% CHAPTER 10 SCOPE (agreed in scoping session 2026-04-27)
+%═══════════════════════════════════════════════════════════════════════
+% ARCHETYPE: ch04 hybrid; spine is the generator/discriminator asymmetry.
+%
+% Block 2 sections, in order:
+%
+%   1. Sources of Weak Labels  (modality coverage: text, images, sequences)
+%   2. Crowdsourcing and the Dawid-Skene Model  (historical precursor)
+%   3. Labeling Functions  (programmatic supervision)
+%   4. Label Modeling  (majority vote -> accuracy weighted -> correlations)
+%   5. The Snorkel Framework  (drill-down on the generator/discriminator
+%      asymmetry: small generative label model, large discriminative end
+%      model, why the end model generalizes beyond the LFs)
+%   6. Soft Labels and Noisy Labels  (not one-hot, label smoothing,
+%      class-conditional noise, loss correction, sample weighting,
+%      co-teaching)
+%   7. Confident Learning  (estimating the joint of noisy and clean
+%      labels, pruning, rank-based)
+%   8. The Verifier-Generator Gap  (generalize the asymmetry: verification
+%      is easier than generation; ties to GANs, RLHF, weak-to-strong)
+%   9. Judges and Process Reward Models  (LLM-as-judge, MT-Bench,
+%      outcome vs process reward, judge calibration)
+%  10. Active Learning  (the high-signal expensive counterpart;
+%      uncertainty, QbC, EGL, cold start)
+%  11. Composing Weak Supervision and Active Learning
+%
+% CENTER STAGE concepts: programmatic supervision, the generator /
+% discriminator asymmetry, soft labels, the verifier-generator gap, and
+% the cheap-many vs expensive-few axis.
+%═══════════════════════════════════════════════════════════════════════
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 1: INTRODUCTION
+%═══════════════════════════════════════════════════════════════════════
+
+\section{The Why}
+
+\marginnote{\newthought{Labels are random variables.} Not ground truth facts; just noisy realisations of an underlying truth that we never observe directly. The annotation pipeline is a measurement device, and like every measurement device it has a bias and a variance.}
+
+\newthought{In Chapter 9} self-supervised learning let the model invent its own labels by reading off structure inside the data. The pretext task carried us from raw bytes to representations, and a small clean head was enough to bolt on a downstream task. The bottleneck moved from labelling to compute, but it did not vanish; the small clean head still demanded a small clean dataset, and that small clean dataset still cost human time.
+
+\newthought{Real-world supervision is rarely clean.} Crowd workers disagree on ambiguous cases at rates of five to twenty percent, even on tasks like image classification that look unambiguous on the surface. Experts disagree with each other on medical scans. Heuristic rules cover ninety percent of the easy cases and break on the hard ten. Legacy datasets concatenate years of inconsistent annotation guidelines. The fiction of perfect labels is exactly that, a fiction we maintain because we have not built the tools to do otherwise.
+
+\newthought{Weak supervision} accepts the noise and models it explicitly. Rather than pretend that a single noisy source is the ground truth, we combine many noisy sources, learn how each one fails, and let a downstream model see through the noise to the underlying signal. The tools are different from those in chapters 6 to 9 because the problem is different. Self-supervised learning asked how a model can build representations without labels; weak supervision asks how a model can train when the only labels available are wrong, partial, or contradictory.
+
+\newthought{Across modalities} the problem repeats with different surface form. In text, a relation extraction system gets distantly supervised labels by aligning sentences against a knowledge base of triples; the alignment is right when the sentence actually expresses the relation, wrong when the entities co-occur for unrelated reasons. In images, a medical-imaging pipeline labels chest X-rays by parsing radiology reports with rules; the rules catch most pneumonia mentions but miss the negations and the hedges. In sequences, a sensor stream gets labelled by hand-written thresholds that fire on every event of interest plus quite a few that look like one. The labels come for free; the noise does not.
+
+\newthought{The dual axis} in this chapter is between cheap many and expensive few. Weak supervision asks how to scale supervision cheaply by tolerating noise; active learning asks how to spend a tiny budget of clean labels where it counts most. The two are not in conflict. They sit on the same axis from opposite ends, and a working system uses both.
+
+\newthought{The asymmetry that organises everything in this chapter} is between the generator and the verifier. A labelling function is a generator of noisy labels; the label model is a verifier that checks whether the labelling functions agree. A radiologist generates a clean diagnosis; an LLM judge verifies whether two model outputs disagree about the diagnosis. Verification is structurally easier than generation, and the entire toolbox of weak supervision exploits this gap.
+
+\newthought{In order to move from the fiction of perfect labels to principled learning under noise} we have good reason to find ways to,
+\begin{itemize}
+    \item encode domain knowledge as programmatic labelling functions that trade coverage for precision.
+    \item aggregate multiple noisy label sources into probabilistic labels, accounting for accuracy and correlation, without ever seeing the true label.
+    \item train discriminative models on probabilistic labels so they generalise beyond the rules that produced them.
+    \item exploit the asymmetry between generation and verification, using cheap noisy labels to scale and a small budget of clean labels to direct.
+\end{itemize}
+
+\newthought{The fundamental question} this chapter answers is how a model can learn from supervision that nobody fully trusts, and how to decide when to ask a human for the one label that matters.
+
+\subsection{Hands On Experience}
+
+\begin{marginfigure}
+\begin{tikzpicture}[scale=0.7]
+    \begin{axis}[
+        ybar,
+        xlabel={Labelling Function},
+        ylabel={Votes},
+        ymin=0, ymax=10,
+        xtick={1,2,3},
+        xticklabels={LF1, LF2, LF3},
+        width=\marginparwidth,
+        height=0.8\marginparwidth,
+        bar width=0.3cm,
+        tick style={black, thin},
+        xticklabel style={font=\tiny},
+        yticklabel style={font=\tiny},
+        legend style={font=\tiny, draw=none},
+    ]
+    \addplot[fill=black!30] coordinates {(1,7) (2,5) (3,8)};
+    \addplot[fill=black!60] coordinates {(1,3) (2,5) (3,2)};
+    \legend{Positive, Negative}
+    \end{axis}
+\end{tikzpicture}
+\caption{Three labelling functions voting on a batch of examples. They disagree, and they cover different examples. The label model has to infer who to trust on which.}
+\label{fig:lf_votes}
+\end{marginfigure}
+
+\newthought{Consider} a spam classifier. You have a million emails, no labels, and a deadline. Hand-labelling the corpus is not on the table. Instead, you sit down with a domain expert for an afternoon and write three rules,
+\begin{enumerate}
+    \item LF1: contains \verb|"free money"| or \verb|"wire transfer"| then spam.
+    \item LF2: from a known contact then not spam.
+    \item LF3: contains a link plus urgency words then spam.
+\end{enumerate}
+
+For an email from a known contact about a free trial offer the three rules disagree:
+\begin{itemize}
+    \item LF1 votes spam, matched on \verb|"free"|.
+    \item LF2 votes not spam, sender is in the address book.
+    \item LF3 abstains, no link in the body.
+\end{itemize}
+
+\marginnote{
+\begin{itemize}
+    \item How would you combine the three votes?
+    \item What if LF1 and LF3 both fire on the same false positives?
+    \item What if you also had a hand-labelled set of fifty emails to calibrate against?
+\end{itemize}}
+
+\newthought{Naive majority vote} says spam, two votes against one. But LF1 is a keyword rule that fires on every promotional newsletter; its precision is poor. LF2 is a hand-curated address book that almost never errs on labels it does emit; its precision is high. Treating the three votes as equal weight throws away exactly the information we have, namely that the three rules have very different reliability.
+
+\newthought{The same picture appears in vision.} Imagine a chest X-ray classifier where LF1 is a regex over the radiology report, LF2 is a pretrained foundation model run on the image, and LF3 is a hand-coded threshold on a single intensity statistic. None of them is reliable on its own; the ensemble might be. The challenge is the same as in the spam case, since we do not have a ground-truth label to calibrate any individual source against.
+
+\newthought{Weak supervision turns this into a measurement problem.} If the three sources never see the truth, they can still see each other. When they agree, the agreement is evidence; when they disagree, the disagreement structure tells us something about which one is wrong on which kind of example. The label model in section 4 makes this precise.
+
+\begin{marginfigure}
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={\tiny LFs (cheap, noisy, many)},
+        ylabel={\tiny Oracle (expensive, clean, few)},
+        xmin=0, xmax=10, ymin=0, ymax=10,
+        width=\marginparwidth, height=\marginparwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        xtick=\empty, ytick=\empty,
+    ]
+    \addplot[only marks, mark=*, mark size=2pt, black!55] coordinates {
+        (1,1) (2,1.2) (3,0.9) (4,1.1) (5,1) (6,1.3) (7,0.8) (8,1.2)
+    };
+    \addplot[only marks, mark=square, mark size=4pt, black, thick] coordinates {
+        (3,7) (6,8) (8,9)
+    };
+    \node[font=\tiny, anchor=west] at (axis cs:8.5,1.0) {LF votes};
+    \node[font=\tiny, anchor=west] at (axis cs:8.5,9.0) {oracle};
+    \draw[<->, thick, black!50] (axis cs:9,1.5) -- (axis cs:9,8.5);
+    \node[font=\tiny, rotate=90, anchor=south] at (axis cs:9.4,5) {label cost};
+    \end{axis}
+\end{tikzpicture}
+\caption{The two ends of the supervision axis. Many cheap noisy votes from labelling functions sit at the bottom, a few expensive clean labels from the oracle sit at the top. Active learning chooses where to spend the few; weak supervision chooses how to combine the many.}
+\label{fig:supervision_axis}
+\end{marginfigure}
+
+\newthought{The Learning Objectives} of this lecture:
+\begin{itemize}
+    \item Understand how programmatic labelling functions and the Snorkel pipeline aggregate noisy sources into a probabilistic training signal, and why the resulting generator/discriminator split lets the end model generalise beyond the rules.
+    \item Apply soft labels, label smoothing, loss correction, and confident learning to train models when the labels themselves are noisy, including the case where the noise rates are unknown.
+    \item Identify when to use weak supervision (cheap many) versus active learning (expensive few) versus a judge (verification at scale), and recognise the verifier-generator gap that runs through all three.
+\end{itemize}
+
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 2: MAIN THEORY
+%═══════════════════════════════════════════════════════════════════════
+
+\newpage
+\section{Sources of Weak Labels}\index{weak labels}
+
+\marginnote{\newthought{Weak labels} come from many sources and each source has its own failure mode. Knowing the failure mode is half the battle, since it tells you what the label model has to model.}
+
+\newthought{Before any aggregation,} it pays to enumerate where the noise comes from. The accuracy and coverage of a source determine how much weight the label model should give it, but the structure of its errors determines how the label model should be parameterised at all. Two sources that share an error mode have correlated noise; treating them as independent counts the same evidence twice.
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.18\textwidth}p{0.13\textwidth}p{0.16\textwidth}p{0.40\textwidth}}
+    \toprule
+    \textbf{Source} & \textbf{Coverage} & \textbf{Accuracy} & \textbf{Typical failure mode} \\
+    \midrule
+    Expert annotation & High & 95\% plus & Disagreement on ambiguous cases; expensive at scale \\
+    Crowd workers & High & 70 to 90\% & Reading carelessness; occasional adversarial workers \\
+    Heuristic rules & Low to medium & Variable & Brittle on phrasing variation; correlated errors across rules \\
+    Distant supervision & High & Low to medium & Co-occurrence does not imply the relation; many false positives \\
+    Pretrained models & High & Medium to high & Confident on the wrong class under distribution shift \\
+    Auxiliary signals & Medium & Variable & Click-through, dwell time and metadata as proxies; selection bias \\
+    Self-training pseudolabels & High & Depends on threshold & Confirmation bias; the model reinforces its own errors \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{A menu of weak-label sources. The label model has to learn to weight them; some can be combined as independent voters, others must be modelled as correlated.}
+\label{tab:weak_sources}
+\end{table*}
+
+\newthought{Crowd labels} come from many annotators who differ in skill, attention, and adversarial intent. Five workers labelling the same image of a sheep on a hillside will agree if it is unambiguous and split four to one if the photograph is dark or the sheep is partially occluded. The right model is per-worker accuracy, not population accuracy; the next section makes this precise with Dawid-Skene.
+
+\newthought{Distant supervision}\index{distant supervision}~\cite{Mintz2009DistantSupervision} derives labels from a knowledge base. If we know that Barack Obama was born in Honolulu, every sentence mentioning both entities is a candidate positive for the \verb|born_in| relation. The candidate is wrong as often as it is right; the sentence might be about a campaign visit, or about an unrelated context where the two strings co-occur. Distant supervision is the original example of a labelling function that gives high coverage and unspectacular accuracy, and it predates Snorkel by almost a decade.
+
+\newthought{Heuristic rules} encode domain knowledge as programmatic functions. They are precise on the cases the author considered and silent on the rest. Two rules written by the same engineer often share blind spots; they were thought up in the same hour from the same intuition, and they fail together on the cases that intuition missed. The label model has to know.
+
+\newthought{Pretrained models as labellers} have become the default in modern pipelines. A frozen CLIP encoder turned into a zero-shot classifier (chapter 8) gives a label for every image in a new dataset; the labels are usually right and confidently wrong on the long tail. Treat the model as a labelling function with high coverage, medium accuracy, and a particular kind of error structure that correlates with the pretraining distribution.
+
+\newthought{Auxiliary signals} are the residue of user behaviour and product instrumentation. Clicks, dwell times, completion rates, sensor metadata; none of them is a label, and yet each of them correlates with one. Treat them as labelling functions and you can fold them into the pipeline; pretend they are labels and you will train on a different objective than the one you wanted.
+
+\newthought{Self-training pseudolabels} (chapter 9) close the loop by letting the model itself become a labelling function. The trick works when the model's confidence is calibrated and breaks when it is not. We treat self-training as a corner case of weak supervision, since the labelling function is a thresholded classifier and the noise structure is exactly confirmation bias.
+
+
+\newpage
+\section{Crowdsourcing and the Dawid-Skene Model}\index{crowdsourcing}\index{Dawid-Skene}
+
+\marginnote{\newthought{Before Snorkel,} the canonical weak-supervision problem was the crowd. Three to five workers vote on every example, every worker has an unknown error rate, and the truth is never observed. Dawid and Skene solved it in 1979 with a latent-variable model fit by EM.}
+
+\newthought{Crowdsourcing} is the historical precursor to programmatic weak supervision. Take a task that a single expert handles in two seconds; ship it to a crowd platform; pay five workers a few cents each to label it; aggregate. The aggregation is not majority vote, because workers differ. A ninety-percent-accurate worker should outvote a sixty-percent-accurate worker even when the votes are even, and the aggregation procedure has to learn whose votes to weight. The clever part is doing this without ever seeing the truth.
+
+\newthought{The Dawid-Skene model}~\cite{DawidSkene1979} is the canonical answer. Each worker $w$ has a confusion matrix $\pi^{(w)}$ where $\pi^{(w)}_{jk} = P(\text{worker } w \text{ says } k \mid \text{true label is } j)$. Each item $i$ has a latent true label $y_i$. The observed label from worker $w$ on item $i$ is drawn from $\pi^{(w)}_{y_i, :}$. The likelihood of the observed label matrix is
+\begin{align*}
+    P(\Lambda) &= \prod_i \sum_{j} P(y_i = j) \prod_w \pi^{(w)}_{j, \lambda^{(w)}_i}.
+\end{align*}
+
+\marginnote{\newthought{Why EM.} The true labels $y_i$ are latent, so the likelihood marginalises over them. With $y_i$ observed the worker confusion matrices would be a closed-form maximum-likelihood estimate, and with the matrices fixed the posterior over $y_i$ is a closed-form Bayes update. EM alternates the two until convergence.}
+
+\newthought{Expectation-maximisation}\index{EM} fits this model without ever seeing $y_i$. The E step computes the posterior over the true label given the workers' votes and the current confusion matrices,
+\begin{align*}
+    q_i(j) &= P(y_i = j \mid \lambda_i, \pi) \\
+           &\propto P(y_i = j) \prod_w \pi^{(w)}_{j, \lambda^{(w)}_i}.
+\end{align*}
+The M step re-estimates the confusion matrices and the prior given the soft labels,
+\begin{align*}
+    \pi^{(w)}_{jk} &= \frac{\sum_i q_i(j) \, \mathbb{1}[\lambda^{(w)}_i = k]}{\sum_i q_i(j)}, \\
+    P(y = j) &= \frac{1}{N} \sum_i q_i(j).
+\end{align*}
+
+The two steps alternate. The E step uses the workers to score the items; the M step uses the items to score the workers; neither requires a clean label.
+
+\begin{algorithm}[H]
+\caption{Dawid-Skene EM for crowd label aggregation}
+\begin{algorithmic}[1]
+\Require Vote matrix $\Lambda \in \{1,\ldots,K\}^{N \times W}$ for $N$ items, $W$ workers, $K$ classes
+\State \textbf{Initialise} $q_i(j) \gets \frac{1}{W} \sum_w \mathbb{1}[\lambda^{(w)}_i = j]$ \Comment{majority-vote warm start}
+\Repeat
+    \State \textbf{M step:} re-estimate $\pi^{(w)}_{jk}$ and $P(y=j)$ from $q$
+    \State \textbf{E step:} re-estimate $q_i(j) \propto P(y=j) \prod_w \pi^{(w)}_{j, \lambda^{(w)}_i}$
+\Until{$q$ stable}
+\State \textbf{Return} soft labels $q_i(j)$ and worker confusion matrices $\pi^{(w)}$
+\end{algorithmic}
+\end{algorithm}
+
+\newthought{Notice that the E step output} is a soft posterior over the true label, not a hard assignment. The aggregation produces a probability distribution per item, and that distribution is exactly what a downstream model should train against. This is the first appearance of the soft-label idea that will run through the rest of the chapter.
+
+\newthought{Modality matters surprisingly little} for Dawid-Skene. The original 1979 paper analysed clinical disagreement among five doctors classifying patient records; the same algorithm aggregates ImageNet crowd labels, sentiment-of-tweet labels, audio transcription edits, and quality judgements between two LLM outputs. The model assumes only that workers see the same items and report categorical labels; the modality of the items is irrelevant.
+
+\newthought{Pathologies show up at the boundaries.} A worker who answers at random has a uniform confusion matrix; the algorithm correctly assigns them low weight. A worker who flips two specific classes consistently, say sheep and goat in animal classification, has an off-diagonal mass of one in those rows; the algorithm learns the swap and unfolds it. A worker who is adversarially correct on the easy items and adversarially wrong on the hard ones cannot be detected by Dawid-Skene at all, because the model assumes the noise is class-conditional and not item-difficulty-conditional. Item-response-theory variants extend the model to handle item difficulty; they are the principled answer when this assumption breaks.
+
+\newthought{The bridge to Snorkel} is direct. Replace the crowd worker with a programmatic labelling function and the votes are still a noisy categorical signal, the latent label is still unobserved, and the same EM procedure with a richer factor structure recovers the soft posterior. Snorkel is Dawid-Skene with three changes: workers become deterministic functions, the items are hand-coded by the engineer rather than supplied by a crowd platform, and the factor graph captures pairwise correlations between labellers that Dawid-Skene assumed away.
+
+
+\newpage
+\section{Labeling Functions}\index{labeling function}
+
+\marginnote{\newthought{A labelling function} is any function $\lambda: X \to Y \cup \{\emptyset\}$ that you can write down. It can vote, abstain, and be wrong; the only thing it cannot do is be uncalibrated about its own confidence, since it has none.}
+
+\newthought{A labelling function} maps an input to a label or to abstention. The signature is deceptively simple,
+\begin{verbatim}
+def lf_free_money(email):
+    if "free money" in email.body.lower():
+        return SPAM
+    return ABSTAIN
+\end{verbatim}
+and yet the structure of weak supervision is encoded entirely in this signature. The function votes when it has an opinion and abstains otherwise. It does not return a probability; either it sees its trigger or it does not. The probability lives in the label model.
+
+\newthought{Examples across modalities} clarify the shape:
+\begin{itemize}
+    \item Text: keyword matching, regex, sentiment lexicons, parse-tree shapes, cross-references against a knowledge base, output of a sentiment classifier.
+    \item Images: presence of a CLIP zero-shot prediction over a threshold, output of a heuristic on intensity statistics, OCR of metadata text, output of a frozen segmentation model.
+    \item Sequences: thresholds on a sensor channel, presence of a state-machine pattern, agreement between two redundant pipelines, output of a hand-tuned anomaly detector.
+\end{itemize}
+
+\newthought{The signature does double duty.} It is small enough to be inspected and edited by a domain expert; large enough to encode the kind of soft knowledge that hand-labelling would otherwise leak through one example at a time. A radiologist who writes ten labelling functions for a chest X-ray classifier has compressed her clinical intuition into ten reusable artefacts that label every image in the dataset; ten hand labels would have labelled ten images.
+
+\subsection{Properties of Good Labelling Functions}
+
+\newthought{High precision} is non-negotiable. When a labelling function votes, it should be right far more often than chance. A function that votes positive forty percent of the time on a balanced binary dataset and is right fifty percent of the time when it votes contributes nothing; the label model would correctly assign it weight zero, and the engineer's hour would be wasted. A useful target is a precision of seventy percent or higher on the cases where the function votes.
+
+\newthought{Reasonable coverage} is desirable but not required. A function that votes on five percent of the dataset with ninety-eight percent precision is valuable; a function that votes on ninety percent of the dataset with sixty percent precision is also valuable; the two have very different roles in the label model, and the pipeline benefits from a mix. A pipeline of all-precision-no-coverage rules will see only a sliver of the data; a pipeline of all-coverage-low-precision rules will be drowned in noise.
+
+\newthought{Diversity} matters more than absolute count. Three labelling functions that look at independent features carry more information than ten that all look at the same keyword in different forms. The reason is the same as in any ensemble argument: independent errors cancel, correlated errors compound. A labelling function suite that is dense in keyword variations but thin in cross-feature signals will fool the label model into trusting an apparent agreement that is really one signal counted ten times.
+
+\newthought{Low correlation} is what the label model can correct for, but only if the structure of the correlation is captured. Two regex rules written by the same engineer often share their blind spots; explicitly declaring the dependency, or including correlated-pair factors in the label model, prevents the algorithm from double-counting.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=0.8]
+    \begin{axis}[
+        xlabel={Coverage},
+        ylabel={Accuracy},
+        xmin=0, xmax=1,
+        ymin=0.5, ymax=1,
+        width=0.6\textwidth,
+        axis line style={draw=none},
+        tick style={black, thin},
+        tick align=outside, tick pos=left,
+    ]
+    \addplot[only marks, mark=*, mark size=4pt, black] coordinates {
+        (0.1, 0.95) (0.3, 0.85) (0.5, 0.75) (0.8, 0.65)
+    };
+    \node at (axis cs:0.15, 0.91) {\small LF1};
+    \node at (axis cs:0.35, 0.81) {\small LF2};
+    \node at (axis cs:0.55, 0.71) {\small LF3};
+    \node at (axis cs:0.85, 0.61) {\small LF4};
+    \draw[dashed, black!40] (axis cs:0,0.8) -- (axis cs:1,0.8);
+    \node[black!55] at (axis cs:0.9, 0.82) {\small threshold};
+    \end{axis}
+\end{tikzpicture}
+\caption{Labelling functions trade off coverage and accuracy. Functions above the dashed precision threshold contribute usefully; functions below it are noise. The label model decides which is which without ever seeing a clean label.}
+\label{fig:lf_tradeoff}
+\end{figure}
+
+
+\newpage
+\section{Label Modeling}\index{label model}
+
+\marginnote{\newthought{The label model} is a small generative model. It assumes a latent true label $y$ produced the noisy votes $\lambda_1, \ldots, \lambda_m$, and it learns the conditional probabilities $P(\lambda_i \mid y)$ without ever seeing $y$.}
+
+\subsection{Majority Vote}
+
+\newthought{The simplest aggregator} is majority vote,
+\begin{align*}
+    \hat{y} &= \mathrm{mode}\bigl(\{\lambda_i(x) : \lambda_i(x) \neq \emptyset\}\bigr).
+\end{align*}
+This treats every voter as equally accurate and every pair of voters as independent. Both assumptions are usually wrong, but the bias is sometimes harmless on tasks where the labelling functions are roughly equal in quality and uncorrelated. Majority vote is the warm start, not the answer.
+
+\subsection{Modeling Labeller Accuracy}
+
+\newthought{Treating each labelling function} as having an unknown accuracy $\alpha_i = P(\lambda_i(x) = y \mid \lambda_i(x) \neq \emptyset)$ gives a weighted aggregation,
+\begin{align*}
+    P(y \mid \lambda_1, \ldots, \lambda_m) &\propto P(y) \prod_{i: \lambda_i \neq \emptyset} P(\lambda_i \mid y).
+\end{align*}
+With $K$ classes and $m$ labelling functions, the number of parameters is $O(mK)$ and they can be estimated from the agreement structure alone. The trick is the same as in Dawid-Skene; if every pair of labelling functions agrees more often than chance, the model can decompose that agreement into per-function accuracies up to a global label-flip ambiguity. The flip ambiguity is resolved by the assumption that on most tasks majority vote is at least better than random.
+
+\subsection{Modeling Correlations}\index{factor graph}
+
+\newthought{Labelling functions disagree more interestingly than crowd workers.} Two regex rules that key off the same word will agree on every example that contains the word; they are not independent voters. Two pretrained classifiers fine-tuned from the same backbone will share their pretraining-distribution biases. Treating these correlated pairs as independent in the label model overweights their joint vote.
+
+A factor graph generalises the conditional model to capture pairwise dependencies,
+\begin{align*}
+    P(y, \lambda_1, \ldots, \lambda_m) &= \tfrac{1}{Z}\, \phi_Y(y) \prod_i \phi_i(y, \lambda_i) \prod_{(i,j) \in E} \phi_{ij}(\lambda_i, \lambda_j),
+\end{align*}
+where $E$ is the set of correlated pairs. The pair set $E$ is either declared by the engineer (we know LF1 and LF3 share a regex pattern) or learned from data via a sparse-graphical-model fit on the agreement statistics.
+
+\newthought{Notice that the latent variable $y$} is what makes the problem unsupervised. If we had any clean labels we would just fit $P(\lambda_i \mid y)$ directly by counting; we do not, and so the algorithm has to learn the conditional from the joint $P(\lambda_1, \ldots, \lambda_m)$ alone. Identifiability is non-trivial here; not every factor graph is identifiable from the agreement structure, and the Snorkel paper analyses exactly which structures are.
+
+
+\newpage
+\section{The Snorkel Framework}\index{Snorkel}
+
+\marginnote{\newthought{Snorkel}~\cite{Ratner2017Snorkel} is the canonical pipeline for programmatic weak supervision. A label model aggregates noisy labelling-function votes into soft labels; a discriminative end model trains on those soft labels.}
+
+\newthought{Snorkel} is the load-bearing framework of the chapter. Three components: labelling functions written by engineers, a label model that aggregates their votes, and a discriminative end model that trains on the aggregated soft labels.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small, align=center},
+    block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                  minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt},
+    arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+]
+    \node[block] (data) {Unlabelled $X$};
+    \node[block, right=of data] (lfs) {Labelling Functions};
+    \node[block, right=of lfs] (lm) {Label Model};
+    \node[block, below=of lm, fill=black!8] (prob) {Soft Labels $\tilde y$};
+    \node[block, left=of prob] (dm) {End Model};
+    \draw[arr] (data.east) -- (lfs.west);
+    \draw[arr] (lfs.east) -- (lm.west);
+    \draw[arr] (lm.south) -- (prob.north);
+    \draw[arr] (prob.west) -- (dm.east);
+    \draw[arr] (data.south) |- (dm.west);
+\end{tikzpicture}
+\caption{The Snorkel pipeline. The labelling functions and the label model live on the left; the end model lives on the right. The two halves do different jobs and have very different sizes.}
+\label{fig:snorkel_pipeline}
+\end{figure}
+
+\begin{algorithm}[H]
+\caption{The Snorkel workflow}
+\begin{algorithmic}[1]
+\State \textbf{Write} labelling functions encoding domain knowledge
+\State \textbf{Apply} the labelling functions to the unlabelled data, producing label matrix $\Lambda \in (Y \cup \{\emptyset\})^{N \times m}$
+\State \textbf{Fit} the label model on $\Lambda$ to estimate per-function accuracies and pairwise correlations, recovering $P(\lambda_i \mid y)$
+\State \textbf{Generate} soft labels $\tilde y_i = P(y \mid \lambda_{i,1}, \ldots, \lambda_{i,m})$
+\State \textbf{Train} the discriminative end model on $(X, \tilde y)$ with cross-entropy against the soft target
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{The Generator Discriminator Asymmetry}
+
+\marginnote{\newthought{Asymmetry.} The label model is generative, small, unsupervised, and operates over labelling-function votes. The end model is discriminative, large, supervised by soft labels, and operates over raw inputs. Each does what it is best at.}
+
+\newthought{The two halves of Snorkel} live in different worlds. The label model is generative, in the technical sense that it parameterises $P(\lambda \mid y)$ and infers the latent $y$ by Bayes' rule. It is small, with $O(mK + |E|)$ parameters; it is unsupervised, since it never sees the truth; it operates over the abstract vote space, where the only features are the labelling functions; and it has no idea what the inputs $x$ even look like.
+
+\newthought{The end model is the opposite.} It is discriminative; it parameterises $P(y \mid x)$ directly. It is large, with millions to billions of parameters; it is supervised, with the soft labels from the label model playing the role of training targets; it operates over the raw input space, with all the inductive bias of a vision encoder or a language model behind it; and it never sees the labelling functions, only the soft labels they produced.
+
+\newthought{The asymmetry is not aesthetic; it is structural.} The label model has a tractable identifiability story precisely because its inputs are categorical votes; a deep generative model over raw images would not. The end model has a generalisation story precisely because it trains on soft targets in input space; the label model never could, since it does not see inputs. Each component does the job the other could not, and the combined pipeline gets both halves of the bargain.
+
+\newthought{Two sizes, two roles.} The label model is the verifier; it watches the labelling functions agree or disagree and infers the latent class. The end model is the generator of predictions on new inputs; it has to extrapolate the soft labels to inputs it has not seen, including inputs that no labelling function ever fired on. The end model is the deployable artefact; the label model is the training-time tool.
+
+\subsection{Why the End Model Generalizes Beyond the LFs}
+
+\marginnote{\newthought{Coverage gap.} Labelling functions cover a fraction of the data; the end model has to predict on all of it. The gap is closed by features.}
+
+\newthought{The most important property of the Snorkel end model} is that it generalises beyond the labelling functions that produced its training labels. A labelling function that fires on the keyword \verb|"refund"| labels every email containing that word; the end model trained on those labels learns to predict on emails that contain \verb|"reimbursement"|, \verb|"return"|, \verb|"chargeback"|, even though no labelling function ever fired on those words.
+
+\newthought{The mechanism is feature learning.} The end model has access to the raw input through its own backbone; the labelling functions did not. When the soft labels supplied by the label model correlate with the input features the backbone has learned to extract, the end model interpolates across input space. The labelling functions provided supervision; the backbone provided the smoothness that lets the supervision spread.
+
+\newthought{The quantitative version} is in the original Snorkel paper. The end model's accuracy on the held-out clean test set is consistently higher than the label model's accuracy on the same test set; the end model also has higher coverage, since it predicts on every example whereas the label model only labels examples covered by at least one labelling function. The gap closes when the labelling functions are so numerous and accurate that the label model is already near ceiling, but in the regime that matters (few labelling functions, modest accuracy) the end model contributes a lot.
+
+\subsection{Failure Modes of the Pipeline}
+
+\marginnote{\newthought{When Snorkel fails,} it usually fails on identifiability or on coverage. The label model cannot tell two correlated functions from one strong one; the end model cannot extrapolate where no labelling function fired.}
+
+\newthought{Identifiability fails} when the labelling functions are too few or too correlated. With two labelling functions and no clean labels, the label model cannot tell whether function A is right and function B is wrong, or the reverse; the agreement statistic is symmetric. With three or more labellers a triangle inequality on agreements breaks the symmetry, but only if the three are not all correlated with each other.
+
+\newthought{Coverage fails} when the labelling functions miss large slabs of the input distribution. If no labelling function ever fires on emails in Spanish, the label model has nothing to say about them, the soft labels are flat, and the end model is asked to predict from supervision that does not exist. The fix is to either add a labelling function that covers Spanish or to acknowledge that the deployment domain is narrower than expected.
+
+\newthought{Engineer overconfidence fails} silently. Five labelling functions written in one afternoon by one engineer encode one engineer's mental model of the task. They will agree on the cases that engineer thought of and miss the cases she did not. The label model cannot detect this; agreement among five correlated voters looks the same as agreement among five independent voters when no clean labels are available. The fix is to triangulate against a small clean development set, which the next sections elaborate.
+
+\subsection{Modality Coverage}
+
+\marginnote{\newthought{Modalities.} Snorkel was developed on text but has shipped in vision, audio, sensor streams, and tabular data. The framework is modality-agnostic; the labelling functions are not.}
+
+\newthought{In text} the labelling functions are usually keyword rules, regular expressions, sentiment classifiers, and external knowledge bases. The original Snorkel benchmarks were relation extraction and information extraction over biomedical and legal corpora. The labelling-function authoring style is a few tens of rules per task, written by a domain expert in an afternoon.
+
+\newthought{In vision} the labelling functions are zero-shot foundation models, intensity heuristics, output of a frozen detection model, OCR of overlays, and metadata. A defect-detection pipeline on a manufacturing line might have a labelling function that says \verb|"a CLIP zero-shot of 'scratched surface' fires above 0.7"|, another that says \verb|"the sobel-filtered intensity in the central crop exceeds a threshold"|, and a third that says \verb|"the part-id metadata matches a known recall list"|. The label model treats them as it treats any other set of votes.
+
+\newthought{In sequence data} the labelling functions are state-machine patterns, sliding-window thresholds, change-point detectors, and the output of a hand-tuned anomaly model. The same Dawid-Skene-style aggregation works; the only difference is that the items are sliding windows over a continuous stream rather than discrete documents.
+
+\newthought{In tabular data} the labelling functions are SQL predicates, gradient-boosted thresholds, and rule-engine outputs from legacy systems. Many production pipelines that pre-date the term weak supervision were already running this pattern; Snorkel just gave it a name and a label model.
+
+
+\newpage
+\section{Soft Labels and Noisy Labels}\index{soft labels}\index{label noise}
+
+\marginnote{\newthought{Soft labels.} A target distribution over classes, not a single class. They carry information that one-hot targets erase, and they are the natural output of every label-model component in this chapter.}
+
+\subsection{Why Not One-Hot}
+
+\newthought{The one-hot label} is a convention with a history. Cross-entropy with a one-hot target is mathematically equivalent to maximising the log-likelihood of the model on a deterministic ground truth, and the convention is so universal that most students go years before they question it. The one-hot encoding asserts that the example is class $j$ with probability one and every other class with probability zero. For most real labels, that assertion is wrong.
+
+\newthought{Crowd labels} produce a distribution over classes. Five workers split four to one is not a one-hot label for the majority class; it is a soft label of $(0.8, 0.2)$ that contains exactly one bit of additional information beyond the majority. Throwing that bit away by hard-thresholding is a routine and expensive habit.
+
+\newthought{Snorkel labels} are explicitly soft. The label model produces a posterior $P(y \mid \lambda)$ over classes, and the natural training loss is the cross-entropy between the model's prediction and that posterior,
+\begin{align*}
+    \mathcal{L}_{\text{soft}}(x, \tilde y) &= -\sum_{j=1}^K \tilde y_j \log p_\theta(y = j \mid x).
+\end{align*}
+This reduces to the usual cross-entropy when $\tilde y$ is a one-hot vector and to a strict superset of it when $\tilde y$ is a proper distribution. The model that trains on soft labels has access to information the one-hot version threw away.
+
+\newthought{Distillation labels}~\cite{HintonDistillation2015} (callback to chapter 8) are soft by construction. The teacher's output is a categorical distribution; the student's loss is cross-entropy against that distribution at a temperature that softens it further. The empirical observation is that students trained on the teacher's softened distribution outperform students trained on the teacher's argmax; the dark knowledge in the off-diagonal probabilities was not noise, it was signal.
+
+\subsection{Label Smoothing as a Default}\index{label smoothing}
+
+\newthought{Label smoothing}~\cite{Szegedy2016LabelSmoothing} is the cheapest soft-label trick. Replace the one-hot target $y$ with a softened version,
+\begin{align*}
+    \tilde y_j &= (1 - \varepsilon) \, \mathbb{1}[y = j] + \tfrac{\varepsilon}{K},
+\end{align*}
+where $\varepsilon$ is a small number, typically $0.1$. The motivation is calibration: a model trained on hard targets pushes its logits to extreme values, becomes overconfident, and the predicted probabilities are no longer meaningful confidence estimates. Smoothing acts as a regulariser that bounds the logit magnitudes.
+
+\newthought{Label smoothing also acts as cheap noise correction.} If a fraction of the training labels are wrong with uniform-over-classes noise, the optimal target is exactly the smoothed label with $\varepsilon$ matching the noise rate. The connection makes label smoothing a default in any pipeline where the labels are at least slightly noisy, which is most pipelines.
+
+\subsection{Class-Conditional Noise and Loss Correction}\index{loss correction}
+
+\newthought{Class-conditional noise} is a stronger model than uniform noise. The transition matrix $T$ where $T_{jk} = P(\tilde y = k \mid y = j)$ encodes the probability that the true class $j$ is corrupted to the observed class $k$. Forward correction~\cite{Patrini2017LossCorrection} computes the loss against the noisy distribution that would be observed if the model's prediction were correct,
+\begin{align*}
+    \tilde \ell(f(x), \tilde y) &= \ell(T^\top f(x), \tilde y).
+\end{align*}
+Backward correction inverts $T$ to recover an unbiased estimate of the clean loss,
+\begin{align*}
+    \tilde \ell(f(x), \tilde y) &= \bigl(T^{-1} \ell(f(x), \cdot)\bigr)_{\tilde y}.
+\end{align*}
+
+\marginnote{\newthought{Forward versus backward.} Forward applies the noise to the model's output; backward applies the inverse to the loss. Forward is numerically stable; backward is unbiased but explodes when $T$ is ill-conditioned.}
+
+\newthought{The transition matrix} can be estimated from a small clean validation set, from the model's confident predictions on the noisy training set (Northcutt's confident learning, next section), or from the structure of the labelling functions themselves in a Snorkel pipeline. The right estimator depends on what you have; the loss correction itself is the same.
+
+\subsection{Sample Weighting}
+
+\newthought{Down-weighting likely-mislabelled examples} gives a weighted loss
+\begin{align*}
+    \mathcal{L} &= \sum_i w_i \, \ell(f(x_i), \tilde y_i),
+\end{align*}
+where $w_i$ is large for examples the model considers consistent and small for examples the model flags as likely noise. The weight can come from the loss value (large loss equals likely noise), from the prediction confidence (high confidence equals likely correct), from the label-model confidence in a Snorkel pipeline, or from an explicit confident-learning estimate of per-example noise probability.
+
+\newthought{The risk of self-reinforcement} is real. If the model's own confidence drives the weight, the model will learn to ignore exactly the hard examples that would have taught it the most, and the training loop will converge to a smoothed version of the easy subset. Mitigations include warm-up periods on uniform weights, ensemble disagreement as the weighting signal, and the meta-learning approaches that learn the weighting on a small clean set.
+
+\subsection{Co-Teaching}\index{co-teaching}
+
+\newthought{Co-teaching}~\cite{Han2018CoTeaching} trains two networks in parallel and lets each select the small-loss examples for the other. The argument is that a deep network fits clean labels first and noisy labels later in training, so small loss is a per-example proxy for clean. Two networks selecting for each other avoid the self-reinforcement that a single network would suffer; their independent random initialisations break the correlation between the noise the two would otherwise memorise.
+
+\begin{algorithm}[H]
+\caption{Co-teaching}
+\begin{algorithmic}[1]
+\Require Two networks $f_A, f_B$ with independent inits; noise rate estimate $\tau$
+\For{each minibatch $\mathcal{B}$}
+    \State Compute losses $\ell_A(\mathcal{B})$ and $\ell_B(\mathcal{B})$
+    \State $\mathcal{B}_A^{\text{clean}} \gets$ smallest $(1 - \tau)|\mathcal{B}|$ losses under $f_A$
+    \State $\mathcal{B}_B^{\text{clean}} \gets$ smallest $(1 - \tau)|\mathcal{B}|$ losses under $f_B$
+    \State Update $f_A$ on $\mathcal{B}_B^{\text{clean}}$ and $f_B$ on $\mathcal{B}_A^{\text{clean}}$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\newthought{Notice that co-teaching} is a peer-review pattern. The two networks act as each other's verifier; each one decides which examples its peer should learn from. The trick foreshadows the verifier-generator gap section; the networks are interchangeable, but the act of cross-checking is what avoids confirmation.
+
+
+\newpage
+\section{Confident Learning}\index{confident learning}
+
+\marginnote{\newthought{Confident learning} estimates the joint distribution $P(\tilde y, y^*)$ of noisy and true labels by treating the model's high-confidence predictions as a clean signal, then uses that joint to rank, prune, or reweight examples.}
+
+\newthought{Confident learning}~\cite{Northcutt2021ConfidentLearning} sits between Snorkel and pure noisy-label training. It does not need labelling functions, since it operates on the noisy labels you already have; it does not assume the noise rates are known, since it estimates them from data. The promise is a principled way to clean a dataset without ever seeing a clean label.
+
+\subsection{The Self-Confidence Trick}
+
+\newthought{The core observation} is that a reasonably good classifier, trained on noisy labels, is still right more often than chance on the noisy training set. When the classifier predicts class $k$ with probability greater than a threshold $t_k$ for an example whose noisy label is $j$, the prediction is evidence that the true label is $k$ even when $k \neq j$. Aggregating these confident disagreements across the training set yields an estimate of the joint $P(\tilde y, y^*)$ over noisy and true labels.
+
+\newthought{The threshold $t_k$} is the average self-confidence of class $k$, namely
+\begin{align*}
+    t_k &= \tfrac{1}{|\{i : \tilde y_i = k\}|} \sum_{i : \tilde y_i = k} p_\theta(y = k \mid x_i).
+\end{align*}
+Using the per-class average as the threshold makes the procedure robust to miscalibration; a class that the model is systematically underconfident about gets a lower bar to cross, and a class it is overconfident about gets a higher one.
+
+\newthought{The count matrix} $C_{j, k}$ counts examples where the noisy label is $j$ and the model predicts $k$ with confidence above $t_k$. After normalisation by row, $C$ is an estimate of $P(\tilde y = j \mid y^* = k)$, which is the noise transition matrix from clean to noisy labels.
+
+\subsection{Pruning, Ranking, Reweighting}
+
+\newthought{Once the joint is estimated} the next step is to do something with it. Three options:
+\begin{itemize}
+    \item \textbf{Prune}: remove the examples in the off-diagonal cells of the count matrix (those where the noisy label disagrees with the confident model prediction) and retrain. The pruned set is smaller and cleaner.
+    \item \textbf{Rank}: sort training examples by self-confidence; train on the top fraction, possibly in a curriculum that gradually admits the lower-confidence tail.
+    \item \textbf{Reweight}: weight each example by the model's confidence in its noisy label, downweighting likely-noise examples without removing them.
+\end{itemize}
+
+\newthought{The pruning recipe} is the headline result of the Northcutt paper. On ImageNet the algorithm flagged tens of thousands of label errors; auditing a sample by hand confirmed that most flagged examples really were labelled wrong by the dataset annotators. Removing them and retraining gave a model that was both smaller and more accurate.
+
+\subsection{Confident Learning as a Measurement Tool}
+
+\marginnote{\newthought{Audit, do not just train.} The most under-rated use of confident learning is dataset audit. Run the algorithm and look at the flagged examples; the kinds of errors it surfaces tell you which classes your annotation pipeline is systematically confusing.}
+
+\newthought{Beyond cleaning,} confident learning is a measurement device for the annotation pipeline itself. The off-diagonal mass of the estimated transition matrix is a direct readout of which class pairs the annotators confuse most often. A medical-imaging dataset where the (lesion, scar) cell of $C$ has high mass tells you that your radiologists confuse the two classes; a sentiment dataset where (positive, neutral) has high mass tells you that your guideline definition of neutral was unclear.
+
+\newthought{The diagnostic value} is sometimes worth more than the cleaning. A pipeline where confident learning flags ten percent of the labels has either a noisy annotation process or a model that is overconfidently wrong; both are worth knowing. The next round of annotator training, or the next round of model auditing, depends on which.
+
+
+\newpage
+\section{The Verifier Generator Gap}\index{verifier generator gap}
+
+\marginnote{\newthought{Verifying is easier than generating.} Spotting a wrong proof is easier than writing a right one; flagging a hallucinated citation is easier than producing a correct one. The gap is the lever that weak supervision pulls.}
+
+\newthought{Pull the asymmetry from Snorkel} into a more general principle. The label model is small and verifies; the end model is large and generates. The Dawid-Skene posterior is small and verifies; the worker is the generator. The co-teaching peer is small and verifies; its partner is the generator. The pattern repeats because verification is easier than generation, and weak supervision is the engineering that exploits that gap.
+
+\subsection{Why Verification Is Easier}
+
+\newthought{Generation requires producing a correct answer from the input alone.} The state space of plausible answers is enormous, and the generator has to navigate it without scaffolding. Verification, in contrast, takes a candidate answer as part of its input; it only has to decide whether the candidate is right. The verifier benefits from a smaller decision space, often binary or low-cardinality, and from the ability to spot-check against constraints that the generator could not have checked itself.
+
+\newthought{The gap is sometimes formal.} In complexity theory, $\mathrm{NP}$ is the class of problems where solutions are easy to verify and hard to find; checking a satisfying assignment to a SAT instance is linear-time, finding one is exponential in the worst case. Most learning problems are not literally NP-hard, but the same intuition transfers; the function space the generator searches is exponentially larger than the space the verifier walks.
+
+\newthought{Generative adversarial networks}\index{GAN} are the architectural archetype. The generator produces samples; the discriminator says whether each sample looks real; the generator improves under the discriminator's signal. The asymmetry is the entire architecture, not an aside; without it the model would have nothing to push against.
+
+\subsection{The Asymmetry in Practice}
+
+\newthought{In Snorkel} the asymmetry shows up as parameter count. The label model is tens to thousands of parameters; the end model is millions to billions. The label model fits in seconds on a laptop; the end model trains for days on a cluster. The two budgets are orthogonal because the two jobs are different; verification of agreement does not need representation learning, generation on raw inputs does.
+
+\newthought{In RLHF}~\cite{Christiano2017DeepRLPreferences,Ouyang2022InstructGPT} the asymmetry shows up as objective. The reward model is a verifier of human preference between two model outputs; the policy is a generator of candidate outputs. The reward model is smaller and trained from far less data; the policy is larger and updated against the reward signal. The pattern is identical to Snorkel up to the names: a small verifier feeds a large generator.
+
+\newthought{In weak-to-strong generalization}~\cite{Burns2024WeakToStrong} the asymmetry is between scale tiers. A small (weak) supervisor labels training data for a large (strong) student; the student outperforms the supervisor. The setup is the same as Snorkel except the supervisor is a model rather than a labelling function and the student is a larger model rather than a from-scratch end model. The empirical finding is that students recover most of the performance ceiling that a clean-supervision student would have, even when the supervisor is well below that ceiling.
+
+\subsection{Modalities and the Gap}
+
+\marginnote{\newthought{Modalities differ in how big the gap is.} In language the gap is enormous (verification is much easier than generation). In images the gap is smaller (it is sometimes hard for a human to tell a real photograph from a high-quality fake). In raw sensor streams the gap may be reversed.}
+
+\newthought{The gap is not constant.} Verifying a written proof is easier than producing one; the gap is large. Verifying that a generated photograph is real is sometimes easier and sometimes harder than producing it; the gap depends on the modality and the resolution. Verifying that a sensor reading is anomalous given a long context window is sometimes harder than producing the next reading; the gap can be reversed.
+
+\newthought{Which way the gap points} matters for the pipeline design. When the gap is large in favour of verification, weak supervision works well; cheap noisy generation plus a verifier for aggregation. When the gap closes, the verifier becomes a bottleneck; you have to pay for clean labels because programmatic verification is no easier than the original task. Knowing which regime you are in is part of choosing whether to build a Snorkel pipeline at all.
+
+
+\newpage
+\section{Judges and Process Reward Models}\index{LLM-as-judge}\index{process reward model}
+
+\marginnote{\newthought{Judge.} A model whose only job is verification. It eats a candidate output and emits a score, a preference, or a critique. It is the modern descendant of the Snorkel label model and the Dawid-Skene posterior, scaled up in capacity and broadened in scope.}
+
+\subsection{LLM-as-Judge}\index{LLM-as-judge}
+
+\newthought{The judge pattern} is straightforward. Take a frozen large language model, hand it two candidate outputs $A$ and $B$ with the original prompt, and ask it which is better. The model's preference is the verification signal. Aggregate over many prompts, optionally with multiple judge models in committee, and you have a scalable evaluation harness that costs orders of magnitude less than human judgement.
+
+\newthought{MT-Bench and Chatbot Arena}~\cite{Zheng2023JudgeBench} put numbers on the pattern. On a benchmark of multi-turn conversations, GPT-4 as judge agreed with human ratings about as often as two humans agree with each other (around eighty percent). The judge is not perfect, but it is consistent enough that the agreement rate can be calibrated against a small held-out human-graded set, and the calibrated judge can then be used to evaluate millions of model outputs at machine speed.
+
+\subsection{Outcome Reward and Process Reward}
+
+\newthought{Outcome reward models} judge the final answer. Given a math problem and a model's solution, an outcome reward model says whether the final number is right. The signal is sparse, since multi-step reasoning is collapsed to a single binary, and intermediate errors that happen to compensate are missed.
+
+\newthought{Process reward models}~\cite{Lightman2024PRM} judge each intermediate step. Given a math problem and a chain-of-thought solution, the process reward model emits a per-step score and the training signal is dense. The empirical finding from PRM800K is that students supervised by process rewards outperform students supervised by outcome rewards on hard math benchmarks, because the process reward gives a non-zero gradient on partial credit.
+
+\newthought{The asymmetry is on display}: writing the proof is hard, judging each step is easier. The PRM is a small judge; the policy is a large generator. The training data for the PRM is collected once at high cost (humans annotated step-correctness on hundreds of thousands of solution traces) and amortised across the policy's training; the policy then generates millions of solutions whose per-step rewards drive its learning.
+
+\subsection{Judge Pathologies}
+
+\marginnote{\newthought{Judge bias.} Position bias (prefer the first answer), length bias (prefer the longer answer), self-preference (prefer your own outputs over others). All three are documented and all three can be controlled by ensembling, swapping order, or adding a bias-removing prompt.}
+
+\newthought{Judges are not neutral.} An LLM-as-judge prefers the output it would have generated; a judge sharing a backbone with the policy will systematically over-rate that policy. Position bias and length bias are documented in the MT-Bench paper; both can be controlled by randomised order and by length-normalised scoring, but neither vanishes entirely.
+
+\newthought{The deeper pathology} is that the judge's calibration drifts with the policy's capability. As the policy improves, the verification problem changes; outputs that the judge once dismissed become plausible, outputs that were once acceptable become recognisably wrong. A static judge applied to a moving policy will give increasingly meaningless scores; the judge has to be retrained, recalibrated, or ensembled with humans on a periodic schedule.
+
+\subsection{Judges as Labelling Functions}
+
+\newthought{The pipeline closes with a circle.} An LLM judge is a labelling function with high coverage and medium accuracy; a process reward model is a labelling function on solution traces; a Dawid-Skene aggregation of three judge models is exactly the same algorithm we used for crowd workers. Snorkel was a labelling-function framework for text; modern LLM-judge pipelines are a labelling-function framework for sequences of model outputs. The names changed, the engineering pattern did not.
+
+\newthought{Verifier-generator pipelines today} are the largest weak-supervision systems ever deployed. The post-training of every frontier language model uses some combination of human preference labels, judge outputs, and process rewards. The 2017 Snorkel paper read as a research curiosity at the time; in 2026 every production language model is trained on its descendants.
+
+
+\newpage
+\section{Active Learning}\index{active learning}
+
+\marginnote{\newthought{Weak supervision} works with the labels you already have. \newthought{Active learning} chooses which clean labels to request next. The two are complements on the same axis.}
+
+\newthought{Labelling functions are cheap, but human time is not.} An expert can produce a near-perfect label for any single example, but their throughput is bounded; in industrial settings the oracle is rate-limited by contract or by attention. Active learning~\cite{Settles2012ActiveLearning} accepts this constraint and asks a different question, namely which input, if labelled now, would most improve the model.
+
+\newthought{Where weak supervision combined many noisy votes,} active learning escalates a single example to a clean vote. The two are not opposites; they sit on the same axis of imperfect supervision and pull in opposite directions. Snorkel asks how to make do with what we have. Active learning asks what to ask for next. A working system uses both.
+
+\newthought{The acquisition function} formalises the choice. Given a pool of unlabelled inputs $\mathcal{U}$ and a budget of $b$ queries, score every $x \in \mathcal{U}$ by an informativeness function $a(x)$ and request labels for the top-$b$ examples. Different definitions of $a$ produce different querying behaviours and capture different notions of what informative means.
+
+\subsection{Uncertainty Sampling}\index{uncertainty sampling}
+
+\marginnote{\newthought{Callback to chapter 7.} The predictive entropy and the margin we used for routing-to-human now drive what we ask the human about. Same number, different downstream consumer.}
+
+\newthought{Uncertainty sampling} picks the input where the model is least sure of its prediction. The predictive entropy
+\begin{align*}
+    a_{\text{ent}}(x) &= -\sum_y p_\theta(y \mid x) \log p_\theta(y \mid x)
+\end{align*}
+peaks when the softmax distribution is flat. The margin
+\begin{align*}
+    a_{\text{mar}}(x) &= -\bigl(p_\theta(y_1^* \mid x) - p_\theta(y_2^* \mid x)\bigr)
+\end{align*}
+focuses on the gap between the top two classes; small margins flag near-tie decisions. Both are direct consumers of the calibrated probabilities from chapter 7, which is what makes the uncertainty machinery so reusable here.
+
+\subsection{Query by Committee}\index{query by committee}
+
+\newthought{Query by committee} replaces a single model with an ensemble and queries inputs where ensemble members disagree most. Disagreement can be measured by vote entropy across the committee or by the average KL divergence between each member's predictive distribution and the ensemble mean. Deep ensembles\index{deep ensembles}~\cite{Lakshminarayanan2017} provide a clean implementation; MC Dropout from chapter 7 is the cheap stand-in when training $M$ networks is too expensive.
+
+\newthought{Disagreement is structurally different from uncertainty.} A single overconfident model can be confidently wrong; an ensemble of models trained from different seeds will spread their probability mass on inputs the data did not pin down. Query by committee therefore catches epistemic uncertainty that uncertainty sampling on a single model can miss.
+
+\subsection{Expected Model Change}\index{expected model change}
+
+\newthought{Expected model change} flips the question. Rather than asking where the model is unsure, it asks which label would shift the parameters the most. A common surrogate is the expected gradient length,
+\begin{align*}
+    a_{\text{egl}}(x) &= \mathbb{E}_{y \sim p_\theta(y \mid x)} \bigl\| \nabla_\theta \mathcal{L}(x, y) \bigr\|.
+\end{align*}
+The label is hypothetical, so the expectation runs over the model's current belief. This is principled, since it directly targets parameter movement, but it is also expensive; every candidate requires a gradient evaluation per possible label. In practice it is reserved for small pools or for selecting batches in the final rounds where uncertainty has plateaued.
+
+\subsection{Pool, Stream, and Membership Query}\index{pool-based active learning}
+
+\newthought{The setting changes the algorithm.} In pool-based active learning the entire unlabelled set $\mathcal{U}$ sits on disk and we score every example before each query round; this is the standard text or image setup. In stream-based selective sampling the inputs arrive one at a time and we must decide on the spot whether to forward this one to the oracle, common in network monitoring and click streams. In membership query synthesis the learner constructs a synthetic input and asks the oracle to label it, which is powerful but often produces inputs no human can interpret. Pool-based is the default for the rest of this section.
+
+\subsection{The Cold-Start Problem}\index{cold start}
+
+\marginnote{\newthought{Cold start} is why every active-learning pipeline opens with a small random or stratified seed before the acquisition function takes over.}
+
+\newthought{Active learning has a chicken-and-egg flaw} at the start. The acquisition functions above all rely on the model's own probabilities or its own gradient. With ten labels and a freshly initialised network those probabilities are nearly uniform, so the entropy is high everywhere and the model points the oracle at random points. Worse, the calibration tools from chapter 7 also need data; an underfit model is overconfident on the training set and uniformly confused off it.
+
+\newthought{The fix is a clean seed.} A small batch of labels chosen by stratified random sampling, or by clustering on representations and picking medoids, gives the model enough signal to produce uncertainty estimates that mean something. Only then is it safe to switch over to uncertainty sampling or query by committee. Treat the first few rounds as bootstrap, not as exploitation.
+
+
+\newpage
+\section{Composing Weak Supervision and Active Learning}
+
+\marginnote{\newthought{The hybrid pipeline} uses weak supervision for breadth and active learning for depth. The labelling functions cover the bulk of the data noisily; the oracle is asked exactly where the noise is loudest.}
+
+\newthought{Active learning and weak supervision compose} into a hybrid pipeline that uses each for what it does well. The model fits on the probabilistic labels from Snorkel; the acquisition function flags the inputs where Snorkel and the model disagree, or where the label model itself is uncertain because too few labelling functions voted. The oracle then labels those inputs, but the human is not asked only for a label; they are asked why, and the why becomes a new labelling function. The model's uncertainty signal therefore drives both the next label request and the next labelling-function priority, closing a loop between cheap programmatic supervision and expensive human supervision.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    node distance=1.4cm,
+    every node/.style={font=\small, align=center},
+    block/.style={rectangle, draw=black, thick, rounded corners=2pt,
+                  minimum width=2.4cm, minimum height=0.7cm, inner sep=4pt},
+    arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
+]
+    \node[block] (pool) {Unlabelled Pool $\mathcal{U}$};
+    \node[block, right=of pool] (acq) {Acquisition $a(x)$};
+    \node[block, right=of acq] (oracle) {Oracle};
+    \node[block, below=of acq, fill=black!8] (model) {Model $p_\theta$};
+    \draw[arr] (pool.east) -- (acq.west);
+    \draw[arr] (acq.east) -- (oracle.west);
+    \draw[arr] (oracle.south) |- node[right, font=\tiny, pos=0.25] {labelled $(x, y)$} (model.east);
+    \draw[arr] (model.west) -| node[left, font=\tiny, pos=0.75] {$p_\theta(y \mid x)$} (acq.south);
+\end{tikzpicture}
+\caption{The active-learning loop. The model's predictive distribution feeds the acquisition function, which selects inputs from the pool for the oracle, whose labels retrain the model.}
+\label{fig:active_learning_loop}
+\end{figure}
+
+\newthought{Notice that the acquisition function} is the only place where chapter 7 and chapter 10 actually meet. Predictive entropy was a routing signal in chapter 7; it is a query signal here. Same number, different downstream consumer.
+
+\newthought{The hybrid pipeline closes the verifier-generator loop.} The labelling functions generate noisy labels, the label model verifies their agreement, the end model generates predictions, the acquisition function verifies which predictions to trust, the oracle generates clean labels, and the cycle repeats. Each component plays a verifier role for some other component's generator, and the pipeline as a whole exploits the gap from every angle.
+
+
+%═══════════════════════════════════════════════════════════════════════
+% BLOCK 3: STUDENT ACTIVATION
+%═══════════════════════════════════════════════════════════════════════
+
+\newpage
+\section{Examples \& Exercises}\index{examples}\index{exercises}
+
+\marginnote{\newthought{Exercises} are for practice and reinforcing concepts. Try to solve them on your own first, try things, play with it, discuss, this is not a time trial. And there is no shame in not ending up at the right answer, in the same sense, that uncovering great questions and tossing them around is usually pretty fruitful on the long run.}
+
+\subsection{Exercise 1: Labelling Functions for a Vision Task}
+
+\newthought{Design five labelling functions} for classifying chest X-rays as pneumonia versus no pneumonia. You have access to the radiology report as text, the image itself, the patient metadata, and a frozen CLIP encoder. Write each function in pseudocode and describe its expected coverage and accuracy:
+
+\begin{verbatim}
+def lf_report_keyword(case):
+    if "pneumonia" in case.report.lower():
+        return PNEUMONIA
+    return ABSTAIN
+\end{verbatim}
+
+\newthought{Now flip it.} For each of your five functions, name one failure mode. Which two of your functions are most likely to share a failure? What does that imply for the label model?
+
+\subsection{Exercise 2: Label Aggregation by Hand}
+
+Three labelling functions vote on an example:
+\begin{itemize}
+    \item LF1: positive, accuracy $0.9$
+    \item LF2: negative, accuracy $0.8$
+    \item LF3: positive, accuracy $0.7$
+\end{itemize}
+
+\newthought{Step.} Assuming independent labelling functions and a uniform prior, compute $P(y = \text{positive} \mid \lambda_1, \lambda_2, \lambda_3)$. The numerator is
+\begin{align*}
+    P(y{=}\text{pos}) \prod_i P(\lambda_i \mid y{=}\text{pos})
+        &= \tfrac{1}{2} \cdot 0.9 \cdot 0.2 \cdot 0.7 \\
+        &= 0.063.
+\end{align*}
+Compute the denominator yourself, then verify the posterior. What changes if LF1 and LF3 are perfectly correlated?
+
+\subsection{Exercise 3: Dawid-Skene EM, One Step}
+
+Three crowd workers labelled three items with three classes; the noisy vote matrix is
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.10\textwidth}p{0.10\textwidth}p{0.10\textwidth}p{0.10\textwidth}}
+    \toprule
+    \textbf{Item} & \textbf{$w_1$} & \textbf{$w_2$} & \textbf{$w_3$} \\
+    \midrule
+    $i_1$ & A & A & B \\
+    $i_2$ & B & B & B \\
+    $i_3$ & A & B & A \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{A vote matrix from three crowd workers on three items.}
+\label{tab:ds_votes}
+\end{table*}
+
+\newthought{Step.} Initialise $q_i$ by majority vote, run one M step to estimate $\pi^{(w)}$ and the prior, then run one E step to update $q$. What is the posterior over the true label of item $i_3$ after one round? Did $w_2$ get a high or low accuracy estimate, and why?
+
+\subsection{Exercise 4: Soft Labels Versus Hard Labels}
+
+\newthought{A toy task.} A binary classifier is trained on labels that come from a label model whose posterior on every example is $(0.7, 0.3)$. Compare two training regimes:
+\begin{itemize}
+    \item Hard targets: take the argmax and train cross-entropy against $1$.
+    \item Soft targets: train cross-entropy against $(0.7, 0.3)$.
+\end{itemize}
+
+\newthought{Step.} Show that the optimal logits under soft targets satisfy $\sigma(\text{logit}) = 0.7$, while the optimal logits under hard targets push $\sigma(\text{logit}) \to 1$. Which model is better calibrated on the held-out clean test set? Why is this the same argument as label smoothing?
+
+\subsection{Exercise 5: Confident Learning Threshold}
+
+\newthought{Compute the per-class self-confidence threshold} for a three-class classifier whose predictions on its noisy training set are summarised in
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.10\textwidth}p{0.14\textwidth}p{0.14\textwidth}p{0.14\textwidth}}
+    \toprule
+    \textbf{$\tilde y$} & \textbf{mean $p(c_1)$} & \textbf{mean $p(c_2)$} & \textbf{mean $p(c_3)$} \\
+    \midrule
+    $c_1$ & $0.78$ & $0.16$ & $0.06$ \\
+    $c_2$ & $0.20$ & $0.65$ & $0.15$ \\
+    $c_3$ & $0.05$ & $0.10$ & $0.85$ \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Average predicted probabilities per noisy class.}
+\label{tab:cl_thresholds}
+\end{table*}
+
+\newthought{Step.} The threshold $t_k$ is the average self-confidence of class $k$, namely the diagonal entry of the table above: $t_1 = 0.78$, $t_2 = 0.65$, $t_3 = 0.85$. An example with noisy label $c_1$ and prediction $(0.20, 0.10, 0.70)$ exceeds $t_3$, so it is flagged as a likely $c_1 \to c_3$ noise. Repeat the check for predictions $(0.50, 0.40, 0.10)$ and $(0.10, 0.80, 0.10)$ on examples with noisy label $c_1$ and $c_3$ respectively. Which would the algorithm flag, and which would it leave alone?
+
+\subsection{Exercise 6: Acquisition Function Bake-Off}
+
+A three-class classifier returns the following softmax probabilities over $\{c_1, c_2, c_3\}$ on six pool inputs:
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.10\textwidth}p{0.12\textwidth}p{0.12\textwidth}p{0.12\textwidth}}
+    \toprule
+    \textbf{Input} & \textbf{$p(c_1)$} & \textbf{$p(c_2)$} & \textbf{$p(c_3)$} \\
+    \midrule
+    $u_1$ & $0.80$ & $0.15$ & $0.05$ \\
+    $u_2$ & $0.45$ & $0.40$ & $0.15$ \\
+    $u_3$ & $0.34$ & $0.33$ & $0.33$ \\
+    $u_4$ & $0.60$ & $0.30$ & $0.10$ \\
+    $u_5$ & $0.50$ & $0.45$ & $0.05$ \\
+    $u_6$ & $0.95$ & $0.04$ & $0.01$ \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Predicted softmax distributions for six pool inputs. Each row sums to one.}
+\label{tab:al_pool}
+\end{table*}
+
+\newthought{Step.} For $u_2$, the entropy is
+\begin{align*}
+    a_{\text{ent}}(u_2) &= -\bigl(0.45 \log 0.45 + 0.40 \log 0.40 + 0.15 \log 0.15\bigr) \\
+                        &\approx 0.359 + 0.366 + 0.285 \\
+                        &\approx 1.010 \text{ nats}
+\end{align*}
+and the margin is $a_{\text{mar}}(u_2) = -(0.45 - 0.40) = -0.05$. Repeat for the other five inputs and rank them.
+
+\newthought{Reflect.} Suppose you also have a deep ensemble of three models that all return the same row for $u_3$ but disagree sharply on $u_5$. Which input would query by committee prefer, and why does this differ from what the single-model entropy says?
+
+\subsection{Exercise 7: Judge Calibration}
+
+\newthought{An LLM judge} is asked to compare two model outputs on one hundred prompts; on a held-out fifty-prompt subset where humans graded the same outputs, the judge agrees with the human verdict on forty-two prompts. Eight of the ten disagreements are on prompts where the second-position output is shorter than the first.
+
+\newthought{Step.} Compute the judge's raw agreement rate, then estimate the position bias as the difference between agreement rates for first-position and second-position preferences. What practical fix would you apply before deploying this judge to evaluate millions of outputs? Why is randomised position swapping insufficient on its own?
+
+\subsection{Exercise 8: Verifier-Generator Choice}
+
+\newthought{Three deployment scenarios.} For each, decide whether to invest engineering in a Snorkel-style weak-supervision pipeline, an active-learning loop with a clean oracle, or a judge-based evaluation. Justify your answer in terms of which side of the verifier-generator gap dominates the task:
+\begin{itemize}
+    \item A relation extraction system over biomedical literature, where domain experts can write rules quickly but cannot label tens of thousands of papers.
+    \item A medical-imaging classifier where a single radiologist can label five hundred scans a week and there are five thousand unlabelled scans available.
+    \item A code-generation evaluation harness where you have a million prompts and a small budget of human reviewer time.
+\end{itemize}
+
+\newthought{Code.} A Python notebook will be provided that walks through Snorkel's label model on a small text dataset, runs a Dawid-Skene aggregation on a synthetic crowd matrix, fits a confident-learning estimator on a noisy MNIST split, and runs a single-round active-learning experiment with uncertainty sampling against a stratified-random baseline. Use it as a starting point, break things, and observe what changes when you correlate two labelling functions, when you remove the high-confidence prune step, and when you skip the cold-start seed.
+
+\newthought{What to observe.} The label model recovers the latent class structure even with no clean labels, but only when the labelling functions have enough independence. The end model outperforms the label model on coverage, even though it sees the same supervision. Confident learning flags some genuinely mislabelled examples and a few correctly-labelled-but-hard ones. Uncertainty sampling beats random selection only after the cold-start seed is large enough; below that threshold, random selection wins.
+
+
+\newpage
+\section{Self-Reflection and Recap}\index{reflection}\index{recap}
+
+\newthought{Self-Reflection} questions to guide your thinking:
+\begin{itemize}
+    \item When is weak supervision preferable to collecting clean labels, and what makes the trade-off tip the other way?
+    \item How does the Dawid-Skene EM procedure recover worker accuracies without ever observing the true label, and what assumption fails when a worker is adversarially correct on easy items and adversarially wrong on hard ones?
+    \item Why does the Snorkel end model generalise beyond the labelling functions that produced its training labels, and what would break this property?
+    \item What is the structural asymmetry between the label model and the end model in Snorkel, and how does the same asymmetry appear in RLHF, in process reward models, and in weak-to-strong generalisation?
+    \item Why is training a classifier on soft labels more informative than training on the argmax, and how is label smoothing a special case of this idea?
+    \item When does a forward loss correction fail or become numerically unstable compared to a backward loss correction, and how would you decide which to use?
+    \item How does confident learning estimate the joint distribution of noisy and clean labels without seeing any clean labels, and what is the role of the per-class self-confidence threshold?
+    \item Why is verification structurally easier than generation, and which modality or task setting would close the gap?
+    \item Why does an LLM-as-judge prefer the first-position answer or the longer answer, and what do these biases imply about deploying the judge at scale?
+    \item How do active learning and weak supervision compose into a hybrid pipeline, and why is the cold-start problem more severe than usual when the seed must also calibrate the labelling functions?
+\end{itemize}
+
+\vspace{1.5em}
+
+\newthought{Recap} of Key Concepts:
+\begin{itemize}
+    \item Weak supervision embraces label noise by modelling labeller accuracy and correlation rather than treating annotations as ground truth; the label model is a small generative aggregator that infers the latent class without ever seeing it.
+    \item The Dawid-Skene model is the historical precursor to Snorkel; an EM loop alternates between estimating worker confusion matrices and posterior over true labels, and the same machinery generalises to programmatic labelling functions.
+    \item Labelling functions encode domain knowledge as noisy voters; the coverage-accuracy trade-off determines their utility in the label model, and correlated functions must be modelled explicitly to avoid double-counted evidence.
+    \item Snorkel's generator/discriminator asymmetry is the chapter's spine; a small generative label model produces soft training targets, and a large discriminative end model trained on those targets generalises beyond the rules to the full input distribution.
+    \item Soft labels carry information that one-hot targets erase; label smoothing, distillation, and Snorkel posteriors are all instances of training against a distribution rather than a hard class, and the resulting models are better calibrated and more robust to noise.
+    \item Confident learning estimates the noise transition without clean labels, using the model's own high-confidence predictions as a proxy; the per-class self-confidence threshold makes the procedure robust to miscalibration, and the flagged off-diagonal mass functions as a measurement of the annotation pipeline.
+    \item The verifier-generator gap is the underlying lever; verification is structurally easier than generation, and the entire toolbox of weak supervision (label models, judges, process reward models, peer co-teaching, weak-to-strong generalisation) exploits the gap from different angles.
+    \item LLM judges and process reward models are modern descendants of the Snorkel label model; they verify rather than generate, they scale evaluation by orders of magnitude, and they carry their own biases (position, length, self-preference) that have to be controlled by ensembling and recalibration.
+    \item Active learning is the high-signal expensive counterpart to weak supervision; an acquisition function such as predictive entropy, margin, ensemble disagreement, or expected gradient length picks where to spend each clean label, and the cold-start problem forces a clean seed before any acquisition function can be trusted.
+    \item The hybrid pipeline composes weak supervision and active learning; the labelling functions cover the breadth, the oracle deepens the spots where the label model is uncertain, and the human's why becomes the next labelling function so the loop closes.
+\end{itemize}
+
+\vspace{2.5em}
+
+\marginnote{\newthought{Root cause.} Every method in this chapter assumed the human only ever delivers a class label, never a behaviour or a correction.}
+
+\newthought{The oracle in this chapter was a labelling oracle.} A medical-triage classifier trained with Snorkel and refined by uncertainty sampling can ask the radiologist whether a lesion is benign or malignant, but it cannot ask the radiologist how she would have moved the probe, nor can it watch her decide when to stop scanning. For sequential tasks, robotic manipulation, dialogue, surgical assistance, the informative supervision is not a label on a single input but a trajectory of decisions across time. A label-only oracle cannot transmit that.
+
+\newthought{Interactive and imitation learning broaden the oracle.} Rather than querying for a label, the next chapter queries for a demonstration, a correction, or a reward. Active learning and weak supervision generalise here in the obvious way; the acquisition function still picks the most informative state to ask about, but what comes back is an action sequence, not a class. The cold-start problem reappears in a sharper form, because covariate shift means a partly trained imitator drifts into states the demonstrator never visited.
+
+\marginnote{\newthought{Teaser.} If the oracle no longer hands you a label but takes the wheel, what are you learning?}
+
+\newthought{The next chapter explores interactive and imitation learning,} where behaviour cloning, DAgger-style correction, and inverse reinforcement learning extend the active-learning idea from labels to whole policies.
+
+\marginnote{\newthought{feedback}}
