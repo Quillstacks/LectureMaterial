@@ -1,111 +1,268 @@
 % !TEX root = ../notes_missingsemester.tex
-% Block 6: Data Lives Here — Databases & SQL
+% Chapter 6: Data Lives Here — Databases & SQL
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\index{PostgreSQL}\index{SQL}\index{SQLAlchemy}\index{database}\index{Alembic}
+% POST IMPROVEMENTS 2026:
+% 1. Add a small TikZ schema diagram of the predictions table.
+% 2. Provide a pre-baked v0.4 reference repo so catch-up takes a single clone.
+
+\index{PostgreSQL}\index{SQL}\index{SQLAlchemy}\index{database}\index{Alembic}\index{ORM}
 \chapter{Data Lives Here: Databases \& SQL}
 \newthought{Your API works. Now make it remember.}
 
-% ==============================================================================
-% SESSION A: THEORY
-% ==============================================================================
+% ==============================================================================================
+% BLOCK 1: INTRODUCTION
+% ==============================================================================================
 
-\section{Why Persist at All?}
+\section{The Why}\index{persistence}\index{relational database}
 
-\newthought{Your API already returns predictions,} but the moment the response is sent, the data is gone.
-A database makes it permanent:
+Block~5 left us with a service that turns drawings into predictions over
+HTTP.
+The classifier loads at startup, the API validates each request, the
+\texttt{systemd} unit keeps it running.
+What it does not do is remember anything.
+The moment the response leaves the server, the prediction is gone.
 
-\begin{description}
-    \item[Analytics] Every prediction is a data point—what digits are drawn, how confident the model is,
-    which model version served the request, when it happened. Block~9's \texttt{/analytics} endpoint queries this.
-    \item[Beyond this course] In production you would also store raw inputs to build retraining datasets,
-    let users correct wrong predictions for labelled data, or detect model drift over time. We will not do
-    that here, but it all starts with having a database.
-\end{description}
+\marginnote{\newthought{PixelWise} now has an HTTP service that classifies
+digits.
+The \texttt{GET /results} endpoint from Block~5 is a stub returning an
+empty list, with a note pointing at this block.
+This block fills that stub by wiring the API to a PostgreSQL database.}
 
-\section{Relational Databases}\index{relational database}
+\newthought{Across ten lecture blocks we build PixelWise}\index{PixelWise}.
+This block is the first that adds persistent state.
+Every block from here forward, the analytics in Block~9, the feature flag
+in Block~8, the frontend results panel in Block~7, depends on the database
+schema you design today.
 
-\newthought{A relational database stores data in tables.} Each table has columns (the schema) and rows
-(the records). Every row has a unique identifier—the primary key\index{primary key}.
+\newthought{Why persist at all?}
+A response that vanishes the moment it is sent is a response that cannot be
+counted, compared, or queried.
+A database makes the prediction permanent: every drawing becomes a row, the
+class label becomes a column, the confidence becomes another, and the model
+version becomes a third.
+Block~9's analytics endpoint reads from this table; Block~8's feature flag
+relies on the version field; the frontend in Block~7 fetches recent results
+to show in the UI.
 
-\begin{description}
-    \item[Table] A named collection of rows with a fixed schema. Think: a spreadsheet with strict column types.
-    \item[Row] A single record. One prediction, one user, one event.
-    \item[Column] A named field with a type: \texttt{INTEGER}, \texttt{VARCHAR}, \texttt{FLOAT}, \texttt{TIMESTAMP}.
-    \item[Primary key] A column (or set of columns) that uniquely identifies each row. Usually an auto-incrementing integer or UUID.
-\end{description}
+\marginnote{\newthought{Beyond this course,}
+the same table is where production teams build retraining datasets, let
+users correct wrong predictions for labelled data, and detect distribution
+drift.
+We do not do any of those here, but every one of them starts with having
+the database.}
 
-\section{SQL Fundamentals}\index{SQL}
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\footnotesize, align=center},
+    box/.style={rectangle, draw=black, thick, rounded corners=2pt, minimum width=2.0cm, minimum height=0.9cm, inner sep=4pt},
+    arr/.style={-latex, thick, black!70}
+]
+\node[box] (api) at (0, 0)   {FastAPI\\\texttt{/classify}};
+\node[box] (cb)  at (3.0, 0) {\texttt{classify\_}\\\texttt{batch}};
+\node[box] (orm) at (6.0, 0) {SQLAlchemy\\\texttt{Prediction}};
+\node[box] (pg)  at (9.0, 0) {PostgreSQL\\\texttt{predictions}};
+\draw[arr] (api.east) -- (cb.west);
+\draw[arr] (cb.east)  -- (orm.west);
+\draw[arr] (orm.east) -- (pg.west);
+\end{tikzpicture}
+\caption{The persistence flow. \texttt{POST /classify} computes a prediction with \texttt{classify\_batch}, maps it through the \texttt{Prediction} SQLAlchemy model, and writes a row to the \texttt{predictions} table in PostgreSQL before returning the response.}
+\label{fig:persistence_flow}
+\end{figure}
 
-\newthought{SQL (Structured Query Language)} is how you talk to relational databases. The core operations:
+\subsection{Hands On Experience}
+
+\newthought{Consider this scenario:} a teammate asks how confident the
+model has been on average across the last hundred predictions.
+You realise nobody can answer that question.
+The API returned the confidence to every caller, but nothing recorded it,
+and ``the last hundred predictions'' is not a thing your service can talk
+about because it never wrote them down.
+The only way back to those numbers is to ask the users to draw their digits
+again, which is not an option.
+
+\marginnote{\newthought{The cost of forgetting.}\index{persistence}
+Anything not stored is not analysable.
+A model running for a month without persistence has produced a month of
+data that can never be recovered.
+The decision to write the database schema now is the decision to make the
+next month answerable.}
+
+\newthought{The schema is a contract,} the same way the API contract is a
+contract.
+Get it right and every later question, distribution per digit, average
+confidence per model version, error rate over time, becomes a query.
+Get it wrong and you find out later, with a hundred thousand rows already
+written, that the column you need does not exist.
+This block introduces migrations as the tool that lets the schema evolve
+without losing the rows already in it.
+
+\marginnote{\newthought{Designing schemas} is its own discipline.
+We deliberately start with a near-trivial schema, three columns, and grow
+it through a migration in the same session.
+The point is to feel the cycle of design, deploy, regret, migrate, which is
+how every real database evolves.}
+
+\newthought{This sixth block} introduces persistence for PixelWise.
+By the end you will have
+\begin{itemize}
+    \item written your first SQL queries against a PostgreSQL database,
+    \item modelled the \texttt{predictions} table as a SQLAlchemy class,
+    \item wired \texttt{POST /classify} so every prediction becomes a row,
+    \item replaced the \texttt{GET /results} stub with a real query,
+    \item run your first schema migration with Alembic to add a missing column,
+    \item and configured database credentials through \texttt{.env}.
+\end{itemize}
+
+
+
+% ==============================================================================================
+% BLOCK 2: MAIN THEORY
+% ==============================================================================================
+
+\newpage
+\section{Relational Databases and SQL}\index{relational database}\index{SQL}
+
+\newthought{A relational database stores data in tables.}
+Each table has a fixed schema: a list of named columns, each with a type.
+Each row is a single record.
+The schema is the contract that every row obeys; the database refuses
+inserts that violate it.
+
+\marginnote{\newthought{Vocabulary to keep straight.}\index{primary key}
+A \emph{table} is a named set of rows; a \emph{row} is one record;
+a \emph{column} is a named field with a type;
+a \emph{primary key} is the column (or set of columns) that uniquely
+identifies each row.
+Most tables use an auto-incrementing integer or a UUID as their key.}
+
+\newthought{SQL\index{SQL} is the language} you use to talk to a relational database.
+Four operations cover almost everything:
 
 \begin{verbatim}
 -- Insert a row
-INSERT INTO predictions (prediction, confidence, model_version)
+INSERT INTO predictions (prediction, confidence,
+                         model_version)
 VALUES ('7', 0.94, 'v1');
 
 -- Read rows
-SELECT * FROM predictions;
 SELECT prediction, confidence FROM predictions
     WHERE model_version = 'v1'
     ORDER BY created_at DESC
     LIMIT 10;
 
 -- Update a row
-UPDATE predictions SET confidence = 0.95 WHERE id = 42;
+UPDATE predictions SET confidence = 0.95
+    WHERE id = 42;
 
 -- Delete a row
 DELETE FROM predictions WHERE id = 42;
 \end{verbatim}
 
-\marginnote{Additional SQL commands you will encounter as the app grows:
-\texttt{JOIN} (combining rows from multiple tables),
-\texttt{GROUP BY} / \texttt{COUNT} / \texttt{AVG} (aggregation),
-\texttt{ORDER BY}, \texttt{LIMIT},
-\texttt{CREATE INDEX} (speeding up queries on large tables).
-The full treatment belongs in a dedicated database course.}
+\marginnote{\newthought{What you will meet later.}\index{SQL!JOIN}\index{SQL!GROUP BY}
+\texttt{JOIN} combines rows from multiple tables;
+\texttt{GROUP BY}, \texttt{COUNT}, and \texttt{AVG} aggregate;
+\texttt{ORDER BY} and \texttt{LIMIT} shape the output;
+\texttt{CREATE INDEX} speeds up queries that scan large tables.
+The full treatment belongs in a dedicated database course; the four
+operations above are enough to get PixelWise running.}
 
-\section{Why PostgreSQL over SQLite}\index{PostgreSQL}\index{SQLite}
+\newthought{The four operations are what every web application does to
+its database all day long}: write a row when something happens, read rows
+back when somebody asks, update a row when state changes, delete one when
+it should be gone.
+Every higher-level pattern, an ORM call, a migration, an analytics query,
+reduces to a sequence of these.
 
-\marginnote{SQLite\index{SQLite} is convenient: zero setup, the DB is a single file, great for prototyping.
-But it has no user authentication, no network access, and limited concurrency—a single writer blocks all readers.
-For a multi-user web service, PostgreSQL is the right tool.}
 
-\newthought{PostgreSQL is a production database:} real users and permissions, network-accessible,
-concurrent reads and writes, and \texttt{psql}\index{psql} as a proper operator interface. We go straight
-to PostgreSQL so students learn the production tool from day one.
 
-\marginnote{PostgreSQL\index{PostgreSQL}: \url{https://www.postgresql.org/}\\
-PostgreSQL Docs: \url{https://www.postgresql.org/docs/current/}}
+% ==============================================================================================
+\newpage
+\section{PostgreSQL over SQLite}\index{PostgreSQL}\index{SQLite}
 
-\subsection{PostgreSQL Basics}
+\newthought{SQLite\index{SQLite} is convenient.}
+The database is a single file, there is no server to install, no users,
+no network configuration.
+For a single-developer prototype or a desktop application, this is exactly
+what you want.
 
-\newthought{Key commands} for administering PostgreSQL:
+\marginnote{\newthought{Where SQLite stops working.}
+SQLite has no user authentication, no password protection, and limited
+concurrency: a single writer blocks all readers.
+For a multi-user web service where 30 students hit the same database at the
+same second, the file-lock model becomes the bottleneck.
+The same file is also harder to back up while the application is running.}
+
+\newthought{PostgreSQL\index{PostgreSQL} is a production database.}
+It runs as a separate process, accepts connections over the network, has
+real users with real permissions, and supports concurrent reads and writes
+without serialising the whole file.
+\texttt{psql}\index{psql} is the operator's interface, the same shape of
+tool as \texttt{systemctl} from Block~5.
+
+\marginnote{PostgreSQL: \url{https://www.postgresql.org/}\\
+PostgreSQL Docs: \url{https://www.postgresql.org/docs/current/}\\
+SQLite: \url{https://www.sqlite.org/}}
+
+\newthought{Setting up the database} on the server is two commands inside
+\texttt{psql}.
+You log in as the \texttt{postgres} superuser to create a dedicated user
+and database for the application:
 
 \begin{verbatim}
-# Connect as the postgres superuser
 sudo -u postgres psql
 
-# Inside psql:
+-- inside psql:
 CREATE USER pixelwise WITH PASSWORD 'secret';
 CREATE DATABASE pixelwise OWNER pixelwise;
 \q
+\end{verbatim}
 
-# Connect as the pixelwise user
+\marginnote{\newthought{Why a dedicated user?}\index{least privilege}
+The \texttt{postgres} superuser can drop any database, create any user,
+and read any table.
+A dedicated \texttt{pixelwise} user can only do what its privileges allow,
+which by default is read and write its own tables.
+The principle is the same as the non-root \texttt{produser} from Block~1:
+the account the application uses is the smallest one that works.}
+
+\newthought{Connect as the application user} to confirm the credentials work:
+
+\begin{verbatim}
 psql -U pixelwise -d pixelwise -h localhost
 \end{verbatim}
 
+The prompt that comes back is what your service will see when it connects
+through SQLAlchemy in the next section.
+If \texttt{psql} cannot reach the database, neither can the API; debug here
+first, before any Python is involved.
+
+
+
+% ==============================================================================================
+\newpage
 \section{SQLAlchemy: Tables as Python Classes}\index{SQLAlchemy}\index{ORM}
 
-\newthought{SQLAlchemy is a Python library}\marginnote{SQLAlchemy\index{SQLAlchemy}:
-\url{https://www.sqlalchemy.org/}\\
-SQLAlchemy Tutorial: \url{https://docs.sqlalchemy.org/en/20/tutorial/}} that maps database tables to Python classes. You define a
-\texttt{Prediction} class with fields like \texttt{prediction}, \texttt{confidence}, \texttt{created\_at}—SQLAlchemy
-generates the SQL to create the table, insert rows, and query data. Students write Python, not SQL. This is
-called an ORM\index{ORM} (Object-Relational Mapper) and is standard in Python web development.
+\newthought{SQLAlchemy is a Python library} that maps database tables to
+Python classes.
+You define a \texttt{Prediction} class with fields like \texttt{prediction},
+\texttt{model\_version}, and \texttt{created\_at};
+SQLAlchemy generates the SQL to create the table, insert rows, and query
+data.
+This is called an \emph{ORM}\index{ORM}, an object-relational mapper, and
+is standard in Python web development.
+
+\marginnote{SQLAlchemy: \url{https://www.sqlalchemy.org/}\\
+SQLAlchemy Tutorial: \\
+\url{https://docs.sqlalchemy.org/en/20/tutorial/}}
+
+\newthought{The model class} declares the columns and their types in plain
+Python:
 
 \begin{verbatim}
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import (Column, Integer, String,
+                        DateTime)
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
 
@@ -117,150 +274,444 @@ class Prediction(Base):
     id = Column(Integer, primary_key=True)
     prediction = Column(String, nullable=False)
     model_version = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime,
+                        default=datetime.utcnow)
 \end{verbatim}
 
-\marginnote{SQLAlchemy's parameterised queries\index{SQL injection} prevent SQL injection automatically.
-When you use the ORM, user input is never string-formatted into SQL—it is passed as parameters,
-which the database driver escapes and quotes safely.}
+\marginnote{\newthought{Why an ORM?}\index{SQL injection}
+Two reasons.
+The first is ergonomic: writing Python is faster than writing string SQL,
+and the editor knows the field names.
+The second is safety: SQLAlchemy uses parameterised queries by default,
+which means user input never ends up concatenated into a SQL statement.
+SQL injection becomes a footgun the framework refuses to hand you.}
 
-\section{Schema Migrations with Alembic}\index{Alembic}\index{migration}
-
-\newthought{You design a schema, deploy it, store 500 predictions.} Then you realise you forgot a column.
-You cannot drop the table and recreate it—those 500 rows are real data. You need a tool that alters the
-live schema without losing data.
-
-\newthought{Alembic}\marginnote{Alembic\index{Alembic}: \url{https://alembic.sqlalchemy.org/}} is the migration tool for SQLAlchemy. It generates migration scripts from model changes,
-applies them in order, and tracks which migrations have run:
+\newthought{An engine and a session} are the runtime objects that connect
+the model to the database:
 
 \begin{verbatim}
-# Initialise Alembic
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+engine = create_engine(os.getenv("DATABASE_URL"))
+SessionLocal = sessionmaker(bind=engine)
+
+# create the table on first run
+Base.metadata.create_all(engine)
+\end{verbatim}
+
+\marginnote{\newthought{The connection string}\index{DATABASE\_URL} is a single
+URL: \\
+\texttt{postgresql://user:pass@host/dbname}.
+It encodes everything the driver needs to reach the database, and it lives
+in \texttt{.env} for the same reasons the API key did in Block~5.
+A leaked \texttt{DATABASE\_URL} is a leaked database.}
+
+\newthought{Inserting a row} from inside the API handler is now a few lines:
+
+\begin{verbatim}
+db = SessionLocal()
+db.add(Prediction(prediction=result["prediction"],
+                  model_version="v1"))
+db.commit()
+\end{verbatim}
+
+The handler still calls \texttt{classify\_batch} from Block~4 and returns
+\texttt{ClassifyResponse} from Block~5; the only addition is one round-trip
+to the database before the response leaves the server.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Schema Migrations with Alembic}\index{Alembic}\index{migration}
+
+\newthought{Schemas always change.}
+You design the table, deploy it, store 500 predictions.
+Then you realise you forgot a column.
+You cannot drop the table and recreate it; those 500 rows are real data.
+You need a tool that alters the live schema without losing them.
+
+\marginnote{Alembic: \url{https://alembic.sqlalchemy.org/}\\
+\newthought{The metaphor.}\index{migration}
+A migration is a recipe that describes a change to the schema and how to
+roll it back.
+The migration tool keeps an internal log of which migrations have run,
+applies new ones in order, and refuses to run the same one twice.
+The result is that the schema in the database always matches the
+migrations folder in Git.}
+
+\newthought{Alembic} is the migration tool for SQLAlchemy.
+It generates migration scripts from changes you made to the model,
+applies them in order, and tracks which migrations have run on which
+database.
+
+\begin{verbatim}
+# Initialise Alembic in the repo
 alembic init alembic
 
-# Generate a migration after changing the model
-alembic revision --autogenerate -m "add confidence column"
+# After you change app/models.py:
+alembic revision --autogenerate \
+    -m "add confidence column"
 
 # Apply the migration
 alembic upgrade head
 \end{verbatim}
 
-\marginnote{In a real system with millions of rows and live traffic, you cannot just drop and recreate.
-Migrations are how schemas evolve safely. This topic is covered in much more depth in dedicated database
-and backend courses—here we show the concept and the tool.}
+\marginnote{\newthought{The autogenerate is a draft, not a final answer.}
+Alembic compares the model in code against the schema in the database and
+guesses what changed.
+For straightforward additions it gets it right; for renames or splits it
+needs a human to read the generated script and adjust it.
+Always read the migration before you run it.}
 
-\section{Sidenote: Redis}\index{Redis}
+\newthought{In a real system} with millions of rows and live traffic, you
+cannot just drop and recreate.
+Migrations are how schemas evolve safely, in production, with the
+application running.
+This topic is covered in much more depth in dedicated database and backend
+courses; here we run one migration end to end so the cycle of edit-model,
+generate-migration, apply-migration is concrete.
 
-\marginnote{Redis\index{Redis} (\url{https://redis.io/}) is an in-memory key-value store. Extremely fast reads (${\sim}$1\,ms). Good for
-caching expensive, frequently repeated queries (e.g., a product page hit by thousands of users), session storage,
-or rate-limiting counters. In PixelWise, every hand-drawn digit is unique pixel data—cache hit rate
-$\approx 0\%$, so Redis adds nothing here. Mentioned so students know it exists; the use cases appear in
-larger-scale applications.}
+\marginnote{\newthought{Sidenote: Redis.}\index{Redis}
+Redis is an in-memory key-value store with sub-millisecond reads.
+It is the right tool for caching, session storage, and rate-limit counters.
+For PixelWise, every drawing is unique pixel data, so the cache hit rate
+would be effectively zero; we mention it so you recognise it later.\\
+Redis: \url{https://redis.io/}}
 
-% ==============================================================================
-% SESSION B: HANDS-ON
-% ==============================================================================
+
+
+% ==============================================================================================
+% BLOCK 3: STUDENT ACTIVATION
+% ==============================================================================================
 
 \newpage
-\section{Workshop}
+\section{Exercise: PostgreSQL on the Server}\index{exercises}
 
-\marginnote{If your VM is broken, restore the \texttt{B5-complete} snapshot.
-At the end of this session, take a snapshot named \texttt{B6-complete}.}
+\marginnote{\newthought{Exercises} mirror the four theory sections in order.
+The database first, then the schema in Python, then the migration, with
+the API wiring threaded through each step.}
 
-\begin{enumerate}
-    \item \textbf{Install PostgreSQL} on the server VM:
-    \begin{verbatim}
-    sudo apt install -y postgresql
-    \end{verbatim}
-    Create a dedicated user and database:
-    \begin{verbatim}
-    sudo -u postgres psql -c \
-      "CREATE USER pixelwise WITH PASSWORD 'secret';"
-    sudo -u postgres psql -c \
-      "CREATE DATABASE pixelwise OWNER pixelwise;"
-    \end{verbatim}
-    Verify the connection:
-    \begin{verbatim}
-    psql -U pixelwise -d pixelwise -h localhost
-    \end{verbatim}
+\newthought{Catching up via the reference tag.}\index{Git!tag}
+The course maintains a public reference repository at
+\url{https://github.com/schutera/pixelwise} with a tag at the end of every
+block.
+\texttt{v0.4} marks the end of Block~5; \texttt{v0.5} will mark the end of
+this block.
+If your repository has drifted, reset to \texttt{v0.4} before starting:
 
-    \item \textbf{Design the initial schema} (intentionally minimal—only the class label):
-    \begin{description}
-        \item[\texttt{Prediction}] \texttt{id} (int, PK), \texttt{created\_at} (timestamp),
-        \texttt{prediction} (str), \texttt{model\_version} (str).
-    \end{description}
-    Implement the SQLAlchemy model in \texttt{app/models.py}. Create the table:
-    \begin{verbatim}
-    Base.metadata.create_all(engine)
-    \end{verbatim}
+\begin{verbatim}
+git fetch origin
+git reset --hard v0.4
+\end{verbatim}
 
-    \item \textbf{Wire the API to the database:} Update \texttt{POST /classify} to store every result
-    in PostgreSQL before returning the response. Each prediction becomes a row in the \texttt{predictions} table.
+\newthought{Block~2 introduced PostgreSQL} as the production database.
+On the \texttt{prod} VM, install the server and start it:
 
-    \item \textbf{Replace the \texttt{GET /results} stub} with a real query: recent predictions, filterable
-    by digit class. The stub from Block~5 is now complete.
+\begin{verbatim}
+ssh produser@192.168.56.11
+sudo apt update
+sudo apt install -y postgresql
+sudo systemctl status postgresql
+\end{verbatim}
 
-    \item \textbf{Collect ${\sim}$20 predictions} via \texttt{curl}. Then ask: \emph{``How confident is the model
-    actually in these predictions? Is it always sure, or does it sometimes guess?''} The API returns
-    confidence—but the database only stored the class label. You cannot answer the question from the data you have.
+\marginnote{\newthought{Update \texttt{setup-server.sh}.}\index{setup-server.sh}
+The provisioning script from Block~3 should now install PostgreSQL too.
+Add \texttt{postgresql} to the \texttt{apt install} line, commit, and push.
+A fresh VM provisioned from the script after this change has the database
+ready without you typing a second command.}
 
-    \item \textbf{First migration:} Use Alembic to add a \texttt{confidence} (float) column to the
-    \texttt{predictions} table:
-    \begin{verbatim}
-    pip install alembic
-    alembic init alembic
-    # Edit alembic/env.py to use your engine
-    alembic revision --autogenerate \
-      -m "add confidence column"
-    alembic upgrade head
-    \end{verbatim}
-    Verify with \texttt{psql}:
-    \begin{verbatim}
-    psql -U pixelwise -d pixelwise -h localhost \
-      -c "SELECT prediction, confidence
-          FROM predictions
-          ORDER BY created_at DESC LIMIT 5;"
-    \end{verbatim}
-    Old rows show \texttt{NULL} for confidence; new predictions store the real number.
+\newthought{Create a dedicated user and database:}
 
-    \item \textbf{Update \texttt{.env} and \texttt{.env.example}:} Add the database connection string:
-    \begin{verbatim}
-    DATABASE_URL=postgresql://pixelwise:secret@localhost/pixelwise
-    \end{verbatim}
+\begin{verbatim}
+sudo -u postgres psql -c \
+  "CREATE USER pixelwise WITH PASSWORD 'secret';"
+sudo -u postgres psql -c \
+  "CREATE DATABASE pixelwise OWNER pixelwise;"
+\end{verbatim}
 
-    \item \textbf{Restart and verify end-to-end:}
-    \begin{verbatim}
-    sudo systemctl restart pixelwise
-    \end{verbatim}
-    Draw a digit $\to$ prediction + confidence stored $\to$ \texttt{GET /results} returns both.
+\newthought{Verify the connection} with the application user:
 
-    \item \textbf{Commit:}
-    \begin{verbatim}
-    git add app/models.py app/main.py alembic/ \
-        requirements.txt .env.example
-    git commit -m "Add PostgreSQL persistence and first migration"
-    git push
-    \end{verbatim}
+\begin{verbatim}
+psql -U pixelwise -d pixelwise -h localhost
+\end{verbatim}
 
-    \item \textbf{Take a snapshot} of both VMs. Name them \texttt{B6-complete}.
-\end{enumerate}
+If \texttt{psql} fails to connect, fix the credentials before going any
+further; SQLAlchemy will report the same error in a less direct way.
+A working \texttt{psql} is the foundation of everything the rest of the
+block builds on.
 
-\section{Security Thread}
 
-\newthought{DB credentials live in \texttt{.env},} never in code. Create a dedicated DB user with minimal
-privileges—no \texttt{CREATEDB}, no superuser. SQLAlchemy's parameterised queries prevent SQL
-injection\index{SQL injection}—never string-format SQL.
 
-\section{Self-Reflection and Recap}
+% ==============================================================================================
+\newpage
+\section{Exercise: The \texttt{Prediction} Model}\index{exercises}
 
-\newthought{Reflection questions:}
+\newthought{Block~2 introduced SQLAlchemy} as the ORM that maps tables to
+Python classes.
+On \texttt{dev}, install the driver and the ORM into the virtual environment:
+
+\begin{verbatim}
+source .venv/bin/activate
+pip install sqlalchemy psycopg2-binary
+pip freeze > requirements.txt
+\end{verbatim}
+
+\newthought{Write \texttt{app/models.py}} with the minimal schema, only the
+class label and the model version:
+
+\begin{verbatim}
+from sqlalchemy import (Column, Integer, String,
+                        DateTime)
+from sqlalchemy.orm import declarative_base
+from datetime import datetime
+
+Base = declarative_base()
+
+class Prediction(Base):
+    __tablename__ = "predictions"
+    id = Column(Integer, primary_key=True)
+    prediction = Column(String, nullable=False)
+    model_version = Column(String, nullable=False)
+    created_at = Column(DateTime,
+                        default=datetime.utcnow)
+\end{verbatim}
+
+\marginnote{\newthought{The schema is intentionally too small.}\index{schema}
+The first version stores only the predicted class and the model version.
+Confidence is missing on purpose; you will feel the gap in the next
+exercise and use Alembic to fix it.
+The point is to feel the migration cycle, not to skip past it.}
+
+\newthought{Add \texttt{DATABASE\_URL}} to \texttt{.env} and \texttt{.env.example}:
+
+\begin{verbatim}
+DATABASE_URL=postgresql://pixelwise:secret@localhost/pixelwise
+\end{verbatim}
+
+\newthought{Create the table once} from a small initialisation script:
+
+\begin{verbatim}
+from sqlalchemy import create_engine
+from app.models import Base
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+engine = create_engine(os.getenv("DATABASE_URL"))
+Base.metadata.create_all(engine)
+\end{verbatim}
+
+Run it on \texttt{prod}.
+Confirm with \texttt{psql} that \texttt{\textbackslash dt} lists the
+\texttt{predictions} table.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Wiring the API to the Database}\index{exercises}
+
+\newthought{Update \texttt{app/main.py}} so \texttt{POST /classify} writes
+a row before returning the response.
+The handler from Block~5 stays the same shape; one new dependency creates
+a database session per request:
+
+\begin{verbatim}
+from app.models import Prediction, SessionLocal
+
+@app.post("/classify",
+          response_model=ClassifyResponse,
+          dependencies=[Depends(verify_api_key)])
+def classify(req: ClassifyRequest):
+    arr = np.array(req.pixels,
+                   dtype=np.uint8)[np.newaxis]
+    result = classify_batch(arr)[0]
+
+    db = SessionLocal()
+    db.add(Prediction(
+        prediction=result["prediction"],
+        model_version="v1"))
+    db.commit()
+    db.close()
+
+    return result
+\end{verbatim}
+
+\marginnote{\newthought{One session per request.}\index{SQLAlchemy!session}
+A session is the unit of database work.
+Open it at the start of the handler, close it at the end.
+The framework patterns FastAPI documents (\texttt{Depends} for sessions)
+do this more elegantly; the manual version above is the simplest one that
+shows what is happening.}
+
+\newthought{Replace the \texttt{GET /results} stub} with a real query:
+
+\begin{verbatim}
+@app.get("/results")
+def results():
+    db = SessionLocal()
+    rows = (db.query(Prediction)
+              .order_by(Prediction.created_at.desc())
+              .limit(20).all())
+    db.close()
+    return {"results": [
+        {"id": r.id,
+         "prediction": r.prediction,
+         "model_version": r.model_version,
+         "created_at": r.created_at.isoformat()}
+        for r in rows]}
+\end{verbatim}
+
+\newthought{Restart the service and feed it data.}
+Twenty \texttt{curl} requests later, \texttt{GET /results} returns twenty
+rows.
+The stub from Block~5 is now complete; the system stores what it predicts.
+
+\marginnote{\newthought{Ask the question} the schema cannot answer:
+``how confident is the model on average?''
+The API returns confidence to every caller, but the database only stored
+the class label.
+You cannot answer the question from the data on disk.
+That is the gap the next exercise closes.}
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: First Migration with Alembic}\index{exercises}
+
+\newthought{Block~2 introduced Alembic} as the migration tool for SQLAlchemy.
+Initialise it and configure it to use the same engine as the application:
+
+\begin{verbatim}
+pip install alembic
+pip freeze > requirements.txt
+alembic init alembic
+\end{verbatim}
+
+Edit \texttt{alembic.ini} so \texttt{sqlalchemy.url} reads from
+\texttt{.env}, and edit \texttt{alembic/env.py} to import \texttt{Base}
+from \texttt{app.models} so autogenerate sees your tables.
+
+\marginnote{\newthought{Read the generated config.}\index{alembic.ini}
+\texttt{alembic init alembic} writes a folder of starter files.
+Skim them once before you change anything; the structure is small and the
+mental model becomes obvious by reading the templates.}
+
+\newthought{Add the missing column} to the model in \texttt{app/models.py}:
+
+\begin{verbatim}
+from sqlalchemy import Float
+
+class Prediction(Base):
+    __tablename__ = "predictions"
+    id = Column(Integer, primary_key=True)
+    prediction = Column(String, nullable=False)
+    confidence = Column(Float)            # NEW
+    model_version = Column(String, nullable=False)
+    created_at = Column(DateTime,
+                        default=datetime.utcnow)
+\end{verbatim}
+
+\newthought{Generate and apply the migration:}
+
+\begin{verbatim}
+alembic revision --autogenerate \
+    -m "add confidence column"
+alembic upgrade head
+\end{verbatim}
+
+\marginnote{\newthought{Read the migration before you run it.}\index{Alembic!autogenerate}
+The generated script lives in \texttt{alembic/versions/}.
+Open it, confirm the only operation is \texttt{add\_column("confidence")},
+and only then run \texttt{upgrade head}.
+A wrong migration on a populated table is much harder to undo than to
+prevent.}
+
+\newthought{Verify with \texttt{psql}:}
+
+\begin{verbatim}
+psql -U pixelwise -d pixelwise -h localhost \
+  -c "SELECT prediction, confidence
+      FROM predictions
+      ORDER BY created_at DESC LIMIT 5;"
+\end{verbatim}
+
+Old rows show \texttt{NULL} for confidence; new predictions store the real
+number.
+That gap between old and new rows is the visible signature of a migration:
+the column exists everywhere, but its values are populated only from the
+moment the new code shipped.
+
+\newthought{Wire confidence into the handler:}
+
+\begin{verbatim}
+db.add(Prediction(
+    prediction=result["prediction"],
+    confidence=result["confidence"],
+    model_version="v1"))
+\end{verbatim}
+
+Restart the service.
+Draw a digit; confirm the new row in \texttt{psql} has both fields populated.
+Commit, push, and the repository now matches \texttt{v0.5}:
+
+\begin{verbatim}
+git add app/main.py app/models.py alembic/ \
+    alembic.ini requirements.txt .env.example
+git commit -m "Add PostgreSQL persistence and first migration"
+git push
+\end{verbatim}
+
+\marginnote{\newthought{A note on what comes next.}
+The system is reachable on the network and remembers what it does, but
+nobody outside the SSH tunnel can use it.
+The next block puts a frontend and an Nginx reverse proxy in front of the
+API, and PixelWise becomes accessible from a browser at a real URL.}
+
+
+
+% ==============================================================================================
+\newpage
+\section{Self-Reflection and Recap}\index{reflection}\index{recap}
+
+\newthought{Self-Reflection} questions to guide your thoughts during and after the exercises:
 \begin{itemize}
     \item Why do we store predictions in a database rather than just returning them in the API response?
     \item What is the difference between dropping and recreating a table versus running a migration?
     \item Why did the old rows show \texttt{NULL} for the confidence column after the migration?
-    \item What happens if you store the database password directly in your Python code instead of \texttt{.env}?
-    \item Why is a dedicated database user with minimal privileges better than using the superuser?
+    \item What happens if you store the database password directly in your Python code instead of in \texttt{.env}?
+    \item Why is a dedicated database user with minimal privileges better than connecting as the superuser?
+    \item How does the ORM make SQL injection harder, and where does the protection break down?
 \end{itemize}
 
-\newthought{Milestone:} Every digit prediction is stored in PostgreSQL with confidence. \texttt{GET /results}
-returns real data. Students have run their first schema migration on a live database. The \texttt{GET /results}
-stub from Block~5 is now complete.
+\newthought{Recap} of key concepts:
+\begin{itemize}
+    \item Relational databases store data in typed tables; SQL is the language that queries and changes them.
+    \item PostgreSQL is the production database for this course; SQLite is too limited for a multi-user web service.
+    \item SQLAlchemy maps tables to Python classes and uses parameterised queries by default.
+    \item Migrations let schemas change without losing rows; Alembic generates and applies them.
+    \item Database credentials live in \texttt{.env}, never in code; the application user has minimal privileges.
+\end{itemize}
+
+\marginnote{\newthought{Security thread.}\index{security}
+DB credentials live in \texttt{.env}, never in code.
+The dedicated \texttt{pixelwise} user has no superuser rights and cannot
+create databases.
+SQLAlchemy's parameterised queries prevent SQL injection by default; never
+build queries with string formatting.}
+
+\marginnote{\newthought{Teaser.} The service stores predictions and returns
+them, but only somebody with \texttt{curl} and the API key can ask.
+What does it take to put this in front of a real browser at a real URL?}
+
+\newthought{Milestone.} Every digit prediction is stored in PostgreSQL with
+its confidence and model version.
+\texttt{GET /results} returns real data from the table; the Block~5 stub
+is gone.
+You have run your first schema migration on a live database with Alembic
+and watched old rows coexist with new ones.
+The next chapter places Nginx and a browser frontend in front of the API
+so PixelWise becomes a website.
