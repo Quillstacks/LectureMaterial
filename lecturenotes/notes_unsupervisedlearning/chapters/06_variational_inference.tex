@@ -32,14 +32,14 @@ Bengio, Courville, and Vincent\cite{Bengio2013} argue that the
 quality of a representation determines the success of any downstream task, and that a good
 representation disentangles the factors that explain the data.
 
-\newthought{PCA gave us a first answer:} project onto the directions of maximum variance.
-But PCA is linear; it cannot recover structure that lies on a curved manifold.
+\newthought{PCA}\index{PCA} gave us a first answer: project onto the directions of maximum variance.
+But PCA is linear; it cannot recover structure that lies on a curved manifold\index{manifold}.
 What we lack is a parametric encoder
 that can be applied to new, unseen data or reused as a feature extractor on nonlinear feature spaces.
 
 \newthought{Autoencoders}\index{autoencoder} close that gap.
 Hinton and Salakhutdinov\cite{Hinton2006} showed that a neural network can learn a nonlinear,
-low-dimensional embedding $z$ from which a second network reconstructs $\hat{x}$,
+low-dimensional embedding\index{embedding} $z$ from which a second network reconstructs $\hat{x}$,
 outperforming PCA on complex data.
 The encoder $\theta_E\colon \mathbb{R}^d \to \mathbb{R}^k$ and the decoder
 $\theta_D\colon \mathbb{R}^k \to \mathbb{R}^d$ are trained jointly to minimise
@@ -257,7 +257,7 @@ that any decoder could interpret?
 % ---------------------------------------------------------------------------
 \newpage
 
-\section{The Autoencoder}\index{autoencoder}\index{reconstruction loss}
+\section{The Autoencoder}\index{autoencoder}\index{reconstruction error}
 
 Follows the notion of a bottleneck architecture: an encoder that compresses the input into a low-dimensional embedding, 
 and a decoder that reconstructs the input from that embedding. Due to the bottleneck, the encoder must learn to extract the most salient features of the input, 
@@ -310,7 +310,7 @@ for the decoder, and
 \end{align*}
 for the encoder. The gradient signal flows from the loss, through the decoder, through $z$, and into the encoder. Both networks are updated from the same single loss.
 
-\newthought{The parameter update} applies standard gradient descent (or a variant such as Adam):
+\newthought{The parameter update} applies standard gradient descent\index{gradient descent} (or a variant such as Adam):
 \begin{align*}
     \theta_E &\leftarrow \theta_E - \eta \, \frac{\partial \mathcal{L}}{\partial \theta_E} \\[4pt]
     \theta_D &\leftarrow \theta_D - \eta \, \frac{\partial \mathcal{L}}{\partial \theta_D}
@@ -353,7 +353,7 @@ Hinton and Salakhutdinov showed that a deep autoencoder with the same total capa
 one produces qualitatively better embeddings, because hierarchical composition is a more efficient way to represent the kind of structure found in real data.}
 
 
-\newthought{The trained encoder is a feature extractor, or dimensionality reducer.}
+\newthought{The trained encoder is a feature extractor, or dimensionality reducer\index{dimensionality reduction}.}
 Once training converges, the decoder can be discarded.
 The encoder alone maps any new input $x$ to an embedding $z$ that captures the factors of variation learned during training.
 This embedding can serve as input to a classifier, a clustering algorithm, or a retrieval system.
@@ -494,7 +494,7 @@ So the decoder sees a slightly different $z$ every time, even for the same input
     \label{fig:vae_architecture}
     \end{figure}
 
-\newthought{We enforce that by adding a loss} a KL divergence $\mathcal{L}_{\text{KL}}(q_{\theta_E}(z|x) \| p(z))$, computed for each input separately.
+\newthought{We enforce that by adding a loss} a KL divergence\index{KL divergence} $\mathcal{L}_{\text{KL}}(q_{\theta_E}(z|x) \| p(z))$, computed for each input separately.
 It measures how far that input's encoder distribution $\mathcal{N}(\mu, \sigma^2)$ is from the prior $p(z) = \mathcal{N}(0, I)$.
 The KL between two Gaussians penalises two things: a mean $\mu$ that is far from the origin, and a variance $\sigma^2$ that deviates from one.
 So for each input, the KL term pulls the mean toward zero and the variance toward unity.

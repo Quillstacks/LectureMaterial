@@ -1,6 +1,38 @@
 % !TEX root = ../notes_unsupervisedlearning.tex
 % Chapter 7: Uncertainty Estimation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% BACKLOG / IDEAS
+% ----------------------------------------------------------------------
+% TODO: Bayesian vs frequentist framing as a narrative anchor for this chapter.
+%   The Bayesian predictive distribution p(y|x, D) = \int p(y|x, w) p(w|D) dw
+%   is one of the reasons machine learning is so messy. Coming from physics,
+%   the Bayesian view feels natural: derive predictions by integrating over
+%   the entire parameter space, the way quantum particle behaviour is derived
+%   by integrating over many possible trajectories. Reference Bishop & Bishop
+%   (Christopher Bishop and his son), "Deep Learning: Foundations and Concepts"
+%   for the equation and treatment.
+%
+%   Why the Bayesian view is appealing:
+%     1) overfitting does not arise once we marginalise over parameters,
+%     2) instead of picking one model, we average over models weighted by their
+%        posterior, which naturally favours intermediate complexity,
+%     3) we get calibrated probabilities over outcomes, which is exactly the
+%        currency this chapter trades in.
+%
+%   Why it lost the last decade: the sums and integrals over all parameters
+%   are infeasible at billion-parameter scale. The equation is too good to be
+%   practical. Maximum likelihood, less principled but tractable, was
+%   bulldozed into mainstream by ever larger models and produced today's
+%   foundation models. Mirror to quantum physics: many parameters is also
+%   why we can hardly compute anything precisely there.
+%
+%   The pivot for this chapter: proper Bayesian approaches still win in
+%   low-data regimes and wherever calibrated uncertainty is required, and
+%   recent work brings the Bayesian playbook back for parts of modern AI
+%   systems. This motivates why uncertainty estimation deserves its own
+%   chapter rather than being absorbed into a generic loss-minimisation view.
+% ----------------------------------------------------------------------
 
 \chapter{Uncertainty Estimation}\index{Uncertainty Estimation}\index{epistemic uncertainty}\index{aleatoric uncertainty}\index{Anomaly Detection}\index{OOD Detection}
 \newthought{I know that I know nothing.}
