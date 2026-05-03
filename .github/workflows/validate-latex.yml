@@ -23,4 +23,4 @@ jobs:
             lecturenotes/notes_numerischemethoden/notes_numerischemethoden.tex
             lecturenotes/notes_philosophyofai/notes_philosophyofai.tex
           work_in_root_file_dir: true
-          args: -pdf -interaction=nonstopmode -halt-on-error
+          args: -pdf -interaction=nonstopmode -f

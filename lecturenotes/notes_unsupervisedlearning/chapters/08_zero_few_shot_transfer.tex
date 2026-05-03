@@ -122,31 +122,76 @@
 
 \section{The Why}
 
-\marginnote{\newthought{Train once, reuse forever.} Almost every modern vision and language system in production starts from someone else's pretrained encoder. The encoder is the expensive part, the task-specific head on top is cheap, and the choice of encoder determines almost everything that follows.}
 
-\newthought{In Chapter~6 we trained an encoder} that mapped inputs into a structured latent space, where nearby points were similar and the bottleneck distilled what mattered. The space was useful, but it belonged to one model trained for one task. By the same logic, every new task would mean training that encoder again, from scratch, on a freshly labelled dataset.
 
-\newthought{Real systems do not work this way.} Almost no production model is trained from scratch. They start from a backbone\index{backbone} someone else pretrained at scale, freeze or adapt it, and bolt a small task-specific head on top. The encoder is the asset, the head is a thin wrapper, and the same backbone is shared across many downstream tasks.
 
-\newthought{Labels are scarce.} Collecting labelled data is the bottleneck for most tasks. A medical-imaging team might labour for months to label five hundred chest X-rays, while a competitive vision encoder needs millions of labelled images to train from scratch. The two scales do not meet.
 
-\newthought{Domains splinter.} Every domain has its own vocabulary of inputs, satellite imagery, manufacturing defects, document layouts, X-ray modalities, and in principle each deserves its own encoder. In practice none of them can afford its own dataset, so the encoder has to come from somewhere else and adapt.
+\marginnote{\newthought{Machine Learning Engineer}}  
+\newthought{In the Chapter on Variational Auto Encoders we trained an Encoder}\index{VAE}\index{embedding} that mapped inputs into a
+structured latent space, where nearby points were similar and the bottleneck\index{bottleneck design}, our embedding, distilled what mattered.
+The space was useful, but it belonged to one model trained for one task.
+By the same logic, every new task would mean training that encoder again, from scratch, on a freshly and sufficiently labelled dataset.
 
-\newthought{Compute is enormous.} Pretraining a modern vision transformer or large language model costs hundreds of GPU-years. Few teams can afford this once, none can afford it per task, so the cost of pretraining must be amortised across tasks rather than paid each time.
 
-\newthought{Some classes have no examples at all.} Rare diseases, novel products, low-resource languages, things that have not yet happened, by definition cannot live in a labelled training set. A method that requires examples per class will never see them, and a system that depends on such a method will never serve them.
+\marginnote{\newthought{Deep Learning Engineer}} 
+\marginnote{\newthought{Train once, reuse forever.}\index{pretraining} Almost every modern vision and language system in
+production starts from someone else's pretrained encoder.
+The encoder is the expensive part, the task-specific head on top is cheap, and
+the choice of encoder determines almost everything that follows.}
+\newthought{Let's reuse or transfer embeddings.}\index{transfer learning}
+Almost no production model is trained from scratch.
+They start from a backbone\index{backbone} someone else pretrained\index{pretraining} at scale, freeze or adapt it,
+and bolt a small task-specific head\index{task-specific head} on top.
+The encoder is the asset, the head is a thin wrapper, for a narrow task or domain,
+and the same backbone is shared across many downstream tasks.
 
-\newthought{Reuse is the mechanism.} A backbone trained at scale on a broad task supplies features that work, often surprisingly well, for tasks it was never trained on. Push the scale far enough and the backbone becomes a foundation model\index{foundation model} that handles new tasks without any task-specific training at all, because its embeddings already cover the world that the new task lives in.
+\newthought{Training an encoder per task is not viable.}\index{representation learning} Labels are expensive to collect,
+domains splinter into modalities that each deserve their own representation, pretraining a competitive backbone costs hundreds of GPU years,
+and entire classes of inputs have no labelled examples to begin with. The encoder therefore has to come from somewhere else and
+the cost of obtaining it has to be amortised across many downstream tasks.
+
+\marginnote{\newthought{Scarce labels.} A medical imaging team may need months to label five hundred chest X-rays, while a competitive vision encoder is trained on millions.}
+
+\marginnote{\newthought{Splintered domains.} Satellite imagery, manufacturing defects, document layouts, and X-ray modalities each have their own vocabulary of inputs and in principle each deserves its own encoder.}
+
+\marginnote{\newthought{Enormous compute.}\index{Vision Transformer}\index{large language model} Pretraining a modern vision transformer or large language model costs hundreds of GPU years, which few teams can afford once and none can afford per task.}
+
+\marginnote{\newthought{No examples at all.} Rare diseases, novel products, and low resource languages cannot live in a labelled training set, so any method that requires examples per class will never see them.}
+
+\marginnote{\newthought{Artificial Intelligence Engineer.}} 
+\newthought{Reuse is the mechanism.}\index{transfer learning}\index{generalisation}
+A backbone trained at scale on a broad task supplies features that work,
+often surprisingly well, for tasks it was never trained on.
+Push the scale far enough and the backbone becomes a foundation model\index{foundation model}
+that handles new tasks without
+any task-specific training at all, because its embeddings already cover
+the world that the new task lives in. Once we found that the long tail of any one task already sits
+inside the backbones embedding~\cite{Radford2021CLIP}.
+
+\newthought{On Modalities.}\index{cross-modal alignment}\index{multimodal}
+Foundation models such as CLIP\index{CLIP}, GPT\index{GPT}, and SAM\index{SAM} push this idea to the extreme: A single representation, learned once on hundreds of millions of image-text pairs or tokens,
+ can be reused on classification, retrieval, or segmentation tasks it was never explicitly trained
+ for, with zero or only a handful of labelled examples.
+ Natural language is specifically applicable to task transfer as the input
+ itself is adaptable and directs the task. The same property that makes the input the task specification
+ is also the surface on which prompt injection\index{prompt injection}\index{adversarial inputs} attacks operate, since adversarial text inserted into the input can redirect the
+ model to a task its operator never intended~\cite{Greshake2023PromptInjection}.
+
 
 \newthought{In order to move from one-task-one-model} to many-tasks-one-backbone we have good reason to find ways to,
 \begin{itemize}
-    \item reuse features learned at scale for downstream tasks with little or no labelled data.
-    \item adapt pretrained representations efficiently, without paying full retraining cost.
-    \item bridge modalities so that text descriptions can serve as classifiers for visual inputs.
-    \item diagnose when transfer fails because source and target distributions are too far apart.
+    \item reuse features learned at scale for downstream tasks with little or no labelled data.\index{zero-shot learning}\index{few-shot learning}
+    \item adapt pretrained representations efficiently, without paying full retraining cost.\index{PEFT}\index{fine-tuning}
+    \item bridge modalities so that text descriptions can serve as classifiers for visual inputs.\index{cross-modal alignment}
+    \item diagnose when transfer fails because source and target distributions are too far apart.\index{negative transfer}\index{distribution shift}
 \end{itemize}
 
 \newthought{The fundamental question} this chapter answers is how a model trained on one corpus can serve a task it never saw, with little or no additional supervision, and how to pick the right adaptation strategy for the data and compute budget at hand.
+
+
+
+\newpage
+\iffalse
 
 \subsection{Hands On Experience}
 
@@ -236,6 +281,7 @@
 \end{itemize}
 
 
+\newpage
 
 
 %═══════════════════════════════════════════════════════════════════════
@@ -246,7 +292,6 @@
 % SECTION 1: Embeddings, Backbones, Foundation Models
 %───────────────────────────────────────────────────────────────────────
 
-\newpage
 \section{Embeddings, Backbones, Foundation Models}\index{embedding}\index{backbone}\index{foundation model}
 
 \marginnote{\newthought{The asset is the encoder.} Everything else, the data loader, the loss function, the optimisation schedule, exists to produce one thing: an encoder whose embeddings are worth reusing.}
@@ -682,9 +727,135 @@ There are no parameters to fit beyond the centroids themselves, and the centroid
 % >>>>>>>>>>>>>>>> SECTION 4 PLACEHOLDER START <<<<<<<<<<<<<<<<
 
 \newpage
-\section{CLIP and Cross-Modal Alignment [placeholder]}\index{CLIP}\index{cross-modal alignment}
+\section{CLIP and Cross-Modal Alignment}\index{CLIP}\index{cross-modal alignment}\index{contrastive learning}
 
-\marginnote{\newthought{Placeholder.} Section~4 will be drafted by a section-drafter subagent. Scope: contrastive image-text objective, diagonal-loss training figure, one worked zero-shot classification trace; CLIP siblings (SigLIP/ALIGN/BLIP) collapsed into ONE marginnote; multimodal LLMs/VLMs in a separate marginnote pointing at the LLM lecture series.}
+\marginnote{\newthought{The bridge is data, not ontology.} Section~3 ended with a learned text encoder standing in for Lampert's hand-built attribute table. CLIP is the model that proved the substitution works at scale, and this section spells out how.}
+
+\newthought{Section~3 left the bridge unspecified.} A zero-shot classifier needs a function that maps a class name to a vector in the same space as image embeddings, and the section argued, but did not show, that such a function can be learned from image-caption pairs. CLIP\cite{Radford2021CLIP} is the canonical realisation, four hundred million pairs scraped from the public web, two encoders trained jointly with a single contrastive objective, and a shared embedding space that supports zero-shot classification on hundreds of downstream benchmarks.
+
+\subsection{The Contrastive Image-Text Objective}\index{contrastive loss}
+
+\newthought{The setup is symmetric.} A batch of $N$ image-caption pairs $\{(x_i, t_i)\}_{i=1}^{N}$ is passed through two encoders, an image encoder $f_{\text{img}}$ and a text encoder $f_{\text{txt}}$. Each side produces a unit-norm embedding, and a similarity matrix $S \in \mathbb{R}^{N \times N}$ is assembled with entries
+\begin{align*}
+    S_{ij} &= \cos\bigl(f_{\text{img}}(x_i),\, f_{\text{txt}}(t_j)\bigr) / \tau,
+\end{align*}
+where $\tau$ is a learned temperature. The matched pairs sit on the diagonal $S_{ii}$, and the $N(N{-}1)$ mismatched pairs sit off-diagonal.
+
+\newthought{The training signal is a contrastive cross-entropy.} Treat each row of $S$ as the logits of a classifier whose correct answer is the diagonal entry, and each column likewise, and average the two:
+\begin{align*}
+    \mathcal{L}_{i \to t} &= -\tfrac{1}{N} \sum_{i=1}^{N} \log \frac{\exp(S_{ii})}{\sum_{j=1}^{N} \exp(S_{ij})}, \\
+    \mathcal{L}_{t \to i} &= -\tfrac{1}{N} \sum_{i=1}^{N} \log \frac{\exp(S_{ii})}{\sum_{j=1}^{N} \exp(S_{ji})}, \\
+    \mathcal{L}_{\text{CLIP}} &= \tfrac{1}{2}\bigl(\mathcal{L}_{i \to t} + \mathcal{L}_{t \to i}\bigr).
+\end{align*}
+The first row pulls each image towards its caption and away from every other caption in the batch; the second row does the symmetric job for captions; the average treats the two modalities as equally privileged.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
+    \draw[thick, rounded corners=2pt, fill=black!4] (0,0) rectangle (5.0, 5.0);
+    \foreach \i/\lab in {0/$t_1$, 1/$t_2$, 2/$t_3$, 3/$t_4$, 4/$t_5$} {
+        \node[font=\tiny] at ({0.5+\i*1.0}, 5.3) {\lab};
+    }
+    \foreach \i/\lab in {0/$x_1$, 1/$x_2$, 2/$x_3$, 3/$x_4$, 4/$x_5$} {
+        \node[font=\tiny] at (-0.35, {4.5-\i*1.0}) {\lab};
+    }
+    \foreach \i in {0,...,4} {
+        \draw[thick, rounded corners=1pt, fill=black!55, draw=black]
+            ({\i*1.0+0.05}, {4.0-\i*1.0+0.05}) rectangle ({\i*1.0+0.95}, {5.0-\i*1.0-0.05});
+    }
+    \foreach \i in {0,...,4} {
+        \foreach \j in {0,...,4} {
+            \ifnum\i=\j\else
+                \draw[thin, rounded corners=1pt, fill=black!10, draw=black!40]
+                    ({\j*1.0+0.05}, {4.0-\i*1.0+0.05}) rectangle ({\j*1.0+0.95}, {5.0-\i*1.0-0.05});
+            \fi
+        }
+    }
+    \draw[->, thick, >=latex] (5.4, 4.5) -- (5.4, 0.5);
+    \node[font=\tiny, anchor=west, rotate=-90] at (5.7, 2.5) {pull diagonal up};
+    \draw[->, thick, >=latex] (0.5, -0.4) -- (4.5, -0.4);
+    \node[font=\tiny, anchor=north] at (2.5, -0.5) {push off-diagonal down};
+    \node[anchor=south] at (2.5, 5.7) {batch similarity matrix $S$};
+\end{tikzpicture}
+\caption{CLIP training as a diagonal-fitting problem. A batch of $N$ image-caption pairs produces an $N{\times}N$ similarity matrix; the contrastive objective pushes the diagonal entries up and every off-diagonal entry down. The two encoders learn jointly, and the only supervision is which caption was scraped with which image.}
+\label{fig:clip_diagonal}
+\end{figure}
+
+\marginnote{\newthought{Why a batch, not pairs?} A naive loss on each $(x_i, t_i)$ alone has no negative signal; the model could collapse all embeddings to a single point and still match every pair. The other captions in the batch act as hard negatives, and the cost of contrastive training is that batch size becomes a hyperparameter that controls the difficulty of the negative set.}
+
+\newthought{The supervision is implicit.} No human ever wrote a label for the CLIP training set. The supervision comes from the co-occurrence of an image and a caption on the same web page, and the contrastive objective converts that co-occurrence into a gradient that aligns the two embedding spaces. The dataset is large because the web is large, and the labelling cost is zero because the labelling already happened, by accident, when someone uploaded the photo with a caption underneath it.
+
+\subsection{A Worked Zero-Shot Trace}\index{zero-shot classification}
+
+\newthought{Once trained, the encoders are used asymmetrically.} The image encoder consumes a target image; the text encoder consumes the class names wrapped in a prompt template. The two embeddings are compared, and the closest text wins. The procedure has no training loop, no labelled examples of the target classes, and no gradient anywhere.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=0.95, every node/.style={font=\small}]
+    \draw[thick, rounded corners=2pt, fill=black!10] (0,3.0) rectangle (1.4, 4.4);
+    \node[font=\tiny] at (0.7, 3.7) {photo of};
+    \node[font=\tiny] at (0.7, 3.4) {a panda};
+    \draw[thick, rounded corners=3pt, fill=black!20] (2.0, 3.0) rectangle (3.6, 4.4);
+    \node at (2.8, 3.7) {$f_{\text{img}}$};
+    \draw[thick, rounded corners=3pt, fill=black!55] (4.2, 3.4) rectangle (5.4, 4.0);
+    \node[font=\tiny, white] at (4.8, 3.7) {$e_x$};
+    \node[anchor=west, font=\tiny] at (-0.3, 1.4) {``a photo of a cat''};
+    \node[anchor=west, font=\tiny] at (-0.3, 0.9) {``a photo of a dog''};
+    \node[anchor=west, font=\tiny] at (-0.3, 0.4) {``a photo of a panda''};
+    \node[anchor=west, font=\tiny] at (-0.3, -0.1) {``a photo of a fox''};
+    \draw[thick, rounded corners=3pt, fill=black!20] (2.0, 0.0) rectangle (3.6, 1.6);
+    \node at (2.8, 0.8) {$f_{\text{txt}}$};
+    \draw[thick, rounded corners=3pt, fill=black!25] (4.2, 1.2) rectangle (5.4, 1.5);
+    \draw[thick, rounded corners=3pt, fill=black!25] (4.2, 0.8) rectangle (5.4, 1.1);
+    \draw[thick, rounded corners=3pt, fill=black!55] (4.2, 0.4) rectangle (5.4, 0.7);
+    \draw[thick, rounded corners=3pt, fill=black!25] (4.2, 0.0) rectangle (5.4, 0.3);
+    \draw[->, thick, >=latex] (5.5, 3.7) -- (6.2, 2.2);
+    \draw[->, thick, >=latex] (5.5, 0.6) -- (6.2, 2.2);
+    \draw[thick, rounded corners=3pt, fill=black!8] (6.3, 1.8) rectangle (7.9, 2.6);
+    \node[font=\tiny] at (7.1, 2.2) {$\arg\max_k \cos$};
+    \draw[->, thick, >=latex] (7.9, 2.2) -- (8.6, 2.2);
+    \node[anchor=west] at (8.6, 2.2) {panda};
+    \draw[thick, rounded corners=2pt] (-0.5, -0.3) rectangle (2.0, 1.7);
+    \node[font=\tiny, anchor=north] at (0.7, -0.4) {prompt template};
+\end{tikzpicture}
+\caption{Zero-shot classification with CLIP. The image is embedded once; each candidate class name is wrapped in a prompt template, embedded once by the text encoder, and the predicted class is the one whose text embedding is closest to the image embedding. No training has happened on the target classes.}
+\label{fig:clip_zero_shot_trace}
+\end{figure}
+
+\newthought{The procedure in code} fits in a few lines, and reading it concretely is more instructive than reading it abstractly.
+
+\begin{verbatim}
+import clip
+import torch
+
+model, preprocess = clip.load("ViT-B/32")
+image = preprocess(my_image).unsqueeze(0)
+classes = ["cat", "dog", "panda", "fox"]
+prompts = [f"a photo of a {c}" for c in classes]
+text   = clip.tokenize(prompts)
+
+with torch.no_grad():
+    e_x = model.encode_image(image)
+    e_t = model.encode_text(text)
+    e_x = e_x / e_x.norm(dim=-1, keepdim=True)
+    e_t = e_t / e_t.norm(dim=-1, keepdim=True)
+    sims = (100.0 * e_x @ e_t.T).softmax(dim=-1)
+
+print(classes[sims.argmax(dim=-1).item()])
+# panda
+\end{verbatim}
+
+\newthought{Notice that the heavy lifting is upstream.} The five lines that classify the photo are cheap, and they would be cheap on a phone. The expense lived in the four hundred million pretraining pairs and the cluster-weeks of contrastive training that built the encoders. Section~1 promised that backbones are infrastructure paid for once and used many times; the snippet above is what the payoff looks like in practice.
+
+\subsection{Why the Recipe Scales}
+
+\newthought{Three properties make CLIP-style training scale.} The supervision is free, because captions are scraped, not annotated. The objective is symmetric, because the same loss serves images and text, and the model has no preferred modality to over-fit to. The compute is parallel-friendly, because the contrastive loss reduces to a matrix multiplication and a softmax, both of which sit comfortably on modern accelerators. The combination produced the first vision encoder whose downstream zero-shot accuracy was competitive with supervised models trained on the same downstream task.
+
+\marginnote{\newthought{CLIP siblings.} ALIGN\cite{Jia2021ALIGN} pushed the same recipe to over a billion noisier pairs. SigLIP\cite{Zhai2023SigLIP} swapped the in-batch softmax for a per-pair sigmoid loss, removing the global-batch coupling and making large-batch training cheaper. BLIP\cite{Li2022BLIP} added a captioning head on top so the model could both align and generate. The objective varies, the architecture varies, the lesson does not: aligned cross-modal embeddings emerge whenever the supervision and the loss agree on what ``matched'' means.}
+
+\marginnote{\newthought{From CLIP to VLMs.} Multimodal large language models such as LLaVA\cite{Liu2023LLaVA} bolt a CLIP-style vision encoder onto a pretrained language model so that images can be referenced in natural-language conversation. The architecture, the alignment training, and the instruction-tuning recipe sit at the centre of the upcoming LLM lecture series; for this chapter the relevant point is that CLIP supplies the visual front end almost every modern VLM uses.}
+
+\newthought{The structural insight} is that contrastive image-text training is a way to harvest supervision that already exists. The web is a collection of weakly aligned modalities, and a loss that asks ``which caption goes with which image in this batch?'' converts the weak alignment into a strong embedding space. Section~5 takes that embedding space, plugs it into a retrieval index, and shows how foundation models start to compose with each other.
 
 \vspace{2.5em}
 
@@ -700,16 +871,112 @@ There are no parameters to fit beyond the centroids themselves, and the centroid
 % >>>>>>>>>>>>>>>> SECTION 5 PLACEHOLDER START <<<<<<<<<<<<<<<<
 
 \newpage
-\section{Composing Foundation Models [placeholder]}\index{retrieval-augmented generation}\index{composition}
+\section{Composing Foundation Models}\index{retrieval-augmented generation}\index{composition}\index{RAG}
 
-\marginnote{\newthought{Placeholder.} Section~5 will be drafted by a section-drafter subagent. Scope: RAG (retrieval-augmented generation) as the canonical composition centerpiece, an embedding backbone (callback to §1) plus a frozen generator; CLIP+SAM+LLM as a secondary multi-modal composition; ch14 VLA teaser marginnote. RAG is the use-payoff that closes the algorithmic arc.}
+\marginnote{\newthought{Adaptation by composition.} Sections~2 to 4 adapted a single model. Section~5 keeps every model frozen and adds a new model in front of it. Knowledge enters at inference time, not at training time, and the cost of updates collapses from hours of fine-tuning to seconds of indexing.}
+
+\newthought{Section~2 mapped a continuum} that started with full fine-tuning and ended with prompting, ordered by how much of the backbone moves during adaptation. There is one more position, further along the axis, where no backbone moves at all and the adaptation is supplied by a second backbone running alongside the first. Composing foundation models is the discipline of building useful systems out of pretrained pieces, none of them retrained, glued together at inference time. The canonical example is retrieval-augmented generation, and the rest of this section uses it to make the pattern concrete.
+
+\subsection{Retrieval-Augmented Generation}\index{retrieval-augmented generation}\index{RAG}
+
+\newthought{The problem RAG solves} is that a frozen language model knows what was in its training corpus and nothing else. Yesterday's news, the company wiki, the user's own notes, none of them were in the pretraining set, and fine-tuning the model every time those sources change is neither cheap nor reliable. RAG\cite{Lewis2020RAG} side-steps the problem by giving the model the relevant text at inference, retrieved from an external store on demand.
+
+\newthought{Two backbones cooperate.} An embedding backbone, the same kind of encoder Section~1 introduced, maps every document chunk in the corpus to a vector and stores it in an index. The same encoder maps each query to a vector, and a similarity search returns the top-$k$ nearest chunks. A frozen generator, typically a language model, then receives the original query concatenated with the retrieved chunks and produces an answer that is grounded in the retrieved text rather than hallucinated from parametric memory.
+
+\begin{align*}
+    \mathcal{C} &= \{c_1, \ldots, c_M\}, \quad e_i = f_{\text{enc}}(c_i), \\
+    \text{retrieve}(q) &= \mathrm{topk}\bigl( \cos(f_{\text{enc}}(q), e_i) \bigr), \\
+    \hat{a} &= g_{\text{gen}}\bigl( \text{prompt}(q,\, \text{retrieve}(q)) \bigr).
+\end{align*}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=0.95, every node/.style={font=\small}]
+    \draw[thick, rounded corners=3pt, fill=black!8] (-0.5, 4.0) rectangle (1.6, 5.0);
+    \node[font=\tiny] at (0.55, 4.5) {documents};
+    \draw[->, thick, >=latex] (1.6, 4.5) -- (2.3, 4.5);
+    \draw[thick, rounded corners=3pt, fill=black!20] (2.3, 4.0) rectangle (3.9, 5.0);
+    \node at (3.1, 4.5) {$f_{\text{enc}}$};
+    \draw[->, thick, >=latex] (3.9, 4.5) -- (4.6, 4.5);
+    \draw[thick, rounded corners=3pt, fill=black!10] (4.6, 4.0) rectangle (6.4, 5.0);
+    \node[font=\tiny] at (5.5, 4.5) {vector index};
+    \draw[thick, rounded corners=3pt, fill=black!8] (-0.5, 1.5) rectangle (1.6, 2.5);
+    \node[font=\tiny] at (0.55, 2.0) {query $q$};
+    \draw[->, thick, >=latex] (1.6, 2.0) -- (2.3, 2.0);
+    \draw[thick, rounded corners=3pt, fill=black!20] (2.3, 1.5) rectangle (3.9, 2.5);
+    \node at (3.1, 2.0) {$f_{\text{enc}}$};
+    \draw[->, thick, >=latex] (3.9, 2.0) -- (4.6, 2.0);
+    \draw[thick, rounded corners=3pt, fill=black!10] (4.6, 1.5) rectangle (6.4, 2.5);
+    \node[font=\tiny] at (5.5, 2.0) {top-$k$ retrieve};
+    \draw[->, thick, >=latex] (5.5, 4.0) -- (5.5, 2.5);
+    \draw[->, thick, >=latex] (6.4, 2.0) -- (7.1, 2.0);
+    \draw[thick, rounded corners=3pt, fill=black!25] (7.1, 1.5) rectangle (9.0, 2.5);
+    \node[font=\tiny] at (8.05, 2.2) {prompt: $q$ +};
+    \node[font=\tiny] at (8.05, 1.8) {retrieved chunks};
+    \draw[->, thick, >=latex] (9.0, 2.0) -- (9.7, 2.0);
+    \draw[thick, rounded corners=3pt, fill=black!55] (9.7, 1.5) rectangle (11.3, 2.5);
+    \node[white] at (10.5, 2.0) {$g_{\text{gen}}$};
+    \draw[->, thick, >=latex] (11.3, 2.0) -- (12.0, 2.0);
+    \node[anchor=west] at (12.0, 2.0) {answer};
+    \node[font=\tiny, anchor=north] at (3.1, 1.4) {frozen};
+    \node[font=\tiny, anchor=north] at (3.1, 3.9) {frozen};
+    \node[font=\tiny, anchor=north] at (10.5, 1.4) {frozen};
+    \node[font=\tiny, anchor=north] at (5.5, 1.4) {indexed once};
+\end{tikzpicture}
+\caption{Retrieval-augmented generation. An embedding backbone (top) indexes every document once; the same encoder (bottom) maps each query into the same space; the top-$k$ chunks are retrieved and prepended to the query for a frozen generator. No backbone is trained; knowledge is added by indexing, not by gradient descent.}
+\label{fig:rag}
+\end{figure}
+
+\marginnote{\newthought{The encoder is the same trick as Section~1.} The retrieval encoder is just a backbone, used here for similarity search instead of classification. Dense passage retrieval\cite{Karpukhin2020DPR} is the workhorse, and the embedding spaces it produces follow the same geometry-as-meaning logic as every other backbone in this chapter.}
+
+\newthought{Knowledge has moved from training time to inference time.} A new document does not require a new gradient update, only a new embedding and a new entry in the index. Outdated facts are removed by deleting their chunks. Per-user knowledge is supported by per-user indices. The generator is the same generator everyone else is using, the encoder is the same encoder, and the only thing that differs across users, tasks, and time is the document set behind the index.
+
+\newthought{The picture closes the algorithmic arc} of this chapter. Section~1 built the encoder. Section~2 mapped how to update it. Sections~3 and 4 used it without updating it, by leaning on its embedding space alone. Section~5 takes that embedding space and turns it into the retrieval surface of a system whose other backbone is doing language modelling. The same encoder that classifies images by similarity to text prompts also retrieves passages by similarity to a question, because the property the encoder has, that nearby points are related, is the only property either application needs.
+
+\subsection{Multi-Foundation Pipelines}\index{composition}
+
+\marginnote{\newthought{One pipeline, three backbones.} The composition pattern generalises beyond text. Each backbone is the dominant foundation model in its own modality, and the glue is the standard one: take the output of one model, hand it to the next, never train any of them.}
+
+\newthought{Composition is not unique to text.} A common visual pipeline runs CLIP for understanding what is in an image, SAM\cite{Kirillov2023SAM} for cutting the relevant object out, and a language model for describing or reasoning about the result. None of the three was trained for the joint task. CLIP supplies a class-or-caption embedding that selects the relevant region; SAM consumes a point or a box and returns a high-quality mask; the language model takes the mask, the original image, and the user's question and produces an answer. The pipeline is wired together by the embeddings the models produce, not by any joint training run.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=0.95, every node/.style={font=\small}]
+    \draw[thick, rounded corners=3pt, fill=black!8] (0, 0.4) rectangle (1.6, 1.6);
+    \node[font=\tiny] at (0.8, 1.0) {image $+$};
+    \node[font=\tiny] at (0.8, 0.7) {question};
+    \draw[->, thick, >=latex] (1.6, 1.0) -- (2.3, 1.0);
+    \draw[thick, rounded corners=3pt, fill=black!25] (2.3, 0.4) rectangle (3.9, 1.6);
+    \node at (3.1, 1.0) {CLIP};
+    \draw[->, thick, >=latex] (3.9, 1.0) -- (4.6, 1.0);
+    \draw[thick, rounded corners=3pt, fill=black!25] (4.6, 0.4) rectangle (6.2, 1.6);
+    \node at (5.4, 1.0) {SAM};
+    \draw[->, thick, >=latex] (6.2, 1.0) -- (6.9, 1.0);
+    \draw[thick, rounded corners=3pt, fill=black!55] (6.9, 0.4) rectangle (8.5, 1.6);
+    \node[white] at (7.7, 1.0) {LLM};
+    \draw[->, thick, >=latex] (8.5, 1.0) -- (9.2, 1.0);
+    \node[anchor=west] at (9.2, 1.0) {answer};
+    \node[font=\tiny, anchor=north] at (3.1, 0.3) {region};
+    \node[font=\tiny, anchor=north] at (5.4, 0.3) {mask};
+    \node[font=\tiny, anchor=north] at (7.7, 0.3) {reasoning};
+\end{tikzpicture}
+\caption{A multi-foundation pipeline that none of the participants was trained for. CLIP localises the relevant region from the question, SAM segments it cleanly, and a language model reasons over the segmented content. The composition is performed by the engineer, not by gradient descent.}
+\label{fig:multi_foundation}
+\end{figure}
+
+\newthought{The composition pattern reframes adaptation.} Instead of asking ``how do I move this model towards my task?'', the engineer asks ``which models, in what order, with what glue, already cover my task?''. The transfer continuum of Section~2 still applies inside each component, but the system-level work has shifted to selection and orchestration. Adaptation has become a matter of plumbing.
+
+\subsection{Composition as the Default Strategy}
+
+\newthought{The use-payoff that closes this chapter} is the realisation that almost every modern AI product, from a coding assistant that retrieves the user's repository to a search engine that grounds its answers in cited sources to a robot that reads a manual before acting, is a composition of frozen foundation models. The expensive backbones are someone else's; the differentiating work is the choice of which backbones, the index that feeds them, and the prompt that wires them together. Section~1 promised that backbones become infrastructure; this section is what it looks like once that promise is taken seriously.
+
+\marginnote{\newthought{Teaser.} If a frozen language model can act on retrieved text, what stops it from acting on the world?}
+
+\newthought{The composition arc continues into chapter~14}, where vision-language-action models add a third modality, motor control, to the same alignment-and-composition recipe this chapter has built. The pieces remain the same: an encoder per modality, a shared embedding space, and a downstream model that consumes the result without ever having been trained on the precise task at hand. The chapter on world models and VLA agents picks up the thread from there.
 
 \vspace{2.5em}
 
 % >>>>>>>>>>>>>>>> SECTION 5 PLACEHOLDER END <<<<<<<<<<<<<<<<
-
-
-\iffalse
 
 %═══════════════════════════════════════════════════════════════════════
 % LEGACY DRAFT BELOW (will be deleted in cleanup pass after §3-§6 land;
@@ -985,42 +1252,52 @@ Your model trained on ImageNet performs poorly on medical X-rays.
 \end{enumerate}
 
 \fi
-\section{Self-Reflection and Recap}
 
-\newthought{Self-Reflection.}
+\newthought{Self-Reflection} questions to guide your thinking:
 
-\begin{enumerate}
-    \item Why does CLIP generalise to unseen categories?
-    \item When does fine-tuning outperform zero-shot, and when is the reverse true?
-    \item How does prompt ensembling reduce the sensitivity to a single prompt choice?
-    \item What makes CoOp's learned prompts more effective than hand-crafted ones?
-    \item When would you prefer a linear probe over full fine-tuning for few-shot tasks?
-    \item How does adversarial domain adaptation differ from simply fine-tuning on target data?
-    \item What risks arise when composing multiple foundation models in a pipeline?
-\end{enumerate}
+\begin{itemize}
+    \item Why does one shot or few shot learning on top of a frozen backbone work, when training the same network from scratch on the same handful of examples does not?
+    \item What role do class centroids play as anchor points in the embedding, and why does averaging many embeddings into one prototype still represent the class faithfully?
+    \item In Lampert zero shot, the bridge from attributes to centroids is fitted only on the seen classes, yet it locates unseen classes correctly. What does the bridge actually learn that lets it generalise, and what role does source breadth play in making that work?
+    \item Why does the Lampert bridge stall when two source classes share an identical attribute row, and what does that aliasing tell you about where the ceiling on attribute based zero shot lives?
+    \item What changes when the hand built bridge is replaced by a contrastively trained text encoder, and why is the resulting structure of two encoders meeting in a shared space the same shape as Lampert?
+    \item Why does cosine similarity work cleanly as the decision rule in both Lampert and CLIP, and what does it imply about how the two sides of the comparison have to be normalised?
+    \item Why does composing pretrained pieces at inference time, a frozen backbone with a learned bridge and a retrieval or clustering step, produce useful behaviour on tasks that none of the pieces was specifically trained for?
+    \item The CLIP contrastive loss encourages the diagonal of the image caption similarity matrix to dominate each row and each column. Why does that single objective produce both the alignment of matched pairs and the separation of unmatched ones at the same time, without a separate negative term?
+    \item Why is the classification head discarded the moment you transfer to a new task, and what does the act of throwing it away tell you about where the value of pretraining actually accumulates inside the network?
+    \item Why does the choice between freezing the backbone and fine tuning it end up depending on both how much labelled target data is available and how far the target distribution sits from the source, rather than being a fixed best practice?
+\end{itemize}
 
 \vspace{1.5em}
 
-\newthought{Recap.}
+\newthought{Recap} of Key Concepts:
 
 \begin{itemize}
-    \item Transfer learning reuses pre-trained features; early layers transfer well, but late layers require adaptation, and large domain gaps risk negative transfer.
-    \item Zero-shot classification via CLIP matches image embeddings to text prompt embeddings; prompt design and ensembling are critical for accuracy.
-    \item Few-shot strategies range from linear probing to full fine-tuning; the right choice depends on how much labelled data is available and how far the target domain is from the source.
-    \item Domain adaptation techniques learn features that are informative for the task but invariant to the domain, mitigating covariate shift.
-    \item Foundation models such as CLIP, SAM, and DINO serve as composable building blocks for tasks they were never explicitly trained on.
+    \item A backbone is a pretrained encoder reused across tasks while the head supplies only the decision, so pretraining cost is amortised across many downstream uses rather than paid each time.
+    \item Linear probes succeed at one and few shot because the frozen embedding has already separated the classes, so the probe only has to pick a side of a hyperplane that the backbone effectively pre-drew.
+    \item Class centroids act as anchor points in the embedding: averaging the embeddings of a class gives a single prototype, and classification reduces to nearest centroid under cosine similarity once both sides are unit normalised.
+    \item Zero shot means reaching unseen classes through a bridge between class semantics and image features, hand built and fitted by least squares in Lampert, learned contrastively from natural language pairs in CLIP; the bridge structure of two encoders meeting in a shared space is the same in both, only the fitting criterion changes.
+    \item Foundation models are backbones whose scale and breadth push the embedding to cover downstream input distributions, so composition of frozen pieces at inference time can replace task specific training, and transfer only fails when source and target distributions diverge beyond what the embedding describes.
 \end{itemize}
 
 \vspace{2.5em}
 
-\marginnote{\newthought{Root cause.} Every method in this chapter assumes the backbone already exists. Pretraining is treated as someone else's problem; the next chapter shows whose problem it is and how it gets solved without labels.}
 
-\newthought{The backbone arrives ready-made.} Throughout this chapter we have taken pretrained encoders as given and asked how to reuse them. ImageNet supervised pretraining works for natural images because someone else once labelled fourteen million examples, but no second ImageNet is being built for every new domain. Foundation models such as CLIP escape this bottleneck not by labelling more, but by extracting supervision from data that was already there, in the form of image-caption pairs scraped from the web. The supervision was hiding in plain sight.
+\newthought{The backbone arrives ready-made.} Throughout this chapter we have
+taken pretrained encoders as given and asked how to reuse them.
+ImageNet\index{ImageNet} supervised pretraining\index{pretraining} works for natural images because someone
+else once labelled fourteen million examples, but no second ImageNet is being
+built for every new domain. Foundation models need to find a source of supervision that hides
+in plain sight.
 
-\newthought{Self-supervised learning} generalises this idea. Instead of asking humans for labels, the model is given a task that can be solved using only the structure of the data itself: predict the masked patch from the surrounding patches, pull augmented views of the same image close together, predict the next token from the previous ones. The labels come from the data, and the representations that emerge are the very backbones this chapter has taught us to reuse.
+\newthought{Self-supervised learning}\index{self-supervised learning} generalises this idea.
+Instead of asking humans for labels, the model is given a task 
+that can be solved using only the structure of the data itself: 
+predict an image from itself, predict the next token from the previous ones. 
+The labels come from the data, and the representations that emerge are the very backbones 
+this chapter has taught us to reuse.
 
-\marginnote{\newthought{Teaser.} If we already have the data, where in the data do the labels hide?}
+\marginnote{\newthought{Teaser.} Where in the data does implicit labels, cues and supervision hide?}
 
-\newthought{The next chapter explores} how data structure becomes its own supervision signal, walking through the contrastive and predictive families of self-supervised objectives that produced the foundation models we have just learned to reuse.
 
 \marginnote{\newthought{feedback}}

@@ -1,51 +1,204 @@
 % !TEX root = ../notes_missingsemester.tex
-% Block 5: The Backend — APIs & Services
+% Chapter 5: The Backend — APIs & Services
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\index{API}\index{FastAPI}\index{HTTP}\index{REST}\index{systemd}
+% POST IMPROVEMENTS 2026:
+% 1. Add a TikZ figure of the request flow from curl to systemd.
+% 2. Provide a pre-baked v0.3 reference repo so catch-up takes a single clone.
+
+\index{API}\index{FastAPI}\index{HTTP}\index{REST}\index{systemd}\index{Pydantic}\index{uvicorn}
 \chapter{The Backend: APIs \& Services}
 \newthought{Making your code speak to the world over HTTP.}
 
-% ==============================================================================
-% SESSION A: THEORY
-% ==============================================================================
+% ==============================================================================================
+% BLOCK 1: INTRODUCTION
+% ==============================================================================================
 
-\section{From Script to Service}
+\section{The Why}\index{HTTP}\index{API}
 
-\newthought{\texttt{predict.py} works,} but only on your terminal. To let others use the model, you need
-a service: a program that runs continuously, listens for requests over the network, and returns responses.
-The protocol is HTTP. The architectural style is REST. The framework is FastAPI.
+Block~4 left us with \texttt{app/classifier.py}, a function that turns
+a 28-by-28 array of pixels into a prediction dictionary.
+The function works.
+\texttt{predict.py} proves it on real MNIST samples.
+What it cannot do is be reached from anywhere except the same Python
+process that imported it.
+A frontend in a browser, a teammate on another machine, an automated
+test runner, none of them can call \texttt{classify\_batch} as it stands.
 
-\section{HTTP Fundamentals}\index{HTTP}
+\marginnote{\newthought{PixelWise} now has a working classifier behind a
+Python function.
+A function call is the wrong interface for everything that is not Python
+running on the same machine.
+This block moves the function behind an HTTP endpoint so any client that
+can speak HTTP can reach it.}
 
-\newthought{Every web interaction is an HTTP request-response cycle.} The client sends a request; the server
-sends a response.
+\newthought{Across ten lecture blocks we build PixelWise}\index{PixelWise}.
+This block is the first that exposes the application to the outside world.
+Every client that follows, the browser frontend in Block~7, the CI runner
+in Block~8, the monitoring \texttt{curl} in Block~9, talks to the service
+through the contract you design here.
 
-\begin{description}
-    \item[Methods]\index{HTTP!methods} \texttt{GET} (retrieve), \texttt{POST} (create/submit), \texttt{PUT} (replace),
-    \texttt{DELETE} (remove). PixelWise uses \texttt{GET} for reading results and \texttt{POST} for submitting drawings.
-    \item[Status codes]\index{HTTP!status codes} \texttt{200} (OK), \texttt{201} (Created), \texttt{400} (Bad Request),
-    \texttt{401} (Unauthorized), \texttt{404} (Not Found), \texttt{422} (Unprocessable Entity), \texttt{429} (Too Many Requests),
-    \texttt{500} (Internal Server Error).
-    \item[Headers] Metadata: \texttt{Content-Type}, \texttt{Authorization}, \texttt{X-API-Key}.
-    \item[Body] The payload—usually JSON for APIs.
-\end{description}
+\newthought{HTTP is the protocol} that every browser, every CLI tool,
+and every web service in this course speaks.
+A client opens a TCP connection, sends a text-shaped request, and reads a
+text-shaped response back.
+The request says which method, which path, which headers, and which body;
+the response says which status, which headers, and which body.
+That is the entire protocol surface most applications need.
 
-\section{REST Principles}\index{REST}
+\marginnote{\newthought{REST}\index{REST} is the architectural style that
+maps the HTTP verbs onto application resources.
+Each resource has a stable URL; each verb has a clear meaning.
+We use REST because it is the convention every frontend, every tool, and
+every framework in this stack expects, not because it is the only valid
+choice.}
 
-\newthought{REST (Representational State Transfer)} is a set of conventions for designing APIs:
+\newthought{A service} is what \texttt{predict.py} becomes when you wrap
+it in HTTP and run it under a supervisor.
+\texttt{uvicorn}\index{uvicorn} is the HTTP server that hosts the FastAPI
+application; \texttt{systemd}\index{systemd} is the supervisor that
+keeps \texttt{uvicorn} running, restarts it when it crashes, and captures
+its logs.
+Together they turn a Python script into something that survives a reboot,
+a crash, or a closed terminal window.
 
-\begin{description}
-    \item[Resources] Everything is a resource with a URL: \texttt{/classify}, \texttt{/results}, \texttt{/health}.
-    \item[Stateless] Each request contains everything the server needs. No session state between requests.
-    \item[Uniform interface] Consistent URL patterns, standard HTTP methods, JSON responses.
-\end{description}
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\footnotesize, align=center},
+    box/.style={rectangle, draw=black, thick, rounded corners=2pt, minimum width=2.0cm, minimum height=0.9cm, inner sep=4pt},
+    arr/.style={-latex, thick, black!70}
+]
+\node[box] (cli) at (0, 0)   {browser /\\\texttt{curl}};
+\node[box] (uv)  at (3.0, 0) {\texttt{uvicorn}\\:8000};
+\node[box] (fa)  at (5.8, 0) {FastAPI\\\texttt{/classify}};
+\node[box] (cf)  at (8.6, 0) {\texttt{classify\_}\\\texttt{batch}};
+\draw[arr] (cli.east) -- node[above]{\scriptsize HTTP} (uv.west);
+\draw[arr] (uv.east)  -- (fa.west);
+\draw[arr] (fa.east)  -- (cf.west);
+\draw[black!60, thick, dashed, rounded corners=3pt]
+    (1.95, -0.85) rectangle (9.65, 0.85);
+\node[font=\scriptsize, anchor=north] at (5.8, -0.95)
+    {\texttt{systemd} unit \texttt{pixelwise.service}};
+\end{tikzpicture}
+\caption{Request flow for a single classification. The client sends an HTTP request to \texttt{uvicorn}; FastAPI dispatches it to the \texttt{/classify} handler, which calls \texttt{classify\_batch} from Block~4. The whole stack runs under a \texttt{systemd} unit that restarts it if it crashes.}
+\label{fig:api_flow}
+\end{figure}
 
-\section{API Contracts and Pydantic}\index{Pydantic}\index{API contract}
+\subsection{Hands On Experience}
 
-\newthought{An API contract defines} what the client sends and what the server returns—precisely.
-FastAPI uses Pydantic models to make contracts executable: the server validates every request against
-the model and rejects anything that does not match.
+\newthought{Consider this scenario:} a teammate cloned PixelWise yesterday
+and got the smoke test working.
+This morning they want to call your classifier from a small JavaScript
+demo in their browser.
+The browser cannot \texttt{import} a Python function.
+Your teammate cannot SSH into your machine.
+Without an HTTP layer, the work you did in Block~4 is unreachable to
+anyone who is not sitting at your laptop.
+
+\marginnote{\newthought{The script-to-service jump.}\index{service}
+A script runs once, prints, exits.
+A service runs continuously, accepts requests, returns responses, survives
+crashes.
+The work in this block is what turns the first into the second; the
+classifier itself does not change.}
+
+\newthought{The contract becomes the product.}
+Once the service is running, the request and response shapes are what
+every other component in the system depends on.
+Change them silently and the frontend breaks; document them clearly and
+new clients can integrate without ever reading your Python.
+Pydantic\index{Pydantic} is the tool that lets us write the contract in
+the same place as the code that enforces it.
+
+\marginnote{\newthought{Why \texttt{systemd}?}\index{systemd}
+Running \texttt{uvicorn} in a terminal works until you close the terminal.
+Running it under \texttt{systemd} survives reboots, restarts on crash,
+and writes its output to a structured log you can query later.
+The classroom requirement and the production requirement are the same.}
+
+\newthought{This fifth block} introduces the backend service layer for PixelWise.
+By the end you will have
+\begin{itemize}
+    \item understood HTTP and REST well enough to design and probe an endpoint,
+    \item written request and response contracts as Pydantic models,
+    \item wrapped \texttt{classify\_batch} in a FastAPI application,
+    \item added API key authentication and basic rate limiting,
+    \item run the service under \texttt{systemd}, observed crashes, and read its logs with \texttt{journalctl}.
+\end{itemize}
+
+
+
+% ==============================================================================================
+% BLOCK 2: MAIN THEORY
+% ==============================================================================================
+
+\newpage
+\section{HTTP and REST}\index{HTTP}\index{REST}
+
+\newthought{Every web interaction is a request and a response.}
+The client sends a request that names a method, a path, and an optional
+body; the server sends back a status code, headers, and an optional body.
+The protocol carries no state of its own: each request is interpretable on
+its own, without knowledge of any previous request from the same client.
+
+\marginnote{\newthought{Methods you will use.}\index{HTTP!methods}
+\texttt{GET} retrieves; \texttt{POST} submits; \texttt{PUT} replaces;
+\texttt{DELETE} removes.
+PixelWise uses \texttt{POST} for \texttt{/classify} (the client submits a
+drawing) and \texttt{GET} for \texttt{/results} and \texttt{/health} (the
+client reads state).}
+
+\newthought{Status codes} are three-digit numbers grouped by leading digit.
+\texttt{2xx} means success, \texttt{4xx} means the client made a mistake,
+\texttt{5xx} means the server made a mistake.
+The codes you see most: \texttt{200} OK, \texttt{201} Created,
+\texttt{400} Bad Request, \texttt{401} Unauthorized, \texttt{404} Not Found,
+\texttt{422} Unprocessable Entity, \texttt{429} Too Many Requests,
+\texttt{500} Internal Server Error.
+
+\marginnote{\newthought{Stateless}\index{stateless} is the load-bearing
+property of HTTP.
+The server keeps no per-client memory between requests; everything the
+server needs to act is in the current request, including any authentication
+token.
+This is what lets you scale from one server to many: any worker can handle
+any request.}
+
+\newthought{REST principles} layer convention on top of the protocol.
+Every distinct thing the API exposes is a resource with a stable URL:
+\texttt{/classify}, \texttt{/results}, \texttt{/health}.
+Methods do what their names suggest.
+Responses are JSON.
+Two clients written by two teams, six months apart, agree on what the API
+does without ever speaking, because the conventions remove ambiguity.
+
+\marginnote{HTTP status codes reference: \\
+\url{https://developer.mozilla.org/en-US/docs/Web/HTTP/Status}\\
+REST overview: \\
+\url{https://restfulapi.net/}}
+
+\newthought{The interactive definition of an API} is the documentation that
+ships with the running service.
+FastAPI generates this automatically from your code, at \texttt{/docs}, and
+exposing it changes the social contract: a teammate does not need to read
+your source to integrate.
+Block~3's \texttt{DEBUG=true} flag controls whether \texttt{/docs} is exposed,
+so the same service is self-documenting in development and silent in
+production.
+
+
+
+% ==============================================================================================
+\newpage
+\section{API Contracts with Pydantic}\index{Pydantic}\index{API contract}
+
+\newthought{An API contract defines} what the client sends and what the
+server returns, precisely enough that a misunderstanding becomes an error
+rather than a silent bug.
+FastAPI uses Pydantic\index{Pydantic} models to make contracts executable:
+the server validates every request against the model and rejects anything
+that does not match.
 
 \newthought{The request and response models} for \texttt{POST /classify}:
 
@@ -53,7 +206,7 @@ the model and rejects anything that does not match.
 from pydantic import BaseModel
 
 class ClassifyRequest(BaseModel):
-    pixels: list[list[int]]  # 28x28, values 0-255
+    pixels: list[list[int]]   # 28x28, values 0-255
 
 class ClassifyResponse(BaseModel):
     prediction: str           # element of CLASSES
@@ -61,28 +214,69 @@ class ClassifyResponse(BaseModel):
     scores: dict[str, float]  # probability per class
 \end{verbatim}
 
-\marginnote{The response model makes the contract bidirectional: the Block~7 frontend knows exactly what
-JSON to expect. Pydantic\index{Pydantic} validates types, shapes, and constraints at the boundary—malformed
-input is rejected before it reaches your code.}
+\marginnote{\newthought{Bidirectional contract.}
+The response model documents what the client receives, with the same
+precision as the request model documents what the client sends.
+The Block~7 frontend consumes \texttt{ClassifyResponse}; it knows the keys,
+the types, and the shape of \texttt{scores} before any HTTP request leaves
+the browser.
+Pydantic: \url{https://docs.pydantic.dev/}}
 
-\newthought{Input validation} is the first line of defence:
-\begin{itemize}
-    \item What happens if the input is not 28$\times$28? (e.g., 27$\times$27, 28$\times$29, or a flat list)
-    \item How to define error responses (HTTP 422 Unprocessable Entity):
-\end{itemize}
+\newthought{Input validation is the first line of defence.}\index{input validation}
+What happens if the client sends a flat list instead of a 28-by-28 grid?
+A list whose inner length is 27?
+Negative integers?
+A field that is not even named \texttt{pixels}?
+Without a contract, every one of these reaches your code as untyped Python
+and has to be checked manually.
+With Pydantic, every one of them is rejected at the boundary with a
+structured error:
 
 \begin{verbatim}
 {
-  "detail": "Input must be a 28x28 array of integers (0-255)"
+  "detail": [
+    {"loc": ["body", "pixels"],
+     "msg": "value is not a valid list",
+     "type": "type_error.list"}
+  ]
 }
 \end{verbatim}
 
-\section{FastAPI}\index{FastAPI}
+\marginnote{\newthought{HTTP 422} Unprocessable Entity is the standard
+response for a request that parses as JSON but fails schema validation.
+The client knows the request was structurally wrong; the server knows it
+never reached the handler.
+\texttt{500} would be a server bug; \texttt{422} is a client error caught
+at the boundary.}
 
-\newthought{FastAPI is a modern Python web framework}\marginnote{FastAPI\index{FastAPI}:
-\url{https://fastapi.tiangolo.com/}\\
-Pydantic\index{Pydantic}: \url{https://docs.pydantic.dev/}\\
-uvicorn\index{uvicorn}: \url{https://www.uvicorn.org/}} that generates interactive API documentation automatically.
+\newthought{The contract is the documentation.}
+\texttt{/docs} reads the Pydantic models and renders them as an interactive
+OpenAPI page where any visitor can issue a request and see the response.
+There is no second source of truth that drifts out of sync; if the model
+changes, the documentation changes with it.
+
+
+
+% ==============================================================================================
+\newpage
+\section{FastAPI in Practice}\index{FastAPI}\index{path operation}
+
+\newthought{FastAPI is a modern Python web framework} built on top of
+Pydantic and the ASGI standard.
+It generates interactive API documentation automatically, validates inputs
+and outputs against the models you declared, and runs on \texttt{uvicorn}, an
+asynchronous HTTP server fast enough that your bottleneck will be the model,
+not the framework.
+
+\marginnote{FastAPI: \url{https://fastapi.tiangolo.com/}\\
+Pydantic: \url{https://docs.pydantic.dev/}\\
+uvicorn: \url{https://www.uvicorn.org/}\\
+ASGI: \url{https://asgi.readthedocs.io/}}
+
+\newthought{A path operation} is a function decorated with an HTTP method
+and a URL path.
+The decorator binds the function to the route; the type hints on its
+parameters become the validation contract.
 
 \begin{verbatim}
 from fastapi import FastAPI
@@ -93,39 +287,86 @@ app = FastAPI()
 def health():
     return {"status": "ok", "model_version": "v1"}
 
-@app.post("/classify", response_model=ClassifyResponse)
-def classify(request: ClassifyRequest):
-    # validate, call classifier, return result
-    ...
+@app.post("/classify",
+          response_model=ClassifyResponse)
+def classify(req: ClassifyRequest):
+    arr = np.array(req.pixels,
+                   dtype=np.uint8)[np.newaxis]
+    return classify_batch(arr)[0]
 \end{verbatim}
 
-\marginnote{FastAPI's \texttt{/docs}\index{FastAPI!/docs} endpoint generates interactive OpenAPI documentation
-automatically from your Pydantic models. It is a living contract—always in sync with the actual code.}
+\marginnote{\newthought{The decorator is the contract.}
+\texttt{@app.post("/classify", response\_model=...)} tells FastAPI which
+method and path the function serves, and which model the response must
+conform to.
+A return value that does not match \texttt{ClassifyResponse} is rejected by
+the framework, not by a future bug report.}
 
-\section{Testing with \texttt{curl}}\index{curl}
-
-\newthought{\texttt{curl} is a command-line HTTP client}\marginnote{curl\index{curl}:
-\url{https://curl.se/}\\
-HTTP status codes reference: \url{https://developer.mozilla.org/en-US/docs/Web/HTTP/Status}}—your first-class debugging tool for APIs:
+\newthought{\texttt{curl} is your first-class debugging tool.}\index{curl}
+A handler that works from \texttt{/docs} but fails from \texttt{curl} is
+nearly always a missing header.
+A handler that fails from both is a code bug.
+Reach for \texttt{curl} the moment something is unclear:
 
 \begin{verbatim}
-# Health check
 curl http://localhost:8000/health
-
-# Classify a digit (28x28 pixel array as JSON)
 curl -X POST http://localhost:8000/classify \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-secret-key" \
   -d '{"pixels": [[0,0,...], [0,255,...], ...]}'
 \end{verbatim}
 
-\section{Rate Limiting}\index{rate limiting}\index{slowapi}
+\marginnote{curl: \url{https://curl.se/}\\
+\texttt{-X} sets the HTTP method.\\
+\texttt{-H} sets a header.\\
+\texttt{-d} sets the request body.\\
+\texttt{-i} prints the response headers alongside the body, useful when a
+status code surprises you.}
 
-\newthought{Why rate limiting matters even in development:} 30 students hitting the same endpoint
-simultaneously will surface it on day one. Rate limiting prevents abuse and protects the server from
-being overwhelmed.
+\newthought{Three endpoints} cover the surface this block exposes:
+\texttt{POST /classify} performs inference, \texttt{GET /results} is a stub
+that Block~6 fills in once persistence exists, and \texttt{GET /health}
+reports liveness so a monitor can tell whether the service is up.
 
-\marginnote{slowapi\index{slowapi}: \url{https://github.com/laurentS/slowapi}}
+
+
+% ==============================================================================================
+\newpage
+\section{Authentication and Rate Limiting}\index{authentication}\index{rate limiting}
+
+\newthought{Even a classroom service needs both.}
+30 students hitting the same endpoint in the same minute is enough load
+to surface a rate-limit problem on the first day.
+A leaking debug build is enough to see the API key reach a place it does
+not belong.
+Authentication and rate limiting are layered defences: the first answers
+``who is calling'', the second answers ``how often''.
+
+\newthought{API key authentication} is the simplest form that fits this
+course.
+The client sends a secret in a header; the server compares it to the value
+in \texttt{.env} and rejects requests that do not match.
+
+\begin{verbatim}
+from fastapi import Header, HTTPException
+
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != os.getenv("SECRET_API_KEY"):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid API key")
+\end{verbatim}
+
+\marginnote{\newthought{Why a header?}\index{HTTP!headers}
+Headers travel separately from the body and the URL, so the secret never
+ends up in the path component of an access log.
+Putting the key in a query parameter would write it into every log line
+the request touched on the way to the server.}
+
+\newthought{Rate limiting} prevents both abuse and accident.
+\texttt{slowapi} attaches a per-route decorator that counts requests per
+client IP and rejects them with HTTP \texttt{429} when the limit is
+exceeded.
 
 \begin{verbatim}
 from slowapi import Limiter
@@ -136,18 +377,43 @@ app.state.limiter = limiter
 
 @app.post("/classify")
 @limiter.limit("30/minute")
-def classify(request: ClassifyRequest):
+def classify(req: ClassifyRequest):
     ...
 \end{verbatim}
 
-\section{From Dev Server to Production Process}\index{systemd}\index{uvicorn}
+\marginnote{\newthought{Where does rate limiting belong?}\index{slowapi}
+Application-level limits are easy to write and travel with the code.
+Reverse-proxy limits, which we add in Block~7 with Nginx, run in front of
+the application and protect it even when it is overwhelmed.
+Both layers are useful; the latter is harder to bypass.\\
+slowapi: \url{https://github.com/laurentS/slowapi}}
 
-\newthought{\texttt{uvicorn} runs fine for testing,} but one \texttt{Ctrl+C} and it is gone—that is not a service.
+\newthought{Pydantic, the API key middleware, and the rate limiter}
+together form a three-stage filter at the boundary of the application.
+A request that arrives must parse as JSON, match the schema, present a
+valid key, and stay within the rate budget before any inference code runs.
+Each stage rejects with a different status code, so a client failure tells
+you exactly which contract was violated.
 
-\subsection{systemd: The OS-Level Supervisor}\index{systemd}
 
-\newthought{\texttt{systemd}} starts your service on boot, restarts it on crash, and captures its logs.
-A \texttt{systemd} unit file for PixelWise:
+
+% ==============================================================================================
+\newpage
+\section{From Dev to Production: \texttt{systemd}}\index{systemd}\index{systemctl}\index{journalctl}
+
+\newthought{\texttt{uvicorn} runs fine for testing,}\index{uvicorn}
+but one Ctrl+C and it is gone.
+A closed terminal kills it.
+A reboot kills it.
+A panic in a worker kills it without restart.
+None of that is the behaviour of a service.
+
+\newthought{\texttt{systemd}} is the OS-level supervisor that comes with
+Ubuntu.
+It starts services on boot, restarts them when they crash, captures their
+output to a structured log, and exposes a uniform interface for operators.
+A \texttt{systemd} unit file describes the service well enough that the
+operating system can run it without you in the room:
 
 \begin{verbatim}
 # /etc/systemd/system/pixelwise.service
@@ -168,151 +434,391 @@ RestartSec=3
 WantedBy=multi-user.target
 \end{verbatim}
 
-\marginnote{We use a fraction of what \texttt{systemd}\index{systemd} can do. In practice, it manages
-timers (like cron but with dependency awareness), socket activation (start a service only when a connection arrives),
-resource limits (cap CPU/memory per service), and dependency ordering (start the database before the app).
-It is the init system of virtually every modern Linux server—worth exploring beyond this course.\\
-systemd docs: \url{https://www.freedesktop.org/wiki/Software/systemd/}}
+\marginnote{\newthought{We use a fraction} of what \texttt{systemd} can do.
+It also manages timers (cron with dependency awareness), socket activation
+(start on connection), resource limits (cap CPU/memory per service), and
+dependency ordering (start the database before the app).
+It is the init system of virtually every modern Linux server.\\
+systemd: \url{https://www.freedesktop.org/wiki/Software/systemd/}}
 
-\subsection{systemctl: The Operator's Interface}\index{systemctl}
+\newthought{\texttt{systemctl}}\index{systemctl} is the operator's interface
+to \texttt{systemd}.
+\texttt{start}, \texttt{stop}, and \texttt{restart} are the verbs you reach
+for during deployment; \texttt{status} reports the current state and the
+last few lines of output; \texttt{enable} marks the service as one that
+should start on boot.
 
 \begin{verbatim}
-sudo systemctl start pixelwise     # start the service
-sudo systemctl stop pixelwise      # stop it
-sudo systemctl restart pixelwise   # restart
-sudo systemctl status pixelwise    # check status
-sudo systemctl enable pixelwise    # start on boot
+sudo systemctl start pixelwise
+sudo systemctl status pixelwise
+sudo systemctl restart pixelwise
+sudo systemctl enable pixelwise
 \end{verbatim}
 
-\subsection{journalctl: Reading Logs}\index{journalctl}
+\marginnote{\newthought{\texttt{journalctl}}\index{journalctl} is where you
+go first when something breaks.
+\texttt{journalctl -u pixelwise} prints every log line from your service
+since boot; \texttt{-f} follows new lines as they arrive, the way
+\texttt{tail -f} follows a file; \texttt{--since "5 min ago"} narrows the
+window when the bug is recent.}
 
-\newthought{\texttt{journalctl}} is the structured log viewer—where you go first when something breaks:
+\newthought{In production} you would run \texttt{gunicorn}\index{gunicorn}
+in front of \texttt{uvicorn} to spawn multiple worker processes, giving
+you concurrency and crash isolation.
+For our classroom setup, a single \texttt{uvicorn} worker behind
+\texttt{systemd} is sufficient.
+\texttt{gunicorn} is standard in production Python deployments; students
+who deploy beyond this course will encounter it within the first week.
+
+
+
+% ==============================================================================================
+% BLOCK 3: STUDENT ACTIVATION
+% ==============================================================================================
+
+\newpage
+\section{Exercise: HTTP, REST, and \texttt{curl}}\index{exercises}
+
+\marginnote{\newthought{Exercises} mirror the five theory sections in order.
+HTTP and REST first, then the contract, then the framework, then the
+defensive layer, then the supervisor.
+Read a concept, then practise it.}
+
+\newthought{Catching up via the reference tag.}\index{Git!tag}
+The course maintains a public reference repository at
+\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
+\texttt{v0.3} marks the end of Block~4; \texttt{v0.4} will mark the end
+of this block.
+If your repository has drifted, reset to \texttt{v0.3} before starting:
 
 \begin{verbatim}
-journalctl -u pixelwise            # all logs for this service
-journalctl -u pixelwise -f         # follow live (like tail -f)
+git fetch origin
+git reset --hard v0.3
+\end{verbatim}
+
+\newthought{Probe a public API} before writing your own.
+HTTP is best learnt against something you did not build, so you can read
+status codes and headers without already knowing what they should be.
+On the \texttt{dev} VM, with the virtual environment active:
+
+\begin{verbatim}
+curl -i https://httpbin.org/get
+curl -i -X POST https://httpbin.org/post \
+    -H "Content-Type: application/json" \
+    -d '{"hello": "world"}'
+\end{verbatim}
+
+\marginnote{\newthought{Read each section of the response.}
+\texttt{HTTP/2 200} is the status line.
+The lines that follow are headers; the blank line marks the boundary; the
+JSON below it is the body.
+Every HTTP response in this course has the same shape; once it is familiar,
+nothing about the protocol surprises you.}
+
+\newthought{Now name the verbs.}
+For each of the three endpoints PixelWise will expose,
+\texttt{POST /classify}, \texttt{GET /results}, \texttt{GET /health},
+write a one-line justification: which method does it use, why,
+and what status code does success look like?
+The naming exercise pays off when you read other people's APIs and
+discover most of them follow the same conventions.
+
+\marginnote{\newthought{The right verb} for inference is \texttt{POST}
+because the request carries a body and the server creates a record.
+\texttt{GET} carries no body in well-behaved clients and caches at every
+layer in between, neither of which fits a per-image classification.}
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: The Pydantic Contract}\index{exercises}
+
+\newthought{Block~2 introduced Pydantic} as the way to make API contracts
+executable.
+Inside the PixelWise repository on \texttt{dev}, install FastAPI, Pydantic,
+and \texttt{uvicorn} into the virtual environment, then update the pinned
+requirements:
+
+\begin{verbatim}
+source .venv/bin/activate
+pip install fastapi uvicorn[standard] \
+    slowapi pydantic
+pip freeze > requirements.txt
+\end{verbatim}
+
+\newthought{Write the request and response models} in \texttt{app/main.py}:
+
+\begin{verbatim}
+from pydantic import BaseModel
+
+class ClassifyRequest(BaseModel):
+    pixels: list[list[int]]
+
+class ClassifyResponse(BaseModel):
+    prediction: str
+    confidence: float
+    scores: dict[str, float]
+\end{verbatim}
+
+\marginnote{\newthought{The shape lives in two places now}\index{contract}:
+\texttt{ClassifyResponse} in Python and the dictionary
+\texttt{classify\_batch} returns from Block~4.
+The two should match exactly.
+A field named \texttt{prediction} in one and \texttt{predicted} in the other
+is exactly the kind of mismatch the contract is supposed to prevent;
+keeping them aligned is part of the work.}
+
+\newthought{Try a tiny script} that exercises the model directly,
+without any HTTP server involved:
+
+\begin{verbatim}
+from app.main import ClassifyResponse
+r = ClassifyResponse(prediction="7",
+    confidence=0.94, scores={"7": 0.94})
+print(r.model_dump_json())
+\end{verbatim}
+
+The model serialises to JSON with the same keys the API will return.
+This is the single source of truth for the response shape from this
+exercise onwards.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Building \texttt{app/main.py}}\index{exercises}
+
+\newthought{Block~2 introduced FastAPI} as the framework that wires Pydantic
+models to HTTP routes.
+Extend \texttt{app/main.py} with three endpoints:
+
+\begin{verbatim}
+from fastapi import FastAPI
+import numpy as np
+from app.classifier import classify_batch
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "model_version": "v1"}
+
+@app.get("/results")
+def results():
+    return {"results": [],
+            "note": "persistence added in Block 6"}
+
+@app.post("/classify",
+          response_model=ClassifyResponse)
+def classify(req: ClassifyRequest):
+    arr = np.array(req.pixels,
+                   dtype=np.uint8)[np.newaxis]
+    return classify_batch(arr)[0]
+\end{verbatim}
+
+\marginnote{\newthought{Run it locally:}\index{uvicorn}
+\texttt{uvicorn app.main:app --reload --port 8000}.
+The \texttt{--reload} flag restarts on every code change, which is what you
+want in development and never want in production.
+Open \url{http://localhost:8000/docs} to see the auto-generated OpenAPI
+page; click ``Try it out'' on \texttt{POST /classify} to issue a real
+request without leaving the browser.}
+
+\newthought{Test with curl from another terminal:}
+
+\begin{verbatim}
+curl http://localhost:8000/health
+curl -X POST http://localhost:8000/classify \
+  -H "Content-Type: application/json" \
+  -d '{"pixels": [[0,0,...], ...]}'
+\end{verbatim}
+
+A 28-by-28 zero array returns a low-confidence prediction; a real digit
+loaded from MNIST returns the right answer.
+The first end-to-end loop is when this works.
+
+\marginnote{\newthought{Send a deliberately wrong shape.}\index{HTTP!422}
+Submit a 27-by-27 grid and read the 422 response.
+Pydantic rejects the request before the handler runs, with a structured
+error that tells the client exactly which field was wrong.
+This is the input validation boundary doing its job.}
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: API Key Auth and Rate Limiting}\index{exercises}
+
+\newthought{Block~2 introduced API keys and rate limits} as the per-request
+defences that sit in front of the handler.
+Add API key middleware to \texttt{app/main.py}:
+
+\begin{verbatim}
+from fastapi import Header, HTTPException, Depends
+import os
+
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != os.getenv("SECRET_API_KEY"):
+        raise HTTPException(
+            status_code=401, detail="Invalid API key")
+
+@app.post("/classify",
+          response_model=ClassifyResponse,
+          dependencies=[Depends(verify_api_key)])
+def classify(req: ClassifyRequest):
+    ...
+\end{verbatim}
+
+\marginnote{\newthought{The header travels in every request.}\index{X-API-Key}
+\texttt{X-API-Key} is a custom header name; FastAPI's \texttt{Header(...)}
+maps it to the function parameter automatically.
+A missing header returns 422 (Pydantic-level), a wrong value returns 401
+(your handler).}
+
+\newthought{Add rate limiting} with \texttt{slowapi}:
+
+\begin{verbatim}
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.middleware import SlowAPIMiddleware
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
+@app.post("/classify")
+@limiter.limit("30/minute")
+def classify(req: ClassifyRequest):
+    ...
+\end{verbatim}
+
+\newthought{Test all three failure modes:}
+\begin{itemize}
+    \item Missing header: 422.
+    \item Wrong key: 401.
+    \item More than 30 requests in a minute: 429.
+\end{itemize}
+Each one should reach \texttt{curl} as a status code rather than as a
+crash; that is the entire point of the boundary.
+
+\marginnote{\newthought{Watch a 429 happen.}\index{HTTP!429}
+A small Bash loop firing 40 \texttt{curl} requests at the endpoint inside
+the same minute should see the last ten return \texttt{429 Too Many
+Requests}.
+The remaining requests stay rejected until the window rolls over.}
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Running as a \texttt{systemd} Service}\index{exercises}
+
+\newthought{Block~2 introduced \texttt{systemd}} as the supervisor that
+keeps a service running.
+Push your code to GitHub from \texttt{dev}, then SSH into the server and
+pull:
+
+\begin{verbatim}
+# on dev
+git add app/main.py requirements.txt .env.example
+git commit -m "Add FastAPI service with auth and limits"
+git push
+
+# on prod
+ssh produser@192.168.56.11
+cd /opt/pixelwise
+git pull
+source .venv/bin/activate
+pip install -r requirements.txt
+\end{verbatim}
+
+\newthought{Create the unit file} at
+\texttt{/etc/systemd/system/pixelwise.service} on \texttt{prod},
+matching the example from the theory section.
+Then reload \texttt{systemd}, enable the unit so it survives reboots,
+and start it:
+
+\begin{verbatim}
+sudo nano /etc/systemd/system/pixelwise.service
+sudo systemctl daemon-reload
+sudo systemctl enable pixelwise
+sudo systemctl start pixelwise
+sudo systemctl status pixelwise
+\end{verbatim}
+
+\marginnote{\newthought{Read the status output.}\index{systemctl}
+\texttt{Active: active (running)} is what you want.
+\texttt{Active: failed} means the unit started and exited; the last few
+log lines below the status block usually say why.
+\texttt{Active: inactive (dead)} means the unit was never started.}
+
+\newthought{Kill it on purpose.}
+A service that has never crashed is a service whose recovery has never been
+tested.
+
+\begin{verbatim}
+sudo systemctl stop pixelwise
+sudo systemctl status pixelwise
+sudo systemctl start pixelwise
 journalctl -u pixelwise --since "5 min ago"
 \end{verbatim}
 
-\subsection{Sidenote: gunicorn}\index{gunicorn}
+\marginnote{\newthought{First end-to-end loop on the network.}\index{curl}
+From \texttt{dev}: \\
+\texttt{curl -X POST http://192.168.56.11:8000/classify
+-H "X-API-Key: ..." -d '\{...\}'}.
+A live prediction from the server, served by \texttt{systemd}-supervised
+\texttt{uvicorn}, returns to your terminal on \texttt{dev}.
+The system is reachable across machines for the first time.}
 
-\marginnote{In production, you would run \texttt{gunicorn}\index{gunicorn} in front of uvicorn to spawn
-multiple worker processes (concurrency, crash isolation). For our classroom setup, a single uvicorn worker
-behind \texttt{systemd} is sufficient. gunicorn is standard in production Python deployments—students who
-deploy beyond this course will encounter it.}
+\newthought{A note on what comes next.}
+The service runs, the contract is documented, the supervisor restarts
+crashes; what is missing is memory.
+\texttt{GET /results} returns an empty list because nothing is being stored.
+The next block adds PostgreSQL, wires \texttt{POST /classify} to write a
+row for every prediction, and replaces the stub with a real query against
+the database.
 
-% ==============================================================================
-% SESSION B: HANDS-ON
-% ==============================================================================
 
+
+% ==============================================================================================
 \newpage
-\section{Workshop}
+\section{Self-Reflection and Recap}\index{reflection}\index{recap}
 
-\marginnote{If your VM is broken, restore the \texttt{B4-complete} snapshot.
-At the end of this session, take a snapshot named \texttt{B5-complete}.}
-
-\begin{enumerate}
-    \item \textbf{Build the PixelWise API} in \texttt{app/main.py}. Create three endpoints:
-    \begin{description}
-        \item[\texttt{POST /classify}] Accepts a 28$\times$28 pixel array (JSON), calls \texttt{classify\_batch},
-        returns prediction + confidence + scores. Test with valid and invalid input.
-        \item[\texttt{GET /results}] Stub only: returns
-        \texttt{\{"results": [], "note": "persistence added in Block 6"\}}.
-        \item[\texttt{GET /health}] Liveness check: confirms the model loaded, returns
-        \texttt{\{"status": "ok", "model\_version": "v1"\}}.
-    \end{description}
-
-    \item \textbf{Add API key authentication:} Implement middleware that checks for an \texttt{X-API-Key}
-    header matching the value from \texttt{.env}:
-    \begin{verbatim}
-    from fastapi import Header, HTTPException
-
-    def verify_api_key(x_api_key: str = Header(...)):
-        if x_api_key != os.getenv("SECRET_API_KEY"):
-            raise HTTPException(status_code=401,
-                detail="Invalid API key")
-    \end{verbatim}
-
-    \item \textbf{Add rate limiting:} Install \texttt{slowapi} and limit \texttt{POST /classify}
-    to 30 requests per minute per IP:
-    \begin{verbatim}
-    pip install slowapi
-    \end{verbatim}
-
-    \item \textbf{Run with uvicorn} and test locally:
-    \begin{verbatim}
-    uvicorn app.main:app --host 0.0.0.0 --port 8000
-    \end{verbatim}
-    In another terminal, test with \texttt{curl}:
-    \begin{verbatim}
-    curl http://localhost:8000/health
-    curl -X POST http://localhost:8000/classify \
-      -H "Content-Type: application/json" \
-      -H "X-API-Key: your-key" \
-      -d '{"pixels": [...]}'
-    \end{verbatim}
-
-    \item \textbf{Register as a systemd service} on the server VM. Create
-    \texttt{/etc/systemd/system/pixelwise.service} using the unit file from the theory section:
-    \begin{verbatim}
-    sudo nano /etc/systemd/system/pixelwise.service
-    sudo systemctl daemon-reload
-    sudo systemctl enable pixelwise
-    sudo systemctl start pixelwise
-    \end{verbatim}
-
-    \item \textbf{Debug with systemctl and journalctl:}
-    \begin{verbatim}
-    sudo systemctl status pixelwise
-    journalctl -u pixelwise -f
-    \end{verbatim}
-
-    \item \textbf{Kill and restart:} Intentionally stop the service and observe what happens:
-    \begin{verbatim}
-    sudo systemctl stop pixelwise
-    sudo systemctl status pixelwise
-    sudo systemctl start pixelwise
-    \end{verbatim}
-    Observe the logs. See what fails, fix and restart. Understand the lifecycle.
-
-    \item \textbf{First end-to-end loop:} From the \texttt{dev} VM, send a classify request to the server:
-    \begin{verbatim}
-    curl -X POST http://192.168.56.11:8000/classify \
-      -H "Content-Type: application/json" \
-      -H "X-API-Key: your-key" \
-      -d '{"pixels": [...]}'
-    \end{verbatim}
-    A live prediction from the server. The model is serving.
-
-    \item \textbf{Update requirements and commit:}
-    \begin{verbatim}
-    pip freeze > requirements.txt
-    git add app/main.py requirements.txt .env.example
-    git commit -m "Add FastAPI API with auth and rate limiting"
-    git push
-    \end{verbatim}
-
-    \item \textbf{Take a snapshot} of both VMs. Name them \texttt{B5-complete}.
-\end{enumerate}
-
-\section{Security Thread}
-
-\newthought{API key auth} via \texttt{X-API-Key} header middleware (value from \texttt{.env}, never hardcoded).
-Rate limiting prevents abuse—limit requests per minute per IP. Pydantic models are the input validation
-boundary—reject malformed input at the edge (wrong shape, wrong dtype, out-of-range values).
-
-\section{Self-Reflection and Recap}
-
-\newthought{Reflection questions:}
+\newthought{Self-Reflection} questions to guide your thoughts during and after the exercises:
 \begin{itemize}
-    \item What is the difference between running \texttt{uvicorn} manually and running it as a \texttt{systemd} service?
-    \item Why does Pydantic validation matter for security?
-    \item What happens if the \texttt{systemd} service crashes? How does \texttt{Restart=always} help?
-    \item Why is the \texttt{GET /results} endpoint a stub right now? What is missing?
-    \item How would you debug a failing API endpoint using only \texttt{journalctl}?
+    \item What is the difference between running \texttt{uvicorn} manually and running it under \texttt{systemd}?
+    \item Why does Pydantic validation matter for security as well as correctness?
+    \item What happens when the \texttt{systemd} service crashes, and how does \texttt{Restart=always} help?
+    \item Why is \texttt{GET /results} a stub right now, and what arrives in Block~6 to fill it in?
+    \item How would you debug a failing endpoint using only \texttt{journalctl}?
+    \item Which of the three rejection points (Pydantic, API key, rate limiter) is hardest to bypass, and why?
 \end{itemize}
 
-\newthought{Milestone:} PixelWise API running as a managed \texttt{systemd} service on the server VM.
-\texttt{POST /classify} returns live digit predictions. \texttt{GET /results} is stubbed—the system is
-complete end-to-end except for persistence, which arrives in Block~6. Students have killed and restarted
-their backend at least once, and debugged with \texttt{journalctl}.
+\newthought{Recap} of key concepts:
+\begin{itemize}
+    \item HTTP is a stateless request-response protocol; REST layers conventions on top so APIs are predictable across teams.
+    \item Pydantic models are the API contract; FastAPI enforces them at the boundary and renders them as live documentation.
+    \item \texttt{POST /classify}, \texttt{GET /results}, \texttt{GET /health} cover the surface this block exposes; \texttt{/results} is a deliberate stub for Block~6.
+    \item API keys answer ``who is calling''; rate limits answer ``how often''.
+    \item \texttt{systemd} turns a script into a service: starts on boot, restarts on crash, logs to \texttt{journalctl}.
+\end{itemize}
+
+\marginnote{\newthought{Security thread.}\index{security}
+The API key lives in \texttt{.env}, never in code.
+Pydantic models are the input validation boundary; rate limits cap any single
+caller; the \texttt{X-API-Key} header keeps the secret out of access logs.
+HTTPS arrives in Block~7 with Nginx.}
+
+\marginnote{\newthought{Teaser.} Where do all those predictions go once the
+response has been sent?}
+
+\newthought{Milestone.} PixelWise runs as a managed \texttt{systemd}
+service on the \texttt{prod} VM.
+\texttt{POST /classify} returns live digit predictions; \texttt{GET /results}
+is stubbed pending persistence; \texttt{GET /health} reports liveness.
+You have killed and restarted the backend at least once and read the logs
+with \texttt{journalctl}.
+The next chapter wires the API to PostgreSQL so every prediction becomes
+a row that survives the response.
