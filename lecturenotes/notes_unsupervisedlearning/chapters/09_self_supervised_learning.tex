@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Self-Supervised Learning}\index{Self-Supervised Learning}\index{contrastive learning}\index{SimCLR}\index{BERT}\index{CLIP}
-\newthought{Letting data supervise itself.}
+\newthought{There is free lunch.}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -11,51 +11,118 @@
 
 \section{The Why}\index{self-supervised learning}\index{pretext task}
 
-\marginnote{\newthought{ImageNet} absorbed years of human effort to assemble fourteen million labelled images. The open web holds a hundred billion images that no curator will ever touch. The asymmetry between labelled and unlabelled data is the structural fact that motivates this chapter.}
 
-\newthought{In the previous chapter} we learned that a model's reliability is bounded by the distribution it was trained on.
-Uncertainty estimation could tell us when an input falls outside that distribution; it could not extend the distribution itself.
-Extending the distribution means more data, and the bottleneck is almost always the same: somebody had to annotate every training example by hand.
+\marginnote{\newthought{Corpus.}\index{corpus} A dataset is curated and usually labelled,
+assembled with a specific task in mind. A corpus is the body of raw data itself, often scraped
+or harvested at web scale, with no task attached. Self-supervised learning is what lets a corpus
+take the place of a dataset.}
 
-\newthought{Labels are scarce and expensive while unlabelled data is abundant.}
-The internet, sensor networks, scientific instruments, and surveillance cameras all produce orders of magnitude more raw data than any annotation budget can keep up with.
-The natural question is whether the structure of unlabelled data, on its own, carries enough signal to teach a model what to look at.
+\newthought{In the previous chapter} we learned to reuse a pretrained backbone across tasks,
+and that foundation models extend reuse to tasks they were never explicitly trained on.
+This chapter generalises that idea, learning representations from raw data
+through a family of objectives that scale to the corpora behind today's foundation models.
 
-\newthought{Annotation cost} is the first wall.
-ImageNet absorbed years of human effort to assemble fourteen million labelled images.
-Medical imaging annotations cost between fifty and five hundred dollars per expert label, and each label requires a clinician.
-An hour of autonomous driving footage takes longer to label, frame by frame and bounding box by bounding box, than it took to record.
-Scaling labelled data linearly with model size is not a research challenge; it is a procurement problem with no obvious solution.
 
-\newthought{Annotation bias} is the second wall.
-Humans encode their priors when they label.
-A clinician trained at one hospital draws boundaries that a clinician trained elsewhere would draw differently; a crowd-sourced labeller follows the instructions and the examples in front of them, not the underlying concept.
-Curated datasets carry curator-specific structure that the model then inherits as a hidden assumption about the world.
 
-\newthought{Scalability ceiling} is the third wall.
-As model and data scale up, the bottleneck is no longer compute or storage; it is the human in the labelling loop.
-A model that can train on ten times more data than today is useless if the labelling pipeline cannot grow with it, and the labelling pipeline cannot grow without an army of humans.
+\marginnote{\newthought{ImageNet}~\cite{Deng2009ImageNet} absorbed years of human effort to assemble fourteen 
+million labelled images. The open web holds a hundred billion images that no curator will ever touch. 
+The asymmetry between labelled and unlabelled data is the structural fact that motivates this chapter.}
 
-\newthought{Domain transfer cost} is the fourth wall.
-Every new domain demands new labels.
-A classifier trained on natural images cannot be deployed in a satellite-imagery pipeline without a new round of annotation; a medical model trained on adult patients needs paediatric labels before it can serve paediatric care.
-Removing the human from the labelling loop opens the door to domain transfer that does not require starting over.
+\newthought{Labels $\tilde{y}$ are the bottleneck.}
+The internet, sensor networks, and scientific instruments produce
+orders of magnitude more raw data than any annotation budget can keep up with.
+Annotation is expensive, biased by the curator, slow to scale with model size,
+and tied to the specific domain that worked them out.
 
-\newthought{Self-supervised learning closes this gap by extracting supervision from the data itself.}
-Instead of asking a human what an image contains, we design a pretext task whose label can be read off directly from the data structure.
-Rotate the image and ask the network to predict the rotation; mask out a patch and ask it to fill the patch in; take two random crops of the same image and ask whether they came from the same source.
-None of these signals require annotation, yet each one becomes solvable only if the network has internalised something about object shape, texture, or semantics along the way.
-The representations learned to solve the pretext task are the real product; the task itself is just scaffolding that the representations climb during training.
 
-\newthought{In order to move from expensive manual annotation to learning from raw data} we have good reason to find ways to,
+\newthought{Self-supervised learning extracts supervision from the data itself.}\index{self-supervised learning}
+Instead of asking a human what an image contains,
+we design a pretext task whose label can be read off directly from the data structure.\\
+
+\marginnote{Chapter~6 showed one route to such a backbone without labels: The variational autoencoder distilled a representation from a reconstruction objective alone.}
+
 \begin{itemize}
-    \item design auxiliary tasks whose supervision signal is inherent in the data itself, so that scale is bounded by storage rather than by human effort.
-    \item learn representations that capture semantic structure without any human labels, transferable across downstream tasks the model was never explicitly trained for.
-    \item understand what prevents collapse when the loss has no negatives to push against, and what makes one pretext task transfer better than another.
+    \item \newthought{Pretext tasks.}\index{pretext task} The pretext task is scaffolding; the representations the network builds while solving it are the real product, and they transfer to downstream tasks the network was never trained for. The first generation of self-supervised methods built auxiliary objectives by hand: Rotate the image and predict the rotation, scramble the patches and reassemble them, fill in the colour of a grayscale photo.
+    \item \newthought{Contrastive learning.}\index{contrastive learning} A second generation drops 
+    the hand-designed task and asks the network to recognise the same image under different views.
+    Two random crops of one photo should land near each other in the embedding space, while crops from 
+    different photos should land apart.
 \end{itemize}
 
-\newthought{The fundamental question} this chapter answers is whether the structure of unlabelled data carries enough signal to teach a model what to look at, without any human ever telling it what to value.
 
+\iffalse
+\newthought{Non-contrastive learning and collapse.}\index{non-contrastive learning}\index{representation collapse}
+Without negatives to push embeddings apart,
+the trivial solution is to map every input to the same vector.
+BYOL\index{BYOL}~\cite{Grill2020BYOL}, SimSiam\index{SimSiam}~\cite{Chen2021SimSiam},
+and DINO\index{DINO}~\cite{Caron2021DINO} avoid this collapse through asymmetric architectures
+and momentum updates rather than through a contrastive loss,
+and understanding why this works is one of the open problems of the area.
+\fi
+
+\newthought{Masked and next-token prediction.}\index{masked prediction}
+The dominant pretext task at scale is to mask part of the input and ask the model to reconstruct or denoise it.
+This can be masked tokens in BERT~\cite{Devlin2019BERT}, masked patches in MAE,
+or the next token in autoregressive language models.
+
+\newthought{Span masking.}\index{span masking}
+Single-token masking is often trivial,
+since twenty visible neighbours give away the missing token.
+Span masking removes contiguous chunks instead,
+forcing the model to reconstruct multi-token structure.
+SpanBERT and T5 made this the default in modern encoder-decoder pretraining.
+\marginnote{\newthought{Example.} Single-token: \texttt{She slipped on a yellow [?] peel and fell over}. Span: \texttt{She slipped on a [? ? ?] and fell over}, where the contiguous chunk is the three adjacent tokens \texttt{yellow banana peel} the model has to recover together.}
+
+\marginnote{\newthought{In the beginning was the word.} Prompt injection, reasoning, and agentic tool use.}
+\newthought{Causal next-token prediction.}\index{next-token prediction}\index{autoregressive language model}
+The decoder-only language model takes the same denoising principle and applies it strictly left to right.
+At every position, the model sees only the prefix and predicts the next token.
+GPT scales this objective to internet-sized corpora, 
+and the resulting model is a foundation model whose representations transfer
+to almost every language task by prompting alone.
+\marginnote{\newthought{Choose by regime.}\index{encoder-decoder} Architecture tracks the downstream task: Encoder-only for understanding, decoder-only for generation, encoder-decoder such as T5 and BART for both at doubled cost.}
+
+
+\newthought{Predicting in latent space.}\index{JEPA}\index{I-JEPA}\index{V-JEPA}\index{self-distillation}
+Reconstructing pixels, or tokens, wastes capacity on texture and lighting the downstream task does not care about.
+Joint-embedding predictive architectures (JEPA) move the target into feature space instead.
+The teacher and the student share the same encoder,
+the teacher's weights are an exponential moving average of the student's to stabilize targets over time,
+and no labels need to enter the pipeline at any point.
+On every step the teacher runs a forward pass on the unmasked input
+and produces target representations of the masked region.
+The student sees a masked view of the same input sample,
+predicts those target representations in the latent space,
+and the loss is the distance between predicted and target features.
+There is no decoder and pure prediction happens in the encoder's feature space, so the method is 
+efficient and scales well to large models and large corpora.
+
+
+\newthought{In order to move from expensive manual annotation to learning from raw data}
+we have good reason to find ways to,
+\begin{itemize}
+    \item design auxiliary tasks whose supervision signal is inherent in the data itself,
+    so that scale is bounded by storage rather than by human effort.
+    \item learn representations that capture semantic structure without any human labels,
+    transferable across downstream tasks the model was never explicitly trained for.
+    \item recognise denoising as the unifying objective behind masked-token, masked-patch,
+    and next-token prediction.
+    \item match the masking pattern to the downstream regime, choosing between encoder-only,
+    decoder-only, and encoder-decoder recipes when the task is understanding, generation, or both.
+    \item predict in feature space rather than pixel space when raw reconstruction would
+    spend capacity on signal the downstream task does not care about.
+\end{itemize}
+
+\newthought{The fundamental question} this chapter answers is whether the structure of unlabelled data
+carries enough signal to teach a model what to look at,
+without any human ever telling it what to value.
+
+
+
+
+
+\newpage
+\iffalse
 \subsection{Hands On Experience}
 
 \newthought{Consider} the canonical six points unlabelled.
@@ -142,6 +209,7 @@ The model trains on whatever target the pretext task constructs, and the represe
 % ==============================================================================================
 
 \newpage
+
 
 \subsection{Pretext Tasks}\index{pretext task}
 
@@ -694,239 +762,6 @@ A teacher network produces target representations from the unmasked input, and a
 The same recipe applies to vision, speech, and text; the only thing that changes is the modality-specific tokeniser.
 Predicting latent representations sidesteps the awkward question of what the right reconstruction loss is for each modality, since the target lives in a learned space rather than in raw pixels, audio samples, or token indices.
 
-\newthought{Masking still confines supervision to a single modality.}
-Each modality's pretext task respects its own boundaries: BERT masks tokens, MAE masks patches, Data2Vec masks features within one modality at a time.
-What if two modalities together supplied a stronger signal, with each modality acting as the supervision for the other?
-
-
-\subsection{Cross-Modal Self-Supervision}\index{CLIP}
-
-\marginnote{\newthought{CLIP.} Contrastive Language-Image Pre-training\cite{Radford2021CLIP} learns from image-caption pairs scraped from the web. The pairing is the supervision; nobody had to label the images with class names.}
-
-\newthought{Cross-modal self-supervision} extends the contrastive idea across modalities.
-CLIP trains an image encoder and a text encoder jointly on four hundred million image-caption pairs collected from the web.
-For each minibatch, the contrastive task is to match each image to its corresponding caption among all captions in the batch, and each caption to its corresponding image.
-The pairing itself is the supervision; nobody had to label the images with class names because the captions came along with them.
-
-\newthought{The result} is a representation in which images and text inhabit the same vector space.
-A familiar image embedding sits near the embedding of any reasonable caption that describes it; a familiar caption embedding sits near the embedding of any image it could plausibly describe.
-Cosine similarity in this joint space is interpretable as semantic relatedness across modalities.
-
-\begin{figure}
-\centering
-\begin{tikzpicture}
-    \begin{axis}[
-        xlabel={$z^{(1)}$}, ylabel={$z^{(2)}$},
-        xmin=-3, xmax=3, ymin=-3, ymax=3,
-        width=0.5\textwidth, height=0.5\textwidth,
-        axis line style={draw=none},
-        tick style={black, thin},
-        xtick={-2,0,2}, ytick={-2,0,2},
-        xticklabel style={font=\small},
-        yticklabel style={font=\small},
-        tick align=outside, tick pos=left,
-    ]
-    \addplot[only marks, mark=*, mark size=2pt, black] coordinates {
-        (-1.5,1.2) (1.4,0.5) (-0.3,-1.6)
-    };
-    \addplot[only marks, mark=o, mark size=2pt, black, thick] coordinates {
-        (-1.4,1.4) (1.6,0.6) (-0.5,-1.5)
-    };
-    \draw[densely dashed, black!60] (axis cs:-1.5,1.2) -- (axis cs:-1.4,1.4);
-    \draw[densely dashed, black!60] (axis cs:1.4,0.5) -- (axis cs:1.6,0.6);
-    \draw[densely dashed, black!60] (axis cs:-0.3,-1.6) -- (axis cs:-0.5,-1.5);
-    \node[font=\small, anchor=north east] at (axis cs:-1.5,1.2) {img$_1$};
-    \node[font=\small, anchor=south west] at (axis cs:-1.4,1.4) {``a banana''};
-    \node[font=\small, anchor=south west] at (axis cs:1.6,0.6) {``a car''};
-    \node[font=\small, anchor=south west] at (axis cs:-0.5,-1.5) {``a tree''};
-    \end{axis}
-\end{tikzpicture}
-\caption{CLIP joint embedding space. Filled markers are image embeddings, open markers are text embeddings. The contrastive objective pulls each image toward its corresponding caption (dashed pairings) and pushes it away from all other captions in the batch. After training, an image and a caption that describe the same content land close together in the same vector space.}
-\label{fig:clip_joint}
-\end{figure}
-
-\newthought{Zero-shot classification} is the immediate consequence.
-A new image can be classified without any task-specific training: encode the candidate class names as text prompts (``a photo of a banana'', ``a photo of an apple'', ``a photo of an orange''), encode the image, and pick the class whose text embedding has the highest cosine similarity to the image embedding.
-The model has never seen the class label as a training signal, yet it can recognise the class because it has seen many images that were captioned with related words.
-
-\newthought{Trace one zero-shot prediction} through the pipeline to make this concrete.
-An image of a banana arrives.
-The image encoder produces an embedding $e_I$.
-The text encoder produces three candidate embeddings $e_T^{\text{(banana)}}, e_T^{\text{(apple)}}, e_T^{\text{(car)}}$ for the three candidate prompts.
-Cosine similarity is computed between $e_I$ and each candidate; the prediction is the class whose text embedding has the highest similarity.
-No retraining, no labels, no adaptation step.
-
-\newthought{The use payoff} of cross-modal pre-training is concrete.
-A model trained on captions, with no class labels, classifies images of categories it was never explicitly trained on.
-The same contrastive principle that pulled augmented views together in SimCLR returns here, but across modalities; image and text become two views of the same underlying concept, and the contrastive loss aligns them.
-Self-supervised learning has stopped being a method for cheap pre-training and has become a recipe for representations rich enough to handle tasks they were never explicitly trained for.
-
-\newthought{The encoder is now strong enough to teach.}
-Once the contrastive, non-contrastive, and masked-prediction recipes give us a representation that captures semantic structure, a question opens up that did not exist when the encoder was random.
-What if a small labelled set on the downstream task was paired with a much larger unlabelled set drawn from the same distribution, and the encoder's own predictions were used as supervision on the unlabelled portion?
-That is the semi-supervised regime, and the methods in the next two subsections turn the SSL flywheel one more turn: representations from raw data, then pseudo-labels from those representations, then a stronger model from the pseudo-labels.
-
-
-\subsection{Pseudo-Labels and Self-Training}\index{pseudo-labelling}\index{self-training}
-
-\marginnote{\newthought{Pseudo-labelling.} The model writes the labels it then learns from\cite{Lee2013PseudoLabel}. The signal comes from the model's own confidence, not from a human.}
-
-\newthought{Pseudo-labelling} is the simplest way to use unlabelled data once the encoder is good enough to be trusted on parts of it.
-Train a classifier on the small labelled set $\mathcal{L}$, run it on the unlabelled set $\mathcal{U}$, keep the predictions whose confidence exceeds a threshold $\tau$, and add those high-confidence predictions to $\mathcal{L}$ as if they were ground truth.
-Retrain on the expanded labelled set, predict again, and repeat.
-The encoder learned the geometry from raw data; the classifier learns the labels from itself.
-
-\vspace{1.5em}
-
-\begin{algorithm}[H]
-\caption{Pseudo-Labelling with Confidence Thresholding}
-\begin{algorithmic}[1]
-\Require Labelled set $\mathcal{L}$, unlabelled set $\mathcal{U}$, threshold $\tau$
-\State Train classifier $f$ on $\mathcal{L}$
-\Repeat
-    \For{each $x \in \mathcal{U}$}
-        \State $\hat{p} \gets f(x)$, $\hat{y} \gets \arg\max \hat{p}$
-        \If{$\max(\hat{p}) > \tau$}
-            \State Add $(x, \hat{y})$ to $\mathcal{L}$
-            \State Remove $x$ from $\mathcal{U}$
-        \EndIf
-    \EndFor
-    \State Retrain $f$ on the expanded $\mathcal{L}$
-\Until{convergence or $\mathcal{U}$ is empty}
-\end{algorithmic}
-\end{algorithm}
-
-\newthought{Notice that the threshold $\tau$ is the only design choice that matters.}
-A high $\tau$ keeps the pseudo-label set small but accurate; a low $\tau$ adds many examples but admits more errors.
-A common protocol is curriculum thresholding: start with $\tau$ near $0.95$, lower it gradually as the classifier improves, so the easy points enter the labelled set first and the hard points enter only when the classifier has earned the right to label them.
-
-\newthought{Confirmation bias} is the central failure mode\index{confirmation bias} and the reason pseudo-labelling cannot be run blindly.
-The model makes an error on an unlabelled point, that error becomes a pseudo-label, the next round of training treats the wrong label as correct, and the model becomes more confident in the same mistake.
-The loop is self-reinforcing in exactly the wrong direction; the very confidence that gates the pseudo-label is the property the loop inflates.
-
-\newthought{Calibration is the fix} that makes the threshold mean what we think it means.
-A neural network is well-calibrated\index{calibration} when $P(\hat{y} = y \mid \hat{p} = p) = p$, that is, when an event the network claims with probability $0.9$ actually happens nine times out of ten.
-Modern networks are systematically overconfident, especially on out-of-distribution inputs and near decision boundaries\cite{Guo2017Calibration}.
-Temperature scaling adjusts logits before the softmax,
-
-\begin{align*}
-    \hat{p}_{\text{calibrated}} &= \mathrm{softmax}(z / T)
-\end{align*}
-
-with a single scalar $T > 1$ fitted on a held-out validation set; the rank of predictions is preserved, but the confidences are stretched toward truthful values.
-A calibrated $\tau{=}0.95$ keeps roughly five percent error in the pseudo-label set; an uncalibrated $\tau{=}0.95$ keeps whatever error the network's overconfidence happens to produce.
-
-\marginnote{\newthought{Calibration before pseudo-labelling.} Always temperature-scale the classifier on a held-out set before reading off confidences as a threshold. Otherwise the threshold gates on a signal that the network has been trained to inflate.}
-
-
-\subsection{Consistency Regularisation and FixMatch}\index{consistency regularisation}\index{FixMatch}
-
-\marginnote{\newthought{Consistency.} Predictions should be stable under perturbations that preserve the class. The unlabelled point gets a target derived from itself.}
-
-\newthought{Consistency regularisation} attacks the same problem from the loss side.
-The pseudo-label algorithm uses confident predictions as hard targets; consistency uses the prediction itself as the target on a perturbed view of the same input.
-The intuition is the same one that drove SimCLR's positive pairs: if a small augmentation changes the input but not the class, the model's prediction should not change either.
-
-\begin{align*}
-    \mathcal{L}_{\text{consistency}} &= \sum_{x \in \mathcal{U}} d\bigl(f(x),\, f(\mathrm{aug}(x))\bigr)
-\end{align*}
-
-where $\mathrm{aug}$ is a stochastic augmentation and $d$ is a distance such as mean squared error or KL divergence between predicted distributions.
-No threshold, no confirmation bias loop; the model trains itself to be invariant to augmentation, and the unlabelled set becomes a regulariser rather than a label source.
-
-\newthought{Mean Teacher} stabilises consistency by using a slow-moving copy of the network as the target\cite{Tarvainen2017MeanTeacher}.\index{Mean Teacher}
-The student updates by gradient descent; the teacher updates as an exponential moving average of the student weights,
-
-\begin{align*}
-    \theta_{\text{teacher}} &\gets \alpha\, \theta_{\text{teacher}} + (1 - \alpha)\, \theta_{\text{student}}
-\end{align*}
-
-with $\alpha$ typically near $0.99$.
-The student matches the teacher's predictions on the same input under different augmentations; the teacher lags the student so its predictions act as a stable target rather than a moving one.
-The mechanism is the same one MoCo used to stabilise its key encoder, transplanted into semi-supervised classification.
-
-\marginnote{\newthought{Why EMA helps.} A teacher that updates as fast as the student tracks the same noise the student does; an averaged teacher smooths over recent fluctuations and presents the student with a target the loss can actually reduce.}
-
-\vspace{1.5em}
-
-\newthought{Co-training} attacks the confirmation bias problem from a different angle: use two classifiers, each trained on a different view of the data, and let each one label data for the other\cite{Blum1998CoTraining}.\index{co-training}
-The assumption is that the two views are conditionally independent given the label, so an error one classifier makes on its own view is not an error the other classifier is likely to make on its view.
-For web pages the canonical split is page content versus anchor text from incoming links; for sensors it might be one modality versus another, or one half of the feature vector versus the other.
-When the conditional independence holds, the two classifiers correct each other; when it does not, they share blind spots and confirmation bias returns through the back door.
-
-\newthought{Tri-training} relaxes the independence assumption by replacing it with agreement\index{tri-training}.
-Train three classifiers on bootstrapped subsets of the labelled data, and pseudo-label an unlabelled point for the third classifier only when the other two agree on it.
-The disagreement signal does the filtering that conditional independence was supposed to do; if two independently bootstrapped classifiers both produce the same prediction, that prediction is more likely to be right than either one alone.
-
-\vspace{1.5em}
-
-\newthought{FixMatch} is the synthesis of all of the above\cite{Sohn2020FixMatch}.\index{FixMatch}
-Take an unlabelled image, apply a weak augmentation such as flip and crop, and read the model's prediction; if the confidence exceeds $\tau$, accept the prediction as a pseudo-label.
-Then apply a strong augmentation such as RandAugment to the same image, and train the model to match the pseudo-label on the strongly augmented view.
-Weak augmentation produces a trustworthy target; strong augmentation produces a hard training signal; the loss couples the two.
-
-\begin{align*}
-    \mathcal{L}_{\text{FixMatch}} &= \mathcal{L}_{\text{supervised}} + \lambda \sum_{x \in \mathcal{U}} \mathbf{1}\!\bigl[\max \hat{p}_w > \tau\bigr]\, H\bigl(\hat{y}_w,\, f(x_{\text{strong}})\bigr)
-\end{align*}
-
-where $\hat{p}_w$ is the prediction on the weakly augmented view, $\hat{y}_w$ is its argmax, $x_{\text{strong}}$ is the strongly augmented view, $H$ is cross-entropy, and $\lambda$ balances supervised and unsupervised terms.
-
-\begin{algorithm}[H]
-\caption{FixMatch}
-\begin{algorithmic}[1]
-\Require Labelled batch $\mathcal{B}_L$, unlabelled batch $\mathcal{B}_U$, threshold $\tau$, weight $\lambda$
-\State Compute supervised loss $\mathcal{L}_s$ on $\mathcal{B}_L$
-\For{each $x \in \mathcal{B}_U$}
-    \State $x_w \gets \mathrm{weak}(x)$, $\hat{p}_w \gets f(x_w)$, $\hat{y}_w \gets \arg\max \hat{p}_w$
-    \If{$\max \hat{p}_w > \tau$}
-        \State $x_s \gets \mathrm{strong}(x)$
-        \State Accumulate $H(\hat{y}_w, f(x_s))$ into the unsupervised loss $\mathcal{L}_u$
-    \EndIf
-\EndFor
-\State Update $\theta$ by gradient descent on $\mathcal{L}_s + \lambda \mathcal{L}_u$
-\end{algorithmic}
-\end{algorithm}
-
-\newthought{Notice that FixMatch makes the asymmetry between weak and strong explicit.}
-The weak view exists to extract a label the model already trusts; the strong view exists to make the model robust against perturbations it does not yet handle.
-Reverse the assignment, ask for pseudo-labels from strongly augmented views, and the labels are too noisy to be useful; train on weakly augmented views, and the model learns nothing it did not already know.
-The two augmentation regimes have different jobs.
-
-\begin{figure}
-\centering
-\begin{tikzpicture}[
-    every node/.style={font=\small, align=center},
-    block/.style={rectangle, draw=black, thick, rounded corners=2pt,
-                  minimum width=1.6cm, minimum height=0.7cm, inner sep=4pt},
-    arr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]}, thick, black!70},
-]
-    \node[block] (x) at (0,0) {unlab.\ $x$};
-    \node[block] (weak) at (2.6, 1.2) {weak aug};
-    \node[block] (strong) at (2.6,-1.2) {strong aug};
-    \node[block, fill=black!8] (m1) at (5.0, 1.2) {$f$};
-    \node[block, fill=black!8] (m2) at (5.0,-1.2) {$f$};
-    \node[block] (gate) at (7.4, 1.2) {$\max\hat{p}_w {>} \tau$?};
-    \node[block] (pl) at (7.4, 0) {$\hat{y}_w$};
-    \node[font=\small] (loss) at (9.4,-1.2) {$H(\hat{y}_w, f(x_s))$};
-
-    \draw[arr] (x) -- (weak);
-    \draw[arr] (x) -- (strong);
-    \draw[arr] (weak) -- (m1);
-    \draw[arr] (strong) -- (m2);
-    \draw[arr] (m1) -- (gate);
-    \draw[arr] (gate) -- node[right, font=\tiny] {yes} (pl);
-    \draw[arr] (pl) -| (loss.north);
-    \draw[arr] (m2) -- (loss.west);
-\end{tikzpicture}
-\caption{FixMatch. The same unlabelled $x$ produces a weakly augmented view that gates a pseudo-label and a strongly augmented view that receives the cross-entropy loss. The pseudo-label only fires when the weak-view confidence exceeds the threshold $\tau$, so the unsupervised loss is silent on uncertain examples.}
-\label{fig:fixmatch}
-\end{figure}
-
-\newthought{Model-in-the-loop labelling} closes the loop back to the foundation models from earlier in this chapter and to chapter 8's CLIP and SAM.
-A large pre-trained model proposes labels on unlabelled data; a human reviews and corrects them; the corrected labels train the smaller downstream model.
-Verifying a candidate label is much faster than producing one from scratch, and the foundation model's representations are good enough that its proposals are right most of the time.
-GPT-style models can propose named-entity annotations for review, SAM can propose segmentation masks for correction, and CLIP can propose image classifications that a human triages.
-The pattern is the same one the rest of this chapter built up to: the encoder learned from raw data is now strong enough to do most of the labelling work itself, and the human supplies the part the encoder cannot.
 
 
 % ==============================================================================================
@@ -1183,50 +1018,6 @@ Temperature $\tau$ controls the sharpness of the contrastive distribution; too l
 The trade-off is the same one you saw in the InfoNCE-by-hand exercise, played out at scale.
 
 
-\section{Self-Reflection and Recap}\index{reflection}\index{recap}
-
-\newthought{Self-Reflection} questions to guide your thinking:
-\begin{itemize}
-    \item What failure modes arise when a pretext task is too easy, and what shortcuts might the network exploit instead of learning useful representations?
-    \item How does the temperature $\tau$ in InfoNCE shape the gradient, and what is the trade-off between low and high values?
-    \item Why is the projection head discarded after training in SimCLR, and what kind of information does it absorb that we do not want in the downstream representation?
-    \item What is the queue size in MoCo a trade-off between, and why does the momentum encoder need to lag the online encoder?
-    \item What prevents collapse in non-contrastive methods like BYOL and SimSiam, and which structural ingredient is most load-bearing?
-    \item Why is BERT's masking ratio fifteen percent while MAE's is seventy-five percent, and what property of the input distinguishes the two regimes?
-    \item Why does cross-modal pre-training as in CLIP enable zero-shot transfer to classes the model never explicitly trained on?
-    \item How does FixMatch's split between weak augmentation for pseudo-labels and strong augmentation for training mitigate confirmation bias compared to plain pseudo-labelling, and what would break if the two augmentation regimes were swapped?
-    \item Why does pseudo-labelling depend on calibration, and how does the temperature scaling fix relate to the threshold $\tau$ in the algorithm?
-    \item When does the conditional independence assumption in co-training hold, and how does tri-training relax it without giving up on the multi-view idea?
-\end{itemize}
-
-\newthought{Recap} of Key Concepts:
-\begin{itemize}
-    \item Self-supervised learning derives free supervision from data structure; the pretext task is scaffolding, the learned representation is the product, and the choice of pretext determines what invariances the representation acquires.
-    \item Contrastive methods pull positive pairs together and push negatives apart through the InfoNCE loss; SimCLR realises this with strong augmentations and large batches, and MoCo decouples the negative pool from the batch with a queue and momentum encoder.
-    \item Non-contrastive methods such as BYOL and SimSiam avoid collapse through asymmetry, stop-gradient, and BatchNorm, eliminating the need for negative examples; the trivial constant solution is always a fixed point of the loss, and architecture, not loss, prevents convergence to it.
-    \item Masked prediction reconstructs hidden inputs from visible context; BERT applies this to language at fifteen percent masking, MAE to vision at seventy-five percent masking, and Data2Vec to any modality in feature space.
-    \item Cross-modal pre-training as in CLIP aligns image and text representations through contrastive matching of caption pairs, enabling zero-shot classification at inference without any task-specific training.
-    \item Pseudo-labelling expands the labelled set with confident model predictions; confirmation bias is its central failure mode, and calibrating the classifier with temperature scaling is what makes the threshold $\tau$ mean what we want it to mean.
-    \item Consistency regularisation forces predictions to be stable under augmentation, with Mean Teacher providing a slow EMA target so the student chases a stable signal rather than its own noise.
-    \item FixMatch synthesises pseudo-labelling and consistency: a weakly augmented view supplies a trustworthy pseudo-label, and a strongly augmented view receives the cross-entropy loss against it, with the threshold $\tau$ silencing the unsupervised term on uncertain examples.
-\end{itemize}
-
-\marginnote{\newthought{The fundamental dependency.} Every SSL method in this chapter still requires unlabelled data from the target distribution; shift the distribution and the representations degrade, just as the uncertainty methods of chapter 7 degrade under the same drift.}
-
-\newthought{Self-supervised representations are powerful, but they are bound to the distribution they were trained on.}
-A SimCLR model pre-trained on natural images will produce useful features for photographs, but it will transfer poorly to medical scans or satellite imagery whose visual statistics differ fundamentally from web data.
-The pseudo-labelling and FixMatch loop we just added inherits the same constraint: it leans on the encoder's confidence, and the encoder is only confident where the data resembles what it has already seen.
-
-\newthought{The model writing its own labels is one way to soften the annotation bottleneck; humans writing rough labels is the other.}
-Self-training treats the encoder as the source of supervision and lets the human supply only a small clean set; weak supervision goes the other way, asking humans to write noisy heuristics or labelling functions that cover the unlabelled data at scale, and then learning to denoise the resulting overlapping signals.
-The two approaches are complements: self-training trusts the model, weak supervision trusts the labelling rules, and both build on the assumption that some signal is better than no signal as long as we know how to handle the noise.
-
-\marginnote{\newthought{Teaser.} If the model can label itself with confidence thresholds, what changes when it is humans who write the noisy labels, and how do we tell apart the cases where a labelling rule is wrong from the cases where it is simply incomplete?}
-
-\newthought{The next chapter explores weak supervision and labelling functions,} where humans contribute heuristics and proxy signals instead of clean annotations, and a label model learns to combine the conflicting outputs into a single training signal.
-The flywheel keeps turning: representations from raw data, pseudo-labels from confident representations, and now noisy labels from rough human rules, each loop softening the annotation bottleneck a little further.
-
-\marginnote{\newthought{feedback}}
 
 
 
@@ -1510,38 +1301,50 @@ A model repeatedly misclassifies ironic positive reviews as negative. Explain ho
 
 Why use weak augmentation for pseudo-labels but strong augmentation for training?
 
+\fi
 
-\section{Self-Reflection and Recap}
+\section{Self-Reflection and Recap}\index{reflection}\index{recap}
 
-\newthought{Self-Reflection.}
-
-\begin{enumerate}
-    \item Why might pseudo-labelling fail on imbalanced data?
-    \item How does FixMatch mitigate confirmation bias compared to basic pseudo-labelling?
-    \item When does the conditional independence assumption in co-training hold, and when does it break?
-    \item What is the relationship between temperature scaling and the pseudo-label threshold $\tau$?
-    \item How does the Mean Teacher's EMA update stabilise training compared to a static teacher?
-    \item Why is strong augmentation essential for the consistency regularisation to be useful?
-    \item What failure mode arises when the initial labelled set is too small or unrepresentative?
-\end{enumerate}
-
-\vspace{1.5em}
-
-\newthought{Recap.}
-
+\newthought{Self-Reflection} questions to guide your thinking:
 \begin{itemize}
-    \item Pseudo-labelling uses confident model predictions as training signal; confirmation bias is the central failure mode, where errors reinforce themselves.
-    \item Consistency regularisation forces predictions to be stable under augmentation, providing a complementary training signal from unlabelled data.
-    \item Co-training exploits conditionally independent views so that each classifier labels data for the other, reducing shared errors.
-    \item FixMatch combines pseudo-labels from weak augmentation with training on strong augmentation, achieving state-of-the-art semi-supervised performance with a simple framework.
+    \item What goes wrong when a pretext task is too easy, and how can the network exploit shortcuts that solve the task without producing useful representations?
+    \item Why does the contrastive recipe of treating different views of the same input as similar, and views of different inputs as dissimilar, give a stronger signal than handcrafted pretext tasks such as rotation prediction?
+    \item Why is the choice of what counts as a different view the design decision that determines which features the contrastive representation will treat as invariant?
+    \item Why is denoising a useful frame for thinking about masked-token, masked-patch, and next-token prediction together rather than as separate methods?
+    \item Where does the supervision signal come from in masked prediction?
+    \item How does the architectural choice between encoder-only, decoder-only, and encoder-decoder follow from whether the downstream task is understanding, generation, or both?
+    \item Why does the encoder-decoder recipe end up paying for both halves of the bargain in architecture cost?
+    \item Why does masking a contiguous span force the model to learn more than masking the same number of scattered single tokens?
+    \item Why is moving the prediction target from pixel space to feature space a useful trade-off when raw reconstruction would spend capacity on signal the downstream task does not care about?
+    \item What role does the slow-moving averaged teacher play in producing a stable target the student can predict against, and why is the same loss not workable when the teacher equals the student at every step?
+    \item Why is the latent-space prediction recipe still considered self-supervised even though there is a teacher network feeding the student?
+    \item Across all the methods in this chapter, what is the common idea that lets each of them produce useful representations from raw data with no human labels in the loop?
 \end{itemize}
 
-\vspace{2.5em}
+\newthought{Recap} of key concepts:
+\begin{itemize}
+    \item Self-supervised learning derives its supervision from the structure of the data itself, with the pretext task as scaffolding and the learned representation as the product.
+    \item Pretext tasks evolved from handcrafted recipes such as rotation prediction and patch scrambling toward principled relational objectives such as contrastive learning over augmented views.
+    \item Denoising unifies the dominant masked-prediction family: Hide part of the input as masked tokens, masked patches, contiguous spans, or the next token in a sequence, and train the model to reconstruct what was hidden.
+    \item The architectural choice between encoder-only, decoder-only, and encoder-decoder tracks the downstream regime, with encoder-only for understanding, decoder-only for generation, and encoder-decoder for both at the cost of doubled architecture.
+    \item Predicting in latent space sidesteps the irrelevant signal that raw pixel reconstruction would spend capacity on, with an exponential moving average teacher providing a stable target the student can predict against in feature space.
+\end{itemize}
 
-\marginnote{\newthought{Teaser.} Self-training uses the model's predictions, but sometimes we need human guidance during training, not just at the start.}
+\marginnote{\newthought{Teaser.} A self-supervised backbone gives you a head start, not a finished classifier;
+the downstream task still wants labels. What signals and cues can you think of to put in the place of supervision.}
 
-\newthought{Self-training treats the model as its own teacher.} But the model can only teach what it already knows, and its mistakes compound. Some problems require a human in the loop: correcting predictions, selecting informative examples to label, or demonstrating the desired behaviour.
+\newthought{Self-supervised learning softened the annotation bottleneck from one side.}
+Instead of asking humans to label more data, the chapter designed objectives and tasks that read supervision off the data structure itself,
+and the resulting representations thus can be transferred to downstream tasks the model was never explicitly trained for.
+The bottleneck has another side, where supervision for dedicated downstream tasks still arrives,
+from humans, from auxiliary sensors coupled to the input, or from larger models standing in as labellers,
+but in the form of rough rules, heuristics, proxy signals, or noisy stand-in labels
+rather than clean per-example annotations.
 
-\newthought{The next chapter explores interactive and imitation learning,} where active learning queries the most informative examples, behaviour cloning learns from demonstrations, and DAgger addresses the covariate shift that makes naive imitation brittle.
+\newthought{The next chapter turns to weak supervision,}
+where a label model learns to combine the noisy and conflicting rule outputs into a single training signal.
+Self-supervised learning trusted the structure of the data; weak supervision trusts the structure of the rules;
+both share the conviction that some signal is a signal.
 
 \marginnote{\newthought{feedback}}
+

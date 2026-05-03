@@ -11,19 +11,86 @@
 
 \section{The Why}
 
-\marginnote{Humans imagine consequences before acting; can machines learn to do the same?}
+\marginnote{\newthought{World model.}\index{world model} A learned, generative model of an environment's dynamics
+that takes a state and an action and returns a predicted next state and reward.
+The agent can then roll out trajectories in this model rather than in the real environment,
+and a policy trained on those imagined rollouts is said to plan in imagination.}
 
-Model-free reinforcement learning learns from experience, but it is sample-inefficient, requiring millions of environment interactions; unsafe, because learning by trial and error can be dangerous in the physical world; and non-transferable, because the agent must relearn each new task from scratch.
+\newthought{In the previous chapter} we asked humans to do the heavy lifting,
+querying labels, correcting the agent online, and demonstrating the task by hand.
+Model-free reinforcement learning and imitation share a common cost,
+both need an enormous number of rollouts in the real environment to converge.
+This chapter learns a model of the environment instead,
+so that planning, exploration, and policy improvement can happen in imagination
+at a fraction of the data and risk.
 
-\newthought{Model-based RL}\index{model-based RL} learns a model of the world, enabling planning by simulating actions before taking them, imagination by generating synthetic experience for training, and sample efficiency by learning from fewer real interactions.
+\marginnote{One hour of robot interaction in the physical world can cost more than a week
+of GPU time spent rolling out trajectories in a learned simulator.
+The asymmetry between real interaction and imagined interaction is the structural fact
+that motivates this chapter.}
 
-\newthought{In order to move from trial and error to planning in imagination} we have good reason to find ways to,
+\newthought{Real interaction is the bottleneck.}
+Each environment step costs wall-clock time, hardware wear, and exposure to safety risk.
+A simulator narrows the gap but introduces sim-to-real mismatch,
+and the agent that crosses that gap still pays for every real rollout it then needs to fine-tune.
+Sample efficiency is not a luxury, it is what decides whether a method ever leaves the lab.
+
+\newthought{Dynamics models and Dyna-style planning.}\index{model-based RL}
+Learn a transition function $f_\theta(s, a) \approx (s', r)$ from collected experience,
+then use it to generate synthetic transitions that augment the real ones during policy updates.
+The agent improves its policy from far fewer real interactions
+because most of the gradient signal comes from the model.
+
+\newthought{Latent world models.}\index{Ha-Schmidhuber world model}
+Ha and Schmidhuber compress observations into a low-dimensional latent
+and learn dynamics in that latent space~\cite{Ha2018WorldModels}.
+A vision module encodes pixels, a recurrent memory module predicts future latents,
+and a small controller is trained entirely on the imagined rollouts.
+
+\newthought{Dreamer and latent imagination.}\index{Dreamer}
+Dreamer learns a recurrent state-space model jointly with a reward predictor
+and trains an actor-critic on trajectories rolled out in latent space~\cite{Hafner2020Dreamer}.
+Backpropagating value gradients through the imagined dynamics
+turns the world model into a differentiable simulator that the policy can be optimised against.
+
+\newthought{Curiosity-driven exploration.}\index{curiosity}\index{ICM}
+When extrinsic reward is sparse, an intrinsic bonus for visiting states the model fails to predict
+gives the agent a reason to explore.
+The Intrinsic Curiosity Module measures novelty as forward-model prediction error~\cite{Pathak2017Curiosity},
+turning the world model itself into a source of exploration signal.
+
+\newthought{Random Network Distillation.}\index{RND}
+Prediction-error curiosity has a known failure mode,
+the agent fixates on stochastic noise it can never learn to predict.
+Random Network Distillation replaces the forward model with a frozen random target
+and rewards the inability of a learned network to match it~\cite{Burda2019RND},
+yielding a novelty signal that ignores irreducible randomness in the observation.
+
+\newthought{Physics priors and inductive biases.}\index{physics-informed}
+Pure data-driven dynamics drift over long horizons because nothing penalises non-physical predictions.
+Physics-informed neural networks add a residual loss that anchors the model to known equations of motion~\cite{Raissi2019PINN},
+and Lagrangian or Hamiltonian parameterisations build conservation laws into the architecture itself
+so that imagined rollouts respect the structure of the real world.
+
+\newthought{In order to move from trial and error in the real world to planning in imagination}
+we have good reason to find ways to,
 \begin{itemize}
-    \item learn dynamics models that predict future states and rewards from current states and actions, enabling mental simulation.
-    \item drive exploration via intrinsic motivation so that the agent seeks novel states even when extrinsic rewards are sparse.
-    \item constrain the model with physics priors so that errors do not compound unchecked over long planning horizons.
+    \item learn dynamics models from collected experience,
+    so that policy improvement is paid for in GPU time rather than hardware wear.
+    \item train policies on rollouts inside the learned model,
+    treating the world model as a differentiable simulator the agent can be optimised against.
+    \item drive exploration with intrinsic signals derived from the model,
+    so that sparse extrinsic reward does not stall learning.
+    \item encode physical structure as prior or as architecture,
+    so that errors in the imagined dynamics do not compound unchecked across long horizons.
 \end{itemize}
 
+\newthought{The fundamental question} this chapter answers is whether an agent can learn enough
+about its environment to do most of its thinking in its own head,
+trading expensive real interaction for cheap imagined rollouts
+without losing touch with the world it eventually has to act in.
+
+\iffalse
 \subsection{Hands On Experience}
 
 \begin{marginfigure}
@@ -161,6 +228,8 @@ A robot explores a room. The TV shows random static. Why might prediction-error 
 
 You are building a world model for a quadruped robot. Which sub-problems benefit most from a physics prior, and which are better left to data?
 
+
+\fi
 
 \section{Self-Reflection and Recap}
 

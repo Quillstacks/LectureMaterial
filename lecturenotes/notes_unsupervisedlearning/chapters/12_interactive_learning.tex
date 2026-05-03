@@ -9,21 +9,105 @@
 % BLOCK 1: INTRODUCTION
 %═══════════════════════════════════════════════════════════════════════
 
-\section{The Why}
+\section{The Why}\index{active learning}\index{imitation learning}
 
-\marginnote{Humans are expensive but informative; use them wisely.}
+\marginnote{\newthought{Demonstration.}\index{demonstration} A trajectory of state-action pairs
+recorded from a competent actor, usually a human, sometimes a scripted controller.
+A demonstration carries more information per second of human time than a scalar reward,
+because every action labels a state.}
 
-Sometimes the model needs guidance that cannot come from data alone. Active learning\index{active learning} queries labels for the most informative examples. Human-in-the-loop training provides continuous human correction. Imitation learning\index{imitation learning} learns from human demonstrations.
+\newthought{In the previous chapter} an agent learned to act from a scalar reward,
+and Bellman decomposition reduced the long-horizon credit-assignment problem to local updates.
+The decomposition is correct, but it does not make the reward less sparse,
+and across long horizons the agent burns millions of steps before any informative signal arrives.
+A human watching the same agent could correct one wrong move, demonstrate the right one,
+or rank two trajectories in seconds, each input a silver bullet that carries more information
+per second of human time than any per-example label could,
+and the methods of this chapter are built to absorb that few-shot supervision.
 
-\newthought{The goal} is to maximise learning per unit of human effort.
+\marginnote{Annotation costs scale with the task.
+A radiologist contouring a tumour costs orders of magnitude more per label
+than a crowd worker tagging a cat,
+and a human teleoperating a robot arm costs more still.
+The structural problem is to spend that budget where it changes the model the most.}
 
-\newthought{In order to move from passive data consumption to efficient human-guided learning} we have good reason to find ways to,
+\marginnote{\newthought{RL doesn't work yet.} Alex Irpan's much-cited essay catalogues the ways deep
+reinforcement learning fails in practice: sample inefficiency, brittle hyperparameters,
+reward hacking, exploration that gives up, and policies that fail to generalise.
+Worth reading before convincing yourself that scalar-reward RL is the answer to your problem.\\
+\url{https://www.alexirpan.com/2018/02/14/rl-hard.html}}
+
+\newthought{Reward learning is sample-inefficient,} reward functions are hard to specify,
+and exploration through random action wastes the most expensive part of the loop, the human.
+Interactive and imitation learning sidestep these failure modes
+by treating human queries, demonstrations, and preferences as first-class supervision.
+
+\newthought{Active learning.}\index{active learning}
+The learner holds a pool of unlabelled examples and a budget of queries,
+and it asks the annotator only for the labels that move the model the most.
+Uncertainty sampling queries the points where the predictive distribution is closest to uniform,
+query by committee trains an ensemble and queries where its members disagree~\cite{Settles2012ActiveLearning},
+and the choice of strategy depends on whether the model is well calibrated.
+
+\newthought{Batch active learning.}\index{batch active learning}
+Annotators label in batches, and querying $B$ near-duplicate uncertain points wastes the budget.
+Batch strategies score a set rather than a point, trading information against diversity
+through greedy selection with a coverage constraint, core-set selection,
+or BatchBALD-style joint information gain.
+
+\newthought{Behaviour cloning.}\index{behavior cloning}
+Treat expert state-action pairs as a supervised dataset and fit a policy by maximum likelihood~\cite{Pomerleau1991ALVINN}.
+The recipe is simple and it scales, but the learner is trained on the expert's state distribution
+while it acts on its own, so small errors push it off-distribution and the policy compounds them
+into large failures, the covariate shift problem.
+
+\newthought{DAgger.}\index{DAgger}
+Dataset Aggregation closes that loop by rolling out the current learner,
+querying the expert for the correct action at every state the learner visits,
+and retraining on the aggregated data~\cite{Ross2011DAgger}.
+The expert now labels the learner's own state distribution,
+which is exactly the distribution the deployed policy will face.
+
+\newthought{Inverse reinforcement learning.}\index{inverse reinforcement learning}
+Sometimes copying actions is the wrong target, because the same action means different things
+in different states, and the reward function transfers across embodiments and environments where the policy does not.
+IRL recovers the reward that explains the expert, and Maximum Entropy IRL\index{MaxEnt IRL} resolves the ambiguity
+by choosing the reward under which expert trajectories are maximally likely
+without committing to assumptions the data does not justify~\cite{Ziebart2008MaxEntIRL}.
+
+\newthought{Generative adversarial imitation learning.}\index{GAIL}
+GAIL skips the explicit reward and trains a discriminator to separate expert from learner trajectories,
+while the policy is trained to fool it~\cite{Ho2016GAIL}.
+The adversarial signal plays the role of a reward,
+and the method inherits the scalability of policy gradient methods without the brittleness of hand-designed rewards.
+
+\newthought{Reinforcement learning from human feedback.}\index{RLHF}
+At scale, the cheapest human signal is a preference between two outputs.
+Christiano and colleagues showed that a reward model fit to pairwise preferences
+suffices to align an RL agent with hard-to-specify objectives~\cite{Christiano2017Preferences},
+and InstructGPT extended the recipe to language models through supervised fine-tuning,
+reward modelling, and PPO optimisation~\cite{Ouyang2022InstructGPT}.
+Direct Preference Optimisation\index{DPO} later showed that the reward model can be folded into the policy loss itself,
+removing the RL stage~\cite{Rafailov2023DPO}.
+
+\newthought{In order to move from passive data consumption to efficient human-guided learning}
+we have good reason to find ways to,
 \begin{itemize}
-    \item select the most informative examples for labelling so that each annotation maximises model improvement.
-    \item learn policies from expert demonstrations without requiring an explicit reward function.
-    \item address the covariate shift that causes imitated policies to compound small errors over time.
+    \item select the few examples whose labels move the model the most,
+    so that an annotation budget buys the largest possible improvement.
+    \item learn policies from expert demonstrations without an explicit reward function,
+    while controlling the covariate shift that compounding errors create.
+    \item recover the reward function that explains expert behaviour,
+    so that the learned objective transfers to environments and embodiments the demonstrations did not cover.
+    \item turn pairwise human preferences into a training signal for systems
+    whose desired behaviour is too complex to specify by hand.
 \end{itemize}
 
+\newthought{The fundamental question} this chapter answers is how to spend a fixed amount of human attention
+so that each query, demonstration, or preference teaches the model as much as possible,
+and how to keep the resulting policy robust once the human steps away.
+
+\iffalse
 \subsection{Hands On Experience}
 
 \begin{marginfigure}
@@ -303,6 +387,8 @@ A self-driving car trained via behaviour cloning veers slightly right. Why does 
 
 When would you prefer IRL over behaviour cloning?
 
+
+\fi
 
 \section{Self-Reflection and Recap}
 

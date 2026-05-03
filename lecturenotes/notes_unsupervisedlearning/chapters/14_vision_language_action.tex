@@ -11,21 +11,107 @@
 
 \section{The Why}
 
-\marginnote{Humans imagine consequences before acting; can machines learn to do the same?}
+\marginnote{\newthought{VLA.}\index{VLA} A vision-language-action model is a single neural network
+that ingests pixels and a language instruction and emits an action,
+where the action can be a motor command for a robot arm,
+a click on a screen, or a call to an external tool.
+The backbone is usually a vision-language model lifted from web-scale pretraining,
+with an action head bolted on top.}
 
-Model-free RL learns from experience, but it is sample-inefficient, requiring millions of environment interactions; unsafe, because learning by trial-and-error can be dangerous; and non-transferable, because the agent must relearn for each new task.
+\newthought{In the previous chapter} world models gave us imagined experience built
+from the agent's own rollouts, a dynamics network rolled forward in latent space.
+This chapter inherits imagined experience from a different source,
+the web-scale corpora behind today's vision-language models,
+and bolts an action head on top so the same backbone can move a robot arm or call an API.
 
-\newthought{Model-based RL}\index{model-based RL} learns a model of the world, enabling planning by simulating actions before taking them, imagination by generating synthetic experience for training, and sample efficiency by learning from fewer real interactions.
+\marginnote{\newthought{Open X-Embodiment}~\cite{Padalkar2024OpenXEmbodiment} pooled
+roughly one million robot trajectories across 22 embodiments and 21 institutions,
+the closest thing the field has to an ImageNet for manipulation.
+It is still four orders of magnitude smaller than the image-text corpora that train the backbones
+the action head sits on, which is the structural fact that motivates this chapter.}
 
-\newthought{Vision-Language-Action models}\index{VLA} represent the frontier: systems that see, understand language, and act in the physical world.
+\newthought{Embodiment is the bottleneck.}
+A robot arm produces orders of magnitude less data than the open web,
+each demonstration is expensive to collect,
+demonstrations are tied to one robot body and one lab,
+and the action space differs between every platform.
+The structural problem is to generalise across tasks, modalities, and embodiments
+while learning the action abstraction from a few thousand demonstrations
+rather than from a billion image-text pairs.
 
-\newthought{In order to move from trial-and-error to planning in imagination} we have good reason to find ways to,
+\newthought{CLIP as a policy backbone.}\index{CLIP}
+The first thread reuses a frozen vision-language encoder as the perceptual front end of a policy.
+CLIP~\cite{Radford2021CLIP} aligned images and text in a shared embedding space,
+and the same embedding lets a downstream controller condition on a natural language goal
+without ever training language understanding from robot data.
+The policy learns the action mapping; the backbone supplies the semantics.
+
+\newthought{PaLM-E.}\index{PaLM-E}
+PaLM-E~\cite{Driess2023PaLME} injects visual and sensor tokens directly into a large language model,
+so the same network that answers a question about an image can also output a high-level plan for a robot.
+The model treats embodied reasoning as just another language task,
+and the chain of thought becomes a chain of actions.
+
+\newthought{RT-1.}\index{RT-1}
+RT-1~\cite{Brohan2022RT1} is the Robotics Transformer,
+trained on 130k real demonstrations across hundreds of tasks.
+Continuous motor commands are discretised into a small vocabulary of action tokens,
+the same tokeniser trick that lets language models predict words now lets a transformer predict torques.
+The architecture is unremarkable; the data collection is the contribution.
+
+\newthought{RT-2.}\index{RT-2}
+RT-2~\cite{Brohan2023RT2} closes the loop the other way,
+fine-tuning a vision-language model so that action tokens live in the same vocabulary as words.
+Web-scale priors transfer directly into the policy,
+and the model generalises to objects and instructions that no robot demonstration ever covered.
+The action head is no longer a separate module, it is a few extra tokens in the language model's output.
+
+\newthought{OpenVLA and SmolVLA.}\index{OpenVLA}
+OpenVLA~\cite{Kim2024OpenVLA} is a 7B-parameter open-weights VLA trained on Open X-Embodiment,
+giving the research community a reproducible baseline at frontier scale.
+SmolVLA~\cite{Shukor2025SmolVLA} pushes in the opposite direction,
+asking how small the backbone can shrink before generalisation collapses,
+and whether a laptop-class model can still drive a real robot.
+
+\newthought{Action head design.}
+How the policy emits an action turns out to matter as much as the backbone.
+RT-1 and RT-2 discretise each degree of freedom into bins and predict tokens autoregressively,
+while $\pi_0$~\cite{Black2024Pi0} replaces the discretiser with a flow matching head
+that produces continuous action chunks in a single forward pass.
+The choice trades off precision, latency, and how cleanly the head bolts onto a language backbone.
+
+\newthought{Sim-to-real and generalist policies.}\index{sim-to-real}
+Because real demonstrations are scarce, much of the training happens in simulation,
+with domain randomisation~\cite{Tobin2017DomainRandomization} forcing the policy to ignore
+visual details that will not survive the transfer to a real lab.
+Octo~\cite{Octo2024GeneralistPolicy} pushes the same idea across embodiments,
+training one policy on a heterogeneous mix of robots and asking the model to figure out which body it controls.
+
+\newthought{Agentic and tool-using extensions.}
+The action abstraction stretches well beyond motor torques.
+ReAct~\cite{Yao2023ReAct} interleaves reasoning steps with tool calls,
+Toolformer~\cite{Schick2023Toolformer} teaches a language model to invoke APIs as part of generation,
+and Code as Policies~\cite{Liang2023CodeAsPolicies} emits Python that drives a robot or a browser.
+At this point the boundary between a robot policy and a software agent is mostly cosmetic,
+both are vision-language models with an action head, and the action space is whatever the world will accept.
+
+\newthought{In order to move from web-scale perception to web-scale action} we have good reason to find ways to,
 \begin{itemize}
-    \item learn dynamics models that predict future states and rewards from current states and actions, enabling mental simulation.
-    \item drive exploration via intrinsic motivation so that the agent seeks novel states even when extrinsic rewards are sparse.
-    \item unify vision, language, and action in a single architecture so that web-scale knowledge transfers to robotic control.
+    \item bolt an action head onto a pretrained vision-language backbone
+    so that perception and language understanding transfer for free into control.
+    \item choose an action representation, discrete tokens or continuous flow matching,
+    that matches the precision and latency budget of the target embodiment.
+    \item pool demonstrations across robot bodies and tasks,
+    so that the policy learns embodiment-invariant skills rather than memorising one lab.
+    \item stretch the action space from motor torques to API calls,
+    so that the same architecture drives a robot arm, a browser, and a code interpreter.
 \end{itemize}
 
+\newthought{The fundamental question} this chapter answers is whether a model
+that learned the world from text and pixels alone
+can be taught to act in it with only a thin layer of demonstration on top.
+
+\iffalse
 \subsection{Hands On Experience}
 
 \begin{marginfigure}
@@ -315,6 +401,7 @@ A robot explores a room. The TV shows random static. Why might curiosity-driven 
 
 Why might a VLA trained on internet data generalise better than a robot-only model?
 
+\fi
 
 \section{Self-Reflection and Recap}
 
@@ -351,7 +438,7 @@ Why might a VLA trained on internet data generalise better than a robot-only mod
 
 \marginnote{\newthought{feedback}}
 
-
+\iffalse
 
 
 
@@ -951,3 +1038,5 @@ if all(is_empty(region) for region in table_regions()):
 \newthought{Trace the arc explicitly.} Acts I and II of the course were geometry: clusters in $\mathbb{R}^d$, then embeddings that bent that geometry to match meaning. Act III was epistemic supervision: zero-shot transfer, self-supervised pretext, learning without labels by exploiting structure already in the data. Act IV was noisy supervision: weak labels, demonstrations, judges, the Snorkel-shaped pipelines that scale annotation past what humans can do alone. The reinforcement learning lecture added reward and made action explicit. The world models lecture added imagination and let the agent rehearse before acting. This last lecture took those threads and let the agent act in any space we are willing to define for it.
 
 \newthought{The course is finished; the field is not.} The seven acts above each took a decade or more to crystallise into the form we taught here, and each rests on assumptions that the next decade will probably revise. The action abstraction is the youngest of them and the most likely to keep moving. What we can say with some confidence is that the substrate is shared; that the unsupervised, self-supervised, and weakly-supervised learning we have spent fourteen chapters on is the part that does not change when the action space does; and that whatever the next embodiment turns out to be, the lectures you have just finished are the part that survives.
+
+\fi
