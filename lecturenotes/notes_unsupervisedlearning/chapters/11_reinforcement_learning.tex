@@ -3,27 +3,151 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Reinforcement Learning Fundamentals}\index{Reinforcement Learning}\index{DQN}\index{PPO}
-\newthought{Learning from rewards, not labels.}
+\newthought{Playing Atari.}
 
-%═══���═══════════════════════════════════════════════════════════════════
+%══════════════════════════════════════════════════════════════════════
 % BLOCK 1: INTRODUCTION
 %═══════════════════════════════════════════════════════════════════════
 
-\section{The Why}
+\section{The Why}\index{reinforcement learning}\index{reward}\index{credit assignment}
 
-\marginnote{Many tasks provide rewards, not labels: games, robotics, trading.}
+\marginnote{\newthought{Reward.}\index{reward} A scalar number returned by the environment after an action,
+carrying no information about which action would have been better, no gradient,
+no class identity, only a magnitude and a sign. Let's extract signal yet again.}
 
-Supervised learning needs labelled data. But many important tasks only provide sparse feedback: games give a win or loss after many moves, robotics reports task success after many actions, dialogue systems receive user satisfaction at conversation end, and trading yields profit after many trades.
+\newthought{In the previous chapter} supervision still arrived as labels, 
+but a label on a single input cannot transmit a sequence of decisions
+or the consequences of one action on the next.
+Reinforcement learning answers a complementary question:
+What if the supervision is a scalar reward and depends on the sequence of actions a model takes?
 
-\newthought{Reinforcement learning}\index{reinforcement learning} learns from rewards, scalar feedback indicating how good an action was. The agent must explore to discover good actions, exploit known good actions for reward, and handle delayed rewards through credit assignment\index{credit assignment}.
 
-\newthought{In order to move from dense supervision to learning from sparse, delayed rewards} we have good reason to find ways to,
+
+\marginnote{\newthought{Simulation as substrate.}\index{simulation}\index{sim-to-real} 
+Most reinforcement learning happens inside a simulator, 
+since collecting millions of transitions on real hardware is prohibitive. 
+The simulator's reward and transition function are perfect inside the sim and biased outside it, 
+and the resulting sim-to-real gap is the central practical concern.}
+
+
+\newthought{Markov decision processes.}\index{Markov Decision Process}
+The setting is formalised~\cite{Bellman1961} as a tuple of a state $s$, an action $a$,
+a transition probability $P(s' \mid s, a)$, a reward $r(s, a)$, and a discount factor $\gamma \in [0, 1)$.
+The Markov property requires that the next state depends only on the current state and action,
+which lets the agent reason forward without dragging the past along,
+while $\gamma$ downweights rewards $t$ steps in the future by $\gamma^t$, keeping the sum of returns finite over infinite horizons.
+
+
+\marginnote{\newthought{Pressure One: Credit assignment.}\index{credit assignment} The reward arrives 
+long after the action that helped earned it. Bellman decomposition turns the long-horizon problem 
+into a local fixed-point one.}
+
+\newthought{Bellman equations.}\index{Bellman equation}
+The value of a state under policy $\pi$ is the expected discounted return when starting in $s$ 
+and following $\pi$ from then on.
+Bellman's insight is that this value satisfies a local recursion:
+The value of a state equals the expected immediate reward plus the discounted expected value of the next state.
+This turns long-horizon optimisation into a fixed-point problem which suits Markovian dynamics.
+
+
+\marginnote{\newthought{Model and policy.}\index{model}\index{policy} A model $\theta$ is the bag of parameters that 
+gradient descent updates. A policy $\pi$ is the behaviour rule the agent acts under, mapping states to actions. 
+The two coincide in policy-gradient methods, where $\theta$ directly parameterises $\pi_\theta$, 
+but separate in value-based methods, where $\theta$ parameterises a value function $Q_\theta$ 
+and the policy is derived from it as greedy or $\varepsilon$-greedy.}
+
+
+
+\newthought{Value-based methods learn what each action is worth.}\index{Q-learning}\index{DQN}
+A Q-learning agent maintains an action-value table and bootstraps each estimate against the next,
+converging to the optimum even when behaviour is off-policy.
+The Deep Q-Network, DQN, scales the table to a neural network for high-dimensional inputs,
+which means a single set of weights now produces the value for every state-action pair,
+and updating the weights for one state changes the values for all of them.
+Two instabilities follow.
+
+\newthought{Replay Buffer}\index{replay buffer}
+First, the agent's experience is a stream of correlated transitions:
+Each new state is the consequence of the previous one,
+and the agent often spends long stretches in similar regions of the environment.
+A network trained directly on this stream overfits to whatever region the agent is currently in
+and forgets what it learned about earlier ones.
+The experience replay buffer stores past transitions in a large pool
+and samples minibatches uniformly from it,
+so each gradient step sees a mix of transitions from many different points in time. Notice 
+that this quickly becomes a compute bottleneck and does not scale.
+
+\newthought{Target Network}\index{target network}
+Second, the bootstrapped target uses the same network whose weights we are updating,
+so each update changes both the predictions and the targets they are regressing against,
+and convergence is unstable because the network is chasing a target that moves with it.
+A target network is a slow-updating copy used only to compute that target,
+kept frozen for thousands of steps so the online network has a stable regression problem
+to converge to before the target shifts.
+
+\marginnote{\newthought{Pressure Two: Stability.}\index{stability} Bootstrapped value estimates and policy gradients can amplify their own noise. Replay buffers, target networks, and trust regions stop the loop from running away.}
+
+\newthought{Policy-based methods learn the action rule directly.}\index{policy gradient}\index{REINFORCE}\index{actor-critic}\index{advantage function}
+A value-based method learns what each action is worth and then acts greedily,
+deriving the policy from the value estimates.
+A policy-based method skips the value function and parameterises a stochastic policy $\pi_\theta(a \mid s)$
+that outputs the probability of each action directly. This also allows for continuous action spaces, 
+where a value-based method regresses.
+The policy gradient theorem turns the long-run expected return into a quantity we can backpropagate against,
+and applies it by rolling out a trajectory, observing the return,
+and nudging $\pi_\theta$ to make the actions that led to high return more likely
+and those that led to low return less likely.
+
+\marginnote{\newthought{Off-policy vs on-policy.}\index{off-policy}\index{on-policy} Q-learning and DQN learn from data collected under any behaviour, including a replay buffer of past transitions. Policy-gradient methods need data collected under the current policy, which is why trust regions matter: They control how far the new policy can drift before the old data stops applying.}
+
+\newthought{Trust regions and clipping.}\index{PPO}\index{trust region}
+Policy-gradient methods are on-policy: The gradient is computed under the old policy,
+so if a single update moves the new policy too far the data no longer applies
+and performance collapses.
+Trust-region methods address this by explicitly constraining the size of the policy update,
+which requires a second-order optimisation step that is expensive to compute. Proximal Policy Optimisation, PPO~\cite{Schulman2017PPO}, replaces the explicit constraint with a much simpler clipping trick.
+Each action in a trajectory has a probability under the old policy and a probability under the new policy,
+and their ratio measures how much the policy has shifted on that action since the last update.
+PPO clips this ratio to a narrow band around one, typically $[0.8, 1.2]$,
+before plugging it into the policy-gradient update.
+The width of the band opts for stability over sample efficiency.
+\marginnote{\newthought{Pressure Three: Exploration.}\index{exploration} Without enough variety in the data, the agent never sees the actions whose value it has yet to estimate. Exploration is the open subfield that supplies that variety.}
+
+\newthought{Trade-off Exploration and Exploitation.}\index{exploration}\index{exploitation}
+Every method above needs a behaviour rule for collecting data,
+and that rule has to balance two pressures.
+Exploit what is currently known to be good so reward is collected,
+explore actions that are uncertain so the value estimates can improve.
+$\varepsilon$-greedy, and entropy bonuses on the policyare the instruments that show up everywhere in practice,
+and the design of better exploration is an open subfield in its own right.
+
+
+\marginnote{\newthought{Atari and Go.}\index{Atari}\index{Go} A DQN agent learned to play forty-nine Atari games
+from raw pixels and a single score signal~\cite{Mnih2015DQN}. The score arrives at the end of a life
+or an episode, not after each frame, and the agent has to figure out by itself which of the thousands
+of intermediate joystick presses earned it.}
+
+\newthought{In order to move to learning from a scalar, model dependant reward} we have good reason to find ways to,
 \begin{itemize}
-    \item formalise sequential decision problems as Markov Decision Processes and derive optimal policies from value functions.
-    \item learn action values from experience via temporal-difference updates, and scale these to large state spaces with neural networks.
-    \item optimise policies directly via gradient ascent on expected return, with variance reduction and clipping for stability.
+    \item formalise sequential decision problems as Markov Decision Processes
+    and decompose long-horizon value into a local Bellman recursion.
+    \item learn action values by bootstrapping each estimate against the next,
+    and stabilise the neural-network case with a replay buffer for decorrelated samples and a target network for a fixed regression target.
+    \item parameterise a stochastic policy directly and update it by rolling out trajectories
+    and reweighting actions according to the returns they led to.
+    \item constrain how far each policy update is allowed to move from the previous one,
+    so that the data collected under the old policy still informs the new one.
+    \item collect informative experience under uncertainty,
+    balancing exploitation of known reward against exploration of unfamiliar actions.
 \end{itemize}
 
+\newthought{The fundamental question} this chapter answers is whether a single scalar reward,
+delayed and sparse, carries enough signal to teach an agent how to act,
+without any teacher ever specifying what the right action would have been.
+
+\newpage
+
+\iffalse
 \subsection{Hands On Experience}
 
 \begin{marginfigure}
@@ -306,37 +430,52 @@ Why does DQN need both experience replay and target networks?
 REINFORCE has high variance. Why does subtracting a baseline help?
 
 
+\fi
 \section{Self-Reflection and Recap}
 
-\newthought{Self-Reflection.}
+\newthought{Self-Reflection} questions to guide your thinking:
 
-\begin{enumerate}
-    \item Why does Q-learning converge to the optimal policy even when the agent follows a suboptimal behaviour policy?
-    \item Why does DQN need experience replay and target networks for stable training?
-    \item When would you prefer policy gradients over Q-learning?
-    \item How does the advantage function reduce variance compared to using raw returns?
-    \item What happens if the clipping range $\epsilon$ in PPO is too large or too small?
-    \item Why is credit assignment harder when rewards are delayed?
-    \item How does the discount factor $\gamma$ trade off short-term and long-term rewards?
-\end{enumerate}
+\begin{itemize}
+    \item Why does the Markov property let the agent reason about the future without dragging the past along, and what would change if the next state depended on the full history?
+    \item Why does the discount factor $\gamma$ exist at all, and how does $\gamma < 1$ keep the sum of returns finite over infinite horizons?
+    \item How does the Bellman recursion turn a long-horizon optimisation into a local fixed-point problem?
+    \item What does it mean for Q-learning to be off-policy, and why does that property let DQN learn from a replay buffer of past transitions?
+    \item Why does scaling the Q-table to a neural network introduce instabilities that the tabular case did not have, given that one set of weights now produces values for every state-action pair?
+    \item What problem does the experience replay buffer solve, how does uniformly sampling past transitions from a large pool address it, and where does the approach run into a compute bottleneck?
+    \item Why is a target network needed on top of the replay buffer, and what goes wrong when the target moves with the network being trained?
+    \item How is a policy-based method different from a value-based method, why does parameterising $\pi_\theta(a \mid s)$ directly let you skip learning the value function, and how does this open the door to continuous action spaces?
+    \item Why is the policy gradient theorem the key technical move that lets us treat the long-run expected return as a quantity we can backpropagate against?
+    \item Why are trust regions and PPO clipping a policy-gradient concern only, and not relevant for Q-learning?
+    \item Why does PPO clip the ratio between new and old policy probabilities to a narrow band such as $[0.8, 1.2]$, and how does the width of that band trade stability against sample efficiency?
+    \item Why does every method in this chapter need a behaviour rule for exploration, and what role do $\varepsilon$-greedy, entropy bonuses on the policy, and stochastic policies play as the three blunt instruments?
+\end{itemize}
 
 \vspace{1.5em}
 
-\newthought{Recap.}
+\newthought{Recap} of key concepts:
 
 \begin{itemize}
-    \item MDPs formalise sequential decision problems via states, actions, transitions, rewards, and a discount factor; the Bellman equations decompose value into immediate reward plus discounted future value.
-    \item Q-learning learns action values via off-policy TD updates; DQN scales this with neural networks, experience replay, and target networks.
-    \item Policy gradients optimise the policy directly; REINFORCE uses Monte Carlo returns, and variance is reduced via baseline subtraction and the advantage function.
-    \item PPO clips the probability ratio to prevent destructive policy updates, providing stable and sample-efficient optimisation.
+    \item Markov decision processes formalise sequential decision making as the tuple $(s, a, P, r, \gamma)$ with the Markov property: the next state depends only on the current state and action, and $\gamma$ downweights rewards $t$ steps in the future by $\gamma^t$ to keep returns finite over infinite horizons.
+    \item The Bellman equations decompose the value of a state into immediate reward plus discounted value of the next state, and almost every method in this chapter is a way to solve that local fixed-point problem under different practical constraints.
+    \item Value-based methods learn what each action is worth and act greedily; Q-learning is off-policy and converges in the tabular case, and DQN scales it to neural networks with an experience replay buffer that mixes correlated transitions and a target network that holds the regression target still, though replay sampling becomes a compute bottleneck at scale.
+    \item Policy-based methods skip the value function and parameterise a stochastic policy $\pi_\theta(a \mid s)$ directly, which also unlocks continuous action spaces where value-based regression struggles; the policy gradient theorem provides a backpropagatable surrogate, and PPO bounds the on-policy update by clipping the probability ratio between new and old policy to a narrow band around one.
+    \item Exploration supplies the data variety the methods above consume; $\varepsilon$-greedy, entropy bonuses on the policy, and stochastic policies are the three blunt instruments, and better exploration is an open subfield in its own right.
 \end{itemize}
 
 \vspace{2.5em}
 
-\marginnote{\newthought{Teaser.} RL is sample-hungry; learning requires millions of interactions. What if we could learn a model of the world and plan in imagination?}
+\marginnote{\newthought{Teaser.} Bellman decomposition makes long-horizon credit assignment tractable in principle. 
+In practice, sparse rewards mean infeasible many steps before any informative signal arrives. 
+What signal would shortcut all that?}
 
-\newthought{Reinforcement learning learns from trial and error.} But this is sample-inefficient: millions of environment interactions are needed, and mistakes in the real world can be costly or dangerous.
+\newthought{Reinforcement learning's hardest problem is long-horizon credit assignment.}
+Bellman decomposition reduces it to local updates,
+but across sparse, long horizons it arrives too rarely to learn from on any practical budget.
 
-\newthought{The next chapter explores world models and Vision-Language-Action models,} where an agent learns a dynamics model of its environment, plans in imagination, and acts in the real world with far fewer interactions.
+\newthought{The next chapter turns to interactive and imitation learning,}
+where we compress the long-horizon credit-assignment problem into a single demonstration,
+correction, or preference.
+Reinforcement learning derived its supervision from environmental reward;
+interactive learning derives it from few-shot demonstrations, corrections, or preferences from an annotator.
 
 \marginnote{\newthought{feedback}}
