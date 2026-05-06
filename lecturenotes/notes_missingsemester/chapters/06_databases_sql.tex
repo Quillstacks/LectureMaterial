@@ -8,6 +8,7 @@
 
 \index{PostgreSQL}\index{SQL}\index{SQLAlchemy}\index{database}\index{Alembic}\index{ORM}
 \chapter{Data Lives Here: Databases \& SQL}
+\printchapterversion{06_databases_sql}
 \newthought{Your API works. Now make it remember.}
 
 % ==============================================================================================
@@ -118,7 +119,7 @@ By the end you will have
 
 
 % ==============================================================================================
-% BLOCK 2: MAIN THEORY
+% BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
 
 \newpage
@@ -175,11 +176,7 @@ it should be gone.
 Every higher-level pattern, an ORM call, a migration, an analytics query,
 reduces to a sequence of these.
 
-
-
-% ==============================================================================================
-\newpage
-\section{PostgreSQL over SQLite}\index{PostgreSQL}\index{SQLite}
+\subsection{PostgreSQL over SQLite}\index{PostgreSQL}\index{SQLite}
 
 \newthought{SQLite\index{SQLite} is convenient.}
 The database is a single file, there is no server to install, no users,
@@ -237,6 +234,66 @@ The prompt that comes back is what your service will see when it connects
 through SQLAlchemy in the next section.
 If \texttt{psql} cannot reach the database, neither can the API; debug here
 first, before any Python is involved.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: PostgreSQL on the Server}\index{exercises}
+
+\marginnote{\newthought{Exercises} sit next to the theory they exercise.
+Each pair takes you from concept to running command on the same topic, and
+the snapshot from Block~1 is your safety net if a step goes wrong.}
+
+\newthought{Catching up via the reference tag.}\index{Git!tag}
+The course maintains a public reference repository at
+\url{https://github.com/schutera/pixelwise} with a tag at the end of every
+block.
+\texttt{v0.4} marks the end of Block~5; \texttt{v0.5} will mark the end of
+this block.
+If your repository has drifted, reset to \texttt{v0.4} before starting:
+
+\begin{verbatim}
+git fetch origin
+git reset --hard v0.4
+\end{verbatim}
+
+\newthought{Install PostgreSQL on \texttt{prod}.}
+With the theory above as the why, the how is two commands.
+On the \texttt{prod} VM, install the server and start it:
+
+\begin{verbatim}
+ssh produser@192.168.56.11
+sudo apt update
+sudo apt install -y postgresql
+sudo systemctl status postgresql
+\end{verbatim}
+
+\marginnote{\newthought{Update \texttt{setup-server.sh}.}\index{setup-server.sh}
+The provisioning script from Block~3 should now install PostgreSQL too.
+Add \texttt{postgresql} to the \texttt{apt install} line, commit, and push.
+A fresh VM provisioned from the script after this change has the database
+ready without you typing a second command.}
+
+\newthought{Create a dedicated user and database:}
+
+\begin{verbatim}
+sudo -u postgres psql -c \
+  "CREATE USER pixelwise WITH PASSWORD 'secret';"
+sudo -u postgres psql -c \
+  "CREATE DATABASE pixelwise OWNER pixelwise;"
+\end{verbatim}
+
+\newthought{Verify the connection} with the application user:
+
+\begin{verbatim}
+psql -U pixelwise -d pixelwise -h localhost
+\end{verbatim}
+
+If \texttt{psql} fails to connect, fix the credentials before going any
+further; SQLAlchemy will report the same error in a less direct way.
+A working \texttt{psql} is the foundation of everything the rest of the
+block builds on.
 
 
 
@@ -324,132 +381,9 @@ to the database before the response leaves the server.
 
 % ==============================================================================================
 \newpage
-\section{Schema Migrations with Alembic}\index{Alembic}\index{migration}
-
-\newthought{Schemas always change.}
-You design the table, deploy it, store 500 predictions.
-Then you realise you forgot a column.
-You cannot drop the table and recreate it; those 500 rows are real data.
-You need a tool that alters the live schema without losing them.
-
-\marginnote{Alembic: \url{https://alembic.sqlalchemy.org/}\\
-\newthought{The metaphor.}\index{migration}
-A migration is a recipe that describes a change to the schema and how to
-roll it back.
-The migration tool keeps an internal log of which migrations have run,
-applies new ones in order, and refuses to run the same one twice.
-The result is that the schema in the database always matches the
-migrations folder in Git.}
-
-\newthought{Alembic} is the migration tool for SQLAlchemy.
-It generates migration scripts from changes you made to the model,
-applies them in order, and tracks which migrations have run on which
-database.
-
-\begin{verbatim}
-# Initialise Alembic in the repo
-alembic init alembic
-
-# After you change app/models.py:
-alembic revision --autogenerate \
-    -m "add confidence column"
-
-# Apply the migration
-alembic upgrade head
-\end{verbatim}
-
-\marginnote{\newthought{The autogenerate is a draft, not a final answer.}
-Alembic compares the model in code against the schema in the database and
-guesses what changed.
-For straightforward additions it gets it right; for renames or splits it
-needs a human to read the generated script and adjust it.
-Always read the migration before you run it.}
-
-\newthought{In a real system} with millions of rows and live traffic, you
-cannot just drop and recreate.
-Migrations are how schemas evolve safely, in production, with the
-application running.
-This topic is covered in much more depth in dedicated database and backend
-courses; here we run one migration end to end so the cycle of edit-model,
-generate-migration, apply-migration is concrete.
-
-\marginnote{\newthought{Sidenote: Redis.}\index{Redis}
-Redis is an in-memory key-value store with sub-millisecond reads.
-It is the right tool for caching, session storage, and rate-limit counters.
-For PixelWise, every drawing is unique pixel data, so the cache hit rate
-would be effectively zero; we mention it so you recognise it later.\\
-Redis: \url{https://redis.io/}}
-
-
-
-% ==============================================================================================
-% BLOCK 3: STUDENT ACTIVATION
-% ==============================================================================================
-
-\newpage
-\section{Exercise: PostgreSQL on the Server}\index{exercises}
-
-\marginnote{\newthought{Exercises} mirror the four theory sections in order.
-The database first, then the schema in Python, then the migration, with
-the API wiring threaded through each step.}
-
-\newthought{Catching up via the reference tag.}\index{Git!tag}
-The course maintains a public reference repository at
-\url{https://github.com/schutera/pixelwise} with a tag at the end of every
-block.
-\texttt{v0.4} marks the end of Block~5; \texttt{v0.5} will mark the end of
-this block.
-If your repository has drifted, reset to \texttt{v0.4} before starting:
-
-\begin{verbatim}
-git fetch origin
-git reset --hard v0.4
-\end{verbatim}
-
-\newthought{Block~2 introduced PostgreSQL} as the production database.
-On the \texttt{prod} VM, install the server and start it:
-
-\begin{verbatim}
-ssh produser@192.168.56.11
-sudo apt update
-sudo apt install -y postgresql
-sudo systemctl status postgresql
-\end{verbatim}
-
-\marginnote{\newthought{Update \texttt{setup-server.sh}.}\index{setup-server.sh}
-The provisioning script from Block~3 should now install PostgreSQL too.
-Add \texttt{postgresql} to the \texttt{apt install} line, commit, and push.
-A fresh VM provisioned from the script after this change has the database
-ready without you typing a second command.}
-
-\newthought{Create a dedicated user and database:}
-
-\begin{verbatim}
-sudo -u postgres psql -c \
-  "CREATE USER pixelwise WITH PASSWORD 'secret';"
-sudo -u postgres psql -c \
-  "CREATE DATABASE pixelwise OWNER pixelwise;"
-\end{verbatim}
-
-\newthought{Verify the connection} with the application user:
-
-\begin{verbatim}
-psql -U pixelwise -d pixelwise -h localhost
-\end{verbatim}
-
-If \texttt{psql} fails to connect, fix the credentials before going any
-further; SQLAlchemy will report the same error in a less direct way.
-A working \texttt{psql} is the foundation of everything the rest of the
-block builds on.
-
-
-
-% ==============================================================================================
-\newpage
 \section{Exercise: The \texttt{Prediction} Model}\index{exercises}
 
-\newthought{Block~2 introduced SQLAlchemy} as the ORM that maps tables to
-Python classes.
+\newthought{Turn the theory above into code.}
 On \texttt{dev}, install the driver and the ORM into the virtual environment:
 
 \begin{verbatim}
@@ -580,10 +514,71 @@ That is the gap the next exercise closes.}
 
 % ==============================================================================================
 \newpage
+\section{Schema Migrations with Alembic}\index{Alembic}\index{migration}
+
+\newthought{Schemas always change.}
+You design the table, deploy it, store 500 predictions.
+Then you realise you forgot a column.
+You cannot drop the table and recreate it; those 500 rows are real data.
+You need a tool that alters the live schema without losing them.
+
+\marginnote{Alembic: \url{https://alembic.sqlalchemy.org/}\\
+\newthought{The metaphor.}\index{migration}
+A migration is a recipe that describes a change to the schema and how to
+roll it back.
+The migration tool keeps an internal log of which migrations have run,
+applies new ones in order, and refuses to run the same one twice.
+The result is that the schema in the database always matches the
+migrations folder in Git.}
+
+\newthought{Alembic} is the migration tool for SQLAlchemy.
+It generates migration scripts from changes you made to the model,
+applies them in order, and tracks which migrations have run on which
+database.
+
+\begin{verbatim}
+# Initialise Alembic in the repo
+alembic init alembic
+
+# After you change app/models.py:
+alembic revision --autogenerate \
+    -m "add confidence column"
+
+# Apply the migration
+alembic upgrade head
+\end{verbatim}
+
+\marginnote{\newthought{The autogenerate is a draft, not a final answer.}
+Alembic compares the model in code against the schema in the database and
+guesses what changed.
+For straightforward additions it gets it right; for renames or splits it
+needs a human to read the generated script and adjust it.
+Always read the migration before you run it.}
+
+\newthought{In a real system} with millions of rows and live traffic, you
+cannot just drop and recreate.
+Migrations are how schemas evolve safely, in production, with the
+application running.
+This topic is covered in much more depth in dedicated database and backend
+courses; here we run one migration end to end so the cycle of edit-model,
+generate-migration, apply-migration is concrete.
+
+\marginnote{\newthought{Sidenote: Redis.}\index{Redis}
+Redis is an in-memory key-value store with sub-millisecond reads.
+It is the right tool for caching, session storage, and rate-limit counters.
+For PixelWise, every drawing is unique pixel data, so the cache hit rate
+would be effectively zero; we mention it so you recognise it later.\\
+Redis: \url{https://redis.io/}}
+
+
+
+% ==============================================================================================
+\newpage
 \section{Exercise: First Migration with Alembic}\index{exercises}
 
-\newthought{Block~2 introduced Alembic} as the migration tool for SQLAlchemy.
-Initialise it and configure it to use the same engine as the application:
+\newthought{Initialise Alembic in the repo.}
+With the migration cycle from the theory above in mind, configure the tool
+to use the same engine as the application:
 
 \begin{verbatim}
 pip install alembic
@@ -674,6 +669,9 @@ API, and PixelWise becomes accessible from a browser at a real URL.}
 
 
 % ==============================================================================================
+% BLOCK 3: CONSOLIDATION
+% ==============================================================================================
+
 \newpage
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}
 

@@ -4,11 +4,13 @@
 
 \index{Git}\index{GitHub}\index{version control}
 \chapter{Version Everything: Git \& GitHub}
+\printchapterversion{02_git_github}
 \newthought{Git a Life.}
 
-% ==============================================================================
-% SESSION A: THEORY
-% ==============================================================================
+
+% ==============================================================================================
+% BLOCK 1: INTRODUCTION
+% ==============================================================================================
 
 % -----------------------------------------------------------------------------
 \section{The Why}
@@ -89,6 +91,10 @@ By the end you will have
 \end{itemize}
 
 
+
+% ==============================================================================================
+% BLOCK 2: CONCEPTS AND PRACTICE
+% ==============================================================================================
 \newpage
 % -----------------------------------------------------------------------------
 \section{The Git Data Model}\index{Git!data model}
@@ -140,237 +146,6 @@ for keeping these artefacts out of the repository.
 
 
 
-
-% -----------------------------------------------------------------------------
-\newpage
-\section{The Staging Workflow}\index{Git!staging}
-
-\marginnote{\newthought{The napkin cycle} as easy as it gets:\\
-\texttt{git pull}\\
-\texttt{git add <files>}\\
-\texttt{git commit -m "..."}\\
-\texttt{git push}\\
-Pull the latest changes, stage your work, commit it, push it. Every other command is a variation on this loop.}
-
-\newthought{Git has three areas:}
-
-\begin{itemize}
-    \item \emph{Working directory}\index{Git!working directory} The files on disk. What you edit.
-    \item \emph{Staging area}\index{Git!staging area} What you have marked for the next commit. A deliberate selection.
-    \item \emph{Repository}\index{Git!repository} The committed history. Permanent, immutable snapshots.
-\end{itemize}
-
-\newthought{The core commands:}
-
-\marginnote{Write commit messages in the imperative mood: ``Add classifier module'' not ``Added classifier module.''
-The message completes the sentence ``This commit will \ldots''. Keep the first line under 72 characters.
-For a gallery of how not to do it, visit \url{https://whatthecommit.com}.}
-\begin{verbatim}
-git status              # what changed? what is staged?
-git add file.py         # stage a file for the next commit
-git add .               # stage everything (use with care)
-git commit -m "message" # commit the staged changes
-git diff                # unstaged changes vs last commit
-git diff --staged       # staged changes vs last commit
-git log                 # show commit history
-git log --oneline       # compact view: one line per commit
-\end{verbatim}
-
-\marginnote{\newthought{When to commit?}
-Commit when you have completed one logical change: a bug fix, a new function, a config update.
-If you struggle to write a short commit message, you probably changed too many things at once.
-If you go hours without committing, you are accumulating risk.
-Small, frequent commits make history useful; large, rare commits make it a wall of text.}
-
-\marginnote{\texttt{(\textbackslash\quad/)}\\
-\texttt{(O.o)}\\
-\texttt{(>\quad<)} Bunny approves these changes.}
-
-% -----------------------------------------------------------------------------
-\section{Branching and Merging}\index{Git!branching}\index{Git!merging}
-
-\newthought{Branches let you work on ideas in isolation.} The \texttt{main} branch is the stable baseline.
-Feature branches diverge, evolve, and merge back when ready.
-
-\begin{verbatim}
-git branch                   # list branches
-git branch feature-x         # create a new branch
-git checkout feature-x       # switch to it
-git checkout -b feature-y    # create and switch in one step
-git branch -d feature-x      # delete after merge
-\end{verbatim}
-
-\marginnote{Delete branches after merging. Stale branches accumulate fast
-and make \texttt{git branch} unreadable. If the branch is merged, it is safe to delete;
-the history lives on in \texttt{main}.}
-
-\newthought{When the feature is ready,} merge it back and clean up:
-
-\begin{verbatim}
-git checkout main
-git merge feature-x
-git branch -d feature-x
-\end{verbatim}
-
-% -----------------------------------------------------------------------------
-\subsection{Merge Conflicts}\index{Git!merge conflict}
-
-\newthought{A merge conflict} occurs when two branches changed the same line in the same file.
-Git cannot decide which version to keep, so you must resolve it manually.
-
-\marginnote{Edit the file to keep the correct version and remove the markers.
-Then stage the resolved file with \texttt{git add file.py}
-and commit with \texttt{git commit -m "Resolve merge conflict in file.py"}.}
-
-\newthought{Git marks the conflict} in the file. The block between \texttt{<<<<<<< HEAD} and \texttt{=======}
-is what the current branch has; \texttt{HEAD} always means ``the commit you are on right now.''
-The block between \texttt{=======} and \texttt{>>>>>>> feature-x} is what the incoming branch has.
-
-\begin{verbatim}
-<<<<<<< HEAD
-result = model.predict(x)
-=======
-result = classifier.classify(x)
->>>>>>> feature-x
-\end{verbatim}
-
-% -----------------------------------------------------------------------------
-\section{Tags}\index{Git!tags}
-
-\newthought{A tag marks a point in history that matters:} a release, a milestone, a known-good state.
-
-\begin{verbatim}
-git tag v0.1                          # lightweight tag
-git tag -a v0.1 -m "initial setup"    # annotated tag (preferred)
-git push --tags                       # push tags to remote
-\end{verbatim}
-
-\marginnote{Lightweight tags are just a name pointing to a commit. Annotated tags store the tagger,
-date, and message; use them for releases. We tag \texttt{v0.1} today; the tag becomes meaningful
-when you look back at it in Block~8.\\[0.5em]
-\texttt{tig}\index{tig} is a terminal-based Git browser that makes it easy to navigate commits, branches, and tags
-on a headless Ubuntu machine. Install with \texttt{sudo apt install tig}.\\
-\url{https://jonas.github.io/tig/}}
-
-\newthought{Semantic versioning}\index{semantic versioning} gives tag names a shared meaning.
-A version number follows the pattern \texttt{MAJOR.MINOR.PATCH}.
-Increment \texttt{PATCH} for bug fixes that do not change behaviour,
-\texttt{MINOR} for new features that remain backwards-compatible,
-and \texttt{MAJOR} when you introduce breaking changes.
-A jump from \texttt{v1.2.3} to \texttt{v1.3.0} tells users
-that something was added but nothing they depend on was removed.
-A jump to \texttt{v2.0.0} warns them to check for incompatibilities.
-
-\marginnote{Semantic Versioning: \url{https://semver.org}}
-
-% -----------------------------------------------------------------------------
-\section{Remotes and GitHub}\index{Git!remotes}\index{GitHub}
-
-
-
-
-\begin{verbatim}
-    git clone <url>              # copy a remote repo locally
-    # fork: copy repo to your GitHub account (GitHub UI, not a git command)
-    git remote add origin git@github.com:user/pixelwise.git
-\end{verbatim}
-
-\newthought{A remote} is a copy of your repository on another machine, usually GitHub.
-
-\newthought{Clone and fork}\index{Git!clone}\index{Git!fork} are two ways to 
-start from an existing repository.
-
-A \texttt{fork}\index{fork} is a GitHub concept, not a Git command.
-It creates a full copy of someone else's repository under your own GitHub account.
-You clone your fork locally, work on it freely, and propose changes back to the original via a pull request.
-Forking is the standard workflow for contributing to open-source projects where you do not have write access to the original repository.
-
-\marginnote{GitHub is not Git. Git is the version control system; GitHub is a hosting platform
-that adds pull requests\index{pull request}, issues\index{issues}, CI/CD, and collaboration features on top of Git.
-Alternatives include GitLab and Bitbucket.\\
-GitHub: \url{https://github.com/}\\
-GitHub Docs: \url{https://docs.github.com/}}
-
-\texttt{git clone} copies a remote repository to your local machine, keeping the original as the \texttt{origin} remote.
-You can pull updates and, if you have permission, push changes back.
-
-
-
-
-
-
-
-
-% -----------------------------------------------------------------------------
-\subsection{Pull Requests}
-
-\newthought{Push}\index{Git!push} sends your local commits to the remote.
-Until you push, your work exists only on your machine.
-
-\newthought{Fetch}\index{Git!fetch} does the opposite: it downloads new commits from the remote
-but leaves your working directory untouched, so you can inspect what changed before merging.
-
-\newthought{Pull}\index{Git!pull} combines fetch and merge in one step,
-updating your local branch to include the remote's latest commits.
-
-\begin{verbatim}
-git push -u origin main     # push and set upstream
-git pull                     # fetch + merge from remote
-git fetch                    # fetch without merging
-\end{verbatim}
-
-\newthought{The \texttt{-u} flag}\index{Git!-u flag} links your local branch to the remote branch.
-After running \texttt{git push -u origin main} once, Git remembers the connection
-and future \texttt{git push} and \texttt{git pull} work without specifying
-the remote or branch.
-
-\newthought{A pull request\index{pull request}} is a proposal to merge a branch into another branch, typically a
-feature branch into \texttt{main}. It is the standard mechanism for code review: your changes are visible,
-reviewable, and discussable before they become part of the main codebase.
-
-\marginnote{\newthought{Pull requests and CI.}\index{continuous integration}
-Because a PR represents a well-defined set of changes that has not yet reached \texttt{main},
-it is the ideal moment to run a test suite, a linter, or any other check automatically.
-If the tests fail, the merge is blocked and \texttt{main} stays healthy.
-We will wire up this automation in a later block; for now, recognise that the PR
-is where human review and machine verification meet.}
-
-% -----------------------------------------------------------------------------
-\newpage
-\subsection{The \texttt{.gitignore} File}\index{.gitignore}
-
-\newthought{Not everything belongs in version control.} The \texttt{.gitignore} file tells Git which files
-and directories to exclude from tracking:
-
-\begin{verbatim}
-# Python
-__pycache__/
-*.pyc
-.venv/
-
-# Secrets
-.env
-
-# Data and models (too large, reproducible)
-data/
-models/*.pkl
-
-# Editor files
-.vscode/
-*.swp
-\end{verbatim}
-
-\newthought{This includes all credentials:}\index{secrets} API keys, database passwords, webhook secrets,
-tokens for AI services. These live on the server in environment variables or protected
-configuration files, never in the repository.
-A leaked production database password or API key can be exploited within minutes by automated scanners.
-
-\marginnote{Git history is permanent\index{Git!history}. A secret committed once is leaked forever, even if you
-delete the file in a later commit. The old commit still contains it. \texttt{.gitignore} is your first line of defence.}
-
-% ==============================================================================
-% SESSION B: HANDS-ON
-% ==============================================================================
 
 \newpage
 % -----------------------------------------------------------------------------
@@ -503,6 +278,84 @@ Write a \texttt{README.md} with a one-line project description.
 
 
 % -----------------------------------------------------------------------------
+\newpage
+\section{The Staging Workflow}\index{Git!staging}
+
+\marginnote{\newthought{The napkin cycle} as easy as it gets:\\
+\texttt{git pull}\\
+\texttt{git add <files>}\\
+\texttt{git commit -m "..."}\\
+\texttt{git push}\\
+Pull the latest changes, stage your work, commit it, push it. Every other command is a variation on this loop.}
+
+\newthought{Git has three areas:}
+
+\begin{itemize}
+    \item \emph{Working directory}\index{Git!working directory} The files on disk. What you edit.
+    \item \emph{Staging area}\index{Git!staging area} What you have marked for the next commit. A deliberate selection.
+    \item \emph{Repository}\index{Git!repository} The committed history. Permanent, immutable snapshots.
+\end{itemize}
+
+\newthought{The core commands:}
+
+\marginnote{Write commit messages in the imperative mood: ``Add classifier module'' not ``Added classifier module.''
+The message completes the sentence ``This commit will \ldots''. Keep the first line under 72 characters.
+For a gallery of how not to do it, visit \url{https://whatthecommit.com}.}
+\begin{verbatim}
+git status              # what changed? what is staged?
+git add file.py         # stage a file for the next commit
+git add .               # stage everything (use with care)
+git commit -m "message" # commit the staged changes
+git diff                # unstaged changes vs last commit
+git diff --staged       # staged changes vs last commit
+git log                 # show commit history
+git log --oneline       # compact view: one line per commit
+\end{verbatim}
+
+\marginnote{\newthought{When to commit?}
+Commit when you have completed one logical change: a bug fix, a new function, a config update.
+If you struggle to write a short commit message, you probably changed too many things at once.
+If you go hours without committing, you are accumulating risk.
+Small, frequent commits make history useful; large, rare commits make it a wall of text.}
+
+\marginnote{\texttt{(\textbackslash\quad/)}\\
+\texttt{(O.o)}\\
+\texttt{(>\quad<)} Bunny approves these changes.}
+
+% -----------------------------------------------------------------------------
+\newpage
+\subsection{The \texttt{.gitignore} File}\index{.gitignore}
+
+\newthought{Not everything belongs in version control.} The \texttt{.gitignore} file tells Git which files
+and directories to exclude from tracking:
+
+\begin{verbatim}
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Secrets
+.env
+
+# Data and models (too large, reproducible)
+data/
+models/*.pkl
+
+# Editor files
+.vscode/
+*.swp
+\end{verbatim}
+
+\newthought{This includes all credentials:}\index{secrets} API keys, database passwords, webhook secrets,
+tokens for AI services. These live on the server in environment variables or protected
+configuration files, never in the repository.
+A leaked production database password or API key can be exploited within minutes by automated scanners.
+
+\marginnote{Git history is permanent\index{Git!history}. A secret committed once is leaked forever, even if you
+delete the file in a later commit. The old commit still contains it. \texttt{.gitignore} is your first line of defence.}
+
+% -----------------------------------------------------------------------------
 \vspace{2em}
 \section{Exercise: Staging, Committing, and .gitignore}\index{exercises}
 
@@ -524,6 +377,54 @@ Run \texttt{git log} to see your first commit. Run \texttt{git status} to confir
 \marginnote{\newthought{The habit to build:} after every commit, run \texttt{git status} and \texttt{git log -{}-oneline}
 to confirm what just happened. It takes two seconds and prevents surprises.}
 
+
+% -----------------------------------------------------------------------------
+\section{Branching and Merging}\index{Git!branching}\index{Git!merging}
+
+\newthought{Branches let you work on ideas in isolation.} The \texttt{main} branch is the stable baseline.
+Feature branches diverge, evolve, and merge back when ready.
+
+\begin{verbatim}
+git branch                   # list branches
+git branch feature-x         # create a new branch
+git checkout feature-x       # switch to it
+git checkout -b feature-y    # create and switch in one step
+git branch -d feature-x      # delete after merge
+\end{verbatim}
+
+\marginnote{Delete branches after merging. Stale branches accumulate fast
+and make \texttt{git branch} unreadable. If the branch is merged, it is safe to delete;
+the history lives on in \texttt{main}.}
+
+\newthought{When the feature is ready,} merge it back and clean up:
+
+\begin{verbatim}
+git checkout main
+git merge feature-x
+git branch -d feature-x
+\end{verbatim}
+
+% -----------------------------------------------------------------------------
+\subsection{Merge Conflicts}\index{Git!merge conflict}
+
+\newthought{A merge conflict} occurs when two branches changed the same line in the same file.
+Git cannot decide which version to keep, so you must resolve it manually.
+
+\marginnote{Edit the file to keep the correct version and remove the markers.
+Then stage the resolved file with \texttt{git add file.py}
+and commit with \texttt{git commit -m "Resolve merge conflict in file.py"}.}
+
+\newthought{Git marks the conflict} in the file. The block between \texttt{<<<<<<< HEAD} and \texttt{=======}
+is what the current branch has; \texttt{HEAD} always means ``the commit you are on right now.''
+The block between \texttt{=======} and \texttt{>>>>>>> feature-x} is what the incoming branch has.
+
+\begin{verbatim}
+<<<<<<< HEAD
+result = model.predict(x)
+=======
+result = classifier.classify(x)
+>>>>>>> feature-x
+\end{verbatim}
 
 % -----------------------------------------------------------------------------
 \newpage
@@ -603,6 +504,35 @@ Verify with \texttt{git log -{}-oneline -{}-graph} that both branches are now in
 
 
 % -----------------------------------------------------------------------------
+\section{Tags}\index{Git!tags}
+
+\newthought{A tag marks a point in history that matters:} a release, a milestone, a known-good state.
+
+\begin{verbatim}
+git tag v0.1                          # lightweight tag
+git tag -a v0.1 -m "initial setup"    # annotated tag (preferred)
+git push --tags                       # push tags to remote
+\end{verbatim}
+
+\marginnote{Lightweight tags are just a name pointing to a commit. Annotated tags store the tagger,
+date, and message; use them for releases. We tag \texttt{v0.1} today; the tag becomes meaningful
+when you look back at it in Block~8.\\[0.5em]
+\texttt{tig}\index{tig} is a terminal-based Git browser that makes it easy to navigate commits, branches, and tags
+on a headless Ubuntu machine. Install with \texttt{sudo apt install tig}.\\
+\url{https://jonas.github.io/tig/}}
+
+\newthought{Semantic versioning}\index{semantic versioning} gives tag names a shared meaning.
+A version number follows the pattern \texttt{MAJOR.MINOR.PATCH}.
+Increment \texttt{PATCH} for bug fixes that do not change behaviour,
+\texttt{MINOR} for new features that remain backwards-compatible,
+and \texttt{MAJOR} when you introduce breaking changes.
+A jump from \texttt{v1.2.3} to \texttt{v1.3.0} tells users
+that something was added but nothing they depend on was removed.
+A jump to \texttt{v2.0.0} warns them to check for incompatibilities.
+
+\marginnote{Semantic Versioning: \url{https://semver.org}}
+
+% -----------------------------------------------------------------------------
 \section{Exercise: Tags and History Browsing}\index{exercises}
 
 \newthought{Tag the release.} Mark this point in history:
@@ -632,6 +562,78 @@ Open the PixelWise folder via \texttt{code .} or Remote SSH,
 then use the Source Control panel and the GitLens extension
 to explore commits, branches, and tags with a graphical interface.}
 
+
+% -----------------------------------------------------------------------------
+\section{Remotes and GitHub}\index{Git!remotes}\index{GitHub}
+
+
+
+
+\begin{verbatim}
+    git clone <url>              # copy a remote repo locally
+    # fork: copy repo to your GitHub account (GitHub UI, not a git command)
+    git remote add origin git@github.com:user/pixelwise.git
+\end{verbatim}
+
+\newthought{A remote} is a copy of your repository on another machine, usually GitHub.
+
+\newthought{Clone and fork}\index{Git!clone}\index{Git!fork} are two ways to 
+start from an existing repository.
+
+A \texttt{fork}\index{fork} is a GitHub concept, not a Git command.
+It creates a full copy of someone else's repository under your own GitHub account.
+You clone your fork locally, work on it freely, and propose changes back to the original via a pull request.
+Forking is the standard workflow for contributing to open-source projects where you do not have write access to the original repository.
+
+\marginnote{GitHub is not Git. Git is the version control system; GitHub is a hosting platform
+that adds pull requests\index{pull request}, issues\index{issues}, CI/CD, and collaboration features on top of Git.
+Alternatives include GitLab and Bitbucket.\\
+GitHub: \url{https://github.com/}\\
+GitHub Docs: \url{https://docs.github.com/}}
+
+\texttt{git clone} copies a remote repository to your local machine, keeping the original as the \texttt{origin} remote.
+You can pull updates and, if you have permission, push changes back.
+
+
+
+
+
+
+
+
+% -----------------------------------------------------------------------------
+\subsection{Pull Requests}
+
+\newthought{Push}\index{Git!push} sends your local commits to the remote.
+Until you push, your work exists only on your machine.
+
+\newthought{Fetch}\index{Git!fetch} does the opposite: it downloads new commits from the remote
+but leaves your working directory untouched, so you can inspect what changed before merging.
+
+\newthought{Pull}\index{Git!pull} combines fetch and merge in one step,
+updating your local branch to include the remote's latest commits.
+
+\begin{verbatim}
+git push -u origin main     # push and set upstream
+git pull                     # fetch + merge from remote
+git fetch                    # fetch without merging
+\end{verbatim}
+
+\newthought{The \texttt{-u} flag}\index{Git!-u flag} links your local branch to the remote branch.
+After running \texttt{git push -u origin main} once, Git remembers the connection
+and future \texttt{git push} and \texttt{git pull} work without specifying
+the remote or branch.
+
+\newthought{A pull request\index{pull request}} is a proposal to merge a branch into another branch, typically a
+feature branch into \texttt{main}. It is the standard mechanism for code review: your changes are visible,
+reviewable, and discussable before they become part of the main codebase.
+
+\marginnote{\newthought{Pull requests and CI.}\index{continuous integration}
+Because a PR represents a well-defined set of changes that has not yet reached \texttt{main},
+it is the ideal moment to run a test suite, a linter, or any other check automatically.
+If the tests fail, the merge is blocked and \texttt{main} stays healthy.
+We will wire up this automation in a later block; for now, recognise that the PR
+is where human review and machine verification meet.}
 
 % -----------------------------------------------------------------------------
 \section{Exercise: Remotes, Push, and Clone}\index{exercises}
@@ -682,6 +684,10 @@ SSH key on \texttt{prod} and register it on GitHub the same way you did on \text
 PixelWise now lives on both machines. Run \texttt{git log -{}-oneline} on the server to confirm the full history arrived.
 
 
+
+% ==============================================================================================
+% BLOCK 3: CONSOLIDATION
+% ==============================================================================================
 \newpage
 % -----------------------------------------------------------------------------
 \section{Self-Reflection and Recap}

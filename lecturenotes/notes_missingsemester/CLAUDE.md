@@ -13,11 +13,11 @@ Each chapter is partitioned into exactly three blocks, separated by banner comme
 % ==============================================================================================
 
 % ==============================================================================================
-% BLOCK 2: MAIN THEORY
+% BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
 
 % ==============================================================================================
-% BLOCK 3: STUDENT ACTIVATION
+% BLOCK 3: CONSOLIDATION
 % ==============================================================================================
 ```
 
@@ -37,32 +37,33 @@ Two consecutive parts:
 
 > Do **not** preview architecture that later chapters actually build (frontend, reverse proxy, database wiring, etc.). Keep Block 1 scoped to what this chapter delivers.
 
-### Block 2 — Main Theory
+### Block 2 — Concepts and Practice
 
-Multiple `\section{...}` entries that present the chapter's core concepts in reading order. Conventions:
+Theory and exercise sections are interleaved as **theory→exercise pairs**, one pair per major concept. The student reads a concept and immediately practises it.
 
-- One `\section` per major concept; start each with `\newpage`.
-- Sections are ordered by dependency: concepts required to perform the next hands-on step come first. The chapter's opening figure and Block 1 learning objectives should preview the same order.
-- Do not include theory that the chapter does not operationalize. If a concept is decorative or is the load-bearing topic of a later chapter, push it there instead.
+Conventions:
+
+- Each pair is two top-level sections in this order:
+  1. `\section{<Concept>}` — the theory section.
+  2. `\section{Exercise: <Concept>}` — the matching hands-on practice.
+- Start each section with `\newpage`. Pairs are ordered by dependency: each pair builds on the previous one.
+- The exercise sequence is the spine; theory adapts to it. If a theory section has no clean exercise mirror, fold it into the closest related theory section as a `\subsection`. If an exercise has no theory mirror (an integration or wrap-up exercise), place it after all paired sections.
+- Optional or forward-looking theory sections that have no exercise belong **at the very end of Block 2**, after all paired and integration exercises, just before the BLOCK 3 banner. Title them `\section{Optional: ...}`.
+- The first exercise of the chapter carries a `\marginnote` framing exercises as practice and noting the snapshot/restore safety net when applicable.
+- The last exercise (or the last optional theory section, if any) closes Block 2 with a `\newthought{A note on what comes next.}` paragraph that motivates the next chapter.
 - Prose is Tufte-style: short paragraphs led by `\newthought{...}`, with `\marginnote{...}` for side commentary, definitions, tool pointers, and worked intuitions.
 - Code and configuration go in `verbatim` blocks.
 - Introduce concepts before they are used; first use of a term is marked with `\emph{...}` and indexed via `\index{...}`.
+- Within each exercise, sequence steps in the order a student would actually carry them out, and end with a concrete verification or artefact (a ping reply, a passwordless login, a named snapshot).
+- Do **not** lead an exercise with a phrase like "Block~N introduced X" — the theory now sits directly above; refer to it as "the theory above" or fold the lead-in into the first imperative sentence.
 
-### Block 3 — Student Activation
+### Block 3 — Consolidation
 
-Two sections, in this order:
+A single section: `\section{Self-Reflection and Recap}`.
 
-1. `\section{Examples \& Exercises}` — hands-on work that students perform.
-   - Open with a `\marginnote` framing exercises as practice, noting the snapshot/restore safety net when applicable.
-   - **Mirror the theory block one-to-one.** Each `\section` in Block 2 must have a corresponding `\subsection` in Examples & Exercises, in the same order, so a student can read a concept and then immediately practise it.
-   - A short `\newthought{Block~N introduced ...}` paragraph at the top of the section names the mirror explicitly.
-   - Within each `\subsection`, sequence steps in the order a student would actually carry them out, and end with a concrete verification or artefact (a ping reply, a passwordless login, a named snapshot).
-   - End the section with a forward-looking `\newthought{A note on what comes next.}` paragraph that motivates the next chapter.
-
-2. `\section{Self-Reflection and Recap}` — consolidation.
-   - `\newthought{Self-Reflection}` questions as an `itemize` list, covering each Block 2 section.
+   - `\newthought{Self-Reflection}` questions as an `itemize` list, covering each theory section in Block 2.
    - `\newthought{Recap}` of key concepts as an `itemize` list.
-   - Close with one or two `\marginnote` teasers bridging to the next chapter.
+   - Close with one or two `\marginnote` teasers bridging to the next chapter, plus a `\newthought{Milestone.}` paragraph summarising what the student now owns.
 
 ## Formatting rules
 

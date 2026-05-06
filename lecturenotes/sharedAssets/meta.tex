@@ -3,6 +3,29 @@
 
 \RequirePackage{qrcode}
 
+%%
+% End-of-document bibliography is built (so \cite{...} keys still resolve to
+% author/year markers wherever they appear, including margin notes) but the
+% visible thebibliography listing is suppressed: \bibitem entries are
+% processed into the .aux/.bbl pipeline so cites work, then the rendered
+% box is dropped. Literature thus lives only in margin notes, while the
+% reference machinery stays intact.
+%%
+\AtBeginDocument{%
+  \@ifundefined{thebibliography}{}{%
+    \let\hidden@oldthebibliography\thebibliography
+    \let\hidden@oldendthebibliography\endthebibliography
+    \renewenvironment{thebibliography}[1]{%
+      \setbox\z@\vbox\bgroup
+        \hsize=\textwidth
+        \hidden@oldthebibliography{##1}%
+    }{%
+        \hidden@oldendthebibliography
+      \egroup
+    }%
+  }%
+}
+
 \InputIfFileExists{version.tex}{}{}
 \providecommand{\docversionmajor}{0}
 \providecommand{\docversionminor}{0}
@@ -40,7 +63,6 @@
 % registered, the call is a silent no-op so chapter files stay safe to
 % input even when the version table has not been generated yet.
 %%
-\InputIfFileExists{chapter_versions.tex}{}{}
 \newcommand{\setchapterversion}[3]{%
   \expandafter\gdef\csname chapver@date@#1\endcsname{#2}%
   \expandafter\gdef\csname chapver@name@#1\endcsname{#3}%
@@ -51,6 +73,21 @@
     \vspace{0.25\baselineskip}%
   \fi
 }
+% Book-level stamp, set by tools/update_chapter_versions.sh from the
+% most recent commit touching the book directory. Rendered on the
+% copyright page in place of the old "Last updated, ..." line.
+\newcommand{\bookver@date}{}
+\newcommand{\bookver@name}{}
+\newcommand{\setbookversion}[2]{%
+  \renewcommand{\bookver@date}{#1}%
+  \renewcommand{\bookver@name}{#2}%
+}
+\newcommand{\printbookversion}{%
+  \ifx\bookver@date\@empty\else
+    \textit{\bookver@date{} \textperiodcentered\ \bookver@name}%
+  \fi
+}
+\InputIfFileExists{chapter_versions.tex}{}{}
 
 %%
 % Copyright page template
@@ -76,7 +113,7 @@ See the license for details.\index{license}
 
   \makecontributioninvite
 
-  \par\textit{Last updated, \monthyear\ --- v\docversion}
+  \par\printbookversion
   \end{fullwidth}
 }
 

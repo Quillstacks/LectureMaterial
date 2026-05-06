@@ -8,6 +8,7 @@
 
 \index{API}\index{FastAPI}\index{HTTP}\index{REST}\index{systemd}\index{Pydantic}\index{uvicorn}
 \chapter{The Backend: APIs \& Services}
+\printchapterversion{05_apis_services}
 \newthought{Making your code speak to the world over HTTP.}
 
 % ==============================================================================================
@@ -130,7 +131,7 @@ By the end you will have
 
 
 % ==============================================================================================
-% BLOCK 2: MAIN THEORY
+% BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
 
 \newpage
@@ -186,6 +187,63 @@ your source to integrate.
 Block~3's \texttt{DEBUG=true} flag controls whether \texttt{/docs} is exposed,
 so the same service is self-documenting in development and silent in
 production.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: HTTP, REST, and \texttt{curl}}\index{exercises}
+
+\marginnote{\newthought{Exercises} are where the theory above turns into
+keystrokes.
+Each theory section is followed by its exercise, so you can read a concept
+and practise it immediately.
+At the end of the session, take a snapshot named \texttt{B5-complete}, your
+safety net for the next block.}
+
+\newthought{Catching up via the reference tag.}\index{Git!tag}
+The course maintains a public reference repository at
+\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
+\texttt{v0.3} marks the end of Block~4; \texttt{v0.4} will mark the end
+of this block.
+If your repository has drifted, reset to \texttt{v0.3} before starting:
+
+\begin{verbatim}
+git fetch origin
+git reset --hard v0.3
+\end{verbatim}
+
+\newthought{Probe a public API} before writing your own.
+HTTP is best learnt against something you did not build, so you can read
+status codes and headers without already knowing what they should be.
+On the \texttt{dev} VM, with the virtual environment active:
+
+\begin{verbatim}
+curl -i https://httpbin.org/get
+curl -i -X POST https://httpbin.org/post \
+    -H "Content-Type: application/json" \
+    -d '{"hello": "world"}'
+\end{verbatim}
+
+\marginnote{\newthought{Read each section of the response.}
+\texttt{HTTP/2 200} is the status line.
+The lines that follow are headers; the blank line marks the boundary; the
+JSON below it is the body.
+Every HTTP response in this course has the same shape; once it is familiar,
+nothing about the protocol surprises you.}
+
+\newthought{Now name the verbs.}
+For each of the three endpoints PixelWise will expose,
+\texttt{POST /classify}, \texttt{GET /results}, \texttt{GET /health},
+write a one-line justification: which method does it use, why,
+and what status code does success look like?
+The naming exercise pays off when you read other people's APIs and
+discover most of them follow the same conventions.
+
+\marginnote{\newthought{The right verb} for inference is \texttt{POST}
+because the request carries a body and the server creates a record.
+\texttt{GET} carries no body in well-behaved clients and caches at every
+layer in between, neither of which fits a per-image classification.}
 
 
 
@@ -254,6 +312,60 @@ at the boundary.}
 OpenAPI page where any visitor can issue a request and see the response.
 There is no second source of truth that drifts out of sync; if the model
 changes, the documentation changes with it.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: The Pydantic Contract}\index{exercises}
+
+\newthought{Turn the contract above into code.}
+Inside the PixelWise repository on \texttt{dev}, install FastAPI, Pydantic,
+and \texttt{uvicorn} into the virtual environment, then update the pinned
+requirements:
+
+\begin{verbatim}
+source .venv/bin/activate
+pip install fastapi uvicorn[standard] \
+    slowapi pydantic
+pip freeze > requirements.txt
+\end{verbatim}
+
+\newthought{Write the request and response models} in \texttt{app/main.py}:
+
+\begin{verbatim}
+from pydantic import BaseModel
+
+class ClassifyRequest(BaseModel):
+    pixels: list[list[int]]
+
+class ClassifyResponse(BaseModel):
+    prediction: str
+    confidence: float
+    scores: dict[str, float]
+\end{verbatim}
+
+\marginnote{\newthought{The shape lives in two places now}\index{contract}:
+\texttt{ClassifyResponse} in Python and the dictionary
+\texttt{classify\_batch} returns from Block~4.
+The two should match exactly.
+A field named \texttt{prediction} in one and \texttt{predicted} in the other
+is exactly the kind of mismatch the contract is supposed to prevent;
+keeping them aligned is part of the work.}
+
+\newthought{Try a tiny script} that exercises the model directly,
+without any HTTP server involved:
+
+\begin{verbatim}
+from app.main import ClassifyResponse
+r = ClassifyResponse(prediction="7",
+    confidence=0.94, scores={"7": 0.94})
+print(r.model_dump_json())
+\end{verbatim}
+
+The model serialises to JSON with the same keys the API will return.
+This is the single source of truth for the response shape from this
+exercise onwards.
 
 
 
@@ -332,6 +444,67 @@ reports liveness so a monitor can tell whether the service is up.
 
 % ==============================================================================================
 \newpage
+\section{Exercise: Building \texttt{app/main.py}}\index{exercises}
+
+\newthought{Wire the path operations from the theory above into a working
+service.}
+Extend \texttt{app/main.py} with three endpoints:
+
+\begin{verbatim}
+from fastapi import FastAPI
+import numpy as np
+from app.classifier import classify_batch
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "model_version": "v1"}
+
+@app.get("/results")
+def results():
+    return {"results": [],
+            "note": "persistence added in Block 6"}
+
+@app.post("/classify",
+          response_model=ClassifyResponse)
+def classify(req: ClassifyRequest):
+    arr = np.array(req.pixels,
+                   dtype=np.uint8)[np.newaxis]
+    return classify_batch(arr)[0]
+\end{verbatim}
+
+\marginnote{\newthought{Run it locally:}\index{uvicorn}
+\texttt{uvicorn app.main:app --reload --port 8000}.
+The \texttt{--reload} flag restarts on every code change, which is what you
+want in development and never want in production.
+Open \url{http://localhost:8000/docs} to see the auto-generated OpenAPI
+page; click ``Try it out'' on \texttt{POST /classify} to issue a real
+request without leaving the browser.}
+
+\newthought{Test with curl from another terminal:}
+
+\begin{verbatim}
+curl http://localhost:8000/health
+curl -X POST http://localhost:8000/classify \
+  -H "Content-Type: application/json" \
+  -d '{"pixels": [[0,0,...], ...]}'
+\end{verbatim}
+
+A 28-by-28 zero array returns a low-confidence prediction; a real digit
+loaded from MNIST returns the right answer.
+The first end-to-end loop is when this works.
+
+\marginnote{\newthought{Send a deliberately wrong shape.}\index{HTTP!422}
+Submit a 27-by-27 grid and read the 422 response.
+Pydantic rejects the request before the handler runs, with a structured
+error that tells the client exactly which field was wrong.
+This is the input validation boundary doing its job.}
+
+
+
+% ==============================================================================================
+\newpage
 \section{Authentication and Rate Limiting}\index{authentication}\index{rate limiting}
 
 \newthought{Even a classroom service needs both.}
@@ -394,6 +567,69 @@ A request that arrives must parse as JSON, match the schema, present a
 valid key, and stay within the rate budget before any inference code runs.
 Each stage rejects with a different status code, so a client failure tells
 you exactly which contract was violated.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: API Key Auth and Rate Limiting}\index{exercises}
+
+\newthought{Add the defensive layer from the theory above to the service.}
+Add API key middleware to \texttt{app/main.py}:
+
+\begin{verbatim}
+from fastapi import Header, HTTPException, Depends
+import os
+
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != os.getenv("SECRET_API_KEY"):
+        raise HTTPException(
+            status_code=401, detail="Invalid API key")
+
+@app.post("/classify",
+          response_model=ClassifyResponse,
+          dependencies=[Depends(verify_api_key)])
+def classify(req: ClassifyRequest):
+    ...
+\end{verbatim}
+
+\marginnote{\newthought{The header travels in every request.}\index{X-API-Key}
+\texttt{X-API-Key} is a custom header name; FastAPI's \texttt{Header(...)}
+maps it to the function parameter automatically.
+A missing header returns 422 (Pydantic-level), a wrong value returns 401
+(your handler).}
+
+\newthought{Add rate limiting} with \texttt{slowapi}:
+
+\begin{verbatim}
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.middleware import SlowAPIMiddleware
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
+@app.post("/classify")
+@limiter.limit("30/minute")
+def classify(req: ClassifyRequest):
+    ...
+\end{verbatim}
+
+\newthought{Test all three failure modes:}
+\begin{itemize}
+    \item Missing header: 422.
+    \item Wrong key: 401.
+    \item More than 30 requests in a minute: 429.
+\end{itemize}
+Each one should reach \texttt{curl} as a status code rather than as a
+crash; that is the entire point of the boundary.
+
+\marginnote{\newthought{Watch a 429 happen.}\index{HTTP!429}
+A small Bash loop firing 40 \texttt{curl} requests at the endpoint inside
+the same minute should see the last ten return \texttt{429 Too Many
+Requests}.
+The remaining requests stay rejected until the window rolls over.}
 
 
 
@@ -473,249 +709,11 @@ who deploy beyond this course will encounter it within the first week.
 
 
 % ==============================================================================================
-% BLOCK 3: STUDENT ACTIVATION
-% ==============================================================================================
-
-\newpage
-\section{Exercise: HTTP, REST, and \texttt{curl}}\index{exercises}
-
-\marginnote{\newthought{Exercises} mirror the five theory sections in order.
-HTTP and REST first, then the contract, then the framework, then the
-defensive layer, then the supervisor.
-Read a concept, then practise it.}
-
-\newthought{Catching up via the reference tag.}\index{Git!tag}
-The course maintains a public reference repository at
-\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
-\texttt{v0.3} marks the end of Block~4; \texttt{v0.4} will mark the end
-of this block.
-If your repository has drifted, reset to \texttt{v0.3} before starting:
-
-\begin{verbatim}
-git fetch origin
-git reset --hard v0.3
-\end{verbatim}
-
-\newthought{Probe a public API} before writing your own.
-HTTP is best learnt against something you did not build, so you can read
-status codes and headers without already knowing what they should be.
-On the \texttt{dev} VM, with the virtual environment active:
-
-\begin{verbatim}
-curl -i https://httpbin.org/get
-curl -i -X POST https://httpbin.org/post \
-    -H "Content-Type: application/json" \
-    -d '{"hello": "world"}'
-\end{verbatim}
-
-\marginnote{\newthought{Read each section of the response.}
-\texttt{HTTP/2 200} is the status line.
-The lines that follow are headers; the blank line marks the boundary; the
-JSON below it is the body.
-Every HTTP response in this course has the same shape; once it is familiar,
-nothing about the protocol surprises you.}
-
-\newthought{Now name the verbs.}
-For each of the three endpoints PixelWise will expose,
-\texttt{POST /classify}, \texttt{GET /results}, \texttt{GET /health},
-write a one-line justification: which method does it use, why,
-and what status code does success look like?
-The naming exercise pays off when you read other people's APIs and
-discover most of them follow the same conventions.
-
-\marginnote{\newthought{The right verb} for inference is \texttt{POST}
-because the request carries a body and the server creates a record.
-\texttt{GET} carries no body in well-behaved clients and caches at every
-layer in between, neither of which fits a per-image classification.}
-
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: The Pydantic Contract}\index{exercises}
-
-\newthought{Block~2 introduced Pydantic} as the way to make API contracts
-executable.
-Inside the PixelWise repository on \texttt{dev}, install FastAPI, Pydantic,
-and \texttt{uvicorn} into the virtual environment, then update the pinned
-requirements:
-
-\begin{verbatim}
-source .venv/bin/activate
-pip install fastapi uvicorn[standard] \
-    slowapi pydantic
-pip freeze > requirements.txt
-\end{verbatim}
-
-\newthought{Write the request and response models} in \texttt{app/main.py}:
-
-\begin{verbatim}
-from pydantic import BaseModel
-
-class ClassifyRequest(BaseModel):
-    pixels: list[list[int]]
-
-class ClassifyResponse(BaseModel):
-    prediction: str
-    confidence: float
-    scores: dict[str, float]
-\end{verbatim}
-
-\marginnote{\newthought{The shape lives in two places now}\index{contract}:
-\texttt{ClassifyResponse} in Python and the dictionary
-\texttt{classify\_batch} returns from Block~4.
-The two should match exactly.
-A field named \texttt{prediction} in one and \texttt{predicted} in the other
-is exactly the kind of mismatch the contract is supposed to prevent;
-keeping them aligned is part of the work.}
-
-\newthought{Try a tiny script} that exercises the model directly,
-without any HTTP server involved:
-
-\begin{verbatim}
-from app.main import ClassifyResponse
-r = ClassifyResponse(prediction="7",
-    confidence=0.94, scores={"7": 0.94})
-print(r.model_dump_json())
-\end{verbatim}
-
-The model serialises to JSON with the same keys the API will return.
-This is the single source of truth for the response shape from this
-exercise onwards.
-
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: Building \texttt{app/main.py}}\index{exercises}
-
-\newthought{Block~2 introduced FastAPI} as the framework that wires Pydantic
-models to HTTP routes.
-Extend \texttt{app/main.py} with three endpoints:
-
-\begin{verbatim}
-from fastapi import FastAPI
-import numpy as np
-from app.classifier import classify_batch
-
-app = FastAPI()
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "model_version": "v1"}
-
-@app.get("/results")
-def results():
-    return {"results": [],
-            "note": "persistence added in Block 6"}
-
-@app.post("/classify",
-          response_model=ClassifyResponse)
-def classify(req: ClassifyRequest):
-    arr = np.array(req.pixels,
-                   dtype=np.uint8)[np.newaxis]
-    return classify_batch(arr)[0]
-\end{verbatim}
-
-\marginnote{\newthought{Run it locally:}\index{uvicorn}
-\texttt{uvicorn app.main:app --reload --port 8000}.
-The \texttt{--reload} flag restarts on every code change, which is what you
-want in development and never want in production.
-Open \url{http://localhost:8000/docs} to see the auto-generated OpenAPI
-page; click ``Try it out'' on \texttt{POST /classify} to issue a real
-request without leaving the browser.}
-
-\newthought{Test with curl from another terminal:}
-
-\begin{verbatim}
-curl http://localhost:8000/health
-curl -X POST http://localhost:8000/classify \
-  -H "Content-Type: application/json" \
-  -d '{"pixels": [[0,0,...], ...]}'
-\end{verbatim}
-
-A 28-by-28 zero array returns a low-confidence prediction; a real digit
-loaded from MNIST returns the right answer.
-The first end-to-end loop is when this works.
-
-\marginnote{\newthought{Send a deliberately wrong shape.}\index{HTTP!422}
-Submit a 27-by-27 grid and read the 422 response.
-Pydantic rejects the request before the handler runs, with a structured
-error that tells the client exactly which field was wrong.
-This is the input validation boundary doing its job.}
-
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: API Key Auth and Rate Limiting}\index{exercises}
-
-\newthought{Block~2 introduced API keys and rate limits} as the per-request
-defences that sit in front of the handler.
-Add API key middleware to \texttt{app/main.py}:
-
-\begin{verbatim}
-from fastapi import Header, HTTPException, Depends
-import os
-
-def verify_api_key(x_api_key: str = Header(...)):
-    if x_api_key != os.getenv("SECRET_API_KEY"):
-        raise HTTPException(
-            status_code=401, detail="Invalid API key")
-
-@app.post("/classify",
-          response_model=ClassifyResponse,
-          dependencies=[Depends(verify_api_key)])
-def classify(req: ClassifyRequest):
-    ...
-\end{verbatim}
-
-\marginnote{\newthought{The header travels in every request.}\index{X-API-Key}
-\texttt{X-API-Key} is a custom header name; FastAPI's \texttt{Header(...)}
-maps it to the function parameter automatically.
-A missing header returns 422 (Pydantic-level), a wrong value returns 401
-(your handler).}
-
-\newthought{Add rate limiting} with \texttt{slowapi}:
-
-\begin{verbatim}
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from slowapi.middleware import SlowAPIMiddleware
-
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
-app.add_middleware(SlowAPIMiddleware)
-
-@app.post("/classify")
-@limiter.limit("30/minute")
-def classify(req: ClassifyRequest):
-    ...
-\end{verbatim}
-
-\newthought{Test all three failure modes:}
-\begin{itemize}
-    \item Missing header: 422.
-    \item Wrong key: 401.
-    \item More than 30 requests in a minute: 429.
-\end{itemize}
-Each one should reach \texttt{curl} as a status code rather than as a
-crash; that is the entire point of the boundary.
-
-\marginnote{\newthought{Watch a 429 happen.}\index{HTTP!429}
-A small Bash loop firing 40 \texttt{curl} requests at the endpoint inside
-the same minute should see the last ten return \texttt{429 Too Many
-Requests}.
-The remaining requests stay rejected until the window rolls over.}
-
-
-
-% ==============================================================================================
 \newpage
 \section{Exercise: Running as a \texttt{systemd} Service}\index{exercises}
 
-\newthought{Block~2 introduced \texttt{systemd}} as the supervisor that
-keeps a service running.
+\newthought{Promote the service from a foreground \texttt{uvicorn} to a
+supervised \texttt{systemd} unit.}
 Push your code to GitHub from \texttt{dev}, then SSH into the server and
 pull:
 
@@ -783,6 +781,9 @@ the database.
 
 
 % ==============================================================================================
+% BLOCK 3: CONSOLIDATION
+% ==============================================================================================
+
 \newpage
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}
 

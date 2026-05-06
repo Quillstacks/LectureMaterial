@@ -9,6 +9,7 @@
 
 \index{Virtual Machines}\index{Linux}\index{SSH}\index{Oracle VirtualBox Manager}
 \chapter{Development and Production}
+\printchapterversion{01_servers_vms_linux}
 \newthought{Divide and conquer.}
 
 % ==============================================================================================
@@ -145,8 +146,9 @@ By the end of the block you will have provisioned both virtual machines,
 
 
 
+
 % ==============================================================================================
-% BLOCK 2: MAIN THEORY
+% BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
 
 \newpage
@@ -215,166 +217,8 @@ so that every command in the course refers to the same addresses.
 
 
 
-% ==============================================================================================
-\newpage
-\section{Linux on the Server}\index{Linux}\index{Ubuntu}
-
-\newthought{Linux} is a family of Unix-like operating systems built around a common kernel,
-first released by Linus Torvalds in 1991.
-A distribution\index{distribution} combines the kernel with a package manager,
-system libraries, and user-space tools into a coherent product.
-Ubuntu\index{Ubuntu}, Debian, Fedora, and Arch are distributions that differ in release cadence and defaults
-but share most of what matters at the command line.
-
-\marginnote{\newthought{Ubuntu}\index{Ubuntu} at \url{https://ubuntu.com/} is the distribution we use on both VMs.
-Long-term support releases receive five years of security updates,
-which is why we pick the LTS ISO rather than the latest release.}
-
-\begin{marginfigure}
-    \centering
-    \includegraphics[width=\marginparwidth]{./figures/vm_running.png}
-    \caption{A running Ubuntu guest inside the Oracle VirtualBox Manager. The guest believes it owns a physical machine; the hypervisor is what makes that illusion hold.}
-    \label{fig:vm_running}
-\end{marginfigure}
-
-\newthought{A server in this section} is a computer configured to run services and accept connections over a network,
-typically without a graphical session.
-You interact with it through a shell, a program that reads commands and prints their output;
-the shell we use is Bash\index{Bash}, the default on Ubuntu.
-
-
-
-\marginnote{\newthought{The Unix philosophy}\index{Unix philosophy} shapes the design of these tools.
-Each program does one thing well, programs pass streams of text to each other, and configuration lives in plain files.
-The result is a small vocabulary of composable commands that combine into pipelines no single command was designed for.}
-
-\newthought{Five commands} are sufficient for the first session.
-\texttt{ls} lists a directory, with \texttt{-la} showing permissions, ownership, and hidden files.
-\texttt{cd} changes directory; \texttt{cd ..} moves up one level and \texttt{cd \~{}} returns home.
-\texttt{pwd} prints the current path, \texttt{mkdir} creates a directory,
-and \texttt{cat} prints a file to the terminal.
-
-\vspace{2.5em}
-\newthought{Linux is a multi-user operating system.}
-Every file belongs to a user and a group and carries three permission sets, for owner, group, and everyone else.
-Each set independently grants read, write, or execute access.
-\texttt{whoami}\index{whoami} reports the current user, and \texttt{ls -la} shows ownership and permissions:
-
-\begin{verbatim}
--rw-r--r-- 1 user user 1234 Jan 15 10:00 config.txt
-drwxr-xr-x 2 user user 4096 Jan 15 10:00 mydir/
-\end{verbatim}
-
-\marginnote{\newthought{Reading the mode string} from left to right,
-the first character tells you whether it is a file or directory,
-then three groups of \texttt{rwx} for owner, group, others.
-A dash means the permission is not granted. The leading \texttt{d} marks a directory.}
-
-\newthought{Two commands} modify these.
-\texttt{chmod}\index{chmod} changes permissions and \texttt{chown}\index{chown} changes ownership:
-
-\begin{verbatim}
-chmod 600 ~/.ssh/id_ed25519           # owner-only read and write
-sudo chown user:user file.txt         # assign user and group
-\end{verbatim}
-
-The principle of least privilege\index{least privilege} applies throughout the course:
-grant each user, process, or service only the access it needs,
-so that narrow defaults limit the blast radius of a compromise or a mistake.
-
-
 
 % ==============================================================================================
-\newpage
-\section{SSH, the Only Door}\index{SSH}
-
-\newthought{SSH, the Secure Shell,} is a protocol for operating a remote machine from a terminal over an encrypted channel.
-In the setup used in this course, SSH is the only means of access to the \texttt{prod} VM:
-there is no graphical login and no console attached.
-Misconfiguring SSH can lock a user out of the machine,
-which is why key material and the daemon's configuration are treated carefully in the exercises.
-
-\marginnote{\newthought{OpenSSH}\index{OpenSSH} at \url{https://www.openssh.com/manual.html}
-is the implementation shipped with Ubuntu and most other Linux distributions.
-The client on \texttt{dev} and the daemon on \texttt{prod} are both part of this project.}
-
-\newthought{The basic command} takes the form \texttt{ssh <username>@<host>}; for example,
-\texttt{ssh produser@192.168.56.11} opens an encrypted connection to the server as the \texttt{produser} account.
-All input and output travel through this channel until the session is closed with \texttt{exit} or \texttt{Ctrl+D}.
-
-\marginnote{\newthought{PuTTY}\index{PuTTY} at \url{https://www.putty.org/}
-is a legacy SSH client for Windows, from the years before OpenSSH shipped with the operating system.
-Windows 10 and later include \texttt{ssh.exe} natively, so PuTTY is rarely necessary;
-you may still encounter it in older tutorials and on locked-down corporate machines.}
-
-\marginnote{\newthought{VS Code Remote-SSH}\index{VS Code}\index{Remote-SSH}
-at \url{https://code.visualstudio.com/docs/remote/ssh} runs the editor locally
-while the language server, terminal, and file system live on the remote host.
-It reads \texttt{\~{}/.ssh/config} and reuses the same keys as the \texttt{ssh} command,
-so any host you can reach with \texttt{ssh user@host} is one click away inside the editor.}
-
-\newthought{Password-based authentication} is vulnerable to guessing, brute-force attacks, and phishing.
-SSH supports an alternative in which the user presents a cryptographic key pair.
-The private key is kept on the client and never transmitted;
-the public key is placed on the server.
-During authentication the server issues a challenge that only the holder of the private key can answer,
-proving identity without the key itself ever leaving the client.
-
-\marginnote{\newthought{Ed25519}\index{Ed25519} keys use elliptic-curve cryptography
-and produce shorter keys than the older RSA algorithm while providing comparable or stronger security.
-They are the default choice on modern SSH clients.}
-
-\newthought{Generate an Ed25519 key pair} on \texttt{dev}:
-
-\begin{verbatim}
-ssh-keygen -t ed25519 -C "you@example.com"
-\end{verbatim}
-
-The command writes the private key \texttt{id\_ed25519} and the public key \texttt{id\_ed25519.pub} to \texttt{\~{}/.ssh/}.
-The private key must have permissions \texttt{600}, owner-only read and write, or SSH refuses to use it.
-
-\newthought{Copy the public key to the server}:
-
-\begin{verbatim}
-ssh-copy-id produser@192.168.56.11
-\end{verbatim}
-
-\marginnote{\newthought{Managing private keys.}\index{ssh-agent}\index{KeePass}
-Private keys live in \texttt{\~{}/.ssh/} on the machine that initiates connections,
-protected by filesystem permissions and, when generated with a passphrase, by symmetric encryption.
-\texttt{ssh-agent} holds the decrypted key in memory for the session so the passphrase is typed once per login.
-Password managers such as KeePass\index{KeePass} at \url{https://keepass.info/}
-or 1Password can store the passphrase and, with their SSH-agent integrations,
-supply the key to \texttt{ssh} without writing it to disk in plaintext.
-Keys are never synced to cloud storage in the clear, and a separate key pair per machine
-keeps the blast radius of a compromised laptop local.}
-
-This appends the key to \texttt{\~{}/.ssh/authorized\_keys}.
-Subsequent connections authenticate using the key pair and do not prompt for a password.
-
-
-
-\newthought{Once key authentication is verified}, password authentication can be disabled on the server.
-Edit \texttt{/etc/ssh/sshd\_config} to set \texttt{PasswordAuthentication no}, then restart the daemon:
-
-\begin{verbatim}
-sudo systemctl restart ssh
-\end{verbatim}
-
-After this change, password-based login attempts are rejected before credentials are even evaluated,
-which eliminates brute-force and credential-stuffing as viable attacks against the machine.
-The exercise introduces \texttt{nano}\index{nano} as a terminal editor
-and \texttt{systemctl}\index{systemctl} as the interface to the \texttt{systemd}\index{systemd} service manager,
-both of which return throughout the course.
-
-
-
-
-
-% ==============================================================================================
-% BLOCK 3: STUDENT ACTIVATION
-% ==============================================================================================
-
 \newpage
 \section{Exercise: Provisioning Virtual Machines}\index{exercises}
 
@@ -475,6 +319,77 @@ On \texttt{dev}, run \texttt{ping 192.168.56.11} to test if \texttt{prod} respon
 
 
 
+
+% ==============================================================================================
+\newpage
+\section{Linux on the Server}\index{Linux}\index{Ubuntu}
+
+\newthought{Linux} is a family of Unix-like operating systems built around a common kernel,
+first released by Linus Torvalds in 1991.
+A distribution\index{distribution} combines the kernel with a package manager,
+system libraries, and user-space tools into a coherent product.
+Ubuntu\index{Ubuntu}, Debian, Fedora, and Arch are distributions that differ in release cadence and defaults
+but share most of what matters at the command line.
+
+\marginnote{\newthought{Ubuntu}\index{Ubuntu} at \url{https://ubuntu.com/} is the distribution we use on both VMs.
+Long-term support releases receive five years of security updates,
+which is why we pick the LTS ISO rather than the latest release.}
+
+\begin{marginfigure}
+    \centering
+    \includegraphics[width=\marginparwidth]{./figures/vm_running.png}
+    \caption{A running Ubuntu guest inside the Oracle VirtualBox Manager. The guest believes it owns a physical machine; the hypervisor is what makes that illusion hold.}
+    \label{fig:vm_running}
+\end{marginfigure}
+
+\newthought{A server in this section} is a computer configured to run services and accept connections over a network,
+typically without a graphical session.
+You interact with it through a shell, a program that reads commands and prints their output;
+the shell we use is Bash\index{Bash}, the default on Ubuntu.
+
+
+
+\marginnote{\newthought{The Unix philosophy}\index{Unix philosophy} shapes the design of these tools.
+Each program does one thing well, programs pass streams of text to each other, and configuration lives in plain files.
+The result is a small vocabulary of composable commands that combine into pipelines no single command was designed for.}
+
+\newthought{Five commands} are sufficient for the first session.
+\texttt{ls} lists a directory, with \texttt{-la} showing permissions, ownership, and hidden files.
+\texttt{cd} changes directory; \texttt{cd ..} moves up one level and \texttt{cd \~{}} returns home.
+\texttt{pwd} prints the current path, \texttt{mkdir} creates a directory,
+and \texttt{cat} prints a file to the terminal.
+
+\vspace{2.5em}
+\newthought{Linux is a multi-user operating system.}
+Every file belongs to a user and a group and carries three permission sets, for owner, group, and everyone else.
+Each set independently grants read, write, or execute access.
+\texttt{whoami}\index{whoami} reports the current user, and \texttt{ls -la} shows ownership and permissions:
+
+\begin{verbatim}
+-rw-r--r-- 1 user user 1234 Jan 15 10:00 config.txt
+drwxr-xr-x 2 user user 4096 Jan 15 10:00 mydir/
+\end{verbatim}
+
+\marginnote{\newthought{Reading the mode string} from left to right,
+the first character tells you whether it is a file or directory,
+then three groups of \texttt{rwx} for owner, group, others.
+A dash means the permission is not granted. The leading \texttt{d} marks a directory.}
+
+\newthought{Two commands} modify these.
+\texttt{chmod}\index{chmod} changes permissions and \texttt{chown}\index{chown} changes ownership:
+
+\begin{verbatim}
+chmod 600 ~/.ssh/id_ed25519           # owner-only read and write
+sudo chown user:user file.txt         # assign user and group
+\end{verbatim}
+
+The principle of least privilege\index{least privilege} applies throughout the course:
+grant each user, process, or service only the access it needs,
+so that narrow defaults limit the blast radius of a compromise or a mistake.
+
+
+
+
 % ==============================================================================================
 \newpage
 \section{Exercise: Navigating Linux}\index{exercises}
@@ -516,7 +431,7 @@ id
 ls -la notes.txt
 \end{verbatim}
 
-Decode the first column of \texttt{ls -la} against the margin note on mode strings from Block~2. Name aloud what each of the ten characters means; if you can do that without looking, permissions have stopped being mysterious.
+Decode the first column of \texttt{ls -la} against the margin note on mode strings from the theory above. Name aloud what each of the ten characters means; if you can do that without looking, permissions have stopped being mysterious.
 
 \newthought{Change the mode and watch it:}
 
@@ -530,6 +445,95 @@ Your \texttt{user} account can read \texttt{/etc/os-release} but cannot edit \te
 }
 
 The next exercise will require \texttt{600} on your SSH private key, or OpenSSH refuses to use it; you have now seen what \texttt{600} looks like and why ownership matters.
+
+
+
+
+% ==============================================================================================
+\newpage
+\section{SSH, the Only Door}\index{SSH}
+
+\newthought{SSH, the Secure Shell,} is a protocol for operating a remote machine from a terminal over an encrypted channel.
+In the setup used in this course, SSH is the only means of access to the \texttt{prod} VM:
+there is no graphical login and no console attached.
+Misconfiguring SSH can lock a user out of the machine,
+which is why key material and the daemon's configuration are treated carefully in the exercises.
+
+\marginnote{\newthought{OpenSSH}\index{OpenSSH} at \url{https://www.openssh.com/manual.html}
+is the implementation shipped with Ubuntu and most other Linux distributions.
+The client on \texttt{dev} and the daemon on \texttt{prod} are both part of this project.}
+
+\newthought{The basic command} takes the form \texttt{ssh <username>@<host>}; for example,
+\texttt{ssh produser@192.168.56.11} opens an encrypted connection to the server as the \texttt{produser} account.
+All input and output travel through this channel until the session is closed with \texttt{exit} or \texttt{Ctrl+D}.
+
+\marginnote{\newthought{PuTTY}\index{PuTTY} at \url{https://www.putty.org/}
+is a legacy SSH client for Windows, from the years before OpenSSH shipped with the operating system.
+Windows 10 and later include \texttt{ssh.exe} natively, so PuTTY is rarely necessary;
+you may still encounter it in older tutorials and on locked-down corporate machines.}
+
+\marginnote{\newthought{VS Code Remote-SSH}\index{VS Code}\index{Remote-SSH}
+at \url{https://code.visualstudio.com/docs/remote/ssh} runs the editor locally
+while the language server, terminal, and file system live on the remote host.
+It reads \texttt{\~{}/.ssh/config} and reuses the same keys as the \texttt{ssh} command,
+so any host you can reach with \texttt{ssh user@host} is one click away inside the editor.}
+
+\newthought{Password-based authentication} is vulnerable to guessing, brute-force attacks, and phishing.
+SSH supports an alternative in which the user presents a cryptographic key pair.
+The private key is kept on the client and never transmitted;
+the public key is placed on the server.
+During authentication the server issues a challenge that only the holder of the private key can answer,
+proving identity without the key itself ever leaving the client.
+
+\marginnote{\newthought{Ed25519}\index{Ed25519} keys use elliptic-curve cryptography
+and produce shorter keys than the older RSA algorithm while providing comparable or stronger security.
+They are the default choice on modern SSH clients.}
+
+\newthought{Generate an Ed25519 key pair} on \texttt{dev}:
+
+\begin{verbatim}
+ssh-keygen -t ed25519 -C "you@example.com"
+\end{verbatim}
+
+The command writes the private key \texttt{id\_ed25519} and the public key \texttt{id\_ed25519.pub} to \texttt{\~{}/.ssh/}.
+The private key must have permissions \texttt{600}, owner-only read and write, or SSH refuses to use it.
+
+\newthought{Copy the public key to the server}:
+
+\begin{verbatim}
+ssh-copy-id produser@192.168.56.11
+\end{verbatim}
+
+\marginnote{\newthought{Managing private keys.}\index{ssh-agent}\index{KeePass}
+Private keys live in \texttt{\~{}/.ssh/} on the machine that initiates connections,
+protected by filesystem permissions and, when generated with a passphrase, by symmetric encryption.
+\texttt{ssh-agent} holds the decrypted key in memory for the session so the passphrase is typed once per login.
+Password managers such as KeePass\index{KeePass} at \url{https://keepass.info/}
+or 1Password can store the passphrase and, with their SSH-agent integrations,
+supply the key to \texttt{ssh} without writing it to disk in plaintext.
+Keys are never synced to cloud storage in the clear, and a separate key pair per machine
+keeps the blast radius of a compromised laptop local.}
+
+This appends the key to \texttt{\~{}/.ssh/authorized\_keys}.
+Subsequent connections authenticate using the key pair and do not prompt for a password.
+
+
+
+\newthought{Once key authentication is verified}, password authentication can be disabled on the server.
+Edit \texttt{/etc/ssh/sshd\_config} to set \texttt{PasswordAuthentication no}, then restart the daemon:
+
+\begin{verbatim}
+sudo systemctl restart ssh
+\end{verbatim}
+
+After this change, password-based login attempts are rejected before credentials are even evaluated,
+which eliminates brute-force and credential-stuffing as viable attacks against the machine.
+The exercise introduces \texttt{nano}\index{nano} as a terminal editor
+and \texttt{systemctl}\index{systemctl} as the interface to the \texttt{systemd}\index{systemd} service manager,
+both of which return throughout the course.
+
+
+
 
 
 
@@ -584,8 +588,6 @@ You can still log in with SSH and run commands, but there is no desktop to inter
 
 
 
-% ============================= CODE ===============================
-\newpage
 
 \marginnote{\newthought{A note on what comes next.}
 The commands you ran in this session are reproducible but not yet reproduced.
@@ -594,6 +596,11 @@ In the next block we place them under version control and turn the sequence
 into a script that any future VM can run end to end, without you remembering anything.}
 
 
+
+
+% ==============================================================================================
+% BLOCK 3: CONSOLIDATION
+% ==============================================================================================
 
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}
 

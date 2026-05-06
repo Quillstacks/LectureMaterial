@@ -11,6 +11,7 @@
 
 \index{dependencies}\index{virtualenv}\index{pip}\index{project structure}\index{12-factor app}
 \chapter{Dependencies \& Structure}
+\printchapterversion{03_dependencies_structure}
 \newthought{Works on my machine.}
 
 % ==============================================================================================
@@ -124,8 +125,9 @@ By the end you will have
 
 
 
+
 % ==============================================================================================
-% BLOCK 2: MAIN THEORY
+% BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
 
 \newpage
@@ -195,6 +197,91 @@ The commands you typed once are written down where the next person can find them
 
 
 
+
+\newpage
+\section{Exercise: The Setup Script}\index{exercises}
+
+\marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
+Work through them yourself first, break things, discuss; this is not a time trial.
+Each theory section is followed by its exercise, so you can read a concept and
+practise it immediately. At the end of the session, take a snapshot named
+\texttt{B3-complete}, your safety net for the next block.}
+
+\newthought{Catching up via the reference tag.}\index{Git!tag}\index{recovery}
+From this block onwards, the GitHub repository is the safety net.
+The course maintains a public reference repository at
+\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
+\texttt{v0.1} marks the end of Block~2; \texttt{v0.2} will mark the end of
+this block.
+If you joined late, missed Block~2, or your repository has drifted from a
+known good state, reset to the previous tag rather than redoing every prior
+exercise.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.1} is the end of Block~2,
+\texttt{v0.2} is the end of this block,
+\texttt{v0.3} the end of Block~4, and so on.
+Every tag is a complete, runnable state of PixelWise.
+Browse them at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{Catch-up procedure.}
+Restore the \texttt{B1-complete} VM image from Block~1, complete the Block~2
+Git identity and SSH key setup so the VM has your credentials, then clone
+the reference repository at the \texttt{v0.1} tag:
+
+\begin{verbatim}
+cd ~
+git clone --branch v0.1 \
+    https://github.com/schutera/pixelwise.git
+cd pixelwise
+git switch -c main
+git remote set-url origin \
+    git@github.com:<you>/pixelwise.git
+\end{verbatim}
+
+You are now at the state where Block~2 ended, ready to start Block~3.
+
+\newthought{With the setup script motivated above,} put it on the \texttt{dev} VM.
+Inside the PixelWise repository, create a shell script that captures the system
+packages installed manually in Block~2:
+
+\begin{verbatim}
+#!/bin/bash
+set -euo pipefail
+
+sudo apt update
+sudo apt install -y git python3 python3-pip \
+    python3-venv curl
+\end{verbatim}
+
+\marginnote{\newthought{Try it on a fresh VM.}\index{provisioning}
+The real test of the script is on a machine that has not seen the commands
+yet.
+A second \texttt{prod} VM, restored from the \texttt{B1-complete} image,
+clones the repository, runs \texttt{bash setup-server.sh}, and provisions
+end to end without you typing a single \texttt{apt install}.}
+
+\newthought{Mark it executable and run it.}
+On a machine that already has the packages, every \texttt{apt install} is a
+no-op; the script reports nothing to do, which is the desired outcome of
+an idempotent provisioning step:
+
+\begin{verbatim}
+chmod +x setup-server.sh
+./setup-server.sh
+\end{verbatim}
+
+\newthought{Commit it.} This is the first file that makes provisioning reproducible:
+
+\begin{verbatim}
+git add setup-server.sh
+git commit -m "Add server provisioning script"
+git push
+\end{verbatim}
+
+
+
 % ==============================================================================================
 \newpage
 \section{Virtual Environments}\index{virtualenv}\index{venv}
@@ -257,6 +344,61 @@ Activate it before you work; deactivate when you are done.
 The one-time cost is a directory and a command;
 the ongoing benefit is never debugging a version conflict between two
 unrelated projects on the same laptop.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: The Virtual Environment}\index{exercises}
+
+\newthought{With the rationale for isolation in mind,} create one on the
+\texttt{dev} VM, inside the PixelWise repository:
+
+\begin{verbatim}
+cd ~/pixelwise
+python3 -m venv .venv
+source .venv/bin/activate
+\end{verbatim}
+
+\marginnote{\newthought{Notice the prompt change.}\index{shell prompt}
+After activation, your shell prompt usually gains a \texttt{(.venv)} prefix
+to remind you which environment is active.
+If you ever wonder whether you are inside the project's environment,
+the prompt is the first place to look; \texttt{which python} is the second.}
+
+\newthought{Verify the switch.}
+\texttt{which python} should print a path inside \texttt{.venv/bin/}.
+\texttt{pip list} should show only \texttt{pip} and \texttt{setuptools}:
+
+\begin{verbatim}
+which python
+pip list
+\end{verbatim}
+
+A fresh environment is empty by design.
+The next exercise fills it with intent.
+
+\newthought{Add the environment to \texttt{.gitignore}.}
+The \texttt{.venv/} directory must never be committed.
+Open the \texttt{.gitignore} from Block~2 and confirm \texttt{.venv/} is
+listed; if not, add it now:
+
+\begin{verbatim}
+.venv/
+*.pkl
+data/
+.env
+\end{verbatim}
+
+\marginnote{\newthought{Read the diff.}\index{Git!diff}
+\texttt{git diff .gitignore} shows what you added compared to the Block~2
+version.
+Reading the diff before committing is the habit that catches accidental
+changes early; running it once now is muscle memory you will reuse every
+day for the rest of the course.}
+
+Run \texttt{git status} before and after to see how much noise the new
+entries silence.
 
 
 
@@ -337,6 +479,69 @@ exactly what is on disk.
 
 % ==============================================================================================
 \newpage
+\section{Exercise: Pinning Dependencies and \texttt{pip-audit}}\index{exercises}
+
+\newthought{With \texttt{pip} as the package installer and
+\texttt{requirements.txt} as the captured environment,} put both to work.
+With the virtual environment active, install the three direct dependencies
+PixelWise needs in this block:
+
+\begin{verbatim}
+pip install scikit-learn joblib python-dotenv
+\end{verbatim}
+
+\newthought{Freeze the environment} into a pinned requirements file:
+
+\begin{verbatim}
+pip freeze > requirements.txt
+\end{verbatim}
+
+Open \texttt{requirements.txt} and inspect.
+Note the pinned versions and the transitive dependencies that were pulled
+in automatically.
+Count how many lines \texttt{pip freeze} produced compared to the three
+packages you installed directly; the gap is the dependency graph
+working invisibly.
+
+\marginnote{\newthought{The habit to build:}\index{requirements.txt}
+after installing or upgrading any package, immediately run
+\texttt{pip freeze > requirements.txt} and commit the change.
+Stale requirements files are the most common cause of
+``works on my machine'' incidents.}
+
+\newthought{Audit the dependency graph.}\index{pip audit}
+Install \texttt{pip-audit} and run it against the active environment:
+
+\begin{verbatim}
+pip install pip-audit
+pip-audit
+\end{verbatim}
+
+Inspect the output.
+What is a CVE\index{CVE}?
+What would you do if a critical vulnerability were reported in one of
+your dependencies?
+The reading you do here pays back in Block~8 when the audit becomes part
+of the deploy pipeline.
+
+\marginnote{\newthought{Read one CVE.}
+Pick any advisory \texttt{pip-audit} reports, click through to the CVE
+record, and read the description, the affected versions, and the fixed
+version.
+Practising this once now makes the production response straightforward
+when an alert fires under time pressure.}
+
+\newthought{Commit the requirements:}
+
+\begin{verbatim}
+git add requirements.txt
+git commit -m "Pin core Python dependencies"
+\end{verbatim}
+
+
+
+% ==============================================================================================
+\newpage
 \section{Configuration: \texttt{.env} and \texttt{python-dotenv}}\index{.env}\index{python-dotenv}\index{12-factor app}
 
 \newthought{Separating configuration from code} is a foundational principle.
@@ -408,326 +613,10 @@ The contrast is immediate: one is the template, the other is a vault for your se
 
 % ==============================================================================================
 \newpage
-\section{Optional: When \texttt{requirements.txt} Starts to Hurt}\index{pyproject.toml}\index{lock file}
-
-\newthought{\texttt{pip freeze > requirements.txt}} captures everything:
-your direct dependencies and all their transitive
-dependencies\index{transitive dependencies}, flattened into one list.
-Six months later you want to upgrade one package: which of those forty-seven
-packages did you deliberately install, and which were pulled into that list automatically?
-Without that distinction, every upgrade is a guessing game. Solving dependency 
-conflicts becomes a nightmare and quickly feels like brute-force.
-
-\marginnote{\newthought{Tools like \texttt{uv}}\index{uv} and
-\texttt{poetry}\index{poetry} use the project-file model and are fast becoming
-the standard.
-Once the \texttt{requirements.txt} workflow is second nature, this is the
-upgrade that makes dependency management sane at scale.\\
-Python Packaging User Guide: \url{https://packaging.python.org/en/latest/}\\
-\texttt{uv}: \url{https://docs.astral.sh/uv/}\\
-Poetry: \url{https://python-poetry.org/}}
-
-\newthought{\texttt{pyproject.toml}} solves this by separating
-``what you depend on'', your direct deps loosely pinned,
-from ``what gets installed'', a generated lock file with the full resolved graph.
-Upgrades become surgical: bump one line, regenerate the lock, done.
-
-\begin{verbatim}
-[project]
-name = "pixelwise"
-version = "0.1.0"
-dependencies = [
-    "scikit-learn>=1.4",
-    "joblib>=1.3",
-    "python-dotenv>=1.0",
-]
-\end{verbatim}
-
-\newthought{Compare} this to \texttt{requirements.txt}: the project file
-lists only what you chose to install, with flexible version bounds.
-The tool resolves the full dependency graph and writes a lock file that
-pins every transitive dependency exactly.
-You commit both files; the lock file is your reproducibility guarantee
-and the project file is your editable surface.
-
-\begin{verbatim}
-# to upgrade a single package and update lock:
-poetry update <package>
-\end{verbatim}
-
-\marginnote{\newthought{We stay with \texttt{requirements.txt}}
-through the rest of the course because it is the format every Python
-developer recognises and the only one some hosting environments still accept.
-The reasoning generalises: when an upgrade is available, learn the workflow
-beneath it before adopting the tool that abstracts it away.}
-
-
-% ==============================================================================================
-\newpage
-\section{Optional: The Container Alternative}\index{Docker}\index{containers}
-
-\newthought{Virtual environments isolate Python packages.}
-Containers isolate the entire operating system: libraries, system packages,
-Python version, environment variables, even the filesystem layout.
-Where \texttt{requirements.txt} specifies which Python packages to install,
-a \texttt{Dockerfile}\index{Dockerfile} does the whole stack in layers: This Linux image,
-install these system packages, then install these Python packages.
-
-\marginnote{\newthought{Docker} and Docker Compose solve the
-reproducible environment problem at the OS level rather than at the Python level.
-This course teaches the virtualenv path to keep the OS layer visible and
-learnable. Later Docker enables you to run Linux containers under Windows as well.
-Docker is the natural next step after this course; it does not replace any
-of what you learn here, it builds on it.\\
-Docker: \url{https://www.docker.com/}\\
-Docker docs: \url{https://docs.docker.com/get-started/}}
-
-\newthought{A minimal Dockerfile} for a Python service looks much like the
-two scripts you are about to write, compressed into a single declarative file:
-
-\begin{verbatim}
-FROM python:3.12-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["python", "main.py"]
-\end{verbatim}
-
-The result is a self-contained unit that runs identically on any machine
-with Docker installed.
-The trade is opacity: when something fails inside a container, the layers
-between your code and the kernel multiply, and debugging across them
-requires familiarity with the layer above and below.
-
-\marginnote{\newthought{Why we hold off.}\index{abstraction}
-The OS layer is the layer most students are least exposed to.
-Containers hide it before students have seen it.
-By the end of this course you will have provisioned, deployed, and monitored
-a service on bare Ubuntu; lifting that into a container at that point is
-mechanical, and you will know exactly what each line of the Dockerfile means.}
-
-\newthought{We do not use Docker in this course,} but you should know it
-exists and why teams adopt it.
-The vocabulary, image, container, registry, layer, volume, recurs in any
-later production work; the next-block decisions in this course translate
-to it directly.
-
-
-
-
-% ==============================================================================================
-% BLOCK 3: STUDENT ACTIVATION
-% ==============================================================================================
-
-\newpage
-\section{Exercise: The Setup Script}\index{exercises}
-
-\marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
-Work through them yourself first, break things, discuss; this is not a time trial.
-Block~2 introduced six topics; the exercises in this block mirror them in
-the same order, so you can read a concept and immediately practise it.}
-
-\newthought{Catching up via the reference tag.}\index{Git!tag}\index{recovery}
-From this block onwards, the GitHub repository is the safety net.
-The course maintains a public reference repository at
-\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
-\texttt{v0.1} marks the end of Block~2; \texttt{v0.2} will mark the end of
-this block.
-If you joined late, missed Block~2, or your repository has drifted from a
-known good state, reset to the previous tag rather than redoing every prior
-exercise.
-
-\marginnote{\newthought{Tag map.}\index{Git!tag}
-\texttt{v0.1} is the end of Block~2,
-\texttt{v0.2} is the end of this block,
-\texttt{v0.3} the end of Block~4, and so on.
-Every tag is a complete, runnable state of PixelWise.
-Browse them at
-\url{https://github.com/schutera/pixelwise/tags}.}
-
-\newthought{Catch-up procedure.}
-Restore the \texttt{B1-complete} VM image from Block~1, complete the Block~2
-Git identity and SSH key setup so the VM has your credentials, then clone
-the reference repository at the \texttt{v0.1} tag:
-
-\begin{verbatim}
-cd ~
-git clone --branch v0.1 \
-    https://github.com/schutera/pixelwise.git
-cd pixelwise
-git switch -c main
-git remote set-url origin \
-    git@github.com:<you>/pixelwise.git
-\end{verbatim}
-
-You are now at the state where Block~2 ended, ready to start Block~3.
-
-\newthought{Block~2 introduced the setup script as the system layer.}
-On the \texttt{dev} VM, inside the PixelWise repository, create a shell script
-that captures the system packages installed manually in Block~2:
-
-\begin{verbatim}
-#!/bin/bash
-set -euo pipefail
-
-sudo apt update
-sudo apt install -y git python3 python3-pip \
-    python3-venv curl
-\end{verbatim}
-
-\marginnote{\newthought{Try it on a fresh VM.}\index{provisioning}
-The real test of the script is on a machine that has not seen the commands
-yet.
-A second \texttt{prod} VM, restored from the \texttt{B1-complete} image,
-clones the repository, runs \texttt{bash setup-server.sh}, and provisions
-end to end without you typing a single \texttt{apt install}.}
-
-\newthought{Mark it executable and run it.}
-On a machine that already has the packages, every \texttt{apt install} is a
-no-op; the script reports nothing to do, which is the desired outcome of
-an idempotent provisioning step:
-
-\begin{verbatim}
-chmod +x setup-server.sh
-./setup-server.sh
-\end{verbatim}
-
-\newthought{Commit it.} This is the first file that makes provisioning reproducible:
-
-\begin{verbatim}
-git add setup-server.sh
-git commit -m "Add server provisioning script"
-git push
-\end{verbatim}
-
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: The Virtual Environment}\index{exercises}
-
-\newthought{Block~2 introduced virtual environments} as the Python isolation
-layer.
-On the \texttt{dev} VM, inside the PixelWise repository, create one:
-
-\begin{verbatim}
-cd ~/pixelwise
-python3 -m venv .venv
-source .venv/bin/activate
-\end{verbatim}
-
-\marginnote{\newthought{Notice the prompt change.}\index{shell prompt}
-After activation, your shell prompt usually gains a \texttt{(.venv)} prefix
-to remind you which environment is active.
-If you ever wonder whether you are inside the project's environment,
-the prompt is the first place to look; \texttt{which python} is the second.}
-
-\newthought{Verify the switch.}
-\texttt{which python} should print a path inside \texttt{.venv/bin/}.
-\texttt{pip list} should show only \texttt{pip} and \texttt{setuptools}:
-
-\begin{verbatim}
-which python
-pip list
-\end{verbatim}
-
-A fresh environment is empty by design.
-The next exercise fills it with intent.
-
-\newthought{Add the environment to \texttt{.gitignore}.}
-The \texttt{.venv/} directory must never be committed.
-Open the \texttt{.gitignore} from Block~2 and confirm \texttt{.venv/} is
-listed; if not, add it now:
-
-\begin{verbatim}
-.venv/
-*.pkl
-data/
-.env
-\end{verbatim}
-
-\marginnote{\newthought{Read the diff.}\index{Git!diff}
-\texttt{git diff .gitignore} shows what you added compared to the Block~2
-version.
-Reading the diff before committing is the habit that catches accidental
-changes early; running it once now is muscle memory you will reuse every
-day for the rest of the course.}
-
-Run \texttt{git status} before and after to see how much noise the new
-entries silence.
-
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: Pinning Dependencies and \texttt{pip-audit}}\index{exercises}
-
-\newthought{Block~2 introduced pip} as the package installer and
-\texttt{requirements.txt} as the captured environment.
-With the virtual environment active, install the three direct dependencies
-PixelWise needs in this block:
-
-\begin{verbatim}
-pip install scikit-learn joblib python-dotenv
-\end{verbatim}
-
-\newthought{Freeze the environment} into a pinned requirements file:
-
-\begin{verbatim}
-pip freeze > requirements.txt
-\end{verbatim}
-
-Open \texttt{requirements.txt} and inspect.
-Note the pinned versions and the transitive dependencies that were pulled
-in automatically.
-Count how many lines \texttt{pip freeze} produced compared to the three
-packages you installed directly; the gap is the dependency graph
-working invisibly.
-
-\marginnote{\newthought{The habit to build:}\index{requirements.txt}
-after installing or upgrading any package, immediately run
-\texttt{pip freeze > requirements.txt} and commit the change.
-Stale requirements files are the most common cause of
-``works on my machine'' incidents.}
-
-\newthought{Audit the dependency graph.}\index{pip audit}
-Install \texttt{pip-audit} and run it against the active environment:
-
-\begin{verbatim}
-pip install pip-audit
-pip-audit
-\end{verbatim}
-
-Inspect the output.
-What is a CVE\index{CVE}?
-What would you do if a critical vulnerability were reported in one of
-your dependencies?
-The reading you do here pays back in Block~8 when the audit becomes part
-of the deploy pipeline.
-
-\marginnote{\newthought{Read one CVE.}
-Pick any advisory \texttt{pip-audit} reports, click through to the CVE
-record, and read the description, the affected versions, and the fixed
-version.
-Practising this once now makes the production response straightforward
-when an alert fires under time pressure.}
-
-\newthought{Commit the requirements:}
-
-\begin{verbatim}
-git add requirements.txt
-git commit -m "Pin core Python dependencies"
-\end{verbatim}
-
-
-
-% ==============================================================================================
-\newpage
 \section{Exercise: Configuration and Secrets}\index{exercises}
 
-\newthought{Block~2 introduced \texttt{.env} and \texttt{.env.example}}
-as the contract for separating configuration from code.
+\newthought{With \texttt{.env} and \texttt{.env.example} as the contract}
+for separating configuration from code, draft both files.
 Create \texttt{.env.example} at the repository root with two entries:
 
 \begin{verbatim}
@@ -863,6 +752,116 @@ the single source of truth.
 A \texttt{git pull} on \texttt{prod} should always be the deployment step,
 never a place to make edits.}
 
+% ==============================================================================================
+\newpage
+\section{Optional: When \texttt{requirements.txt} Starts to Hurt}\index{pyproject.toml}\index{lock file}
+
+\newthought{\texttt{pip freeze > requirements.txt}} captures everything:
+your direct dependencies and all their transitive
+dependencies\index{transitive dependencies}, flattened into one list.
+Six months later you want to upgrade one package: which of those forty-seven
+packages did you deliberately install, and which were pulled into that list automatically?
+Without that distinction, every upgrade is a guessing game. Solving dependency 
+conflicts becomes a nightmare and quickly feels like brute-force.
+
+\marginnote{\newthought{Tools like \texttt{uv}}\index{uv} and
+\texttt{poetry}\index{poetry} use the project-file model and are fast becoming
+the standard.
+Once the \texttt{requirements.txt} workflow is second nature, this is the
+upgrade that makes dependency management sane at scale.\\
+Python Packaging User Guide: \url{https://packaging.python.org/en/latest/}\\
+\texttt{uv}: \url{https://docs.astral.sh/uv/}\\
+Poetry: \url{https://python-poetry.org/}}
+
+\newthought{\texttt{pyproject.toml}} solves this by separating
+``what you depend on'', your direct deps loosely pinned,
+from ``what gets installed'', a generated lock file with the full resolved graph.
+Upgrades become surgical: bump one line, regenerate the lock, done.
+
+\begin{verbatim}
+[project]
+name = "pixelwise"
+version = "0.1.0"
+dependencies = [
+    "scikit-learn>=1.4",
+    "joblib>=1.3",
+    "python-dotenv>=1.0",
+]
+\end{verbatim}
+
+\newthought{Compare} this to \texttt{requirements.txt}: the project file
+lists only what you chose to install, with flexible version bounds.
+The tool resolves the full dependency graph and writes a lock file that
+pins every transitive dependency exactly.
+You commit both files; the lock file is your reproducibility guarantee
+and the project file is your editable surface.
+
+\begin{verbatim}
+# to upgrade a single package and update lock:
+poetry update <package>
+\end{verbatim}
+
+\marginnote{\newthought{We stay with \texttt{requirements.txt}}
+through the rest of the course because it is the format every Python
+developer recognises and the only one some hosting environments still accept.
+The reasoning generalises: when an upgrade is available, learn the workflow
+beneath it before adopting the tool that abstracts it away.}
+
+
+% ==============================================================================================
+\newpage
+\section{Optional: The Container Alternative}\index{Docker}\index{containers}
+
+\newthought{Virtual environments isolate Python packages.}
+Containers isolate the entire operating system: libraries, system packages,
+Python version, environment variables, even the filesystem layout.
+Where \texttt{requirements.txt} specifies which Python packages to install,
+a \texttt{Dockerfile}\index{Dockerfile} does the whole stack in layers: This Linux image,
+install these system packages, then install these Python packages.
+
+\marginnote{\newthought{Docker} and Docker Compose solve the
+reproducible environment problem at the OS level rather than at the Python level.
+This course teaches the virtualenv path to keep the OS layer visible and
+learnable. Later Docker enables you to run Linux containers under Windows as well.
+Docker is the natural next step after this course; it does not replace any
+of what you learn here, it builds on it.\\
+Docker: \url{https://www.docker.com/}\\
+Docker docs: \url{https://docs.docker.com/get-started/}}
+
+\newthought{A minimal Dockerfile} for a Python service looks much like the
+two scripts you are about to write, compressed into a single declarative file:
+
+\begin{verbatim}
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["python", "main.py"]
+\end{verbatim}
+
+The result is a self-contained unit that runs identically on any machine
+with Docker installed.
+The trade is opacity: when something fails inside a container, the layers
+between your code and the kernel multiply, and debugging across them
+requires familiarity with the layer above and below.
+
+\marginnote{\newthought{Why we hold off.}\index{abstraction}
+The OS layer is the layer most students are least exposed to.
+Containers hide it before students have seen it.
+By the end of this course you will have provisioned, deployed, and monitored
+a service on bare Ubuntu; lifting that into a container at that point is
+mechanical, and you will know exactly what each line of the Dockerfile means.}
+
+\newthought{We do not use Docker in this course,} but you should know it
+exists and why teams adopt it.
+The vocabulary, image, container, registry, layer, volume, recurs in any
+later production work; the next-block decisions in this course translate
+to it directly.
+
+
+
+
 \newthought{A note on what comes next.}
 The repository now has a scaffold, pinned dependencies, and a provisioned
 server, but no application code.
@@ -871,8 +870,9 @@ In the next block we drop a trained model into \texttt{models/}, write the
 inference layer in \texttt{app/classifier.py}, and verify end to end that
 PixelWise can classify a digit before any API or frontend exists.
 
-
-
+% ==============================================================================================
+% BLOCK 3: CONSOLIDATION
+% ==============================================================================================
 % ==============================================================================================
 \newpage
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}

@@ -8,6 +8,7 @@
 
 \index{model integration}\index{classifier}\index{MNIST}\index{inference}\index{joblib}
 \chapter{Integrate the Model}
+\printchapterversion{04_model_integration}
 \newthought{Your ML course teaches you to train models. This block teaches you to ship one.}
 
 % ==============================================================================================
@@ -129,7 +130,7 @@ By the end you will have
 
 
 % ==============================================================================================
-% BLOCK 2: MAIN THEORY
+% BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
 
 \newpage
@@ -199,6 +200,68 @@ SafeTensors: \url{https://huggingface.co/docs/safetensors}}
 
 % ==============================================================================================
 \newpage
+\section{Exercise: Inspecting the Model Artefact}\index{exercises}
+
+\marginnote{\newthought{Exercises} sit directly under the concept they
+practise: read a section, then carry it out.
+If your repository has drifted from the end of Block~3, the catch-up below
+brings it back to the known good state.}
+
+\newthought{Catching up via the reference tag.}\index{Git!tag}
+The course maintains a public reference repository at
+\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
+\texttt{v0.2} marks the end of Block~3; \texttt{v0.3} will mark the end of
+this block.
+If you joined late or your repository has drifted, reset to the previous
+tag before starting:
+
+\begin{verbatim}
+git fetch origin
+git reset --hard v0.2
+\end{verbatim}
+
+This rewrites your working tree to match the end of Block~3 exactly.
+The state on disk is now identical to the published reference, including
+\texttt{setup-server.sh}, \texttt{requirements.txt}, and \texttt{.env.example}.
+
+\newthought{Treat the model artefact as something you load,} not something
+you commit.
+Copy \texttt{digit\_classifier\_v1.pkl} (provided) into \texttt{models/}.
+Confirm that \texttt{.gitignore} excludes \texttt{*.pkl} so the artefact
+stays out of version control:
+
+\begin{verbatim}
+ls models/
+git status
+\end{verbatim}
+
+\marginnote{\newthought{If the file appears in \texttt{git status},}
+your \texttt{.gitignore} from Block~3 needs an update.
+Add \texttt{models/*.pkl} on its own line and rerun \texttt{git status}.
+A model file accidentally committed once is in the history forever, even
+if the next commit deletes it.}
+
+\newthought{Inspect the artefact} in a Python shell:
+
+\begin{verbatim}
+source .venv/bin/activate
+python3
+>>> import joblib
+>>> model = joblib.load("models/digit_classifier_v1.pkl")
+>>> print(type(model))
+>>> print(model.classes_)
+\end{verbatim}
+
+What type is it?
+What classes does it predict?
+Does class 0 appear?
+The answer to the third question determines what \texttt{CLASSES} should
+contain in the next exercise.
+
+
+
+% ==============================================================================================
+\newpage
 \section{Honouring the Model Contract}\index{train/serve skew}\index{model contract}
 
 \newthought{Every model was trained on inputs in a specific format.}
@@ -254,6 +317,52 @@ training script established.
 \marginnote{scikit-learn\index{scikit-learn}: \url{https://scikit-learn.org/}\\
 joblib\index{joblib}: \url{https://joblib.readthedocs.io/}\\
 NumPy\index{NumPy}: \url{https://numpy.org/}}
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Preprocessing and Binarization}\index{exercises}
+
+\newthought{Practise the preprocessing step} that matches the training
+contract.
+Load a sample MNIST digit and compare the raw and binarized representations
+side by side:
+
+\begin{verbatim}
+from sklearn.datasets import fetch_openml
+import numpy as np
+
+X, y = fetch_openml("mnist_784", version=1,
+    return_X_y=True, as_frame=False)
+sample = X[0].reshape(28, 28).astype(np.uint8)
+binary = (sample > 128).astype(float)
+print(sample[:5, :5])    # raw values
+print(binary[:5, :5])    # 0s and 1s
+\end{verbatim}
+
+\marginnote{\newthought{Notice the structure survives.}\index{binarization}
+The raw image has anti-aliased grey edges; the binarized image is sharp
+black and white.
+The digit is still recognisable, the noise is gone, and the input now
+matches what the model saw during training.
+Serving raw greyscale would mean predicting against a distribution the
+model has never seen.}
+
+\newthought{Plot if you have a notebook open.}
+A side-by-side image of the raw and binarized digit makes the effect
+visible at a glance.
+\texttt{matplotlib} is not in \texttt{requirements.txt} yet; install it
+locally with \texttt{pip install matplotlib} for this exercise only,
+then leave it out of the pinned requirements until a later block needs it.
+
+\marginnote{\newthought{Why threshold at 128?}\index{threshold}
+128 is the midpoint of the uint8 range, the simplest split between
+``ink'' and ``paper''.
+Otsu's method picks a smarter threshold per image, and for noisier
+inputs that is sometimes worth doing.
+For MNIST the simple split is enough and matches the training pipeline
+exactly.}
 
 
 
@@ -355,180 +464,11 @@ from Block~3.}
 
 % ==============================================================================================
 \newpage
-\section{The Model Card}\index{model card}\index{MODELCARD.md}
-
-\newthought{A model card} is the documentation artefact that links a model
-to its provenance and limitations.
-It answers four questions any consumer of the model should know the answer
-to before they trust it: where did the data come from, what can the model
-do, what does it fail at, and what is it intended for.
-
-\marginnote{Model cards as a concept were proposed by Mitchell et al.\
-in 2018 and are now standard at Google, HuggingFace, and increasingly
-across the industry.\\
-Model Cards (Google):\\
-\url{https://modelcards.withgoogle.com/}\\
-HuggingFace Model Cards: \\
-\url{https://huggingface.co/docs/hub/model-cards}}
-
-\newthought{For PixelWise} the model card lives next to the artefact
-in \texttt{models/MODELCARD.md} and is committed to Git, so it travels
-with the repository even though the \texttt{.pkl} itself does not:
-
-\begin{verbatim}
-# MODELCARD.md: digit_classifier_v1
-
-## Training Data
-MNIST digits 1-9, ~54k train / ~9k test, public domain.
-Class 0 withheld intentionally.
-
-## Capabilities
-Predict handwritten digits 1-9.
-Expected accuracy: ~92% (LogisticRegression baseline).
-
-## Known Failures
-6/9 confusion, 3/8 confusion, messy or rotated digits.
-
-## Intended Use
-28x28 canvas drawings.
-Out of scope: photos, non-digit characters.
-\end{verbatim}
-
-\marginnote{\newthought{The card is a contract,} like any other.
-When v2 is deployed via the Block~8 feature flag, the card is updated
-alongside it; the version number, the training data section, and the
-capabilities all change in lockstep.
-Traceability across versions is the entire reason the card is a separate
-file.}
-
-\newthought{What the card is not} is a substitute for the runtime checks
-already built into the loader.
-Documentation tells humans what to expect; the assertion at module load
-tells the program what to expect.
-Both are needed.
-Documentation drifts; assertions cannot.
-
-
-
-% ==============================================================================================
-% BLOCK 3: STUDENT ACTIVATION
-% ==============================================================================================
-
-\newpage
-\section{Exercise: Inspecting the Model Artefact}\index{exercises}
-
-\marginnote{\newthought{Exercises} mirror the four theory sections in order.
-Read a concept, then practise it; the structure of this block matches the
-structure of Block~2 one to one.
-If your repository has drifted from the end of Block~3, the catch-up below
-brings it back to the known good state.}
-
-\newthought{Catching up via the reference tag.}\index{Git!tag}
-The course maintains a public reference repository at
-\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
-\texttt{v0.2} marks the end of Block~3; \texttt{v0.3} will mark the end of
-this block.
-If you joined late or your repository has drifted, reset to the previous
-tag before starting:
-
-\begin{verbatim}
-git fetch origin
-git reset --hard v0.2
-\end{verbatim}
-
-This rewrites your working tree to match the end of Block~3 exactly.
-The state on disk is now identical to the published reference, including
-\texttt{setup-server.sh}, \texttt{requirements.txt}, and \texttt{.env.example}.
-
-\newthought{Block~2 introduced the model artefact} as something you load,
-not something you commit.
-Copy \texttt{digit\_classifier\_v1.pkl} (provided) into \texttt{models/}.
-Confirm that \texttt{.gitignore} excludes \texttt{*.pkl} so the artefact
-stays out of version control:
-
-\begin{verbatim}
-ls models/
-git status
-\end{verbatim}
-
-\marginnote{\newthought{If the file appears in \texttt{git status},}
-your \texttt{.gitignore} from Block~3 needs an update.
-Add \texttt{models/*.pkl} on its own line and rerun \texttt{git status}.
-A model file accidentally committed once is in the history forever, even
-if the next commit deletes it.}
-
-\newthought{Inspect the artefact} in a Python shell:
-
-\begin{verbatim}
-source .venv/bin/activate
-python3
->>> import joblib
->>> model = joblib.load("models/digit_classifier_v1.pkl")
->>> print(type(model))
->>> print(model.classes_)
-\end{verbatim}
-
-What type is it?
-What classes does it predict?
-Does class 0 appear?
-The answer to the third question determines what \texttt{CLASSES} should
-contain in the next exercise.
-
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: Preprocessing and Binarization}\index{exercises}
-
-\newthought{Block~2 introduced binarization} as the preprocessing step that
-matches the training contract.
-Load a sample MNIST digit and compare the raw and binarized representations
-side by side:
-
-\begin{verbatim}
-from sklearn.datasets import fetch_openml
-import numpy as np
-
-X, y = fetch_openml("mnist_784", version=1,
-    return_X_y=True, as_frame=False)
-sample = X[0].reshape(28, 28).astype(np.uint8)
-binary = (sample > 128).astype(float)
-print(sample[:5, :5])    # raw values
-print(binary[:5, :5])    # 0s and 1s
-\end{verbatim}
-
-\marginnote{\newthought{Notice the structure survives.}\index{binarization}
-The raw image has anti-aliased grey edges; the binarized image is sharp
-black and white.
-The digit is still recognisable, the noise is gone, and the input now
-matches what the model saw during training.
-Serving raw greyscale would mean predicting against a distribution the
-model has never seen.}
-
-\newthought{Plot if you have a notebook open.}
-A side-by-side image of the raw and binarized digit makes the effect
-visible at a glance.
-\texttt{matplotlib} is not in \texttt{requirements.txt} yet; install it
-locally with \texttt{pip install matplotlib} for this exercise only,
-then leave it out of the pinned requirements until a later block needs it.
-
-\marginnote{\newthought{Why threshold at 128?}\index{threshold}
-128 is the midpoint of the uint8 range, the simplest split between
-``ink'' and ``paper''.
-Otsu's method picks a smarter threshold per image, and for noisier
-inputs that is sometimes worth doing.
-For MNIST the simple split is enough and matches the training pipeline
-exactly.}
-
-
-
-% ==============================================================================================
-\newpage
 \section{Exercise: The Classifier Module}\index{exercises}
 
-\newthought{Block~2 introduced the inference interface.}
-Implement \texttt{app/classifier.py} with the class constant, module-level
-loading, the startup assertion, and the two functions:
+\newthought{Implement the inference interface in \texttt{app/classifier.py}}
+with the class constant, module-level loading, the startup assertion, and
+the two functions:
 
 \begin{verbatim}
 import os
@@ -605,11 +545,67 @@ is unchanged.}
 
 % ==============================================================================================
 \newpage
+\section{The Model Card}\index{model card}\index{MODELCARD.md}
+
+\newthought{A model card} is the documentation artefact that links a model
+to its provenance and limitations.
+It answers four questions any consumer of the model should know the answer
+to before they trust it: where did the data come from, what can the model
+do, what does it fail at, and what is it intended for.
+
+\marginnote{Model cards as a concept were proposed by Mitchell et al.\
+in 2018 and are now standard at Google, HuggingFace, and increasingly
+across the industry.\\
+Model Cards (Google):\\
+\url{https://modelcards.withgoogle.com/}\\
+HuggingFace Model Cards: \\
+\url{https://huggingface.co/docs/hub/model-cards}}
+
+\newthought{For PixelWise} the model card lives next to the artefact
+in \texttt{models/MODELCARD.md} and is committed to Git, so it travels
+with the repository even though the \texttt{.pkl} itself does not:
+
+\begin{verbatim}
+# MODELCARD.md: digit_classifier_v1
+
+## Training Data
+MNIST digits 1-9, ~54k train / ~9k test, public domain.
+Class 0 withheld intentionally.
+
+## Capabilities
+Predict handwritten digits 1-9.
+Expected accuracy: ~92% (LogisticRegression baseline).
+
+## Known Failures
+6/9 confusion, 3/8 confusion, messy or rotated digits.
+
+## Intended Use
+28x28 canvas drawings.
+Out of scope: photos, non-digit characters.
+\end{verbatim}
+
+\marginnote{\newthought{The card is a contract,} like any other.
+When v2 is deployed via the Block~8 feature flag, the card is updated
+alongside it; the version number, the training data section, and the
+capabilities all change in lockstep.
+Traceability across versions is the entire reason the card is a separate
+file.}
+
+\newthought{What the card is not} is a substitute for the runtime checks
+already built into the loader.
+Documentation tells humans what to expect; the assertion at module load
+tells the program what to expect.
+Both are needed.
+Documentation drifts; assertions cannot.
+
+
+
+% ==============================================================================================
+\newpage
 \section{Exercise: The Model Card}\index{exercises}
 
-\newthought{Block~2 introduced the model card} as the documentation
-artefact that travels with the project even though the \texttt{.pkl} does
-not.
+\newthought{Write the documentation artefact} that travels with the project
+even though the \texttt{.pkl} does not.
 Write \texttt{models/MODELCARD.md} following the structure from the theory
 section: dataset, input format, performance per class, known failures,
 version, and date.
@@ -694,6 +690,9 @@ human in the loop.
 
 
 % ==============================================================================================
+% BLOCK 3: CONSOLIDATION
+% ==============================================================================================
+
 \newpage
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}
 

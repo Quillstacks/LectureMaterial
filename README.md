@@ -1,21 +1,117 @@
-Combobulated by Prof. Dr.-Ing. Mark Schutera
 
-## Lecture Notes
+<br>
 
-* **Philosophy of AI**<br>
-[📄 Download Notes](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf)
-
-* **Unsupervised Deep Learning**<br>
-[📄 Download Notes](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/notes_unsupervisedlearning.pdf)
+## Lectures Combobulated by Prof. Dr.-Ing. Mark Schutera
 
 
-* **Numerical Methods**<br>
-[📄 Download Notes](https://material.schutera.com/lecturenotes/notes_numerischemethoden/notes_numerischemethoden.pdf)
-
-
-* **Full Stack Handwerkszeug**<br>
-[📄 Download Notes](https://material.schutera.com/lecturenotes/notes_missingsemester/notes_missingsemester.pdf)
+<br>
 
 ---
+### Philosophy of AI
+
+<!-- BEGIN:lecture:notes_philosophyofai -->
+<details>
+<summary>📑 <b>Lecture Notes</b></summary>
+<br/>
+
+|   #  | Chapter | Download |
+| :--: | :--- | :-: |
+| Full | Philosophy of AI · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf) |
+|  01  | Anthropomorphism | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/01_Anthropomorphism.pdf) |
+|  02  | Accountability | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/02_Accountability.pdf) |
+|  03  | Embodiment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/03_Embodiment.pdf) |
+|  04  | Agency | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/04_Agency.pdf) |
+|   A  | Session Preparation Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/aa_PreparationGuidance.pdf) |
+|   B  | Debate Format & Moderator Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/ac_DebateProtocol.pdf) |
+
+</details>
+<!-- END:lecture:notes_philosophyofai -->
+
+<br>
+
+---
+
+### Unsupervised Deep Learning
+
+<!-- BEGIN:lecture:notes_unsupervisedlearning -->
+<details>
+<summary>📑 <b>Lecture Notes</b></summary>
+<br/>
+
+|   #  | Chapter | Download |
+| :--: | :--- | :-: |
+| Full | Unsupervised Deep Learning · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/notes_unsupervisedlearning.pdf) |
+|  01  | Similarity and Distance | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/01_foundations.pdf) |
+|  02  | Centroid Clustering | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/02_centroid_clustering.pdf) |
+|  03  | Hierarchical Clustering | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/03_hierarchical_clustering.pdf) |
+|  04  | Density-Based Clustering | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/04_density_graph_clustering.pdf) |
+|  05  | Dimensionality Reduction | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/05_dimensionality_reduction.pdf) |
+|  06  | Variational Inference | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/06_variational_inference.pdf) |
+|  07  | Uncertainty Estimation | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/07_uncertainty_estimation.pdf) |
+|  08  | Transfer Learning | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/08_zero_few_shot_transfer.pdf) |
+|  09  | Self-Supervised Learning | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/09_self_supervised_learning.pdf) |
+|  10  | Weak Supervision | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/10_weak_supervision.pdf) |
+|  11  | Reinforcement Learning Fundamentals | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/11_reinforcement_learning.pdf) |
+
+</details>
+<!-- END:lecture:notes_unsupervisedlearning -->
+
+<br>
+
+---
+
+### Numerical Methods
+
+<!-- BEGIN:lecture:notes_numerischemethoden -->
+<details>
+<summary>📑 <b>Lecture Notes</b></summary>
+<br/>
+
+|   #  | Chapter | Download |
+| :--: | :--- | :-: |
+| Full | Numerical Methods · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/notes_numerischemethoden.pdf) |
+|  01  | Enter Numerical Methods | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/1_introduction.pdf) |
+|  02  | Floating-Point Arithmetic | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/2_floatingpointarithmetics.pdf) |
+|  03  | Error Analysis | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/3_erroranalysis.pdf) |
+|  04  | Newton Methods | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/4_newton_methods.pdf) |
+|  05  | Global Optimization | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/5_global_optimization.pdf) |
+|  06  | Numerical Integration | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/6_integration_and_sgd.pdf) |
+
+</details>
+<!-- END:lecture:notes_numerischemethoden -->
+
+<br>
+
+---
+### Full Stack Handwerkszeug
+
+<!-- BEGIN:lecture:notes_missingsemester -->
+<details>
+<summary>📑 <b>Lecture Notes</b></summary>
+<br/>
+
+|   #  | Chapter | Download |
+| :--: | :--- | :-: |
+| Full | Full Stack Handwerkszeug · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/notes_missingsemester.pdf) |
+|  00  | Projektbericht | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/00_projektbericht.pdf) |
+|  01  | Development and Production | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/01_servers_vms_linux.pdf) |
+|  02  | Version Everything: Git & GitHub | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/02_git_github.pdf) |
+|  03  | Dependencies & Structure | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/03_dependencies_structure.pdf) |
+|  04  | Integrate the Model | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/04_model_integration.pdf) |
+|  05  | The Backend: APIs & Services | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/05_apis_services.pdf) |
+|  06  | Data Lives Here: Databases & SQL | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/06_databases_sql.pdf) |
+|  07  | Face the World: Frontend & Nginx | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/07_frontend_nginx.pdf) |
+|  08  | Automate Everything: CI/CD, Cron, Webhooks & Backups | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/08_cicd_automation.pdf) |
+|  09  | Watch It Run: Monitoring, Logging & Analytics | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/09_monitoring_logging.pdf) |
+|  10  | AI Dev & Vibe Coding | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/10_ai_dev_vibecoding.pdf) |
+
+</details>
+<!-- END:lecture:notes_missingsemester -->
+
+<br>
+
+---
+---
+<br>
 
 *For students: These materials are provided for educational purposes. Do not redistribute without permission.*

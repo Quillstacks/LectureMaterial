@@ -43,9 +43,22 @@ fi
 PREAMBLE="$(sed -n "1,$((preamble_end_line - 1))p" "$MAIN_TEX")"
 
 # Pull bibliographystyle and bibliography lines out of the main file (if any),
-# so cites resolve in the chapter PDF.
+# so cites resolve in the chapter PDF. Two patterns are supported:
+#   (a) top-level \bibliographystyle{...} + \bibliography{<file>}
+#   (b) \makestandardbackmatter{<file>} (defined in tufte.cls), in which case
+#       the bib file is the macro argument; we synthesise the equivalent
+#       \bibliographystyle{abbrvnat} + \bibliography{<file>} for the wrapper.
 BIBSTYLE_LINE="$(grep -E '^\\bibliographystyle' "$MAIN_TEX" | head -1 || true)"
 BIBLIO_LINE="$(grep -E '^\\bibliography\{' "$MAIN_TEX" | head -1 || true)"
+if [[ -z "$BIBLIO_LINE" ]]; then
+  BACKMATTER_BIB="$(grep -E '^\\makestandardbackmatter\{' "$MAIN_TEX" \
+    | head -1 \
+    | sed -E 's|^\\makestandardbackmatter\{([^}]+)\}.*|\1|' || true)"
+  if [[ -n "$BACKMATTER_BIB" ]]; then
+    BIBSTYLE_LINE='\bibliographystyle{abbrvnat}'
+    BIBLIO_LINE="\\bibliography{${BACKMATTER_BIB}}"
+  fi
+fi
 
 mkdir -p "$OUT_DIR"
 
@@ -81,8 +94,45 @@ build_one() {
   fi
 }
 
-for chapter in "$BOOK_DIR"/chapters/*.tex; do
-  [[ -e "$chapter" ]] || continue
+# Only build chapters that the main .tex actually \input{}s with an
+# uncommented line. A chapter commented out in the main file is skipped
+# from the standalone build too. (Portable to macOS bash 3.2: no mapfile.)
+ACTIVE_CHAPTERS=()
+while IFS= read -r base; do
+  [[ -n "$base" ]] && ACTIVE_CHAPTERS+=("$base")
+done < <(
+  grep -E '^[[:space:]]*\\input\{chapters/[^}]+\}' "$MAIN_TEX" \
+    | sed -E 's|^[[:space:]]*\\input\{chapters/([^}]+)\}.*|\1|; s|\.tex$||'
+)
+
+# Prune stale chapter PDFs (and their build artefacts) so chapter_pdfs/
+# stays in sync with what the main .tex currently inputs. Building is the
+# act that decides what is published; commenting a chapter out removes it.
+if [[ -d "$OUT_DIR" ]]; then
+  for pdf in "$OUT_DIR"/*.pdf; do
+    [[ -e "$pdf" ]] || continue
+    pdf_base="$(basename "$pdf" .pdf)"
+    keep=false
+    for active in ${ACTIVE_CHAPTERS[@]+"${ACTIVE_CHAPTERS[@]}"}; do
+      if [[ "$pdf_base" == "$active" ]]; then
+        keep=true
+        break
+      fi
+    done
+    if ! $keep; then
+      echo "  prune  ${pdf_base}.pdf (not active in $(basename "$MAIN_TEX"))"
+      rm -f "$OUT_DIR/${pdf_base}".pdf \
+            "$OUT_DIR/_ch_${pdf_base}".{log,aux,out,fls,fdb_latexmk,toc,idx,ind,ilg,bbl,blg}
+    fi
+  done
+fi
+
+for base in ${ACTIVE_CHAPTERS[@]+"${ACTIVE_CHAPTERS[@]}"}; do
+  chapter="$BOOK_DIR/chapters/${base}.tex"
+  if [[ ! -f "$chapter" ]]; then
+    echo "  skip   ${base} (file not found at ${chapter})"
+    continue
+  fi
   build_one "$chapter"
 done
 

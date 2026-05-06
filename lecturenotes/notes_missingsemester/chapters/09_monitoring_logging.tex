@@ -4,11 +4,12 @@
 
 \index{monitoring}\index{logging}\index{analytics}\index{Discord webhook}
 \chapter{Watch It Run: Monitoring, Logging \& Analytics}
+\printchapterversion{09_monitoring_logging}
 \newthought{You cannot improve what you cannot measure.}
 
-% ==============================================================================
-% SESSION A: THEORY
-% ==============================================================================
+% ==============================================================================================
+% BLOCK 1: INTRODUCTION
+% ==============================================================================================
 
 \section{From Debugging to Observability}
 
@@ -22,6 +23,11 @@ it is working well? Three pillars:
     \item[Analytics] Patterns in your data that reveal how the system behaves over time.
 \end{description}
 
+% ==============================================================================================
+% BLOCK 2: CONCEPTS AND PRACTICE
+% ==============================================================================================
+
+\newpage
 \section{Structured Logging}\index{structured logging}\index{JSON logging}
 
 \newthought{Plain strings are not enough.} \texttt{print("got request")} tells you something happened.
@@ -71,7 +77,19 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_data)
 \end{verbatim}
 
-\section{The \texttt{/health} Endpoint — Upgraded}\index{health check}
+\newpage
+\section{Exercise: Add Structured JSON Logging}\index{exercises}
+
+\marginnote{If your VM is broken, restore the \texttt{B8-complete} snapshot.
+At the end of this session, take a snapshot named \texttt{B9-complete}.}
+
+\newthought{Configure the Python \texttt{logging} module} with a JSON formatter using the class shown
+in the theory above. Every request should log: \texttt{timestamp}, \texttt{level}, \texttt{endpoint},
+\texttt{request\_id}, \texttt{latency\_ms}, \texttt{predicted\_class}, \texttt{confidence},
+\texttt{model\_version}.
+
+\newpage
+\section{The \texttt{/health} Endpoint Upgraded}\index{health check}
 
 \newthought{Block~5's \texttt{/health}} confirmed the process is running. Now distinguish two levels:
 
@@ -93,11 +111,18 @@ def health():
 returns \texttt{"ok"} or \texttt{"degraded"}. It does not expose DB passwords, stack traces, or version
 details. Detailed diagnostics are logged internally.}
 
+\newpage
+\section{Exercise: Upgrade \texttt{/health}}\index{exercises}
+
+\newthought{Check DB connectivity and model load status.} Return \texttt{\{"status": "ok"\}} externally;
+log detailed diagnostics internally.
+
+\newpage
 \section{Monitoring with Discord Webhooks}\index{Discord webhook}\index{monitoring}
 
 \newthought{No new tools to install.} A cron job \texttt{curl}s \texttt{/health} every 5 minutes.
 If the response is not \texttt{"ok"}, it sends a Discord webhook notification. Your service talks to you
-when something breaks—on your phone, in your pocket.
+when something breaks, on your phone, in your pocket.
 
 \begin{verbatim}
 #!/bin/bash
@@ -112,7 +137,7 @@ if [ "$STATUS" != "ok" ]; then
 fi
 \end{verbatim}
 
-\marginnote{The Discord webhook URL is stored in \texttt{.env}—it is a secret that grants posting
+\marginnote{The Discord webhook URL is stored in \texttt{.env}. It is a secret that grants posting
 access to your channel. The cron job runs the script; the script talks to Discord when there is a problem.\\
 Discord Webhooks: \url{https://discord.com/developers/docs/resources/webhook}}
 
@@ -121,6 +146,30 @@ Discord Webhooks: \url{https://discord.com/developers/docs/resources/webhook}}
 */5 * * * * /opt/pixelwise/scripts/health_check.sh
 \end{verbatim}
 
+\newpage
+\section{Exercise: Set Up Discord Webhook Monitoring}\index{exercises}
+
+\newthought{Wire the alerting path end to end.} Work through the steps below:
+
+\begin{itemize}
+    \item Create a Discord server and webhook (Settings $\to$ Integrations $\to$ Webhooks).
+    \item Add \texttt{DISCORD\_WEBHOOK\_URL} to \texttt{.env} and \texttt{.env.example}.
+    \item Write \texttt{scripts/health\_check.sh} using the script from the theory section.
+    \item Register the cron job:
+    \begin{verbatim}
+    crontab -e
+    # Add:
+    */5 * * * * /opt/pixelwise/scripts/health_check.sh
+    \end{verbatim}
+    \item Test it: stop the \texttt{systemd} service and wait. Does Discord ping?
+    \begin{verbatim}
+    sudo systemctl stop pixelwise
+    # Wait up to 5 minutes, check Discord
+    sudo systemctl start pixelwise
+    \end{verbatim}
+\end{itemize}
+
+\newpage
 \section{Event-Driven Notifications}\index{alerting}
 
 \newthought{The Discord pattern generalises.} Any event worth knowing about can trigger a notification.
@@ -135,31 +184,45 @@ if result["confidence"] < CONFIDENCE_THRESHOLD:
     )
 \end{verbatim}
 
-\newthought{If these spike,} the model may be struggling with inputs it was not trained on—a real signal,
+\newthought{If these spike,} the model may be struggling with inputs it was not trained on, a real signal,
 not noise. This is the natural step toward model monitoring: tracking confidence over time, spotting
 distribution shifts, detecting when a model goes stale.
 
+\newpage
+\section{Exercise: Add a Low-Confidence Alert}\index{exercises}
+
+\newthought{In the classify endpoint,} send a Discord notification when confidence falls below a
+threshold (e.g., 0.5). Test it by drawing an ambiguous digit. Does Discord ping?
+
+\newpage
+\section{Exercise: Add a Canvas-Clear Notification}\index{exercises}
+
+\newthought{Add a second Discord notification} that fires when a user clears the drawing field.
+Add an API endpoint (e.g., \texttt{POST /api/events/clear}) that the frontend calls on canvas clear.
+Discuss: what does a spike in clears tell you about model performance?
+
+\newpage
 \section{Analytics}\index{analytics}
 
 \newthought{Everything that happens in the app is a potential data point:}
 
 \begin{description}
-    \item[Backend signals] Prediction counts, confidence values, model version usage—already stored in
+    \item[Backend signals] Prediction counts, confidence values, model version usage, already stored in
     PostgreSQL from Block~6.
-    \item[Frontend signals] Page loads, drawings submitted, canvas clears, time spent drawing—any user
+    \item[Frontend signals] Page loads, drawings submitted, canvas clears, time spent drawing. Any user
     interaction can be tracked by the frontend and sent to the API.
 \end{description}
 
 \subsection{Analytics Concepts}
 
 \marginnote{These concepts are how product teams understand user behaviour at scale:
-\textbf{funnels}\index{funnel} (open page $\to$ draw $\to$ submit $\to$ view result—where do users drop off?),
+\textbf{funnels}\index{funnel} (open page $\to$ draw $\to$ submit $\to$ view result, where do users drop off?),
 \textbf{retention} (do users come back?),
-\textbf{sessions}\index{session} (grouping events into a single visit—recall the session IDs from Block~7's URL design).}
+\textbf{sessions}\index{session} (grouping events into a single visit, recall the session IDs from Block~7's URL design).}
 
 \subsection{The \texttt{/analytics} Endpoint}\index{/analytics}
 
-\newthought{Provided as boilerplate}—returns prediction counts, average confidence, and model version
+\newthought{Provided as boilerplate.} It returns prediction counts, average confidence, and model version
 breakdown. Students hit the endpoint and see the data. The lesson is not how to write the queries, but
 what the numbers tell you about your app.
 
@@ -175,92 +238,66 @@ def analytics():
     }
 \end{verbatim}
 
-\marginnote{In production, analytics panels are never public—they reveal usage patterns and internal metrics.
+\marginnote{In production, analytics panels are never public. They reveal usage patterns and internal metrics.
 They belong behind authentication on a separate internal route (e.g., \texttt{/admin/analytics}).}
 
 \subsection{Frontend Analytics}
 
 \newthought{Instrument the frontend} to count user interactions. A small panel in the UI displays:
-page loads, drawings submitted, canvas clears. These are frontend-only counters—simple JavaScript
+page loads, drawings submitted, canvas clears. These are frontend-only counters, simple JavaScript
 variables incremented on each event.
 
-\newthought{Canvas clears are a signal too:} when a user clears the drawing field, it often means the
-prediction was wrong or the user wants to try again. This is the natural step to wire in model analytics—a
-spike in clears correlated with low-confidence predictions tells you the model is struggling with certain inputs.
-
-% ==============================================================================
-% SESSION B: HANDS-ON
-% ==============================================================================
+\newthought{Canvas clears are a signal too.} When a user clears the drawing field, it often means the
+prediction was wrong or the user wants to try again. This is the natural step to wire in model analytics.
+A spike in clears correlated with low-confidence predictions tells you the model is struggling with certain inputs.
 
 \newpage
-\section{Workshop}
+\section{Exercise: Deploy the \texttt{/analytics} Endpoint}\index{exercises}
 
-\marginnote{If your VM is broken, restore the \texttt{B8-complete} snapshot.
-At the end of this session, take a snapshot named \texttt{B9-complete}.}
+\newthought{Use the provided boilerplate.} Hit it with \texttt{curl} and interpret the results:
 
-\begin{enumerate}
-    \item \textbf{Add structured JSON logging:} Configure the Python \texttt{logging} module with a JSON
-    formatter. Every request should log: \texttt{timestamp}, \texttt{level}, \texttt{endpoint},
-    \texttt{request\_id}, \texttt{latency\_ms}, \texttt{predicted\_class}, \texttt{confidence},
-    \texttt{model\_version}.
-
-    \item \textbf{Upgrade \texttt{/health}:} Check DB connectivity and model load status. Return
-    \texttt{\{"status": "ok"\}} externally; log detailed diagnostics internally.
-
-    \item \textbf{Set up Discord webhook monitoring:}
-    \begin{enumerate}
-        \item Create a Discord server and webhook (Settings $\to$ Integrations $\to$ Webhooks).
-        \item Add \texttt{DISCORD\_WEBHOOK\_URL} to \texttt{.env} and \texttt{.env.example}.
-        \item Write \texttt{scripts/health\_check.sh} using the script from the theory section.
-        \item Register the cron job:
-        \begin{verbatim}
-    crontab -e
-    # Add:
-    */5 * * * * /opt/pixelwise/scripts/health_check.sh
-        \end{verbatim}
-        \item Test it: stop the \texttt{systemd} service and wait—does Discord ping?
-        \begin{verbatim}
-    sudo systemctl stop pixelwise
-    # Wait up to 5 minutes, check Discord
-    sudo systemctl start pixelwise
-        \end{verbatim}
-    \end{enumerate}
-
-    \item \textbf{Add a low-confidence alert:} In the classify endpoint, send a Discord notification
-    when confidence falls below a threshold (e.g., 0.5). Test it by drawing an ambiguous digit—does
-    Discord ping?
-
-    \item \textbf{Add a canvas-clear notification:} Add a second Discord notification that fires when
-    a user clears the drawing field. Add an API endpoint (e.g., \texttt{POST /api/events/clear}) that
-    the frontend calls on canvas clear. Discuss: what does a spike in clears tell you about model performance?
-
-    \item \textbf{Deploy the \texttt{/analytics} endpoint:} Use the provided boilerplate. Hit it with
-    \texttt{curl} and interpret the results:
-    \begin{verbatim}
+\begin{verbatim}
     curl https://192.168.56.11/api/analytics -k \
       -H "X-API-Key: your-key"
-    \end{verbatim}
-    Which digit is drawn most? Is one model version more confident than the other?
+\end{verbatim}
 
-    \item \textbf{Add frontend analytics:} Instrument the starter code to count page loads, drawings
-    submitted, and canvas clears. Display these in a small panel in the UI. Discuss: what would you
-    track if this were a real product?
+\newthought{Read the numbers.} Which digit is drawn most? Is one model version more confident than the other?
 
-    \item \textbf{Commit:}
-    \begin{verbatim}
+\newpage
+\section{Exercise: Add Frontend Analytics}\index{exercises}
+
+\newthought{Instrument the starter code} to count page loads, drawings submitted, and canvas clears.
+Display these in a small panel in the UI. Discuss: what would you track if this were a real product?
+
+\newpage
+\section{Exercise: Commit}\index{exercises}
+
+\newthought{Stage and push} the new logging, alerting, and analytics work:
+
+\begin{verbatim}
     git add app/ scripts/ frontend/ .env.example
     git commit -m "Add structured logging, Discord alerts, analytics"
     git push
-    \end{verbatim}
+\end{verbatim}
 
-    \item \textbf{Take a snapshot} of both VMs. Name them \texttt{B9-complete}.
-\end{enumerate}
+\newpage
+\section{Exercise: Take a Snapshot}\index{exercises}
 
+\newthought{Snapshot both VMs} and name them \texttt{B9-complete}.
+
+\newthought{A note on what comes next.} With the service observable end to end, the focus shifts from
+watching the system to scaling and hardening it. The next block carries that thread forward.
+
+\newpage
 \section{Security Thread}
 
-\newthought{Log sanitization}—never log raw pixel data or user identifiers unnecessarily.
+\newthought{Log sanitization.} Never log raw pixel data or user identifiers unnecessarily.
 The \texttt{/health} endpoint confirms the system is alive but does not expose internal state
 (DB passwords, stack traces, version details) to unauthenticated callers.
+
+% ==============================================================================================
+% BLOCK 3: CONSOLIDATION
+% ==============================================================================================
 
 \section{Self-Reflection and Recap}
 

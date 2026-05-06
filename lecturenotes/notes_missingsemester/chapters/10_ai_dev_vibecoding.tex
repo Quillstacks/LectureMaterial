@@ -4,11 +4,12 @@
 
 \index{AI-assisted development}\index{vibe coding}\index{LLM}\index{agent}
 \chapter{AI Dev \& Vibe Coding}
+\printchapterversion{10_ai_dev_vibecoding}
 \newthought{The tools changed. The fundamentals did not. Know both.}
 
-% ==============================================================================
-% SESSION A: THEORY
-% ==============================================================================
+% ==============================================================================================
+% BLOCK 1: INTRODUCTION
+% ==============================================================================================
 
 \section{Two Ways AI Helps You Code}
 
@@ -17,10 +18,10 @@
 \begin{description}
     \item[Terminal/CLI agents]\index{CLI agent} Claude Code\index{Claude Code} (\url{https://docs.anthropic.com/en/docs/claude-code}),
     Aider\index{Aider} (\url{https://aider.chat/}),
-    Codex CLI—work directly in your repo from the terminal, read your files, make changes, run commands.
+    Codex CLI work directly in your repo from the terminal, read your files, make changes, run commands.
     Best for: implementing features, debugging, refactoring across multiple files.
     \item[IDE-integrated agents]\index{IDE agent} Cursor\index{Cursor} (\url{https://www.cursor.com/}),
-    Windsurf (\url{https://windsurf.com/}), Cline (\url{https://cline.bot/})—full IDE with AI
+    Windsurf (\url{https://windsurf.com/}), Cline (\url{https://cline.bot/}) full IDE with AI
     built in, visual diffs, inline suggestions. Best for: editing in context, reviewing changes visually,
     inline completions while typing.
 \end{description}
@@ -29,17 +30,22 @@
 Chat-based tools: ChatGPT (\url{https://chatgpt.com/}), Claude (\url{https://claude.ai/}).
 CLI and IDE agents are the next level: they read your whole project, not just the current file.}
 
+% ==============================================================================================
+% BLOCK 2: CONCEPTS AND PRACTICE
+% ==============================================================================================
+
+\newpage
 \section{The Agent Loop}\index{agent loop}
 
-\newthought{How these tools actually work}—the agent loop repeats until the task is done:
+\newthought{How these tools actually work} the agent loop repeats until the task is done:
 
-\begin{enumerate}
-    \item \textbf{Observe:} The agent collects context—your repo structure, git status, recent commits,
+\begin{itemize}
+    \item Observe: the agent collects context, your repo structure, git status, recent commits,
     the files you point it at.
-    \item \textbf{Inspect:} It analyses the code and your request to understand what needs to change.
-    \item \textbf{Choose:} It selects an action—edit a file, run a command, ask you a question.
-    \item \textbf{Act:} It executes the action, gets the result, and loops back to observe.
-\end{enumerate}
+    \item Inspect: it analyses the code and your request to understand what needs to change.
+    \item Choose: it selects an action, edit a file, run a command, ask you a question.
+    \item Act: it executes the action, gets the result, and loops back to observe.
+\end{itemize}
 
 \newthought{The harness} (the program wrapping the LLM\index{LLM}) validates every action before execution:
 is the tool recognised? Are the arguments valid? Is the file path inside the repo? The LLM proposes,
@@ -48,9 +54,52 @@ the harness gatekeeps.
 \newthought{The quality depends entirely on what context you give the agent.} Garbage in, garbage out.
 A vague prompt produces vague code. A precise prompt with file references produces precise changes.
 
+\subsection{Sandboxing}\index{sandboxing}
+
+\newthought{AI agents run on your machine,} so what stops them from doing damage? An unrestricted agent
+can run \texttt{rm -rf /}, \texttt{curl} your secrets to an external server, install packages, or modify
+system files. It runs with your user's permissions.
+
+\newthought{How sandboxing works in practice:}
+
+\begin{description}
+    \item[Permission prompts] Agents like Claude Code ask before executing each command, you approve or deny.
+    The human stays in the loop.
+    \item[Code-only mode] Aider is code-only by default, it reads and edits files but does not run shell
+    commands at all.
+    \item[Restricted execution] Docker containers, VMs, or chroot jails, the agent runs in an isolated
+    environment where it physically cannot access the host system.
+    \item[Allow/deny lists] Configure which commands or directories the agent can access. Some tools let
+    you whitelist specific tools (e.g., ``can run \texttt{pytest} but nothing else'').
+\end{description}
+
+\marginnote{The principle: give the agent the minimum access it needs. Read your code, yes. Edit files, yes.
+Run arbitrary commands, only with explicit approval. Access \texttt{.env} or SSH keys, never.}
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Set up Aider}\index{exercises}
+
+\marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
+If your VM is broken, restore the \texttt{B9-complete} snapshot.
+No snapshot needed after this session, this is the final block.}
+
+\newthought{Set up Aider} on your dev VM. Aider\index{Aider} (\url{https://aider.chat/}) is an open-source CLI agent. Connect it to
+Qwen\index{Qwen} (\url{https://qwen.readthedocs.io/}) via Ollama\index{Ollama} (\url{https://ollama.com/}), self-hosted on the server, provided by the course.
+No external API needed:
+
+\begin{verbatim}
+pip install aider-chat
+aider --model ollama/qwen2.5-coder
+\end{verbatim}
+
+\newthought{Once Aider runs}, you have a working instance of the agent loop sitting at your prompt. The next exercises will use the same session as their starting point.
+
+% ==============================================================================================
+\newpage
 \section{Git as a Safety Net}\index{Git!safety net}
 
-\newthought{Commit before you let an agent touch your code.} This is not just an AI workflow—it is how
+\newthought{Commit before you let an agent touch your code.} This is not just an AI workflow, it is how
 you work with any risky change: experimental refactors, dependency upgrades, merge conflict resolution.
 
 \begin{verbatim}
@@ -75,33 +124,51 @@ git branch -D experiment
 \end{verbatim}
 
 \marginnote{Always commit clean state first, then change, then review the diff. This pattern predates AI
-tools—it is how experienced developers have always worked with risky changes.}
+tools, it is how experienced developers have always worked with risky changes.}
 
-\section{Sandboxing}\index{sandboxing}
+\subsection{Reading Diffs}\index{diff}\index{code review}
 
-\newthought{AI agents run on your machine,} so what stops them from doing damage? An unrestricted agent
-can run \texttt{rm -rf /}, \texttt{curl} your secrets to an external server, install packages, or modify
-system files. It runs with your user's permissions.
+\newthought{The core review skill.} When an agent (or a colleague) makes changes, you do not re-read
+the entire file. You read the diff: what was added, what was removed, what was modified.
 
-\newthought{How sandboxing works in practice:}
+\begin{verbatim}
+git diff                    # in the terminal
+\end{verbatim}
 
-\begin{description}
-    \item[Permission prompts] Agents like Claude Code ask before executing each command—you approve or deny.
-    The human stays in the loop.
-    \item[Code-only mode] Aider is code-only by default—it reads and edits files but does not run shell
-    commands at all.
-    \item[Restricted execution] Docker containers, VMs, or chroot jails—the agent runs in an isolated
-    environment where it physically cannot access the host system.
-    \item[Allow/deny lists] Configure which commands or directories the agent can access. Some tools let
-    you whitelist specific tools (e.g., ``can run \texttt{pytest} but nothing else'').
-\end{description}
+\newthought{\texttt{git diff} in the terminal,} side-by-side diffs in the IDE, GitHub's pull request diff
+view, all the same skill. Students need to read diffs fluently. This is how code review actually works.
 
-\marginnote{The principle: give the agent the minimum access it needs. Read your code—yes. Edit files—yes.
-Run arbitrary commands—only with explicit approval. Access \texttt{.env} or SSH keys—never.}
+\marginnote{Lines starting with \texttt{+} were added. Lines starting with \texttt{-} were removed.
+Lines starting with a space are unchanged context. The \texttt{@@} header tells you which file and which
+line numbers changed.}
 
+% ==============================================================================================
+\newpage
+\section{Exercise: Commit Clean State}\index{exercises}
+
+\newthought{First rule, commit clean state} before letting the agent touch anything:
+
+\begin{verbatim}
+git add -A
+git commit -m "pre-agent checkpoint"
+\end{verbatim}
+
+This is your undo button for everything that follows. From this clean state, every change the agent makes shows up cleanly in \texttt{git diff} and can be reverted with a single command.
+
+\newthought{Verify the safety net} works. Let the agent make a small, deliberately throwaway change, then read the diff and revert:
+
+\begin{verbatim}
+git diff
+git checkout .
+\end{verbatim}
+
+You should land back at the pre-agent checkpoint with the agent's edits gone. Until you can do this without thinking, do not give the agent anything important to touch.
+
+% ==============================================================================================
+\newpage
 \section{Context Management}\index{context window}\index{context management}
 
-\newthought{Agents have a limited context window}—how much text the LLM can process at once.
+\newthought{Agents have a limited context window}, how much text the LLM can process at once.
 Long conversations degrade quality: the agent forgets earlier instructions, repeats mistakes, or
 contradicts itself. Older parts of the conversation get compressed or dropped.
 
@@ -114,29 +181,29 @@ contradicts itself. Older parts of the conversation get compressed or dropped.
 
 \subsection{Subagents}\index{subagent}
 
-\newthought{Some tools can spawn child agents for subtasks}—e.g., ``research this question in a
+\newthought{Some tools can spawn child agents for subtasks}, e.g., ``research this question in a
 separate context, report back.'' The child agent operates with tighter permissions and its own context
 window, keeping the parent conversation clean.
 
-\section{Reading Diffs}\index{diff}\index{code review}
+% ==============================================================================================
+\newpage
+\section{Exercise: Explore the Tool}\index{exercises}
 
-\newthought{The core review skill.} When an agent (or a colleague) makes changes, you do not re-read
-the entire file. You read the diff: what was added, what was removed, what was modified.
+\newthought{Get comfortable with the conversation loop} by asking the agent to explain a file, describe the PixelWise architecture, or find where a function is called. Try:
 
-\begin{verbatim}
-git diff                    # in the terminal
-\end{verbatim}
+\begin{itemize}
+    \item ``Explain what \texttt{app/classifier.py} does''
+    \item ``Where is \texttt{classify\_batch} called?''
+    \item ``Describe the full request flow from browser to database''
+\end{itemize}
 
-\newthought{\texttt{git diff} in the terminal,} side-by-side diffs in the IDE, GitHub's pull request diff
-view—all the same skill. Students need to read diffs fluently. This is how code review actually works.
+\newthought{Watch the context fill up.} Notice how the agent's answers degrade if you keep piling questions into the same conversation, and how a fresh session with a single, file-scoped prompt produces a sharper answer. Pointing the agent at specific files rather than asking it to ``look at the whole project'' is the cheapest quality gain you have.
 
-\marginnote{Lines starting with \texttt{+} were added. Lines starting with \texttt{-} were removed.
-Lines starting with a space are unchanged context. The \texttt{@@} header tells you which file and which
-line numbers changed.}
-
+% ==============================================================================================
+\newpage
 \section{Teaching the AI Your Project}\index{instructions file}
 
-\newthought{Instructions as code}—declarative files that persist across sessions. You write them once,
+\newthought{Instructions as code}, declarative files that persist across sessions. You write them once,
 the AI follows them every time. This is the highest-leverage thing you can do with AI tools.
 
 \begin{description}
@@ -146,40 +213,131 @@ the AI follows them every time. This is the highest-leverage thing you can do wi
     \item[\texttt{.cursorrules}]\index{.cursorrules} Cursor-specific project rules.
 \end{description}
 
-\newthought{The pattern across all tools:} each has its own filename, but the idea is identical—a
+\newthought{The pattern across all tools:} each has its own filename, but the idea is identical, a
 markdown file in your repo that the AI reads before starting work.
 
 \subsection{Skill Files}\index{skill file}
 
-\newthought{Skill files are reusable recipes} for specific tasks—structured \texttt{.md} files with
+\newthought{Skill files are reusable recipes} for specific tasks, structured \texttt{.md} files with
 step-by-step instructions the AI follows consistently. Example: ``how to add a new API endpoint to
 this project.'' The AI produces correct code when given only the skill file and a task description.
 
+% ==============================================================================================
+\newpage
+\section{Exercise: Write a CLAUDE.md}\index{exercises}
+
+\newthought{Write a \texttt{CLAUDE.md}} (or equivalent instructions file) for the PixelWise project.
+Document: the stack, the conventions, what the AI should and should not do. Example structure:
+
+\begin{verbatim}
+# PixelWise
+
+## Stack
+- Python 3.11, FastAPI, SQLAlchemy, PostgreSQL
+- Nginx reverse proxy, vanilla JS frontend
+- sklearn LogisticRegression model (MNIST)
+
+## Conventions
+- All config via .env (never hardcode secrets)
+- Batch-first inference (classify_batch is the core)
+- Pydantic models for all API contracts
+
+## Do NOT
+- Modify .env or expose secrets
+- Add new dependencies without updating requirements.txt
+- Change the classifier interface without updating tests
+\end{verbatim}
+
+Commit it to the repo. From now on, every agent session in this project starts with this file already in context.
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Write a Skill File}\index{exercises}
+
+\newthought{Create a \texttt{.skills/} directory} and write a skill for a
+specific task, e.g., ``how to add a new API endpoint'':
+
+\begin{verbatim}
+mkdir -p .skills
+nano .skills/add-endpoint.md
+\end{verbatim}
+
+Include: which files to modify, what patterns to follow, what to test. Give the skill file to
+the agent with a task description, does it produce correct code?
+
+\newthought{Iterate on the skill} until the agent can carry out the task from the skill alone, without you correcting it mid-way. A good skill file is one a tired colleague could also follow.
+
+% ==============================================================================================
+\newpage
 \section{Working with AI Agents Effectively}
 
 \newthought{The agent-edit-verify loop:}
-\begin{enumerate}
+\begin{itemize}
     \item Agent makes changes.
-    \item \texttt{git diff}—review every line.
-    \item Run the app—works or does not.
+    \item \texttt{git diff}, review every line.
+    \item Run the app, works or does not.
     \item If not, feed the error back to the agent or fix it yourself.
     \item Iterate until it is right, or revert and try a different approach.
-\end{enumerate}
+\end{itemize}
 
-\newthought{Use \texttt{/plan}} to let the agent think before it acts—review the plan, adjust, then
+\newthought{Use \texttt{/plan}} to let the agent think before it acts, review the plan, adjust, then
 let it execute. Do not jump straight to implementation.
 
-\newthought{Code review with AI:} have the agent review your own code—it catches things you are blind
+\newthought{Code review with AI:} have the agent review your own code, it catches things you are blind
 to after staring at the same file for hours.
 
-\section{MCP and Tool Use}\index{MCP}\index{Model Context Protocol}
+% ==============================================================================================
+\newpage
+\section{Exercise: Make a Real Change with the AI}\index{exercises}
+
+\newthought{Student's choice}, a new feature, a refactor, a bug fix.
+Follow the agent-edit-verify loop:
+
+\begin{itemize}
+    \item Let the agent make changes.
+    \item Review: \texttt{git diff}, read every line.
+    \item Run the app, does it work?
+    \item If not, feed the error back. Iterate or revert.
+\end{itemize}
+
+\newthought{Stay in the loop} the entire time. The moment you stop reading the diffs is the moment the agent starts shipping bugs into your repo with your name on the commit.
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Branching Workflow}\index{exercises}
+
+\newthought{Create a branch for the AI's work} so the main line stays clean while you experiment:
+
+\begin{verbatim}
+git checkout -b ai-experiment
+# ... let the agent work ...
+git diff main
+# If good: merge. If bad: delete the branch.
+\end{verbatim}
+
+The branch is the boundary between ``the agent has free rein'' and ``the codebase you trust''. Merge only what passes the diff and the run.
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Group Discussion}\index{exercises}
+
+\newthought{Compare notes with the room.} When was the AI faster than writing code by hand? When was it slower?
+When was it confidently wrong? What did the instructions file change about the AI's output quality?
+
+\newthought{Name one thing} you will keep doing, one thing you will stop doing, and one habit you want to acquire before the agent touches production code on your behalf.
+
+% ==============================================================================================
+\newpage
+\section{Optional: MCP and Tool Use}\index{MCP}\index{Model Context Protocol}
 
 \newthought{Agents can do more than edit code.} MCP (Model Context Protocol)\marginnote{MCP\index{MCP}:
 \url{https://modelcontextprotocol.io/}} lets agents connect to
-external tools—reading documentation, searching the web, running tests, querying databases, interacting
+external tools, reading documentation, searching the web, running tests, querying databases, interacting
 with APIs. The agent is not limited to what is in your repo.
 
-\section{When to Trust AI Output}\index{AI trust}
+% ==============================================================================================
+\newpage
+\section{Optional: When to Trust AI Output}\index{AI trust}
 
 \begin{description}
     \item[Strong] Boilerplate, tests for known behaviour, documentation, refactoring, explaining unfamiliar code.
@@ -187,98 +345,20 @@ with APIs. The agent is not limited to what is in your repo.
     \item[Never] Blind trust without reading the output.
 \end{description}
 
-% ==============================================================================
-% SESSION B: HANDS-ON
-% ==============================================================================
-
+% ==============================================================================================
 \newpage
-\section{Workshop}
-
-\marginnote{If your VM is broken, restore the \texttt{B9-complete} snapshot.
-No snapshot needed after this session—this is the final block.}
-
-\begin{enumerate}
-    \item \textbf{First rule—commit clean state:}
-    \begin{verbatim}
-    git add -A
-    git commit -m "pre-agent checkpoint"
-    \end{verbatim}
-    This is your undo button for everything that follows.
-
-    \item \textbf{Set up Aider:} Aider\index{Aider} (\url{https://aider.chat/}) is an open-source CLI agent. Connect it to
-    Qwen\index{Qwen} (\url{https://qwen.readthedocs.io/}) via Ollama\index{Ollama} (\url{https://ollama.com/}) — self-hosted on the server, provided by the course.
-    No external API needed:
-    \begin{verbatim}
-    pip install aider-chat
-    aider --model ollama/qwen2.5-coder
-    \end{verbatim}
-
-    \item \textbf{Explore the tool:} Ask the agent to explain a file, describe the PixelWise architecture,
-    or find where a function is called. Get comfortable with the conversation loop. Try:
-    \begin{itemize}
-        \item ``Explain what \texttt{app/classifier.py} does''
-        \item ``Where is \texttt{classify\_batch} called?''
-        \item ``Describe the full request flow from browser to database''
-    \end{itemize}
-
-    \item \textbf{Write a \texttt{CLAUDE.md}} (or equivalent instructions file) for the PixelWise project.
-    Document: the stack, the conventions, what the AI should and should not do. Example structure:
-    \begin{verbatim}
-    # PixelWise
-
-    ## Stack
-    - Python 3.11, FastAPI, SQLAlchemy, PostgreSQL
-    - Nginx reverse proxy, vanilla JS frontend
-    - sklearn LogisticRegression model (MNIST)
-
-    ## Conventions
-    - All config via .env (never hardcode secrets)
-    - Batch-first inference (classify_batch is the core)
-    - Pydantic models for all API contracts
-
-    ## Do NOT
-    - Modify .env or expose secrets
-    - Add new dependencies without updating requirements.txt
-    - Change the classifier interface without updating tests
-    \end{verbatim}
-    Commit it to the repo.
-
-    \item \textbf{Write a skill file:} Create a \texttt{.skills/} directory and write a skill for a
-    specific task—e.g., ``how to add a new API endpoint'':
-    \begin{verbatim}
-    mkdir -p .skills
-    nano .skills/add-endpoint.md
-    \end{verbatim}
-    Include: which files to modify, what patterns to follow, what to test. Give the skill file to
-    the agent with a task description—does it produce correct code?
-
-    \item \textbf{Make a real change with the AI:} Student's choice—a new feature, a refactor, a bug fix.
-    Follow the agent-edit-verify loop:
-    \begin{enumerate}
-        \item Let the agent make changes.
-        \item Review: \texttt{git diff}—read every line.
-        \item Run the app—does it work?
-        \item If not, feed the error back. Iterate or revert.
-    \end{enumerate}
-
-    \item \textbf{Branching workflow:} Create a branch for the AI's work:
-    \begin{verbatim}
-    git checkout -b ai-experiment
-    # ... let the agent work ...
-    git diff main
-    # If good: merge. If bad: delete the branch.
-    \end{verbatim}
-
-    \item \textbf{Group discussion:} When was the AI faster than writing code by hand? When was it slower?
-    When was it confidently wrong? What did the instructions file change about the AI's output quality?
-\end{enumerate}
-
 \section{Security Thread}
 
 \newthought{AI-generated code must pass the same security review as human-written code.}
 Prompt injection\index{prompt injection}: user-submitted text that ends up in an AI prompt is an injection
-vector—never pipe untrusted input into an AI call. The AI must never be given access to \texttt{.env},
+vector, never pipe untrusted input into an AI call. The AI must never be given access to \texttt{.env},
 SSH keys, or production credentials directly.
+
+\newthought{A note on what comes next.} This is the final block. The course wrap-up sits in the recap below: every layer you touched, from two empty VMs to a deployed, monitored, AI-assisted service, is now yours to maintain.
+
+% ==============================================================================================
+% BLOCK 3: CONSOLIDATION
+% ==============================================================================================
 
 \section{Self-Reflection and Recap}
 
@@ -291,11 +371,18 @@ SSH keys, or production credentials directly.
     \item When should you trust AI output, and when should you be sceptical?
 \end{itemize}
 
-\newthought{Milestone:} Students have used a terminal AI agent on a real codebase. Instructions file and
-skill file committed to the repo. Every student can read a diff, revert a bad change, and iterate with an agent.
+\newthought{Recap} of key concepts:
+\begin{itemize}
+    \item The agent loop (observe, inspect, choose, act) and the harness that gatekeeps every action.
+    \item Git as the safety net: clean checkpoint, branch, diff, revert.
+    \item Sandboxing and least privilege: the agent gets the minimum access it needs.
+    \item Context management: short conversations, file-scoped prompts, instructions files.
+    \item \texttt{CLAUDE.md} and skill files as the highest-leverage way to steer AI output.
+\end{itemize}
 
-\bigskip
+\marginnote{\newthought{Milestone.} Students have used a terminal AI agent on a real codebase. Instructions file and
+skill file committed to the repo. Every student can read a diff, revert a bad change, and iterate with an agent.}
 
-\newthought{Course wrap-up:} Look at what you have built—from two empty VMs to a deployed, monitored,
+\marginnote{\newthought{Course wrap-up.} Look at what you have built, from two empty VMs to a deployed, monitored,
 auto-deploying AI web service with structured logging, database persistence, CI/CD, and now AI-assisted
-development. The full stack, end to end. You own every layer.
+development. The full stack, end to end. You own every layer.}

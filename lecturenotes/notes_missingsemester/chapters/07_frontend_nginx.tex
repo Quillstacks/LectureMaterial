@@ -4,11 +4,12 @@
 
 \index{Nginx}\index{reverse proxy}\index{frontend}\index{HTTPS}\index{CORS}
 \chapter{Face the World: Frontend \& Nginx}
+\printchapterversion{07_frontend_nginx}
 \newthought{Browsers do not talk to your app server directly.}
 
-% ==============================================================================
-% SESSION A: THEORY
-% ==============================================================================
+% ==============================================================================================
+% BLOCK 1: INTRODUCTION
+% ==============================================================================================
 
 \section{The Problem}
 
@@ -16,6 +17,81 @@
 You need something in front that handles the ports, serves static files, and forwards API requests.
 That something is Nginx\index{Nginx}.
 
+% ==============================================================================================
+% BLOCK 2: CONCEPTS AND PRACTICE
+% ==============================================================================================
+
+\newpage
+\section{The Frontend Stack}\index{JavaScript}\index{HTML}\index{CSS}
+
+\subsection{Why Vanilla JavaScript}
+
+\newthought{HTML for structure, CSS for layout, JavaScript for interactivity.} The \texttt{fetch} API
+sends requests to the backend.
+
+\marginnote{MDN Web Docs\index{MDN} (HTML/CSS/JS reference): \url{https://developer.mozilla.org/}\\
+Fetch API: \url{https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API}}
+
+\marginnote{Why not React, Vue, or Svelte? Frameworks solve problems that appear at scale, component reuse,
+state management, routing across dozens of views. PixelWise has one page with one canvas and one results panel.
+A framework would add a build toolchain (Node.js, npm, bundler), a learning curve orthogonal to this course,
+and complexity that hides what is actually happening between browser and server. Vanilla JS keeps the HTTP
+layer visible.}
+
+\newthought{The starter code is provided.} Students need to understand it well enough to wire it up
+and extend it in Block~10. The key pieces:
+
+\begin{description}
+    \item[Drawing canvas] A 28$\times$28 pixel grid where users draw with the mouse.
+    \item[Submit button] Extracts the pixel array from the canvas and sends a \texttt{POST /api/classify} request.
+    \item[Results panel] Displays the predicted digit, confidence score, and a confidence bar.
+\end{description}
+
+\newthought{The \texttt{fetch} call} is the bridge between frontend and backend:
+
+\begin{verbatim}
+async function classifyDrawing() {
+    const pixels = getPixelsFromCanvas();  // 28x28 array
+    const response = await fetch("/api/classify", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": API_KEY
+        },
+        body: JSON.stringify({ pixels: pixels })
+    });
+    const result = await response.json();
+    displayResult(result);
+}
+\end{verbatim}
+
+\marginnote{No build step, no \texttt{node\_modules}, no framework version to maintain. The code runs in
+any browser, can be read by any developer, and deploys as static files served directly by Nginx. Students
+who later build larger applications will recognise when a framework becomes necessary, and why.}
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Deploy the Frontend}\index{exercises}
+
+\marginnote{\newthought{Exercises} are for practice and reinforcement. If your VM is broken, restore the
+\texttt{B6-complete} snapshot. At the end of this session, take a snapshot named \texttt{B7-complete}.}
+
+\newthought{Copy the provided starter code} to \texttt{frontend/} on the server. Walk through the code to
+understand: the \texttt{fetch} call to \texttt{/api/classify}, the pixel array extraction from the canvas,
+the response rendering.
+
+\begin{verbatim}
+# On the server
+ls /opt/pixelwise/frontend/
+# Should contain: index.html, style.css, app.js
+\end{verbatim}
+
+\marginnote{Read \texttt{app.js} top to bottom. Locate the \texttt{fetch} call, the canvas event handlers,
+and the function that turns canvas pixels into the JSON payload. If the bridge between browser and backend
+is to make sense in the next exercise, it must first be visible to you here.}
+
+% ==============================================================================================
+\newpage
 \section{Nginx: Three Roles in One}\index{Nginx}
 
 \newthought{Nginx serves three roles}\marginnote{Nginx\index{Nginx}: \url{https://nginx.org/}\\
@@ -55,9 +131,45 @@ server {
 
 \marginnote{The \texttt{proxy\_pass} directive is the reverse proxy: any request to \texttt{/api/classify}
 is forwarded to \texttt{http://localhost:8000/classify}. The browser sees \texttt{https://192.168.56.11/api/classify};
-uvicorn sees \texttt{http://localhost:8000/classify}. The trailing slash matters—it strips the \texttt{/api}
+uvicorn sees \texttt{http://localhost:8000/classify}. The trailing slash matters, it strips the \texttt{/api}
 prefix.}
 
+% ==============================================================================================
+\newpage
+\section{Exercise: Install and Configure Nginx}\index{exercises}
+
+\newthought{Install Nginx} on the server:
+
+\begin{verbatim}
+sudo apt install -y nginx
+\end{verbatim}
+
+\newthought{Create the PixelWise site configuration:}
+
+\begin{verbatim}
+sudo nano /etc/nginx/sites-available/pixelwise
+\end{verbatim}
+
+Use the config from the theory above. Enable the site and restart:
+
+\begin{verbatim}
+sudo ln -s /etc/nginx/sites-available/pixelwise \
+    /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t          # test config syntax
+sudo systemctl restart nginx
+\end{verbatim}
+
+\marginnote{\texttt{nginx -t} parses the configuration without applying it. Run it before every restart;
+a syntax error caught here is cheaper than a daemon that refuses to start in production.}
+
+\newthought{Verify the reverse proxy.} Open a browser on the host machine and navigate to
+\texttt{http://192.168.56.11}. You should see the PixelWise frontend. Draw a digit and submit, the
+request goes through Nginx to uvicorn and back. The browser sees a single origin; uvicorn never appears
+in any URL.
+
+% ==============================================================================================
+\newpage
 \section{CORS: Cross-Origin Resource Sharing}\index{CORS}
 
 \newthought{CORS is a browser security policy}\marginnote{CORS explained:
@@ -80,60 +192,42 @@ app.add_middleware(
 )
 \end{verbatim}
 
-\marginnote{Never use \texttt{allow\_origins=["*"]} in production—it allows any website to call your API.
+\marginnote{Never use \texttt{allow\_origins=["*"]} in production, it allows any website to call your API.
 Configure allowed origins explicitly.}
 
 \newthought{With Nginx as a reverse proxy,} CORS often resolves itself: the frontend and API share the
 same origin (\texttt{https://192.168.56.11}), so the browser does not block the request. But students must
 understand CORS because they will hit it in every deployment that separates frontend and backend.
 
-\section{The Frontend Stack}\index{JavaScript}\index{HTML}\index{CSS}
+% ==============================================================================================
+\newpage
+\section{Exercise: Debug CORS}\index{exercises}
 
-\subsection{Why Vanilla JavaScript}
+\newthought{If the frontend cannot reach the API,} check the browser console for CORS errors. Open the
+developer tools, switch to the console tab, and reload the page; a blocked request prints a message
+beginning with \texttt{Access to fetch has been blocked by CORS policy}.
 
-\newthought{HTML for structure, CSS for layout, JavaScript for interactivity.} The \texttt{fetch} API
-sends requests to the backend.
-
-\marginnote{MDN Web Docs\index{MDN} (HTML/CSS/JS reference): \url{https://developer.mozilla.org/}\\
-Fetch API: \url{https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API}}
-
-\marginnote{Why not React, Vue, or Svelte? Frameworks solve problems that appear at scale—component reuse,
-state management, routing across dozens of views. PixelWise has one page with one canvas and one results panel.
-A framework would add a build toolchain (Node.js, npm, bundler), a learning curve orthogonal to this course,
-and complexity that hides what is actually happening between browser and server. Vanilla JS keeps the HTTP
-layer visible.}
-
-\newthought{The starter code is provided.} Students need to understand it well enough to wire it up
-and extend it in Block~10. The key pieces:
-
-\begin{description}
-    \item[Drawing canvas] A 28$\times$28 pixel grid where users draw with the mouse.
-    \item[Submit button] Extracts the pixel array from the canvas and sends a \texttt{POST /api/classify} request.
-    \item[Results panel] Displays the predicted digit, confidence score, and a confidence bar.
-\end{description}
-
-\newthought{The \texttt{fetch} call} is the bridge between frontend and backend:
+\newthought{Add the CORS middleware} to FastAPI with the correct allowed origin:
 
 \begin{verbatim}
-async function classifyDrawing() {
-    const pixels = getPixelsFromCanvas();  // 28x28 array
-    const response = await fetch("/api/classify", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": API_KEY
-        },
-        body: JSON.stringify({ pixels: pixels })
-    });
-    const result = await response.json();
-    displayResult(result);
-}
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://192.168.56.11"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 \end{verbatim}
 
-\marginnote{No build step, no \texttt{node\_modules}, no framework version to maintain. The code runs in
-any browser, can be read by any developer, and deploys as static files served directly by Nginx. Students
-who later build larger applications will recognise when a framework becomes necessary—and why.}
+Restart uvicorn and reload the page. The console should now be silent for the previously blocked request.
 
+\marginnote{This is a rite of passage. Every developer who has shipped a frontend separated from its
+backend has read this error message at least once. Knowing the cause makes the cure a one-line edit
+instead of an afternoon of bafflement.}
+
+% ==============================================================================================
+\newpage
 \section{URL Design}\index{URL design}
 
 \newthought{Clean, readable URLs} matter:
@@ -145,15 +239,17 @@ who later build larger applications will recognise when a framework becomes nece
 
 \newthought{Query parameters} serve filtering and configuration. Storing session IDs in URLs
 (\texttt{/classify?session=abc123}) lets you track a user's session without cookies, link to specific
-results, or pass configuration to the frontend. The URL is state—treat it deliberately.
+results, or pass configuration to the frontend. The URL is state, treat it deliberately.
 
+% ==============================================================================================
+\newpage
 \section{HTTPS and TLS}\index{HTTPS}\index{TLS}
 
 \newthought{Without HTTPS, API keys travel in plaintext.} Anyone on the network can read them.
 HTTPS encrypts the entire channel between browser and server.
 
 \begin{description}
-    \item[Self-signed certificate] Fine for development. The browser shows a warning—ignore it.
+    \item[Self-signed certificate] Fine for development. The browser shows a warning, ignore it.
     \item[Let's Encrypt]\index{Let's Encrypt} Free, automated certificates for production (\url{https://letsencrypt.org/}).
     Renewal is automatic via \texttt{certbot}\index{certbot} (\url{https://certbot.eff.org/}).
 \end{description}
@@ -169,7 +265,7 @@ sudo openssl req -x509 -nodes -days 365 \
 
 \subsection{Security Headers}\index{security headers}
 
-\newthought{Nginx can add security headers} to every response—one place, all responses covered:
+\newthought{Nginx can add security headers} to every response, one place, all responses covered:
 
 \begin{verbatim}
 add_header X-Frame-Options "DENY";
@@ -177,96 +273,87 @@ add_header X-Content-Type-Options "nosniff";
 add_header Content-Security-Policy "default-src 'self'";
 \end{verbatim}
 
-\section{Sidenote: \texttt{ufw}}\index{ufw}\index{firewall}
+% ==============================================================================================
+\newpage
+\section{Exercise: Enable HTTPS and Security Headers}\index{exercises}
+
+\newthought{Generate a self-signed certificate} on the server:
+
+\begin{verbatim}
+sudo openssl req -x509 -nodes -days 365 \
+    -newkey rsa:2048 \
+    -keyout /etc/ssl/private/pixelwise.key \
+    -out /etc/ssl/certs/pixelwise.crt
+\end{verbatim}
+
+\newthought{Update the Nginx config} to listen on port 443 with the certificate:
+
+\begin{verbatim}
+server {
+    listen 443 ssl;
+    ssl_certificate /etc/ssl/certs/pixelwise.crt;
+    ssl_certificate_key /etc/ssl/private/pixelwise.key;
+    # ... rest of config
+}
+\end{verbatim}
+
+Restart Nginx and verify \texttt{https://192.168.56.11} works (accept the browser warning).
+
+\newthought{Add security headers} to the Nginx config: \texttt{X-Frame-Options}, \texttt{X-Content-Type-Options},
+and \texttt{Content-Security-Policy}. Restart and verify they appear in the response headers:
+
+\begin{verbatim}
+curl -I https://192.168.56.11 -k
+\end{verbatim}
+
+\marginnote{The \texttt{-k} flag tells \texttt{curl} to accept the self-signed certificate without
+complaint. In production with a Let's Encrypt certificate, you would not need it; the warning
+disappears and the headers are the same.}
+
+% ==============================================================================================
+\newpage
+\section{Optional: \texttt{ufw}}\index{ufw}\index{firewall}
 
 \marginnote{\texttt{ufw}\index{ufw} (Uncomplicated Firewall) is Ubuntu's firewall tool. On managed production
 servers, the firewall is typically preconfigured to allow only ports 22 (SSH), 80 (HTTP), 443 (HTTPS).
 On the classroom VMs this is a formality (host-only network), but students should know the concept exists.}
 
-% ==============================================================================
-% SESSION B: HANDS-ON
-% ==============================================================================
+\newthought{The firewall is the outer skin of the server.} On a host-only network there is no public
+internet to defend against, so the lecture VMs run without one. On a real production host the rule of
+thumb is: deny by default, allow exactly the ports the service needs. \texttt{ufw} expresses this in
+a few commands and stays out of the way once configured.
 
+% ==============================================================================================
 \newpage
-\section{Workshop}
+\section{Exercise: Commit and Snapshot}\index{exercises}
 
-\marginnote{If your VM is broken, restore the \texttt{B6-complete} snapshot.
-At the end of this session, take a snapshot named \texttt{B7-complete}.}
+\newthought{Commit the frontend and Nginx work}:
 
-\begin{enumerate}
-    \item \textbf{Deploy the frontend:} Copy the provided starter code to \texttt{frontend/} on the server.
-    Walk through the code to understand: the \texttt{fetch} call to \texttt{/api/classify}, the pixel array
-    extraction from the canvas, the response rendering:
-    \begin{verbatim}
-    # On the server
-    ls /opt/pixelwise/frontend/
-    # Should contain: index.html, style.css, app.js
-    \end{verbatim}
+\begin{verbatim}
+git add frontend/ nginx/
+git commit -m "Add frontend and Nginx reverse proxy"
+git push
+\end{verbatim}
 
-    \item \textbf{Install and configure Nginx:}
-    \begin{verbatim}
-    sudo apt install -y nginx
-    \end{verbatim}
-    Create the PixelWise site configuration:
-    \begin{verbatim}
-    sudo nano /etc/nginx/sites-available/pixelwise
-    \end{verbatim}
-    Use the config from the theory section. Enable the site and restart:
-    \begin{verbatim}
-    sudo ln -s /etc/nginx/sites-available/pixelwise \
-        /etc/nginx/sites-enabled/
-    sudo rm /etc/nginx/sites-enabled/default
-    sudo nginx -t          # test config syntax
-    sudo systemctl restart nginx
-    \end{verbatim}
+\newthought{Take a snapshot} of both VMs. Name them \texttt{B7-complete}. This is your known good state
+with the full stack live: frontend, reverse proxy, HTTPS, and security headers all in place.
 
-    \item \textbf{Verify the reverse proxy:} Open a browser on the host machine and navigate to
-    \texttt{http://192.168.56.11}. You should see the PixelWise frontend. Draw a digit and submit—the
-    request goes through Nginx to uvicorn and back.
+\marginnote{\newthought{A note on what comes next.}
+The full stack now answers the browser, but every step you took to get here was manual: copying files,
+editing configs, restarting services. The next block automates that path with deployment scripts so a
+single command takes code from \texttt{dev} to \texttt{prod} without you remembering anything.}
 
-    \item \textbf{Debug CORS if needed:} If the frontend cannot reach the API, check the browser console
-    for CORS errors. Add the CORS middleware to FastAPI with the correct allowed origin. This is a rite of passage.
-
-    \item \textbf{Enable HTTPS} with a self-signed certificate:
-    \begin{verbatim}
-    sudo openssl req -x509 -nodes -days 365 \
-        -newkey rsa:2048 \
-        -keyout /etc/ssl/private/pixelwise.key \
-        -out /etc/ssl/certs/pixelwise.crt
-    \end{verbatim}
-    Update the Nginx config to listen on port 443 with the certificate:
-    \begin{verbatim}
-    server {
-        listen 443 ssl;
-        ssl_certificate /etc/ssl/certs/pixelwise.crt;
-        ssl_certificate_key /etc/ssl/private/pixelwise.key;
-        # ... rest of config
-    }
-    \end{verbatim}
-    Restart Nginx and verify \texttt{https://192.168.56.11} works (accept the browser warning).
-
-    \item \textbf{Add security headers:} Add \texttt{X-Frame-Options}, \texttt{X-Content-Type-Options},
-    and \texttt{Content-Security-Policy} to the Nginx config. Restart and verify they appear in the
-    response headers:
-    \begin{verbatim}
-    curl -I https://192.168.56.11 -k
-    \end{verbatim}
-
-    \item \textbf{Commit:}
-    \begin{verbatim}
-    git add frontend/ nginx/
-    git commit -m "Add frontend and Nginx reverse proxy"
-    git push
-    \end{verbatim}
-
-    \item \textbf{Take a snapshot} of both VMs. Name them \texttt{B7-complete}.
-\end{enumerate}
-
+% ==============================================================================================
+\newpage
 \section{Security Thread}
 
-\newthought{Security headers are configured at the Nginx layer}—one place, all responses covered.
+\newthought{Security headers are configured at the Nginx layer}, one place, all responses covered.
 HTTPS encrypts the channel; without it, API keys travel in plaintext. CORS misconfiguration is a common
-deployment bug—configure allowed origins explicitly, never \texttt{*} in production.
+deployment bug, configure allowed origins explicitly, never \texttt{*} in production.
+
+% ==============================================================================================
+% BLOCK 3: CONSOLIDATION
+% ==============================================================================================
 
 \section{Self-Reflection and Recap}
 

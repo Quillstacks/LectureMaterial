@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Regenerate README.md lecture tables from chapter_pdfs/ before each commit.
+# Re-stages README.md so any refresh ships in the same commit.
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+"$REPO_ROOT/tools/update_readme_chapters.py" >/dev/null
+git add "$REPO_ROOT/README.md"
