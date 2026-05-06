@@ -4,7 +4,10 @@
 
 % POST IMPROVEMENTS 2026:
 % 1. Add a sequence diagram of pip's resolver to motivate lock files visually.
-% 2. Provide a pre-baked v0.2 reference repo so catch-up takes a single clone.
+% 2. Provide a pre-baked v0.2 reference repo so catch-up takes a single clone. (maybe solved with tags already)
+% 3. % TODO: Good add-on teaching on how they release their own first package of something. 
+
+
 
 \index{dependencies}\index{virtualenv}\index{pip}\index{project structure}\index{12-factor app}
 \chapter{Dependencies \& Structure}
@@ -14,58 +17,39 @@
 % BLOCK 1: INTRODUCTION
 % ==============================================================================================
 
-\section{The Why}\index{reproducibility}\index{requirements.txt}\index{setup-server.sh}
+\section{The Why}\index{reproducibility}\index{requirements.txt}\index{setup-server.sh}\index{.env}
 
 Block~2 left us with a PixelWise repository on GitHub and a server that has
 Git and Python installed.
 Both machines share the same history, both can pull from \texttt{origin},
 and the workflow that moves code between them is in place.
-What is still missing is the layer beneath the code:
-the system packages, the language runtime, the libraries, and the secrets
-your application reads.
-None of that is captured anywhere outside the typing fingers
-of whoever set the machine up.
+What is still missing is the layer beneath the code: the system packages, the language runtime, the libraries, and the secrets
+your application reads (installed or provisioned by \texttt{setup-server.sh} and recorded in \texttt{.env}/\texttt{.env.example}).
 
 \marginnote{\newthought{PixelWise} now lives on GitHub and on both machines,
 but the repository contains only \texttt{README.md} and \texttt{.gitignore}.
 Before we can write application code, we need a reproducible way to install
 everything the project depends on, so that \texttt{dev} and \texttt{prod}
-stay in sync without human memory.}
+stay in sync without human memory.
+Use \texttt{setup-server.sh} to provision system packages and the runtime, and
+keep secrets and runtime configuration in \texttt{.env.example} (copied to \texttt{.env}).}
 
-\newthought{Across ten lecture blocks we build PixelWise}\index{PixelWise},
-and at the end of this third block we want any fresh VM to go from empty
-to ready to code with a small, fixed sequence of commands.
-The two halves of that sequence are the load-bearing idea of the chapter:
-system packages on one side, Python packages on the other,
-version controlled in different files because they live in different layers
-of the machine.
-
-\newthought{``Works on my machine''} is the most dangerous sentence in
-software engineering.
+\newthought{Kaltstart Capabilities}\index{PixelWise},
 Your colleague clones the repository, runs the code, and immediately hits an
-\texttt{ImportError}.
-You installed \texttt{scikit-learn}\index{scikit-learn} months ago and forgot.
+\texttt{Error}.
+You installed a package with a specific version months ago and forgot.
 They did not.
 The code is correct; the environment is wrong.
 The remainder of the day is spent debugging an artefact of the install
-history rather than the program itself.
+history rather than contributing real valeu to the program itself.
+At the end of this third block we want any fresh VM to go from empty
+to ready to code with a small, fixed sequence of commands.
+The two halves of that sequence are the load-bearing idea of the chapter:
+system packages on one side, Python packages on the other,
+version controlled in different files. 
 
-\marginnote{\newthought{Reproducibility is a discipline,} not a tool.
-The artefacts in this block, \texttt{setup-server.sh},
-\texttt{requirements.txt}, and \texttt{.env.example}, are practical levers,
-but the habit they cultivate is the same one Git instilled in Block~2:
-write the steps down once, in a place a future stranger can find,
-and never trust your own memory.}
 
-\newthought{Two layers, two files.}
-System packages, the things you install with \texttt{apt}\index{apt},
-are captured in a shell script called \texttt{setup-server.sh}\index{setup-server.sh}.
-Python packages, the libraries your application imports,
-are captured in \texttt{requirements.txt}\index{requirements.txt} and installed
-inside an isolated virtual environment.
-The two files are committed to Git, run on either machine,
-and produce identical environments without any further intervention.
-
+\vspace{2em}
 \begin{figure}
 \centering
 \begin{tikzpicture}[
@@ -79,31 +63,41 @@ and produce identical environments without any further intervention.
 \draw[arr] (sys.east) -- (env.west);
 \draw[arr] (py.east)  -- (env.west);
 \end{tikzpicture}
-\caption{Two layers, two files. \texttt{setup-server.sh} provisions the operating system; \texttt{requirements.txt} provisions Python inside an isolated virtual environment. Together they reconstruct the environment from scratch on any fresh VM.}
+\caption{Two layers, two files. \protect\texttt{setup-server.sh} provisions the operating system; \protect\texttt{requirements.txt} 
+provisions Python inside an isolated virtual environment. Together they reconstruct the environment from scratch on any fresh VM. 
+System packages, the things you install with \protect\texttt{apt}\protect\index{apt},
+are captured in a shell script called \protect\texttt{setup-server.sh}\protect\index{setup-server.sh}.
+Python packages, the libraries your application imports,
+are captured in \protect\texttt{requirements.txt}\protect\index{requirements.txt} and installed
+inside an isolated virtual environment.
+The two files are committed to Git, run on either machine,
+and produce identical environments without any further intervention.}
 \label{fig:two_layers}
 \end{figure}
 
+
+
+\newpage
 \subsection{Hands On Experience}
 
 \newthought{Consider this scenario:} you hand your PixelWise repository to a
 classmate at the end of the day.
-They clone it, type \texttt{python3 train.py},
+They clone it, type \texttt{python3 train.py} without running the provisioning script \texttt{setup-server.sh},
 and immediately hit \texttt{ModuleNotFoundError: No module named 'sklearn'}.
 You tell them to install scikit-learn.
 They do, but they get version 2.0 while you wrote the code against 1.4.
 The training script crashes with a different error.
 By the time the original problem is fixed,
-an hour is gone and neither of you has touched the actual code.
+a few hours are gone and neither of you has touched the actual code nor added any value.
 
 \marginnote{\newthought{The two-command promise.}
 A well-managed project lets any new developer go from clone to running code
 with two commands: create the virtual environment and install from a pinned
 requirements file.
-No guessing, no Slack messages asking ``which version of numpy do I need?''
+No guessing, no mails or messages asking ``which version of numpy do I need?''
 This block is what makes that promise hold.}
 
-\newthought{Reproducibility} is the property that makes this episode impossible.
-A reproducible project does not require remembering, asking, or guessing.
+\newthought{Reproducible projects} do not require remembering, asking, or guessing.
 The exact set of packages, the exact versions, the exact configuration
 contract, are written down once, committed to Git, and replayed on any
 machine that has the script and the file.
@@ -111,7 +105,8 @@ machine that has the script and the file.
 \marginnote{\newthought{Outside the classroom,} the same files are how cloud
 deployment works in practice.
 A continuous-integration runner clones the repository, executes the setup
-script, installs from \texttt{requirements.txt}, and runs the tests.
+script (for example, \texttt{setup-server.sh}), installs from \texttt{requirements.txt}, 
+and runs the tests.
 The reproducibility you build for two VMs scales without modification
 to a hosted server, a colleague's laptop, or a CI runner you have never seen.}
 
@@ -140,10 +135,8 @@ By the end you will have
 operating system into one that can run your application.
 So far it has been done by typing \texttt{sudo apt install} commands at the
 prompt and reading their output.
-That works once.
-It does not work the second time, when the VM needs to be rebuilt,
-when a teammate joins, or when you cannot remember whether
-\texttt{python3-venv} was already installed.
+That works for one-time setups, it does not scale.
+Software is meant to be scaled.
 
 \marginnote{\newthought{Configuration management} is a whole discipline that
 grew from this small itch.
@@ -185,9 +178,7 @@ the four-character preamble eliminates most of them.
 \marginnote{\newthought{Idempotence}\index{idempotence} is the property that
 running a script twice yields the same result as running it once.
 \texttt{apt install} is idempotent by default: an already-installed package
-is a no-op.
-Keep this property in mind as the script grows, so that re-running it after
-a partial failure is always safe.}
+is a no-op. So re-running is always safe, and the script can be used to fix a machine that has drifted.}
 
 \newthought{Mark it executable} and run it:
 
@@ -196,7 +187,7 @@ chmod +x setup-server.sh
 ./setup-server.sh
 \end{verbatim}
 
-\newthought{This is version control paying for itself.}
+\newthought{See how version control already pays off.}
 The script is committed to Git, so when the VM is rebuilt or a new team
 member joins, \texttt{bash setup-server.sh} reproduces the exact same
 environment.
@@ -226,11 +217,10 @@ source .venv/bin/activate
 Project A needs \texttt{numpy==1.24}; project B needs \texttt{numpy==2.0}.
 Without per-project environments, one of them breaks the moment the other
 is installed.
-With virtual environments, both coexist on the same machine and neither
-sees the other's packages.}
+With virtual environments, both coexist on the same machine and make it easy for you to switch between projects seamlessly.}
 
 \newthought{The directory is large} and machine specific, often 50 to 200\,MB.
-It must live in \texttt{.gitignore}: never commit it.
+Thus it is listed in \texttt{.gitignore}: never commit it.
 A teammate clones the repository, creates their own \texttt{.venv}, installs
 from \texttt{requirements.txt}, and ends up with the same packages without
 ever copying the binary contents.
@@ -273,6 +263,8 @@ unrelated projects on the same laptop.
 % ==============================================================================================
 \newpage
 \section{Managing Packages with pip}\index{pip}\index{requirements.txt}
+% TODO: Good add-on teaching on how they release their own first package of something. 
+
 
 \newthought{pip is the package installer} for Python.\index{PyPI}
 It downloads packages from PyPI, the Python Package Index at
@@ -286,10 +278,10 @@ pip install -r requirements.txt
 \end{verbatim}
 
 \marginnote{\newthought{Read these three lines as a contract.}
-The first creates the environment.
+The first installs into the environment.
 The second writes a snapshot of it to a text file.
 The third reconstructs the same environment from the file on any machine.
-Together they are the reproducibility layer for Python.}
+Together they are the reproducibility layer for your programming environment.}
 
 \newthought{\texttt{pip install}} downloads each named package and its
 dependencies and places them in \texttt{.venv/}.
@@ -316,12 +308,11 @@ Looser specifiers are appropriate for libraries that other projects depend on,
 which is not where most of your work lives.\\
 Semantic versioning: \url{https://semver.org}}
 
-\newthought{Pinning matters} because PyPI is a moving target.
+\newthought{Pinning matters} because packages are a moving target.
 A package you install today as \texttt{numpy>=1.24} may resolve to
-\texttt{1.27} tomorrow, with new behaviour, new bugs, and possibly new
-security advisories.
-Pinning to \texttt{==1.24.3} freezes the resolution and protects the project
-from surprise upgrades that nobody in the team intended.
+\texttt{1.27} tomorrow, with new features added, new behaviour, new bugs, and possibly new
+security advisories. Packages are software, and they are subject to change; just the same as your own project.
+Pinning to \texttt{==1.24.3} freezes the resolution and makes switching to newer versions a deliberate act.
 
 \marginnote{\newthought{Security auditing.}\index{pip audit}\index{CVE}
 Your dependencies have their own dependencies, and any of them can harbour
@@ -330,7 +321,7 @@ known vulnerabilities.
 \texttt{pip install pip-audit \&\& pip-audit}.
 Run it after every \texttt{pip freeze}.
 In Block~8 we wire it into a cron job so vulnerabilities surface without
-human memory.\\
+human labor.\\
 \texttt{pip-audit}: \url{https://github.com/pypa/pip-audit}\\
 Dependabot: \url{https://docs.github.com/en/code-security/dependabot}}
 
@@ -349,11 +340,9 @@ exactly what is on disk.
 \section{Configuration: \texttt{.env} and \texttt{python-dotenv}}\index{.env}\index{python-dotenv}\index{12-factor app}
 
 \newthought{Separating configuration from code} is a foundational principle.
-The Twelve-Factor App methodology states it directly: store config in the
-environment, never in the source code.
 Configuration is anything that varies between development, staging, and
 production: API keys, database URLs, feature flags, debug settings.
-Code is the part that does not change.
+Code is the part that does not change between deployments.
 
 \marginnote{The Twelve-Factor App: \url{https://12factor.net/}\\
 python-dotenv: \url{https://github.com/theskumar/python-dotenv}}
@@ -379,12 +368,11 @@ api_key = os.getenv("SECRET_API_KEY")
 debug = os.getenv("DEBUG", "false").lower() == "true"
 \end{verbatim}
 
-\marginnote{\newthought{Why a file at all?}\index{environment variables}
+\marginnote{\newthought{A file for convenience.}\index{environment variables}
 Environment variables can be exported manually, set inline before a command,
 or supplied by the systemd service file we install in Block~5.
 A \texttt{.env} file is the development-time convenience that mirrors the
-production-time mechanism: same names, same shape, different source.
-The application code does not change between environments.}
+production-time mechanism: same names, same shape, different source.}
 
 \subsection{The \texttt{.env.example} Pattern}\index{.env.example}
 
@@ -393,7 +381,7 @@ be committed.
 \texttt{.env.example} is the contract: it lists which variables exist,
 explains what each one is for, and provides a safe placeholder.
 The example file is committed and public.
-The real file lives on the developer's machine and stays out of Git.
+The filled contracts live on the respective machines and stays out of Git.
 
 \begin{verbatim}
 # API key callers must send in the X-API-Key header
@@ -412,27 +400,83 @@ a comment explaining its purpose.
 A teammate cloning the repository six weeks from now sees the full surface
 of the application's configuration in one file.}
 
-\newthought{Students create their actual \texttt{.env}} by copying
+\newthought{On first setup create your actual \texttt{.env}} by copying
 \texttt{.env.example} and replacing each placeholder with a real value.
-The contrast is immediate: one is the template, the other is the secret.
+The contrast is immediate: one is the template, the other is a vault for your secrets.
 
 
 
 % ==============================================================================================
 \newpage
-\section{The Container Alternative}\index{Docker}\index{containers}
+\section{Optional: When \texttt{requirements.txt} Starts to Hurt}\index{pyproject.toml}\index{lock file}
+
+\newthought{\texttt{pip freeze > requirements.txt}} captures everything:
+your direct dependencies and all their transitive
+dependencies\index{transitive dependencies}, flattened into one list.
+Six months later you want to upgrade one package: which of those forty-seven
+packages did you deliberately install, and which were pulled into that list automatically?
+Without that distinction, every upgrade is a guessing game. Solving dependency 
+conflicts becomes a nightmare and quickly feels like brute-force.
+
+\marginnote{\newthought{Tools like \texttt{uv}}\index{uv} and
+\texttt{poetry}\index{poetry} use the project-file model and are fast becoming
+the standard.
+Once the \texttt{requirements.txt} workflow is second nature, this is the
+upgrade that makes dependency management sane at scale.\\
+Python Packaging User Guide: \url{https://packaging.python.org/en/latest/}\\
+\texttt{uv}: \url{https://docs.astral.sh/uv/}\\
+Poetry: \url{https://python-poetry.org/}}
+
+\newthought{\texttt{pyproject.toml}} solves this by separating
+``what you depend on'', your direct deps loosely pinned,
+from ``what gets installed'', a generated lock file with the full resolved graph.
+Upgrades become surgical: bump one line, regenerate the lock, done.
+
+\begin{verbatim}
+[project]
+name = "pixelwise"
+version = "0.1.0"
+dependencies = [
+    "scikit-learn>=1.4",
+    "joblib>=1.3",
+    "python-dotenv>=1.0",
+]
+\end{verbatim}
+
+\newthought{Compare} this to \texttt{requirements.txt}: the project file
+lists only what you chose to install, with flexible version bounds.
+The tool resolves the full dependency graph and writes a lock file that
+pins every transitive dependency exactly.
+You commit both files; the lock file is your reproducibility guarantee
+and the project file is your editable surface.
+
+\begin{verbatim}
+# to upgrade a single package and update lock:
+poetry update <package>
+\end{verbatim}
+
+\marginnote{\newthought{We stay with \texttt{requirements.txt}}
+through the rest of the course because it is the format every Python
+developer recognises and the only one some hosting environments still accept.
+The reasoning generalises: when an upgrade is available, learn the workflow
+beneath it before adopting the tool that abstracts it away.}
+
+
+% ==============================================================================================
+\newpage
+\section{Optional: The Container Alternative}\index{Docker}\index{containers}
 
 \newthought{Virtual environments isolate Python packages.}
 Containers isolate the entire operating system: libraries, system packages,
 Python version, environment variables, even the filesystem layout.
-Where \texttt{requirements.txt} says ``install these Python packages'',
-a \texttt{Dockerfile}\index{Dockerfile} says ``start from this Linux image,
-install these system packages, then install these Python packages.''
+Where \texttt{requirements.txt} specifies which Python packages to install,
+a \texttt{Dockerfile}\index{Dockerfile} does the whole stack in layers: This Linux image,
+install these system packages, then install these Python packages.
 
 \marginnote{\newthought{Docker} and Docker Compose solve the
-``reproducible environment'' problem at the OS level rather than at the Python level.
+reproducible environment problem at the OS level rather than at the Python level.
 This course teaches the virtualenv path to keep the OS layer visible and
-learnable.
+learnable. Later Docker enables you to run Linux containers under Windows as well.
 Docker is the natural next step after this course; it does not replace any
 of what you learn here, it builds on it.\\
 Docker: \url{https://www.docker.com/}\\
@@ -469,56 +513,6 @@ The vocabulary, image, container, registry, layer, volume, recurs in any
 later production work; the next-block decisions in this course translate
 to it directly.
 
-
-
-% ==============================================================================================
-\newpage
-\section{Optional: When \texttt{requirements.txt} Starts to Hurt}\index{pyproject.toml}\index{lock file}
-
-\newthought{\texttt{pip freeze > requirements.txt}} captures everything:
-your direct dependencies and all their transitive
-dependencies\index{transitive dependencies}, flattened into one list.
-Six months later you want to upgrade one package: which of those forty-seven
-lines did you actually choose, and which were pulled in automatically?
-Without that distinction, every upgrade is a guessing game.
-
-\marginnote{\newthought{Tools like \texttt{uv}}\index{uv} and
-\texttt{poetry}\index{poetry} use the project-file model and are fast becoming
-the standard.
-Once the \texttt{requirements.txt} workflow is second nature, this is the
-upgrade that makes dependency management sane at scale.\\
-Python Packaging User Guide: \url{https://packaging.python.org/en/latest/}\\
-\texttt{uv}: \url{https://docs.astral.sh/uv/}\\
-Poetry: \url{https://python-poetry.org/}}
-
-\newthought{\texttt{pyproject.toml}} solves this by separating
-``what you depend on'', your direct deps loosely pinned,
-from ``what gets installed'', a generated lock file with the full resolved graph.
-Upgrades become surgical: bump one line, regenerate the lock, done.
-
-\begin{verbatim}
-[project]
-name = "pixelwise"
-version = "0.1.0"
-dependencies = [
-    "scikit-learn>=1.4",
-    "joblib>=1.3",
-    "python-dotenv>=1.0",
-]
-\end{verbatim}
-
-\newthought{Compare} this to \texttt{requirements.txt}: the project file
-lists only what you chose to install, with flexible version bounds.
-The tool resolves the full dependency graph and writes a lock file that
-pins every transitive dependency exactly.
-You commit both files; the lock file is your reproducibility guarantee
-and the project file is your editable surface.
-
-\marginnote{\newthought{We stay with \texttt{requirements.txt}}
-through the rest of the course because it is the format every Python
-developer recognises and the only one some hosting environments still accept.
-The reasoning generalises: when an upgrade is available, learn the workflow
-beneath it before adopting the tool that abstracts it away.}
 
 
 

@@ -181,7 +181,7 @@ Foundation models such as CLIP\index{CLIP}, GPT\index{GPT}, and SAM\index{SAM} p
 \newthought{In order to move from one-task-one-model} to many-tasks-one-backbone we have good reason to find ways to,
 \begin{itemize}
     \item reuse features learned at scale for downstream tasks with little or no labelled data.\index{zero-shot learning}\index{few-shot learning}
-    \item adapt pretrained representations efficiently, without paying full retraining cost.\index{PEFT}\index{fine-tuning}
+    \item adapt pretrained representations efficiently, without paying full retraining cost.\index{PEFT}\index{fine-tuning}\marginnote{\newthought{LoRA}\cite{Hu2021LoRA} factors the correction as two thin matrices that slot onto a frozen layer. With $W$ frozen, $\partial L / \partial W$ is never formed and Adam's optimiser state collapses onto the rank-$r$ adapters. Fine-tuning just got cheap.}
     \item bridge modalities so that text descriptions can serve as classifiers for visual inputs.\index{cross-modal alignment}
     \item diagnose when transfer fails because source and target distributions are too far apart.\index{negative transfer}\index{distribution shift}
 \end{itemize}

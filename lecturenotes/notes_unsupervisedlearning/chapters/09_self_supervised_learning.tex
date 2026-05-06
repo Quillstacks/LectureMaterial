@@ -94,8 +94,9 @@ and produces target representations of the masked region.
 The student sees a masked view of the same input sample,
 predicts those target representations in the latent space,
 and the loss is the distance between predicted and target features.
-There is no decoder and pure prediction happens in the encoder's feature space, so the method is 
+There is no decoder and pure prediction happens in the encoder's feature space, so the method is
 efficient and scales well to large models and large corpora.
+\marginnote{\newthought{DINO}\cite{Caron2021DINO} predates and inspires the JEPA family. A momentum teacher produces soft targets in feature space, the student matches them with cross entropy, and no negatives or labels are needed. Self-supervised attention maps emerge that segment objects without supervision.}
 
 
 \newthought{In order to move from expensive manual annotation to learning from raw data}

@@ -1,6 +1,8 @@
 %% meta.tex -- Shared metadata and templates for lecture notes
 %% Author: Dr.-Ing. Mark Schutera
 
+\RequirePackage{qrcode}
+
 \InputIfFileExists{version.tex}{}{}
 \providecommand{\docversionmajor}{0}
 \providecommand{\docversionminor}{0}
@@ -12,6 +14,43 @@
 %%
 \newcommand{\defaultauthor}{Prof. Dr.-Ing. Mark Schutera}
 \newcommand{\defaultpublisher}{Unfinished Lecture Notes}
+
+%%
+% Contribution invitation. Each lecture-notes main file should set
+% \notesdir to its own subdirectory, e.g.
+%   \renewcommand{\notesdir}{notes_philosophyofai}
+% so the QR code and URL on the copyright page point to the right book.
+%%
+\providecommand{\repobaseurl}{https://github.com/Quillstacks/LectureMaterial/tree/main/lecturenotes}
+\providecommand{\notesdir}{}
+\newcommand{\notesrepourl}{\repobaseurl/\notesdir}
+
+\newcommand{\makecontributioninvite}{%
+  \par These notes are, by their very nature, unfinished, and they improve with every reader.
+  If you spot an error, disagree with a framing, or want to add a source, a question, or a position, open a pull request at \url{\notesrepourl}. Every contribution is welcome.
+  \par\noindent\hfill\qrcode[height=1.6cm]{\notesrepourl}\hspace*{0pt}
+}
+
+%%
+% Per-chapter version stamp. Populated by tools/update_chapter_versions.sh,
+% which writes a chapter_versions.tex file with calls like
+%   \setchapterversion{05_Maschinenquaelerei}{2026-05-06}{crunchy banana dachs}
+% Each chapter calls \printchapterversion{<key>} right after \chapter{...}
+% to emit a small italic line under the chapter title; if the key is not
+% registered, the call is a silent no-op so chapter files stay safe to
+% input even when the version table has not been generated yet.
+%%
+\InputIfFileExists{chapter_versions.tex}{}{}
+\newcommand{\setchapterversion}[3]{%
+  \expandafter\gdef\csname chapver@date@#1\endcsname{#2}%
+  \expandafter\gdef\csname chapver@name@#1\endcsname{#3}%
+}
+\newcommand{\printchapterversion}[1]{%
+  \ifcsname chapver@date@#1\endcsname
+    \par\noindent{\itshape\small\csname chapver@date@#1\endcsname{} \textperiodcentered\ \csname chapver@name@#1\endcsname}\par
+    \vspace{0.25\baselineskip}%
+  \fi
+}
 
 %%
 % Copyright page template
@@ -34,6 +73,8 @@ To view a copy of this license, visit \url{https://creativecommons.org/licenses/
 Unless required by applicable law or agreed to in writing, distributed material is provided on an 
 \smallcaps{``AS IS'' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND}, either express or implied. 
 See the license for details.\index{license}
+
+  \makecontributioninvite
 
   \par\textit{Last updated, \monthyear\ --- v\docversion}
   \end{fullwidth}
