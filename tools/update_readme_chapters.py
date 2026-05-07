@@ -86,9 +86,8 @@ def build_block(book: str) -> str:
             rows.append(f"|   {label}  | {title} *(Appendix)* | [📄 PDF]({url}) |")
 
     return (
-        "<details>\n"
+        '<details markdown="1">\n'
         "<summary>📑 <b>Lecture Notes</b></summary>\n"
-        "<br/>\n"
         "\n"
         "|   #  | Chapter | Download |\n"
         "| :--: | :--- | :-: |\n"

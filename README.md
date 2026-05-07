@@ -10,9 +10,8 @@
 ### Philosophy of AI
 
 <!-- BEGIN:lecture:notes_philosophyofai -->
-<details>
+<details markdown="1">
 <summary>📑 <b>Lecture Notes</b></summary>
-<br/>
 
 |   #  | Chapter | Download |
 | :--: | :--- | :-: |
@@ -34,9 +33,8 @@
 ### Unsupervised Deep Learning
 
 <!-- BEGIN:lecture:notes_unsupervisedlearning -->
-<details>
+<details markdown="1">
 <summary>📑 <b>Lecture Notes</b></summary>
-<br/>
 
 |   #  | Chapter | Download |
 | :--: | :--- | :-: |
@@ -63,9 +61,8 @@
 ### Numerical Methods
 
 <!-- BEGIN:lecture:notes_numerischemethoden -->
-<details>
+<details markdown="1">
 <summary>📑 <b>Lecture Notes</b></summary>
-<br/>
 
 |   #  | Chapter | Download |
 | :--: | :--- | :-: |
@@ -86,9 +83,8 @@
 ### Full Stack Handwerkszeug
 
 <!-- BEGIN:lecture:notes_missingsemester -->
-<details>
+<details markdown="1">
 <summary>📑 <b>Lecture Notes</b></summary>
-<br/>
 
 |   #  | Chapter | Download |
 | :--: | :--- | :-: |
