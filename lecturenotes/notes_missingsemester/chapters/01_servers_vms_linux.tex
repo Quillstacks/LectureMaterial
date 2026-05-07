@@ -228,10 +228,14 @@ If your VM ends up in a state you cannot recover, restore the \texttt{B1-fresh} 
 At the end of the session, take a snapshot named \texttt{B1-complete}, your safety net for the next block.}
 
 
-\newthought{Install the Oracle VirtualBox Manager} for your host OS with default settings, and download two Ubuntu LTS ISOs: the Desktop edition for \texttt{dev} and the Server edition for \texttt{prod}. The asymmetry is deliberate, \texttt{dev} carries a graphical environment so you can run an editor and a browser locally, while \texttt{prod} stays headless because a production server has no business running a desktop.
+\newthought{Install the Oracle VirtualBox Manager} for your host OS with default settings, and download two Ubuntu LTS ISOs (go for version 24.x.x if you find one): the Desktop edition for \texttt{dev} and the Server edition for \texttt{prod}. The asymmetry is deliberate, \texttt{dev} carries a graphical environment so you can run an editor and a browser locally, while \texttt{prod} stays headless because a production server has no business running a desktop.
 You can also decide to run dev on your machine directly, but this is not further supported in the excercises.
 
-\marginnote{\newthought{Where to get them.} VirtualBox: \url{https://www.oracle.com/virtualization/virtualbox/}. Ubuntu Desktop LTS ISO: \url{https://ubuntu.com/download/desktop}. Ubuntu Server LTS ISO: \url{https://ubuntu.com/download/server}. Pick the LTS release in both cases, not the interim one, so support extends across the semester.}
+\marginnote{\newthought{Where to get them.} VirtualBox: \url{https://www.oracle.com/virtualization/virtualbox/}. 
+Ubuntu Desktop LTS ISO: \url{https://ubuntu.com/download/desktop}. Ubuntu Server LTS ISO: \url{https://ubuntu.com/download/server}. 
+Pick the LTS release in both cases, not the interim one, so support extends across the semester. 
+On an Ubuntu host you can use GNOME Boxes instead: \url{https://apps.gnome.org/Boxes/}. O
+n macOS, UTM is the closest equivalent: \url{https://mac.getutm.app/}.}
 
 
 \marginnote{\newthought{Installer choices} that matter: use distinct credentials per VM, \texttt{user}/\texttt{password} on \texttt{dev} and \texttt{produser}/\texttt{prodpassword} on \texttt{prod}. The asymmetry is deliberate, you should feel that logging into \texttt{prod} is a different act from working on \texttt{dev}.}
