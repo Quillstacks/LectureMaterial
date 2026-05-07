@@ -94,12 +94,6 @@
 |  02  | Version Everything: Git & GitHub | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/02_git_github.pdf) |
 |  03  | Dependencies & Structure | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/03_dependencies_structure.pdf) |
 |  04  | Integrate the Model | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/04_model_integration.pdf) |
-|  05  | The Backend: APIs & Services | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/05_apis_services.pdf) |
-|  06  | Data Lives Here: Databases & SQL | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/06_databases_sql.pdf) |
-|  07  | Face the World: Frontend & Nginx | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/07_frontend_nginx.pdf) |
-|  08  | Automate Everything: CI/CD, Cron, Webhooks & Backups | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/08_cicd_automation.pdf) |
-|  09  | Watch It Run: Monitoring, Logging & Analytics | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/09_monitoring_logging.pdf) |
-|  10  | AI Dev & Vibe Coding | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/10_ai_dev_vibecoding.pdf) |
 
 </details>
 <!-- END:lecture:notes_missingsemester -->
