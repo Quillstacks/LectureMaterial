@@ -364,7 +364,7 @@ git push
 ssh produser@192.168.56.11
 cd /opt/pixelwise
 git pull origin main
-cp .env.example .env       # if you have not yet
+cp .env.example .env       # Don't forget to edit .env to fir production
 bash setup-server.sh
 ls models/
 \end{verbatim}
@@ -618,8 +618,7 @@ Deserialising on every request kills throughput, so
 the resulting \texttt{Pipeline} stays in memory for the lifetime of the
 process. The path comes from \texttt{.env}, not a hardcoded string, so
 swapping the model in production is an env-var change plus a service
-restart, the same pattern as the database URL in Block~6 and the API
-key from Block~5.
+restart, the same pattern you will see repeated in later blocks.
 
 \marginnote{\newthought{The startup assertion is the headline.}\index{assertion}
 Right after \texttt{joblib.load}, one line: \texttt{assert
@@ -683,7 +682,19 @@ def classify(image: np.ndarray) -> dict:
     return classify_batch(image[np.newaxis])[0]
 \end{verbatim}
 
-\marginnote{\newthought{The assertion is the headline.}\index{assertion}
+\marginnote{\newthought{Optional: pin pandas.}\index{pandas}\index{requirements.txt}
+\texttt{fetch\_openml} pulls in \texttt{pandas} under the hood, and we
+have leaned on it implicitly more than once already. If you want it as
+an explicit, pinned dependency rather than a transitive one, install
+and refreeze:
+\\[0.5em]
+\texttt{pip install pandas}\\
+\texttt{pip freeze > requirements.txt}\\
+\texttt{git add requirements.txt}\\
+\texttt{git commit -m "Pin pandas"}\\
+}
+
+\marginnote{\newthought{(Optional) The assertion is the headline.}\index{assertion}
 Comment it out, save, restart Python, and import the module.
 Now mutate \texttt{CLASSES} to add a fake \texttt{"10"} entry, restore
 the assertion, restart, and observe the assertion firing.
@@ -729,11 +740,25 @@ for r, t in zip(results, truth):
           f"(conf {r['confidence']:.2f})  True: {t}")
 \end{verbatim}
 
-\marginnote{\newthought{Read \texttt{predict.py} as the API preview.}\index{predict.py}
-This is what the API in Block~5 will do: take pixel data, call
-\texttt{classify\_batch}, return the result.
-Block~5 swaps stdin for HTTP and stdout for JSON, and moves the service
-to \texttt{prod}; the inference logic itself is unchanged.}
+\marginnote{\newthought{\texttt{\_\_pycache\_\_} in your commit?}\index{.gitignore}\index{\_\_pycache\_\_}
+Running \texttt{python predict.py} produces compiled bytecode in
+\texttt{app/\_\_pycache\_\_/}. If those \texttt{.pyc} files made it into
+the commit, extend \texttt{.gitignore} from Block~3 with the entries
+below so they stay out of every future commit:
+\\[0.5em]
+\texttt{\_\_pycache\_\_/}\\
+\texttt{*.pyc}
+\\[0.5em]
+Then untrack what was already added and rewrite the previous commit so
+the bytecode never reaches the remote:
+\\[0.5em]
+\texttt{git rm -r -{}-cached app/\_\_pycache\_\_}\\
+\texttt{git add .gitignore}\\
+\texttt{git commit -{}-amend -{}-no-edit}\\
+\texttt{git push -{}-force-with-lease}\\[0.5em]
+Only \texttt{-{}-force-with-lease} this commit if you pushed it once and
+nobody else has pulled yet. Otherwise create a fresh follow-up commit.}
+
 
 \newthought{Run the smoke test on dev} from the repo root with the
 virtual environment activated, then commit:
@@ -745,6 +770,8 @@ git add app/classifier.py predict.py .env.example
 git commit -m "Add classifier module pinned to model v1.0"
 git push
 \end{verbatim}
+
+
 
 \newthought{Tag the release as \texttt{v0.3}.}\index{Git!tag}
 The end of every block is a tagged, runnable state. Mark it now so
@@ -761,8 +788,6 @@ pinned to the model release.
 The \texttt{.pkl} stays on each developer's machine, the artefact path
 is in \texttt{.env}, and the rest of the team can reproduce the
 environment from the code in Git.
-Block~5 takes this dev-verified module and exposes it as an HTTP service
-on \texttt{prod}.
 
 
 
@@ -825,20 +850,14 @@ and \texttt{MODEL\_VERSION=v2.0}, then re-run
 The assertion will break the moment v2 is loaded against v1's
 \texttt{CLASSES}; fix it by updating the constant.
 
-\marginnote{This challenge connects directly to Block~8: v2 is deployed
-via the feature flag, and Block~9's analytics compare v1 and v2 performance.
-No data collection is needed; MNIST has the 0s already.}
+\marginnote{This challenge sets up a thread we will revisit later, when
+feature flags decide which model version is served and analytics compare
+their performance side by side. No data collection is needed; MNIST has
+the 0s already.}
 
 \newthought{A note on what comes next.}
 \texttt{app/classifier.py} works on dev, but it is trapped in a Python
 script.
-A user with a browser cannot call it; a teammate on a different machine
-cannot reach it; \texttt{prod} has not yet seen this artefact.
-The next block wraps \texttt{classify\_batch} in an HTTP endpoint, defines
-the request and response contract with Pydantic, and runs the result as a
-managed \texttt{systemd} service on \texttt{prod} so the model becomes
-reachable without a human in the loop.
-
 
 
 % ==============================================================================================
@@ -889,9 +908,7 @@ what the model is and is not, and the integration verifies against it.
 \newthought{We deliberately stop short of \texttt{prod}.}\index{deployment}
 The classifier works on \texttt{dev}, but \texttt{prod} has not been
 updated, on purpose. There is no service on \texttt{prod} yet that would
-call \texttt{classify\_batch}, no HTTP endpoint, no \texttt{systemd}
-unit, no entry point at all. Pulling the new code there now would just
-add an unused \texttt{app/classifier.py} to the production checkout.
-Block~5 introduces the FastAPI layer and the \texttt{systemd} service
-that make the model reachable; deployment to \texttt{prod} happens then,
-once there is something to deploy.
+call \texttt{classify\_batch}, no HTTP endpoint, no managed background
+process, no entry point at all. Pulling the new code there now would
+just add an unused \texttt{app/classifier.py} to the production checkout.
+Deployment to \texttt{prod} happens once there is something to deploy.

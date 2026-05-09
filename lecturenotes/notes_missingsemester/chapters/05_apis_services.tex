@@ -35,9 +35,9 @@ can speak HTTP can reach it.}
 
 \newthought{Across ten lecture blocks we build PixelWise}\index{PixelWise}.
 This block is the first that exposes the application to the outside world.
-Every client that follows, the browser frontend in Block~7, the CI runner
-in Block~8, the monitoring \texttt{curl} in Block~9, talks to the service
-through the contract you design here.
+Every client that follows, whether a browser frontend, an automated test
+runner, or a monitoring probe, talks to the service through the contract
+you design here.
 
 \newthought{HTTP is the protocol} that every browser, every CLI tool,
 and every web service in this course speaks.
@@ -268,7 +268,7 @@ keystrokes.
 Each theory section is followed by its exercise, so you can read a concept
 and practise it immediately.
 At the end of the session, take a snapshot named \texttt{B5-complete}, your
-safety net for the next block.}
+safety net for whatever comes next.}
 
 \newthought{Probe a public API} before writing your own.
 HTTP is best learnt against something you did not build, so you can read
@@ -332,7 +332,7 @@ class ClassifyResponse(BaseModel):
 \marginnote{\newthought{Bidirectional contract.}
 The response model documents what the client receives, with the same
 precision as the request model documents what the client sends.
-The Block~7 frontend consumes \texttt{ClassifyResponse}; it knows the keys,
+Any frontend that later consumes \texttt{ClassifyResponse} knows the keys,
 the types, and the shape of \texttt{scores} before any HTTP request leaves
 the browser.
 Pydantic: \url{https://docs.pydantic.dev/}}
@@ -494,7 +494,7 @@ status code surprises you.}
 
 \newthought{Three endpoints} cover the surface this block exposes:
 \texttt{POST /classify} performs inference, \texttt{GET /results} is a stub
-that Block~6 fills in once persistence exists, and \texttt{GET /health}
+that a later persistence layer will fill in, and \texttt{GET /health}
 reports liveness so a monitor can tell whether the service is up.
 
 
@@ -521,7 +521,7 @@ def health():
 @app.get("/results")
 def results():
     return {"results": [],
-            "note": "persistence added in Block 6"}
+            "note": "persistence not yet implemented"}
 
 @app.post("/classify",
           response_model=ClassifyResponse)
@@ -613,8 +613,8 @@ def classify(req: ClassifyRequest):
 
 \marginnote{\newthought{Where does rate limiting belong?}\index{slowapi}
 Application-level limits are easy to write and travel with the code.
-Reverse-proxy limits, which we add in Block~7 with Nginx, run in front of
-the application and protect it even when it is overwhelmed.
+Reverse-proxy limits, a topic we will revisit later in the course, run in
+front of the application and protect it even when it is overwhelmed.
 Both layers are useful; the latter is harder to bypass.\\
 slowapi: \url{https://github.com/laurentS/slowapi}}
 
@@ -831,9 +831,8 @@ The system is reachable across machines for the first time.}
 The service runs, the contract is documented, the supervisor restarts
 crashes; what is missing is memory.
 \texttt{GET /results} returns an empty list because nothing is being stored.
-The next block adds PostgreSQL, wires \texttt{POST /classify} to write a
-row for every prediction, and replaces the stub with a real query against
-the database.
+Persistence is a thread we will pick up later in the course, when every
+prediction becomes a row that survives the response.
 
 
 
@@ -849,7 +848,7 @@ the database.
     \item What is the difference between running \texttt{uvicorn} manually and running it under \texttt{systemd}?
     \item Why does Pydantic validation matter for security as well as correctness?
     \item What happens when the \texttt{systemd} service crashes, and how does \texttt{Restart=always} help?
-    \item Why is \texttt{GET /results} a stub right now, and what arrives in Block~6 to fill it in?
+    \item Why is \texttt{GET /results} a stub right now, and what would have to arrive to fill it in?
     \item How would you debug a failing endpoint using only \texttt{journalctl}?
     \item Which of the three rejection points (Pydantic, API key, rate limiter) is hardest to bypass, and why?
 \end{itemize}
@@ -858,7 +857,7 @@ the database.
 \begin{itemize}
     \item HTTP is a stateless request-response protocol; REST layers conventions on top so APIs are predictable across teams.
     \item Pydantic models are the API contract; FastAPI enforces them at the boundary and renders them as live documentation.
-    \item \texttt{POST /classify}, \texttt{GET /results}, \texttt{GET /health} cover the surface this block exposes; \texttt{/results} is a deliberate stub for Block~6.
+    \item \texttt{POST /classify}, \texttt{GET /results}, \texttt{GET /health} cover the surface this block exposes; \texttt{/results} is a deliberate stub awaiting a persistence layer.
     \item API keys answer ``who is calling''; rate limits answer ``how often''.
     \item \texttt{systemd} turns a script into a service: starts on boot, restarts on crash, logs to \texttt{journalctl}.
 \end{itemize}
@@ -867,7 +866,7 @@ the database.
 The API key lives in \texttt{.env}, never in code.
 Pydantic models are the input validation boundary; rate limits cap any single
 caller; the \texttt{X-API-Key} header keeps the secret out of access logs.
-HTTPS arrives in Block~7 with Nginx.}
+Transport-layer encryption is a thread we will revisit later in the course.}
 
 \marginnote{\newthought{Teaser.} Where do all those predictions go once the
 response has been sent?}
@@ -878,5 +877,5 @@ service on the \texttt{prod} VM.
 is stubbed pending persistence; \texttt{GET /health} reports liveness.
 You have killed and restarted the backend at least once and read the logs
 with \texttt{journalctl}.
-The next chapter wires the API to PostgreSQL so every prediction becomes
-a row that survives the response.
+The contract is now the load-bearing surface of the system: every
+component that follows will speak to PixelWise through it.

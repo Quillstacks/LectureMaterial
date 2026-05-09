@@ -101,40 +101,6 @@
 <br>
 
 ---
-### Papers Over Time
-
-<!-- BEGIN:lecture:notes_papersovertime -->
-<details markdown="1">
-<summary>📑 <b>Lecture Notes</b></summary>
-
-|   #  | Chapter | Download |
-| :--: | :--- | :-: |
-| Full | Papers Over Time · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_papersovertime/notes_papersovertime.pdf) |
-|  01  | Zebrafish Phenotype Pattern Recognition | [📄 PDF](https://material.schutera.com/lecturenotes/notes_papersovertime/chapter_pdfs/01_zebrafish_phenotype.pdf) |
-
-</details>
-<!-- END:lecture:notes_papersovertime -->
-
-<br>
-
----
-### Everything Everywhere All at Once
-
-<!-- BEGIN:lecture:notes_everythingeverywhereallatonce -->
-<details markdown="1">
-<summary>📑 <b>Lecture Notes</b></summary>
-
-|   #  | Chapter | Download |
-| :--: | :--- | :-: |
-| Full | Everything Everywhere All at Once · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_everythingeverywhereallatonce/notes_everythingeverywhereallatonce.pdf) |
-|  01  | Spikeball | [📄 PDF](https://material.schutera.com/lecturenotes/notes_everythingeverywhereallatonce/chapter_pdfs/01_spikeball.pdf) |
-
-</details>
-<!-- END:lecture:notes_everythingeverywhereallatonce -->
-
-<br>
-
----
 ---
 <br>
 

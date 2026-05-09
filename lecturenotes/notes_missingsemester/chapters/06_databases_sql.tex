@@ -32,19 +32,17 @@ This block fills that stub by wiring the API to a PostgreSQL database.}
 
 \newthought{Across ten lecture blocks we build PixelWise}\index{PixelWise}.
 This block is the first that adds persistent state.
-Every block from here forward, the analytics in Block~9, the feature flag
-in Block~8, the frontend results panel in Block~7, depends on the database
-schema you design today.
+Every later block depends on the database schema you design today.
 
 \newthought{Why persist at all?}
 A response that vanishes the moment it is sent is a response that cannot be
 counted, compared, or queried.
-A database makes the prediction permanent: every drawing becomes a row, the
+A database makes the prediction permanent: Every drawing becomes a row, the
 class label becomes a column, the confidence becomes another, and the model
 version becomes a third.
-Block~9's analytics endpoint reads from this table; Block~8's feature flag
-relies on the version field; the frontend in Block~7 fetches recent results
-to show in the UI.
+Later in the course, analytics endpoints will read from this table, feature
+flags will rely on the version field, and a frontend will fetch recent
+results to show in the UI.
 
 \marginnote{\newthought{Beyond this course,}
 the same table is where production teams build retraining datasets, let
@@ -730,8 +728,8 @@ git push
 \marginnote{\newthought{A note on what comes next.}
 The system is reachable on the network and remembers what it does, but
 nobody outside the SSH tunnel can use it.
-The next block puts a frontend and an Nginx reverse proxy in front of the
-API, and PixelWise becomes accessible from a browser at a real URL.}
+Making PixelWise accessible from a browser at a real URL is a thread we
+will revisit later in the course.}
 
 
 
@@ -778,5 +776,5 @@ its confidence and model version.
 is gone.
 You have run your first schema migration on a live database with Alembic
 and watched old rows coexist with new ones.
-The next chapter places Nginx and a browser frontend in front of the API
-so PixelWise becomes a website.
+Making PixelWise reachable as a website from a real browser is a step we
+will take later in the course.

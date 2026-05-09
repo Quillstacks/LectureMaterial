@@ -213,7 +213,7 @@ running with a TLS certificate and the frontend already deployed.
 
 \marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
 If your VM is broken, restore the \texttt{B7-complete} snapshot.
-At the end of this session, take a snapshot named \texttt{B8-complete}, your safety net for the next block.}
+At the end of this session, take a snapshot named \texttt{B8-complete} as a safety net.}
 
 \newthought{Write the CI workflow.} Create \texttt{.github/workflows/ci.yml} that on every push
 lints with \texttt{ruff}\index{ruff} and runs \texttt{pytest} against the boilerplate tests in \texttt{tests/}:
@@ -390,7 +390,7 @@ model_path = f"models/digit_classifier_{MODEL_VERSION}.pkl"
 
 \marginnote{This is how teams roll out features gradually or switch between model versions without risk.
 Both \texttt{v1} and \texttt{v2} model files are available. Switching the model is a config change plus
-service restart. Block~9 will use this to compare model performance.}
+service restart, a hook for comparing model performance later in the course.}
 
 
 % ==============================================================================================
@@ -434,10 +434,10 @@ Watch the CI workflow on GitHub. If green, merge. The deploy workflow should upd
 
 \newthought{Take a snapshot} of both VMs. Name them \texttt{B8-complete}.
 
-\marginnote{\newthought{A note on what comes next.}
+\marginnote{\newthought{Where this leaves you.}
 The pipeline now runs without you. Every push is linted and tested, every merge deploys, every night
-the database is dumped off-site. The next chapter shifts from automating the system to observing it,
-collecting metrics, reading logs, and noticing when something is wrong before a user does.}
+the database is dumped off-site. Automating the system is one half of operating it reliably;
+observing it is a thread we will pick up later.}
 
 
 % ==============================================================================================
