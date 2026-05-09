@@ -239,24 +239,91 @@ first, before any Python is involved.
 
 % ==============================================================================================
 \newpage
+\section{Optional Exercise: Catch Up to \texttt{v0.4}}\index{exercises}\index{Git!tag}\index{recovery}
+
+\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
+This block builds on the state at the end of Block~5: A FastAPI service
+exposing \texttt{POST /classify} and \texttt{GET /health}, with API-key
+authentication and basic rate limiting, running under a \texttt{systemd}
+unit on \texttt{prod}, with request and response contracts defined as
+Pydantic models.
+If you joined late, missed Block~5, or your repository has drifted,
+restore from the snapshot and reset to \texttt{v0.4} rather than redoing
+every prior exercise.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.4} marks the end of Block~5, \texttt{v0.5} will mark the end
+of this block.
+Browse the full set at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{Restore the snapshot.}
+On both VMs, restore the \texttt{B5-complete} snapshot from Block~5.
+The snapshot carries everything that is not in Git, the \texttt{.venv/},
+the model artefact in \texttt{models/}, the system packages from
+\texttt{setup-server.sh}, the \texttt{pixelwise.service} systemd unit
+installed on \texttt{prod}, and any real \texttt{.env} values you wrote.
+With the system layer back in place, only the repository state needs
+to be rewound.
+
+\newthought{Catch-up procedure on \texttt{dev}.}
+Reset PixelWise to the previous tag:
+
+\begin{verbatim}
+cd ~/pixelwise
+git fetch origin
+git reset --hard v0.4
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
+This rewrites your working tree to match the end of Block~5 exactly,
+including \texttt{app/main.py} and the updated \texttt{requirements.txt}.
+There is no work to lose if you have not committed beyond \texttt{v0.4};
+if you have, branch off first with \texttt{git branch backup-pre-catchup}
+so the work is recoverable.}
+
+\newthought{Mirror it on \texttt{prod}.}
+
+\begin{verbatim}
+ssh produser@192.168.56.11
+cd /opt/pixelwise
+git fetch origin
+git reset --hard v0.4
+sudo systemctl restart pixelwise
+\end{verbatim}
+
+\marginnote{\newthought{Already have a fork?}\index{Git!fork}
+If your own fork carries the \texttt{v0.4} tag, swap \texttt{origin} to
+your fork URL on \texttt{dev} with
+\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
+so push and pull continue to target your account.
+The HTTPS clone on \texttt{prod} stays read-only.}
+
+\newthought{Verify the service.}
+On \texttt{prod}, confirm the FastAPI service is reachable before moving
+on:
+
+\begin{verbatim}
+curl http://192.168.56.11:8000/health
+\end{verbatim}
+
+A \texttt{200 OK} response confirms the systemd unit is running against
+the rewound code.
+You are now at the state where Block~5 ended, with both machines
+aligned, ready to start Block~6.
+
+\newthought{Without a snapshot,} replay Block~5 before continuing.
+The file state alone is not enough when the next exercise expects an
+installed systemd unit and a running API service.
+
+
+% ==============================================================================================
+\newpage
 \section{Exercise: PostgreSQL on the Server}\index{exercises}
 
 \marginnote{\newthought{Exercises} sit next to the theory they exercise.
 Each pair takes you from concept to running command on the same topic, and
 the snapshot from Block~1 is your safety net if a step goes wrong.}
-
-\newthought{Catching up via the reference tag.}\index{Git!tag}
-The course maintains a public reference repository at
-\url{https://github.com/schutera/pixelwise} with a tag at the end of every
-block.
-\texttt{v0.4} marks the end of Block~5; \texttt{v0.5} will mark the end of
-this block.
-If your repository has drifted, reset to \texttt{v0.4} before starting:
-
-\begin{verbatim}
-git fetch origin
-git reset --hard v0.4
-\end{verbatim}
 
 \newthought{Install PostgreSQL on \texttt{prod}.}
 With the theory above as the why, the how is two commands.

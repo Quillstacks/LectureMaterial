@@ -40,7 +40,6 @@ Your colleague clones the repository, runs the code, and immediately hits an
 \texttt{Error}.
 You installed a package with a specific version months ago and forgot.
 They did not.
-The code is correct; the environment is wrong.
 The remainder of the day is spent debugging an artefact of the install
 history rather than contributing real valeu to the program itself.
 At the end of this third block we want any fresh VM to go from empty
@@ -50,7 +49,7 @@ system packages on one side, Python packages on the other,
 version controlled in different files. 
 
 
-\vspace{2em}
+\vspace{1.5em}
 \begin{figure}
 \centering
 \begin{tikzpicture}[
@@ -130,6 +129,212 @@ By the end you will have
 % BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
 
+
+
+
+
+
+\newpage
+\section{Optional Exercise: Catch Up to \texttt{v0.1}}\index{exercises}\index{Git!tag}\index{recovery}
+
+\newthought{Catching up via the reference tag.}\index{Git!tag}\index{recovery}
+From this block onwards, the GitHub repository is the safety net.
+The course maintains a public reference repository at
+\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
+\texttt{v0.1} marks the end of Block~2; \texttt{v0.2} will mark the end of
+this block.
+If you joined late, missed Block~2, or your repository has drifted from a
+known good state, reset to the previous tag rather than redoing every prior
+exercise.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.1} is the end of Block~2,
+\texttt{v0.2} is the end of this block,
+\texttt{v0.3} the end of Block~4, and so on.
+Every tag is a complete, runnable state of PixelWise.
+Browse them at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{The model:} pull from \texttt{schutera/pixelwise}, push to your
+own \texttt{<you>/pixelwise}. The reference repository is read-only for
+you; the place you commit to is your personal copy on GitHub. The steps
+below assume nothing from Block~2 is in place, so the exercise is fully
+self-contained.
+
+\newthought{Create an empty \texttt{pixelwise} repository on GitHub} under
+your own account. Log in to GitHub, click New repository, name it
+\texttt{pixelwise}, and leave it empty, no README, no \texttt{.gitignore},
+no licence, since the push step below will populate it. Without this
+repository the \texttt{git remote set-url} URL points at a path GitHub
+cannot find, and the first push reports \texttt{does not appear to be a
+git repository}.
+
+\newthought{Restore \texttt{B1-complete} on \texttt{dev}} so you start from
+the same baseline as everyone else, with Ubuntu installed and the user
+account in place but nothing on top.
+
+\newthought{Install Git, configure your identity, and generate a separate
+SSH key for GitHub} on the fresh VM. \texttt{B1-complete} predates Block~2,
+so the new VM has no \texttt{git} binary and no Git config. It does already
+have \texttt{\textasciitilde/.ssh/id\_ed25519} and
+\texttt{\textasciitilde/.ssh/id\_ed25519.pub} from Block~1, the key pair
+you use to log in to \texttt{prod}. The \texttt{-f} flag below writes the
+new key to a distinct path, so the existing prod-login key files stay
+byte-for-byte intact on disk and your password-less SSH into \texttt{prod}
+keeps working:
+
+\begin{verbatim}
+sudo apt update && sudo apt install -y git
+git config --global user.name  "Your Name"
+git config --global user.email "your@email.com"
+ssh-keygen -t ed25519 -C "your@email.com" \
+    -f ~/.ssh/id_ed25519_github
+ls -l ~/.ssh/id_ed25519*
+cat ~/.ssh/id_ed25519_github.pub
+\end{verbatim}
+
+\marginnote{\newthought{Sanity check.}\index{SSH!key}
+\texttt{ls -l} should now list four files under
+\texttt{\textasciitilde/.ssh/}: the \texttt{id\_ed25519} pair from Block~1
+and the \texttt{id\_ed25519\_github} pair you just generated. If the
+Block~1 files are missing, you accepted the default path during
+\texttt{ssh-keygen} and overwrote the prod key. Restore
+\texttt{B1-complete} and rerun the step with the \texttt{-f} flag.}
+
+\marginnote{\newthought{Add the key to GitHub.}\index{SSH!key}
+Copy the entire \texttt{ssh-ed25519 \ldots} line printed by
+\texttt{cat \textasciitilde/.ssh/id\_ed25519\_github.pub}, go to Settings,
+then SSH and GPG keys, then New SSH key on GitHub, give it a title like
+\texttt{pixelwise-dev-vm}, and paste.}
+
+\newthought{Tell SSH which key to use for github.com.}\index{SSH!config}
+With two keys in \texttt{\textasciitilde/.ssh/}, SSH may offer the
+prod-login key first and GitHub authenticates you as the wrong account, or
+fails outright. Worse, if \texttt{ssh-agent} has already cached the
+prod-login key, it gets offered before any \texttt{IdentityFile} on disk,
+and the symptom is a misleading
+\texttt{git@github.com:<you>/pixelwise.git does not appear to be a git
+repository}. Open (or create) \texttt{\textasciitilde/.ssh/config} in
+\texttt{nano} and add an entry that pins the GitHub key to github.com and
+bypasses the agent for that host:
+
+\begin{verbatim}
+nano ~/.ssh/config
+\end{verbatim}
+
+Paste the following block at the end of the file, save with \texttt{Ctrl+O},
+then exit with \texttt{Ctrl+X}:
+
+\begin{verbatim}
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_github
+    IdentitiesOnly yes
+    IdentityAgent none
+\end{verbatim}
+
+\newthought{Lock down the file permissions.}\index{SSH!config}
+SSH refuses to read \texttt{config} if it is world- or group-readable, so
+tighten it to the owner only:
+
+\begin{verbatim}
+chmod 600 ~/.ssh/config
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{IdentityAgent none}?}\index{ssh-agent}
+\texttt{IdentitiesOnly yes} alone tells \texttt{ssh} to ignore extra agent
+keys, but in practice some agent setups still offer them first.
+\texttt{IdentityAgent none} is the belt-and-braces fix: for connections to
+github.com, skip the agent entirely and read the key from the file you
+named, period. Other hosts, including \texttt{prod}, are unaffected and
+still use the agent normally, so password-less SSH into \texttt{prod} keeps
+working.}
+
+\marginnote{\newthought{Already polluted the agent?}\index{ssh-agent}
+If you ran \texttt{ssh-add} earlier in the session and \texttt{ssh-add -l}
+now lists more than one key, drop them all from the agent and reload only
+the GitHub key:
+\\[0.5em]
+\texttt{ssh-add -D}\\
+\texttt{ssh-add \textasciitilde/.ssh/id\_ed25519\_github}
+\\[0.5em]
+\texttt{ssh-add -D} only forgets the keys held in agent memory; the files
+in \texttt{\textasciitilde/.ssh/} are not touched. Re-add the prod key
+later with \texttt{ssh-add \textasciitilde/.ssh/id\_ed25519} when you next
+log in to \texttt{prod} if you prefer not to retype the passphrase.}
+
+\newthought{Run the verification handshake.}\index{SSH!known\_hosts}
+The first SSH connection to
+GitHub asks you to confirm GitHub's host fingerprint and writes it into
+\texttt{\textasciitilde/.ssh/known\_hosts}:
+
+\begin{verbatim}
+ssh -T git@github.com
+\end{verbatim}
+
+Type \texttt{yes} when prompted to trust the fingerprint. GitHub then
+answers \texttt{Hi <you>! You've successfully authenticated, but GitHub
+does not provide shell access.} The shell-access line sounds like an
+error but is the intended response: GitHub allows Git operations over
+SSH, not interactive shells.
+
+\newthought{Catch-up procedure on \texttt{dev}.}
+With the empty repository in place and the key registered, clone the
+reference repository, rewind \texttt{main} to the \texttt{v0.1} tag, point
+\texttt{origin} at your own empty repository, and push:
+
+\begin{verbatim}
+cd ~
+git clone https://github.com/schutera/pixelwise.git
+cd pixelwise
+git reset --hard v0.1
+git remote set-url origin \
+    git@github.com:<you>/pixelwise.git
+git push -u origin main
+git push --tags
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
+The clone lands you on the reference repository's current \texttt{main},
+which is ahead of \texttt{v0.1}. \texttt{git reset -{}-hard v0.1} moves
+your local \texttt{main} back to the tagged commit, discarding the later
+ones, so the working tree matches the end-of-Block~2 state exactly. There
+is no work to lose because you have not committed anything yet.}
+
+\newthought{Mirror it on \texttt{prod}.}
+By the end of Block~2, PixelWise also lived on the production VM at
+\texttt{/opt/pixelwise}. Restore \texttt{B1-complete} on \texttt{prod} as
+well, install \texttt{git}, then clone the reference repository to its
+permanent home and rewind \texttt{main} to \texttt{v0.1}:
+
+\begin{verbatim}
+sudo apt update && sudo apt install -y git
+sudo mkdir -p /opt/pixelwise
+sudo chown produser:produser /opt/pixelwise
+git clone https://github.com/schutera/pixelwise.git \
+    /opt/pixelwise
+cd /opt/pixelwise
+git reset --hard v0.1
+\end{verbatim}
+
+\marginnote{\newthought{No SSH key on \texttt{prod}.}\index{SSH!key}\index{Git!HTTPS clone}
+\texttt{prod} only ever pulls; it never pushes, so an HTTPS clone of a
+public repository is enough and no SSH key needs to be registered with
+GitHub. Skip the \texttt{ssh-keygen} ceremony you just did on \texttt{dev}.
+If your repository is private, or you later need to push from \texttt{prod},
+generate a separate key on \texttt{prod} and add it to GitHub the same way.}
+
+\marginnote{\newthought{Already have a fork?}\index{Git!fork}
+If your own fork already carries the \texttt{v0.1} tag, swap the URL for
+\texttt{git@github.com:<you>/pixelwise.git} on \texttt{dev} and the HTTPS
+equivalent on \texttt{prod}, so push and pull continue to target your account
+rather than the reference repo.}
+
+You are now at the state where Block~2 ended, with both VMs aligned, ready
+to start Block~3.
+
+
 \newpage
 \section{The Setup Script}\index{setup-server.sh}\index{provisioning}
 
@@ -196,55 +401,21 @@ environment.
 The commands you typed once are written down where the next person can find them.
 
 
-
-
 \newpage
 \section{Exercise: The Setup Script}\index{exercises}
 
-\marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
-Work through them yourself first, break things, discuss; this is not a time trial.
-Each theory section is followed by its exercise, so you can read a concept and
-practise it immediately. At the end of the session, take a snapshot named
-\texttt{B3-complete}, your safety net for the next block.}
-
-\newthought{Catching up via the reference tag.}\index{Git!tag}\index{recovery}
-From this block onwards, the GitHub repository is the safety net.
-The course maintains a public reference repository at
-\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
-\texttt{v0.1} marks the end of Block~2; \texttt{v0.2} will mark the end of
-this block.
-If you joined late, missed Block~2, or your repository has drifted from a
-known good state, reset to the previous tag rather than redoing every prior
-exercise.
-
-\marginnote{\newthought{Tag map.}\index{Git!tag}
-\texttt{v0.1} is the end of Block~2,
-\texttt{v0.2} is the end of this block,
-\texttt{v0.3} the end of Block~4, and so on.
-Every tag is a complete, runnable state of PixelWise.
-Browse them at
-\url{https://github.com/schutera/pixelwise/tags}.}
-
-\newthought{Catch-up procedure.}
-Restore the \texttt{B1-complete} VM image from Block~1, complete the Block~2
-Git identity and SSH key setup so the VM has your credentials, then clone
-the reference repository at the \texttt{v0.1} tag:
-
-\begin{verbatim}
-cd ~
-git clone --branch v0.1 \
-    https://github.com/schutera/pixelwise.git
-cd pixelwise
-git switch -c main
-git remote set-url origin \
-    git@github.com:<you>/pixelwise.git
-\end{verbatim}
-
-You are now at the state where Block~2 ended, ready to start Block~3.
-
 \newthought{With the setup script motivated above,} put it on the \texttt{dev} VM.
-Inside the PixelWise repository, create a shell script that captures the system
-packages installed manually in Block~2:
+At the root of the PixelWise repository, that is \texttt{\textasciitilde/pixelwise/}
+where you ran \texttt{git init} in Block~2, create a file called
+\texttt{setup-server.sh} that captures the system packages installed manually
+in Block~2:
+
+\marginnote{\newthought{Why at the repo root?}\index{repository layout}
+Provisioning is a project-wide concern, not the responsibility of any single
+subdirectory, so \texttt{setup-server.sh} sits next to \texttt{README.md} and
+\texttt{.gitignore} where anyone cloning the repository will spot it
+immediately. Open the file with \texttt{nano \textasciitilde/pixelwise/setup-server.sh}
+or your editor of choice and paste the contents below.}
 
 \begin{verbatim}
 #!/bin/bash
@@ -255,7 +426,7 @@ sudo apt install -y git python3 python3-pip \
     python3-venv curl
 \end{verbatim}
 
-\marginnote{\newthought{Try it on a fresh VM.}\index{provisioning}
+\marginnote{\newthought{(Optional) Try it on a fresh VM.}\index{provisioning}
 The real test of the script is on a machine that has not seen the commands
 yet.
 A second \texttt{prod} VM, restored from the \texttt{B1-complete} image,
@@ -381,13 +552,11 @@ The next exercise fills it with intent.
 \newthought{Add the environment to \texttt{.gitignore}.}
 The \texttt{.venv/} directory must never be committed.
 Open the \texttt{.gitignore} from Block~2 and confirm \texttt{.venv/} is
-listed; if not, add it now:
+listed; if not, add it now. You will notice that currently we 
+ignore \texttt{*.py} python files, but in future you do not want to ignore those, so remove that line:
 
 \begin{verbatim}
 .venv/
-*.pkl
-data/
-.env
 \end{verbatim}
 
 \marginnote{\newthought{Read the diff.}\index{Git!diff}
@@ -397,8 +566,11 @@ Reading the diff before committing is the habit that catches accidental
 changes early; running it once now is muscle memory you will reuse every
 day for the rest of the course.}
 
-Run \texttt{git status} before and after to see how much noise the new
-entries silence.
+Run \texttt{git status}. The only change shown should be the
+\texttt{.gitignore} edit itself, even though \texttt{.venv/} sits right
+next to it on disk with hundreds of files inside. That silence is
+\texttt{.gitignore} doing its job: the absence of \texttt{.venv/} in the
+output is the demonstration, not a missing piece.
 
 
 

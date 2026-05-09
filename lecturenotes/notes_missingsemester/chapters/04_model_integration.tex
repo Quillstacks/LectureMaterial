@@ -178,29 +178,81 @@ trust.
 
 % ==============================================================================================
 \newpage
+\section{Optional Exercise: Catch Up to \texttt{v0.2}}\index{exercises}\index{Git!tag}\index{recovery}
+
+\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
+This block builds on the state at the end of Block~3: A provisioned VM
+with the virtual environment, pinned dependencies, the \texttt{app/}
+scaffold, and \texttt{.env.example} in place.
+If you joined late, missed Block~3, or your repository has drifted,
+restore from the snapshot and reset to \texttt{v0.2} rather than redoing
+every prior exercise.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.2} marks the end of Block~3, \texttt{v0.3} will mark the end
+of this block.
+Browse the full set at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{Restore the snapshot.}
+On both VMs, restore the \texttt{B3-complete} snapshot from Block~3.
+The snapshot carries everything that is not in Git, the \texttt{.venv/},
+the system packages installed by \texttt{setup-server.sh}, and any real
+\texttt{.env} values you wrote.
+With the system layer back in place, only the repository state needs
+to be rewound.
+
+\newthought{Catch-up procedure on \texttt{dev}.}
+Reset PixelWise to the previous tag:
+
+\begin{verbatim}
+cd ~/pixelwise
+git fetch origin
+git reset --hard v0.2
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
+This rewrites your working tree to match the end of Block~3 exactly,
+including \texttt{setup-server.sh}, \texttt{requirements.txt}, and
+\texttt{.env.example}.
+There is no work to lose if you have not committed beyond \texttt{v0.2};
+if you have, branch off first with \texttt{git branch backup-pre-catchup}
+so the work is recoverable.}
+
+\newthought{Mirror it on \texttt{prod}.}
+
+\begin{verbatim}
+ssh produser@192.168.56.11
+cd /opt/pixelwise
+git fetch origin
+git reset --hard v0.2
+\end{verbatim}
+
+\marginnote{\newthought{Already have a fork?}\index{Git!fork}
+If your own fork carries the \texttt{v0.2} tag, swap \texttt{origin} to
+your fork URL on \texttt{dev} with
+\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
+so push and pull continue to target your account.
+The HTTPS clone on \texttt{prod} stays read-only.}
+
+\newthought{Without a snapshot,} replay Block~3 before continuing.
+The file state alone is not enough when the next exercise expects an
+active virtual environment and the system Python packages from
+\texttt{setup-server.sh}.
+You are now at the state where Block~3 ended, with both machines
+aligned, ready to start Block~4.
+
+
+
+% ==============================================================================================
+\newpage
 \section{Exercise: Pull the Model into Dev}\index{exercises}
 
 
 
 
 
-\marginnote{\newthought{Catching up via the reference tag.}\index{Git!tag}
-The course maintains a public reference repository at
-\url{https://github.com/schutera/pixelwise} with a tag at the end of every
-block.
-\texttt{v0.2} marks the end of Block~3; \texttt{v0.3} will mark the end of
-this block.
-If you joined late or your repository has drifted, reset to the previous
-tag before starting:\\[2pt]
-\begingroup\ttfamily\footnotesize\noindent
-git fetch origin\\
-git reset -{}-hard v0.2
-\endgroup\\[2pt]
-This rewrites your working tree to match the end of Block~3 exactly,
-including \texttt{setup-server.sh}, \texttt{requirements.txt}, and
-\texttt{.env.example}.}
-
-\marginnote{\newthought{The course artefact.}\index{LogisticRegression} at 
+\marginnote{\newthought{The course artefact.}\index{LogisticRegression} at
 \url{https://github.com/schutera/pixelwise-model}
 \texttt{digit\_classifier\_v1.pkl} is a LogisticRegression pipeline trained
 on MNIST digits 1 to 9 (9 classes, ${\sim}54{,}000$ training samples, public

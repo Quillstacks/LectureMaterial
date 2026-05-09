@@ -71,6 +71,92 @@ who later build larger applications will recognise when a framework becomes nece
 
 % ==============================================================================================
 \newpage
+\section{Optional Exercise: Catch Up to \texttt{v0.5}}\index{exercises}\index{Git!tag}\index{recovery}
+
+\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
+This block builds on the state at the end of Block~6: PostgreSQL running
+on \texttt{prod}, the \texttt{pixelwise} database and application user
+created, SQLAlchemy models in \texttt{app/models.py}, Alembic migrations
+applied, \texttt{DATABASE\_URL} set in \texttt{.env}, and the FastAPI
+handler writing prediction rows to the database.
+If you joined late, missed Block~6, or your repository has drifted,
+restore from the snapshot and reset to \texttt{v0.5} rather than redoing
+every prior exercise.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.5} marks the end of Block~6, \texttt{v0.6} will mark the end
+of this block.
+Browse the full set at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{Restore the snapshot.}
+On both VMs, restore the \texttt{B6-complete} snapshot from Block~6.
+The snapshot carries everything that is not in Git, the \texttt{.venv/},
+the model artefact, the systemd service, the PostgreSQL installation
+with the populated \texttt{pixelwise} database, and any real
+\texttt{.env} values you wrote.
+With the system layer back in place, only the repository state needs
+to be rewound.
+
+\newthought{Catch-up procedure on \texttt{dev}.}
+Reset PixelWise to the previous tag:
+
+\begin{verbatim}
+cd ~/pixelwise
+git fetch origin
+git reset --hard v0.5
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
+This rewrites your working tree to match the end of Block~6 exactly,
+including \texttt{app/models.py}, the \texttt{alembic/} directory, and
+\texttt{alembic.ini}.
+There is no work to lose if you have not committed beyond \texttt{v0.5};
+if you have, branch off first with \texttt{git branch backup-pre-catchup}
+so the work is recoverable.}
+
+\newthought{Mirror it on \texttt{prod}.}
+
+\begin{verbatim}
+ssh produser@192.168.56.11
+cd /opt/pixelwise
+git fetch origin
+git reset --hard v0.5
+sudo systemctl restart pixelwise
+\end{verbatim}
+
+\marginnote{\newthought{Already have a fork?}\index{Git!fork}
+If your own fork carries the \texttt{v0.5} tag, swap \texttt{origin} to
+your fork URL on \texttt{dev} with
+\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
+so push and pull continue to target your account.
+The HTTPS clone on \texttt{prod} stays read-only.}
+
+\newthought{Verify persistence.}
+On \texttt{prod}, post a digit through the API and confirm the row
+appears in PostgreSQL:
+
+\begin{verbatim}
+curl -X POST http://192.168.56.11:8000/classify \
+    -H "Content-Type: application/json" \
+    -H "X-API-Key: $SECRET_API_KEY" \
+    -d '{"pixels": [[0,0,...]]}'
+psql -U pixelwise -d pixelwise -h localhost \
+    -c "SELECT count(*) FROM predictions;"
+\end{verbatim}
+
+A nonzero row count means the persistence layer is alive against the
+rewound code.
+You are now at the state where Block~6 ended, with both machines
+aligned, ready to start Block~7.
+
+\newthought{Without a snapshot,} replay Block~6 before continuing.
+The file state alone is not enough when the next exercises expect a
+running PostgreSQL instance with the \texttt{pixelwise} database and
+the migrations applied.
+
+% ==============================================================================================
+\newpage
 \section{Exercise: Deploy the Frontend}\index{exercises}
 
 \marginnote{\newthought{Exercises} are for practice and reinforcement. If your VM is broken, restore the

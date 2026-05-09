@@ -78,6 +78,91 @@ Run arbitrary commands, only with explicit approval. Access \texttt{.env} or SSH
 
 % ==============================================================================================
 \newpage
+\section{Optional Exercise: Catch Up to \texttt{v0.8}}\index{exercises}\index{Git!tag}\index{recovery}
+
+\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
+This block builds on the state at the end of Block~9: Structured JSON
+logging in \texttt{app/main.py} emitting timestamps, levels, request
+identifiers, latencies, predicted class, confidence, and model version on
+every request, an upgraded \texttt{/health} endpoint that distinguishes
+liveness from readiness with database and model checks, Discord webhook
+alerts wired to error-level logs, and analytics queries against the
+PostgreSQL \texttt{predictions} table.
+If you joined late, missed Block~9, or your repository has drifted,
+restore from the snapshot and reset to \texttt{v0.8} rather than redoing
+every prior exercise.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.8} marks the end of Block~9.
+This is the final block, no further tag is produced.
+Browse the full set at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{Restore the snapshot.}
+On both VMs, restore the \texttt{B9-complete} snapshot from Block~9.
+The snapshot carries everything that is not in Git, the \texttt{.venv/},
+the model artefact, the systemd service, the PostgreSQL database with
+the prediction history, the Nginx configuration, the TLS certificate,
+the cron table on \texttt{prod}, and any real \texttt{.env} values you
+wrote, including the Discord webhook URL.
+With the system layer back in place, only the repository state needs
+to be rewound.
+
+\newthought{Catch-up procedure on \texttt{dev}.}
+Reset PixelWise to the previous tag:
+
+\begin{verbatim}
+cd ~/pixelwise
+git fetch origin
+git reset --hard v0.8
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
+This rewrites your working tree to match the end of Block~9 exactly,
+including the JSON logging configuration, the upgraded health endpoint,
+and the Discord webhook glue.
+There is no work to lose if you have not committed beyond \texttt{v0.8};
+if you have, branch off first with \texttt{git branch backup-pre-catchup}
+so the work is recoverable.}
+
+\newthought{Mirror it on \texttt{prod}.}
+
+\begin{verbatim}
+ssh produser@192.168.56.11
+cd /opt/pixelwise
+git fetch origin
+git reset --hard v0.8
+sudo systemctl restart pixelwise
+\end{verbatim}
+
+\marginnote{\newthought{Already have a fork?}\index{Git!fork}
+If your own fork carries the \texttt{v0.8} tag, swap \texttt{origin} to
+your fork URL on \texttt{dev} with
+\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
+so push and pull continue to target your account.
+The HTTPS clone on \texttt{prod} stays read-only.}
+
+\newthought{Verify the observability layer.}
+On \texttt{prod}, post a digit, then read one structured log line and
+the readiness probe:
+
+\begin{verbatim}
+journalctl -u pixelwise -n 1 -o cat | jq .
+curl -k https://192.168.56.11/api/health
+\end{verbatim}
+
+The first call should print a JSON dictionary with the expected keys;
+the second should report both liveness and readiness as healthy.
+You are now at the state where Block~9 ended, with both machines
+aligned, ready to start Block~10.
+
+\newthought{Without a snapshot,} replay Block~9 before continuing.
+The file state alone is not enough when the next exercises expect a
+service that is already emitting structured logs and the Discord webhook
+already configured in \texttt{.env}.
+
+% ==============================================================================================
+\newpage
 \section{Exercise: Set up Aider}\index{exercises}
 
 \marginnote{\newthought{Exercises} are for practice and reinforcing concepts.

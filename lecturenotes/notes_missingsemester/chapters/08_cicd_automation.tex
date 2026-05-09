@@ -125,6 +125,90 @@ The goal is to see the feedback loop: push code $\to$ tests run $\to$ green or r
 
 % ==============================================================================================
 \newpage
+\section{Optional Exercise: Catch Up to \texttt{v0.6}}\index{exercises}\index{Git!tag}\index{recovery}
+
+\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
+This block builds on the state at the end of Block~7: Nginx installed
+on \texttt{prod} as a reverse proxy in front of the FastAPI service, the
+static frontend served from \texttt{/opt/pixelwise/frontend/}, a
+self-signed TLS certificate in place, the site reachable at
+\texttt{https://192.168.56.11}, and security headers set on every
+response.
+If you joined late, missed Block~7, or your repository has drifted,
+restore from the snapshot and reset to \texttt{v0.6} rather than redoing
+every prior exercise.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.6} marks the end of Block~7, \texttt{v0.7} will mark the end
+of this block.
+Browse the full set at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{Restore the snapshot.}
+On both VMs, restore the \texttt{B7-complete} snapshot from Block~7.
+The snapshot carries everything that is not in Git, the \texttt{.venv/},
+the model artefact, the systemd service, the PostgreSQL installation,
+the Nginx configuration, the TLS certificate, and any real \texttt{.env}
+values you wrote.
+With the system layer back in place, only the repository state needs
+to be rewound.
+
+\newthought{Catch-up procedure on \texttt{dev}.}
+Reset PixelWise to the previous tag:
+
+\begin{verbatim}
+cd ~/pixelwise
+git fetch origin
+git reset --hard v0.6
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
+This rewrites your working tree to match the end of Block~7 exactly,
+including \texttt{frontend/}, the Nginx configuration committed to the
+repository, and the updated CORS middleware in \texttt{app/main.py}.
+There is no work to lose if you have not committed beyond \texttt{v0.6};
+if you have, branch off first with \texttt{git branch backup-pre-catchup}
+so the work is recoverable.}
+
+\newthought{Mirror it on \texttt{prod}.}
+
+\begin{verbatim}
+ssh produser@192.168.56.11
+cd /opt/pixelwise
+git fetch origin
+git reset --hard v0.6
+sudo systemctl reload nginx
+sudo systemctl restart pixelwise
+\end{verbatim}
+
+\marginnote{\newthought{Already have a fork?}\index{Git!fork}
+If your own fork carries the \texttt{v0.6} tag, swap \texttt{origin} to
+your fork URL on \texttt{dev} with
+\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
+so push and pull continue to target your account.
+The HTTPS clone on \texttt{prod} stays read-only.}
+
+\newthought{Verify the public surface.}
+From \texttt{dev} or your host browser, hit the HTTPS endpoint and
+confirm the frontend renders and the API responds:
+
+\begin{verbatim}
+curl -kI https://192.168.56.11
+curl -k https://192.168.56.11/api/health
+\end{verbatim}
+
+The first call should return \texttt{200 OK} with the security headers
+visible; the second should return the health JSON.
+You are now at the state where Block~7 ended, with both machines
+aligned, ready to start Block~8.
+
+\newthought{Without a snapshot,} replay Block~7 before continuing.
+The file state alone is not enough when the next exercises expect Nginx
+running with a TLS certificate and the frontend already deployed.
+
+
+% ==============================================================================================
+\newpage
 \section{Exercise: CI Workflow}\index{exercises}
 
 \marginnote{\newthought{Exercises} are for practice and reinforcing concepts.

@@ -573,6 +573,10 @@ Reconnect with \texttt{ssh produser@192.168.56.11} and notice the password promp
 cat ~/.ssh/authorized_keys
 \end{verbatim}
 
+\marginnote{\newthought{Nuke the machine.} From \texttt{prod}, run \texttt{sudo rm -rf /} to delete all files on the machine. Restore from the snapshot.}
+\marginnote{\newthought{Run prod without GUI.} In future run prod headless without GUI from the VirtualBox Manager.
+You can still log in with SSH and run commands, but there is no desktop to interact with. This is how a real production server works.}
+
 
 
 \newthought{Disable password authentication.}
@@ -586,10 +590,6 @@ sudo systemctl status ssh
 The \texttt{status} output should show \texttt{active (running)}. If it does not, keep your current session open and fix the configuration before logging out; a locked-out VM is rescued by restoring the snapshot, not by wishful thinking. From a machine without the key, the daemon now rejects the attempt without even asking for a password.
 
 \newthought{Take a snapshot} of both VMs once everything works, naming them \texttt{B1}; this is your known good state for the rest of the course. Then deliberately break something inside a VM, watch the fallout, and restore the snapshot. You now have physical evidence that the safety net holds.
-\marginnote{\newthought{Nuke the machine.} From \texttt{prod}, run \texttt{sudo rm -rf /} to delete all files on the machine. Restore from the snapshot.}
-\marginnote{\newthought{Run prod without GUI.} In future run prod headless without GUI from the VirtualBox Manager.
-You can still log in with SSH and run commands, but there is no desktop to interact with. This is how a real production server works.}
-
 
 
 
@@ -605,7 +605,7 @@ into a script that any future VM can run end to end, without you remembering any
 % ==============================================================================================
 % BLOCK 3: CONSOLIDATION
 % ==============================================================================================
-
+\newpage
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}
 
 \newthought{Self-Reflection} Questions which can guide your thoughts during and after the exercises:

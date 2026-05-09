@@ -92,6 +92,43 @@ By the end you will have
 
 
 
+% -----------------------------------------------------------------------------
+\newpage
+\section{Optional Exercise: Catch Up to Block~1's End State}\index{exercises}\index{recovery}
+
+This block builds on the state at the end of Block~1: Two virtual machines, dev and prod, with key-based SSH from dev to prod and password authentication disabled. If you joined late or your VMs are in an unknown state, restore the snapshots rather than redoing every prior exercise.
+
+\marginnote{\newthought{Snapshot map.}\index{snapshot}
+\texttt{B1-complete} is the snapshot taken at the end of Block~1 on both VMs.
+From Block~2 onwards, repository state is also versioned with Git tags, the first being
+\texttt{v0.1} at the end of this block.}
+
+\newthought{Restore the snapshot.}
+Open VirtualBox Manager, select the \texttt{dev} VM, and restore the \texttt{B1-complete} snapshot.
+Then select the \texttt{prod} VM and restore its \texttt{B1-complete} snapshot as well.
+Both machines now sit at the exact state in which Block~1 ended.
+
+\newthought{Verify the network and SSH.}
+From a terminal on \texttt{dev}, confirm that \texttt{prod} is reachable and that the
+key-based login still works:
+
+\begin{verbatim}
+ping -c 3 192.168.56.11
+ssh produser@192.168.56.11
+\end{verbatim}
+
+The ping should succeed and the SSH login should complete without a password prompt. If either fails, replay Block~1's networking and SSH exercises before continuing.
+
+\marginnote{\newthought{Without a snapshot.}\index{recovery}
+If you never took \texttt{B1-complete}, replay the Block~1 exercises end to end:
+Provisioning the two VMs, configuring host-only networking with static IPs, generating
+an Ed25519 key on \texttt{dev}, copying it to \texttt{prod} with \texttt{ssh-copy-id},
+and disabling password authentication on \texttt{prod}'s \texttt{sshd}.}
+
+You are now at the state where Block~1 ended, with both VMs aligned, ready to start Block~2.
+
+
+
 % ==============================================================================================
 % BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
@@ -227,13 +264,7 @@ disk so a stolen key file is not immediately usable.
 
 
 
-\marginnote{\newthought{What just happened?}\index{SSH!public key}\index{SSH!private key}
-\texttt{ssh-keygen} created two files in \texttt{\textasciitilde/.ssh/}.
-\texttt{id\_ed25519} is the private key: never share it, never commit it, never copy it
-to another machine without good reason.
-\texttt{id\_ed25519.pub} is the public key, safe to share, this is the file you paste into GitHub.
-The \texttt{-t ed25519} flag picks a modern signature algorithm; the \texttt{-C} comment
-labels the key so you can recognise it later when you have several.}
+
 
 \newthought{Add the public key to GitHub.} Print it to the terminal and select the entire output,
 beginning with \texttt{ssh-ed25519} and ending with the comment:
@@ -245,6 +276,15 @@ cat ~/.ssh/id_ed25519.pub
 In GitHub, navigate to Settings, then SSH and GPG keys, then New SSH key. Give it a
 recognisable title like \texttt{pixelwise-dev-vm} so you know which machine it belongs to,
 paste the public key into the Key field, and save.
+
+\marginnote{\newthought{What did just happened?}\index{SSH!public key}\index{SSH!private key}
+\texttt{ssh-keygen} created two files in \texttt{\textasciitilde/.ssh/}.
+\texttt{id\_ed25519} is the private key: never share it, never commit it, never copy it
+to another machine without good reason.
+\texttt{id\_ed25519.pub} is the public key, safe to share, this is the file you paste into GitHub.
+The \texttt{-t ed25519} flag picks a modern signature algorithm; the \texttt{-C} comment
+labels the key so you can recognise it later when you have several.}
+
 
 \newthought{Test the connection:}
 
@@ -318,12 +358,12 @@ If you struggle to write a short commit message, you probably changed too many t
 If you go hours without committing, you are accumulating risk.
 Small, frequent commits make history useful; large, rare commits make it a wall of text.}
 
-\marginnote{\texttt{(\textbackslash\quad/)}\\
+\marginnote{\\
+\texttt{(\textbackslash\quad/)}\\
 \texttt{(O.o)}\\
 \texttt{(>\quad<)} Bunny approves these changes.}
 
 % -----------------------------------------------------------------------------
-\newpage
 \subsection{The \texttt{.gitignore} File}\index{.gitignore}
 
 \newthought{Not everything belongs in version control.} The \texttt{.gitignore} file tells Git which files
@@ -356,7 +396,7 @@ A leaked production database password or API key can be exploited within minutes
 delete the file in a later commit. The old commit still contains it. \texttt{.gitignore} is your first line of defence.}
 
 % -----------------------------------------------------------------------------
-\vspace{2em}
+\newpage
 \section{Exercise: Staging, Committing, and .gitignore}\index{exercises}
 
 \newthought{Write a \texttt{.gitignore}.} Create a \texttt{.gitignore} file that excludes
@@ -379,6 +419,7 @@ to confirm what just happened. It takes two seconds and prevents surprises.}
 
 
 % -----------------------------------------------------------------------------
+\newpage
 \section{Branching and Merging}\index{Git!branching}\index{Git!merging}
 
 \newthought{Branches let you work on ideas in isolation.} The \texttt{main} branch is the stable baseline.
@@ -504,6 +545,7 @@ Verify with \texttt{git log -{}-oneline -{}-graph} that both branches are now in
 
 
 % -----------------------------------------------------------------------------
+\newpage
 \section{Tags}\index{Git!tags}
 
 \newthought{A tag marks a point in history that matters:} a release, a milestone, a known-good state.
@@ -533,6 +575,7 @@ A jump to \texttt{v2.0.0} warns them to check for incompatibilities.
 \marginnote{Semantic Versioning: \url{https://semver.org}}
 
 % -----------------------------------------------------------------------------
+\vspace{3.5em}
 \section{Exercise: Tags and History Browsing}\index{exercises}
 
 \newthought{Tag the release.} Mark this point in history:
@@ -564,6 +607,7 @@ to explore commits, branches, and tags with a graphical interface.}
 
 
 % -----------------------------------------------------------------------------
+\newpage
 \section{Remotes and GitHub}\index{Git!remotes}\index{GitHub}
 
 
@@ -636,6 +680,7 @@ We will wire up this automation in a later block; for now, recognise that the PR
 is where human review and machine verification meet.}
 
 % -----------------------------------------------------------------------------
+\newpage
 \section{Exercise: Remotes, Push, and Clone}\index{exercises}
 
 \newthought{Connect to GitHub.} Create a repository on GitHub, add it as a remote, push the

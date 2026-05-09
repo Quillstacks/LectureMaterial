@@ -77,6 +77,99 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_data)
 \end{verbatim}
 
+% ==============================================================================================
+\newpage
+\section{Optional Exercise: Catch Up to \texttt{v0.7}}\index{exercises}\index{Git!tag}\index{recovery}
+
+\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
+This block builds on the state at the end of Block~8: GitHub Actions
+workflows under \texttt{.github/workflows/} that lint and test on every
+push and deploy to \texttt{prod} on every merge to \texttt{main},
+GitHub repository secrets configured for the deploy SSH key, a deploy
+script in \texttt{scripts/deploy.sh}, cron jobs installed on \texttt{prod}
+for nightly backups and weekly \texttt{pip-audit} runs, and feature flags
+read from environment variables in \texttt{app/main.py}.
+If you joined late, missed Block~8, or your repository has drifted,
+restore from the snapshot and reset to \texttt{v0.7} rather than redoing
+every prior exercise.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.7} marks the end of Block~8, \texttt{v0.8} will mark the end
+of this block.
+Browse the full set at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{Restore the snapshot.}
+On both VMs, restore the \texttt{B8-complete} snapshot from Block~8.
+The snapshot carries everything that is not in Git, the \texttt{.venv/},
+the model artefact, the systemd service, the PostgreSQL database, the
+Nginx configuration, the TLS certificate, the cron table on \texttt{prod},
+and any real \texttt{.env} values you wrote.
+GitHub-side state, the repository secrets and the workflow runs, lives
+on GitHub itself and is not part of the VM snapshot.
+With the system layer back in place, only the repository state needs
+to be rewound.
+
+\newthought{Catch-up procedure on \texttt{dev}.}
+Reset PixelWise to the previous tag:
+
+\begin{verbatim}
+cd ~/pixelwise
+git fetch origin
+git reset --hard v0.7
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
+This rewrites your working tree to match the end of Block~8 exactly,
+including \texttt{.github/workflows/}, \texttt{scripts/deploy.sh}, the
+backup scripts, and the feature-flag wiring in \texttt{app/main.py}.
+There is no work to lose if you have not committed beyond \texttt{v0.7};
+if you have, branch off first with \texttt{git branch backup-pre-catchup}
+so the work is recoverable.}
+
+\newthought{Mirror it on \texttt{prod}.}
+
+\begin{verbatim}
+ssh produser@192.168.56.11
+cd /opt/pixelwise
+git fetch origin
+git reset --hard v0.7
+sudo systemctl reload nginx
+sudo systemctl restart pixelwise
+\end{verbatim}
+
+\marginnote{\newthought{Already have a fork?}\index{Git!fork}
+If your own fork carries the \texttt{v0.7} tag, swap \texttt{origin} to
+your fork URL on \texttt{dev} with
+\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
+so push and pull continue to target your account.
+The HTTPS clone on \texttt{prod} stays read-only.
+Re-create the GitHub repository secrets on the fork as well, since they
+do not transfer.}
+
+\newthought{Verify the automation.}
+Trigger a no-op commit and watch the CI workflow run on GitHub:
+
+\begin{verbatim}
+git commit --allow-empty -m "Verify CI catch-up"
+git push
+\end{verbatim}
+
+The Actions tab should show a green run for the lint and test workflow.
+On \texttt{prod}, confirm the cron jobs are still installed:
+
+\begin{verbatim}
+crontab -l
+\end{verbatim}
+
+You are now at the state where Block~8 ended, with both machines and
+GitHub aligned, ready to start Block~9.
+
+\newthought{Without a snapshot,} replay Block~8 before continuing.
+The file state alone is not enough when the next exercises expect
+working CI/CD, scheduled cron jobs on \texttt{prod}, and feature flags
+that the runtime can already read.
+
 \newpage
 \section{Exercise: Add Structured JSON Logging}\index{exercises}
 
