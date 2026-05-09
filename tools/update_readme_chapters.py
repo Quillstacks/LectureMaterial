@@ -30,6 +30,8 @@ LECTURE_TITLES = {
     "notes_unsupervisedlearning": "Unsupervised Deep Learning",
     "notes_numerischemethoden": "Numerical Methods",
     "notes_missingsemester": "Full Stack Handwerkszeug",
+    "notes_papersovertime": "Papers Over Time",
+    "notes_everythingeverywhereallatonce": "Everything Everywhere All at Once",
 }
 
 

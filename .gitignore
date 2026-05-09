@@ -1,6 +1,14 @@
 # Claude Code
 .claude/
-notesskill.md
+
+# Markdown notes (Claude memory, design docs, drafts)
+# README.md is the GitHub Pages source and stays tracked.
+*.md
+!README.md
+
+# Per-chapter draft wrappers from tools/draft.sh
+lecturenotes/*/draft.tex
+lecturenotes/*/draft.pdf
 
 # LaTeX build artifacts
 *.aux

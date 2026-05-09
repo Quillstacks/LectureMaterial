@@ -9,7 +9,7 @@
 \index{model integration}\index{classifier}\index{MNIST}\index{inference}\index{joblib}
 \chapter{Integrate the Model}
 \printchapterversion{04_model_integration}
-\newthought{Your ML course teaches you to train models. This block teaches you to ship one.}
+\newthought{Train hard, ship easy.}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -19,112 +19,74 @@
 
 Block~3 left us with a reproducible environment on both machines.
 The virtual environment is ready, the dependencies are pinned,
-the project structure is in place.
-What is missing is the part of the system that does any actual work:
-PixelWise still cannot classify anything, because the \texttt{app/} folder
-is empty.
+the project foundation is in place. A foundation that would work for all sorts of different projects by the way.
+Let's get our project some specific functionality.
 
-\marginnote{\newthought{PixelWise} now has a scaffold, pinned dependencies,
-a provisioned server, and a \texttt{.env.example} that documents its
-configuration contract.
-But the \texttt{app/} directory is empty.
-Before we can build an API or a frontend, we need the core capability:
-a trained model that can classify a handwritten digit.}
 
-\newthought{Across ten lecture blocks we build PixelWise}\index{PixelWise}.
-This block is the first that produces application logic.
-Everything before it was foundation: a place to put code, a way to track it,
-a reproducible environment to run it in.
-Everything after it depends on the inference interface produced here.
+\newthought{We build PixelWise}\index{PixelWise}.
+This block is the first that produces application logic in the form of a neural network,
+in the following referred to as model. 
+We assume the model is already trained and available, 
+and our task is to integrate it into the codebase and make it callable.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\footnotesize, align=center},
+        box/.style={rectangle, draw=black, thick, rounded corners=2pt, minimum width=1.9cm, minimum height=0.9cm, inner sep=4pt},
+        arr/.style={-latex, thick, black!70}
+    ]
+    \node[box] (img)   at (0, 0)    {input\\\texttt{(28,28)} uint8};
+    \node[box] (bin)   at (2.2, 0)  {binarize\\\texttt{>128}};
+    \node[box] (flat)  at (4.4, 0)  {flatten\\\texttt{(1,784)}};
+    \node[box] (model) at (6.6, 0)  {model\\\texttt{.pkl}};
+    \node[box] (pred)  at (8.8, 0)  {predict\\\texttt{\_proba}};
+    \node[box] (out)   at (11.0, 0) {result\\\texttt{dict}};
+    \draw[arr] (img.east)   -- (bin.west);
+    \draw[arr] (bin.east)   -- (flat.west);
+    \draw[arr] (flat.east)  -- (model.west);
+    \draw[arr] (model.east) -- (pred.west);
+    \draw[arr] (pred.east)  -- (out.west);
+    \end{tikzpicture}
+    \caption{\rule{0pt}{1.4cm}\\
+    The inference pipeline for one image: a raw \texttt{(28,28)} grayscale array is binarised at threshold 128, flattened into a \texttt{(1,784)} row vector, fed to the loaded \texttt{.pkl} model, and turned into a result dictionary by \texttt{predict\_proba}.}
+    \label{fig:inference_pipeline}
+    \end{figure}
 
 \newthought{The gap between a trained model and a working system}
 is larger than most students expect.
 A \texttt{.pkl}\index{.pkl} file sitting in a folder is not a product.
 It needs to be loaded safely, called with the exact input format it was
 trained on, and wrapped in an interface the rest of the application can
-depend on.
-Any of these can be wrong without producing an error: the model returns a
-prediction, the prediction is plausible, the prediction is wrong.
-
-\marginnote{\newthought{Silent failure}\index{silent failure} is the signature
-bug of machine-learning systems.
-Code that crashes is recoverable; you read the trace and fix the line.
-Code that returns a wrong answer with the same confidence as a right one
-goes unnoticed until somebody notices the impact downstream.
-Most of the engineering in this block exists to turn silent failures into
-loud ones at the earliest possible moment.}
-
-\newthought{This block bridges that gap.}
-We take a pre-trained digit classifier, integrate it into the PixelWise
-codebase, and verify end to end that it works before any API or frontend
-code exists.
-The pipeline you build here, model file in, prediction dictionary out,
-is the contract every later block consumes without modification.
-
-\begin{figure}
-\centering
-\begin{tikzpicture}[
-    every node/.style={font=\footnotesize, align=center},
-    box/.style={rectangle, draw=black, thick, rounded corners=2pt, minimum width=1.9cm, minimum height=0.9cm, inner sep=4pt},
-    arr/.style={-latex, thick, black!70}
-]
-\node[box] (img)  at (0, 0)    {input\\\texttt{(28,28)} uint8};
-\node[box] (bin)  at (2.4, 0)  {binarize\\\texttt{>128}};
-\node[box] (flat) at (4.8, 0)  {flatten\\\texttt{(1,784)}};
-\node[box] (mod)  at (7.4, 0)  {pipeline\\\texttt{predict\_proba}};
-\node[box] (out)  at (10.0, 0) {result\\\texttt{dict}};
-\draw[arr] (img.east)  -- (bin.west);
-\draw[arr] (bin.east)  -- (flat.west);
-\draw[arr] (flat.east) -- (mod.west);
-\draw[arr] (mod.east)  -- (out.west);
-\end{tikzpicture}
-\caption{The inference pipeline for one image. The same pipeline scales to a batch by stacking inputs into an $(N, 28, 28)$ array; \texttt{predict\_proba} is vectorised, so the cost per image stays nearly constant as $N$ grows.}
-\label{fig:inference_pipeline}
-\end{figure}
+depend on, suffice to say validated. The perfect mdoel however, is not useful if it 
+is not integrated into the system, so it can be exposed and put to work.
 
 \subsection{Hands On Experience}
 
-\newthought{Consider this scenario:} you download a model file from a
-colleague, drop it into your project, and write a quick script that calls
-\texttt{model.predict(image)}.
-It runs without errors.
-The predictions look reasonable.
-You ship it.
-Two weeks later a user reports that the app never predicts the digit 0.
-You check: the model was trained on digits 1 to 9 only.
-Nobody documented the omission.
-Nobody checked.
+\newthought{Consider this scenario:} a colleague hands you a trained model
+file and a one-line note, "ship it".
+This block teaches you how to, and why you should, ask the right questions 
+to your colleague.
 
-\marginnote{\newthought{A silent failure} is one the program never reports.
-Unlike a crash, it has no log line, no stack trace, no obvious moment of
-failure.
-The only way to find it is to compare the output against an expected value,
-and the only way to do that systematically is to write the expectation down
-somewhere the program can check.}
-
-\newthought{The model contract} is the agreement between the training script
-that produced the file and the inference code that loads it.
-The contract has three parts: which classes the model predicts,
-what shape and dtype the inputs must take, and what preprocessing has
-already been baked in.
-Honouring the contract is the difference between a service that classifies
-digits and a service that returns plausible nonsense.
-
-\marginnote{\newthought{The inference interface} you build today is consumed,
-unchanged, by Block~5's API, Block~6's database writer, Block~7's frontend,
-Block~8's CI pipeline, and Block~9's analytics.
-Five later blocks read from the function you write this afternoon.
-Designing it well is leverage.}
+\marginnote{\newthought{Verification and validation}\index{verification}\index{validation}
+are two different questions.
+Verification asks whether the system was built right: does the integration
+return what the model is trained to produce, with the expected shape, dtype,
+and class set?
+Validation asks whether the right system was built: is this model the right
+choice for the problem in the first place and is the performance sufficient?
+This block is squarely about verification.
+Validation belongs to pre-integration.}
 
 \newthought{This fourth block} integrates a trained model into PixelWise
 and builds the inference layer.
 By the end you will have
 \begin{itemize}
     \item understood what a model file is and why it is not source code,
-    \item loaded the model safely and verified its class contract at startup,
+    \item loaded the model safely, learned about and verified its class contract at startup,
     \item implemented a batch-first inference interface in \texttt{app/classifier.py},
-    \item written a smoke test that proves end-to-end correctness on real samples,
-    \item and documented the model's capabilities and limitations in a model card.
+    \item written a smoke test that proves the integration honours the contract,
+    \item and read the canonical model card alongside your introspection output to verify the contract.
 \end{itemize}
 
 
@@ -137,38 +99,62 @@ By the end you will have
 \section{What a Model File Actually Is}\index{pickle}\index{joblib}\index{.pkl}
 
 \newthought{A \texttt{.pkl} file is a build artefact,} not source code.
-You distribute it; you do not commit it.
+You distribute it; you do not commit it to your repo.
 Just as a compiled binary is produced by a compiler, a model file is produced
 by a training script.
-The training script is the source of truth: it takes data, runs an algorithm,
+The training script and its configuration is the source of truth: It takes data, runs an algorithm,
 and writes weights, hyperparameters, and any preprocessing into a single
 serialised object.
 
-\marginnote{\newthought{The course provides}
-\texttt{models/digit\_classifier\_v1.pkl}\index{LogisticRegression},
-a LogisticRegression pipeline trained on MNIST digits 1 to 9
-(9 classes, ${\sim}54{,}000$ training samples, public domain).
-Class 0 is intentionally held back; students can add it later without
-collecting any new data.}
+\marginnote{\newthought{Training from scratch every time is unrealistic.}
+Even our small classifier takes seconds; a production scale model takes
+days of GPU time and terabytes of data.
+The training team tunes, the inference team integrates, and the artefact
+is the contract between them.}
 
-\newthought{Inspect the artefact} in a Python shell to see what is inside:
+\newthought{Versioning makes that contract durable.}\index{model versioning}
+Files carry a version in the filename or in metadata shipped alongside.
+A retrain on more data bumps the patch version; an architecture change or
+a different class set bumps the major version.
+Integration code pins to a specific version and updates deliberately,
+the same discipline you would apply to any external API.
+Open source tooling that automates this includes
+\href{https://dvc.org}{DVC} for git-style data and model tracking,
+\href{https://mlflow.org}{MLflow} and
+\href{https://clear.ml}{ClearML} as self-hostable experiment registries,
+\href{https://aimstack.io}{Aim} as a lighter-weight tracker,
+and the Hugging Face Hub itself, which is free for public repositories
+and versions every push as a git revision.
 
-\begin{verbatim}
-import joblib
-model = joblib.load("models/digit_classifier_v1.pkl")
-print(type(model))
-# <class 'sklearn.pipeline.Pipeline'>
-print(model.classes_)
-# ['1' '2' '3' '4' '5' '6' '7' '8' '9']
-\end{verbatim}
+\marginnote{\newthought{Pulling a model from the Hub.}\\[2pt]
+\begingroup\ttfamily\footnotesize\noindent
+from huggingface\_hub import hf\_hub\_download\\
+path = hf\_hub\_download(\\
+\hspace*{1em}repo\_id="distilbert-base-uncased",\\
+\hspace*{1em}filename="model.safetensors",\\
+\hspace*{1em}revision="v1.0",\\
+)
+\endgroup}
 
-The object that comes back is a full sklearn Pipeline\index{sklearn!Pipeline},
-not just a weights tensor.
-It carries the preprocessing, the classifier, and the class labels in one
-package, so loading the file is enough to start predicting.
+\newthought{Hugging Face is the GitHub of models.}\index{Hugging Face}
+The Hugging Face Hub at \url{https://huggingface.co} hosts hundreds of
+thousands of public model repositories, each with versioned weights,
+a model card describing it.
+Downloading a specific revision is a one-line call against the
+\texttt{huggingface\_hub} library.
+The same workflow runs against private repositories with a token, which
+is how many companies share proprietary models internally.
+For this course the artefact lives in the course-maintained model repository
+at \url{https://github.com/schutera/pixelwise-model}, with a tagged release
+per model version and the model card sitting next to it.
+
 
 \marginnote{\newthought{The training script}\index{train.py}
-\texttt{train.py} is provided as supplementary material.
+\texttt{train.py} lives in the course \texttt{pixelwise-model} repo
+alongside the artefact it produces, not in PixelWise.
+The artefact and the script that produced it travel together, so any
+consumer of a tagged release can audit how that exact \texttt{.pkl} came
+to be.
 Students who want to understand how the artefact was produced can run it:
 MNIST downloads automatically via \texttt{sklearn.datasets.fetch\_openml},
 and training takes ${\sim}30$ seconds on CPU.
@@ -187,99 +173,126 @@ when the file came from somewhere you do not control.
 Treat \texttt{.pkl} files the way you treat executables: only run what you
 trust.
 
-\marginnote{\newthought{Safer formats exist.}\index{ONNX}
-ONNX stores only weights and graph structure, no executable code.
-SafeTensors does the same for PyTorch tensors.
-For this course \texttt{joblib} is sufficient because we control the
-training pipeline end to end; for any model received from outside,
-prefer the safer formats.\\
-ONNX: \url{https://onnx.ai/}\\
-SafeTensors: \url{https://huggingface.co/docs/safetensors}}
 
 
 
 % ==============================================================================================
 \newpage
-\section{Exercise: Inspecting the Model Artefact}\index{exercises}
+\section{Exercise: Pull the Model into Dev}\index{exercises}
 
-\marginnote{\newthought{Exercises} sit directly under the concept they
-practise: read a section, then carry it out.
-If your repository has drifted from the end of Block~3, the catch-up below
-brings it back to the known good state.}
 
-\newthought{Catching up via the reference tag.}\index{Git!tag}
+
+
+
+\marginnote{\newthought{Catching up via the reference tag.}\index{Git!tag}
 The course maintains a public reference repository at
-\url{https://github.com/schutera/pixelwise} with a tag at the end of every block.
+\url{https://github.com/schutera/pixelwise} with a tag at the end of every
+block.
 \texttt{v0.2} marks the end of Block~3; \texttt{v0.3} will mark the end of
 this block.
 If you joined late or your repository has drifted, reset to the previous
-tag before starting:
+tag before starting:\\[2pt]
+\begingroup\ttfamily\footnotesize\noindent
+git fetch origin\\
+git reset -{}-hard v0.2
+\endgroup\\[2pt]
+This rewrites your working tree to match the end of Block~3 exactly,
+including \texttt{setup-server.sh}, \texttt{requirements.txt}, and
+\texttt{.env.example}.}
 
-\begin{verbatim}
-git fetch origin
-git reset --hard v0.2
-\end{verbatim}
-
-This rewrites your working tree to match the end of Block~3 exactly.
-The state on disk is now identical to the published reference, including
-\texttt{setup-server.sh}, \texttt{requirements.txt}, and \texttt{.env.example}.
+\marginnote{\newthought{The course artefact.}\index{LogisticRegression} at 
+\url{https://github.com/schutera/pixelwise-model}
+\texttt{digit\_classifier\_v1.pkl} is a LogisticRegression pipeline trained
+on MNIST digits 1 to 9 (9 classes, ${\sim}54{,}000$ training samples, public
+domain).
+Class 0 is intentionally held back; students can add it later as a v2
+release without collecting any new data.}
 
 \newthought{Treat the model artefact as something you load,} not something
-you commit.
-Copy \texttt{digit\_classifier\_v1.pkl} (provided) into \texttt{models/}.
-Confirm that \texttt{.gitignore} excludes \texttt{*.pkl} so the artefact
-stays out of version control:
+you commit to PixelWise.
+The course hosts \texttt{digit\_classifier\_v1.pkl} as a tagged release in
+the central \texttt{pixelwise-model} repo; you pull it into \texttt{models/}
+of the main project, you do not redistribute it.
+
+\marginnote{\newthought{Why pull from a separate repo?}\index{model versioning}
+The model has its own release cadence and its own contract.
+Pinning a specific tag in PixelWise's \texttt{.env} makes the integration
+explicit: a v2 only takes effect when the integration code chooses to.
+The optional exercise at the end of the block walks through publishing
+your own v2 to a fork of the model repo.}
+
+\newthought{Pin the model version} in PixelWise.
+Add to \texttt{.env.example} so others know which release the integration
+expects:
 
 \begin{verbatim}
+MODEL_REPO=schutera/pixelwise-model
+MODEL_VERSION=v1.0
+\end{verbatim}
+
+Then download the tagged artefact into \texttt{models/} using the GitHub
+CLI; the same call works locally and inside CI:
+
+\begin{verbatim}
+mkdir -p models/
+gh release download "$MODEL_VERSION" \
+    --repo "$MODEL_REPO" \
+    --dir models/
 ls models/
 git status
 \end{verbatim}
 
-\marginnote{\newthought{If the file appears in \texttt{git status},}
-your \texttt{.gitignore} from Block~3 needs an update.
+\marginnote{\newthought{If \texttt{digit\_classifier\_v1.pkl} appears in
+\texttt{git status},} your \texttt{.gitignore} from Block~3 needs an update.
 Add \texttt{models/*.pkl} on its own line and rerun \texttt{git status}.
 A model file accidentally committed once is in the history forever, even
 if the next commit deletes it.}
 
-\newthought{Inspect the artefact} in a Python shell:
+\newthought{Confirm the artefact loads} in a Python shell on dev:
 
 \begin{verbatim}
 source .venv/bin/activate
 python3
 >>> import joblib
 >>> model = joblib.load("models/digit_classifier_v1.pkl")
->>> print(type(model))
->>> print(model.classes_)
+>>> type(model)
 \end{verbatim}
 
-What type is it?
-What classes does it predict?
-Does class 0 appear?
-The answer to the third question determines what \texttt{CLASSES} should
-contain in the next exercise.
+If \texttt{joblib.load} returns a \texttt{Pipeline} object without raising,
+the artefact is sitting at \texttt{models/digit\_classifier\_v1.pkl} on
+your dev VM, ready to be scrutinised next.
 
 
 
 % ==============================================================================================
 \newpage
-\section{Honouring the Model Contract}\index{train/serve skew}\index{model contract}
+\section{The Model Contract and Its Card}\index{train/serve skew}\index{model contract}\index{model card}\index{MODELCARD.md}
 
 \newthought{Every model was trained on inputs in a specific format.}
 The format is part of the contract: a 28-by-28 greyscale image, pixel
 values in $[0, 1]$, flattened to 784 features.
-Violate the format and the model predicts silently wrong: no error, no
-warning, just a different number than the right one.
-This bug class is called train/serve skew\index{train/serve skew}
-and it is the most common production ML defect.
+Most violations of this contract are loud: a wrong shape raises
+\texttt{ValueError} on the first call, a wrong dtype trips an assertion
+in the pipeline, a missing class never appears in the predictions at all.
+The integration layer's job is to catch these before the model reaches production.
 
-\marginnote{\newthought{Why silent?}
-The model takes a vector of floats and returns a class index.
-At no point does it know whether the floats came from the training
-distribution or from some unrelated source.
-A photograph, a random scribble, or a correctly drawn digit with the wrong
-dynamic range all produce the same kind of output: a class label and a
-confidence score.
-The label might be wrong, but the system has no way to tell.}
+\newthought{Silent failures}\index{train/serve skew} live in
+the gap between syntactic and semantic correctness.
+Same dtype, same dimensions, but pixel range $[0, 255]$ instead of
+$[0, 1]$, or raw greyscale instead of binarised.
+The model returns a class label and a confidence score with no way to
+tell that the input did not come from the training distribution.
+This is the train/serve skew bug class, and the only fix is an explicit
+preprocessing step that mirrors training.
+
+\begin{marginfigure}
+    \raggedleft
+    \includegraphics[width=0.55\marginparwidth]{./figures/mnist_eight.png}
+    \caption{An MNIST sample: a handwritten digit on a $28 \times 28$
+    greyscale grid, the input shape every consumer of
+    \texttt{digit\_classifier\_v1} must respect.}
+    \label{fig:mnist_eight}
+\end{marginfigure}
 
 \newthought{The MNIST model expects:}
 \begin{itemize}
@@ -288,81 +301,145 @@ The label might be wrong, but the system has no way to tell.}
     \item flattened to a 784-element vector.
 \end{itemize}
 
-\newthought{The canvas in the browser produces uint8 values}
-in the range $[0, 255]$.
-Converting to binary (0 or 1) reduces payload size, removes anti-aliasing
-noise, and matches the training-time preprocessing exactly:
-
-\begin{verbatim}
-import numpy as np
-raw = np.array(...)                  # (28, 28) uint8
-binary = (raw > 128).astype(float)   # 0s and 1s
-flat = binary.reshape(1, -1)         # (1, 784)
-\end{verbatim}
-
-\marginnote{\newthought{Binarization}\index{binarization} is aggressive but
-effective for MNIST.
-Anti-aliased grey edges become sharp black and white.
-The model was trained on binarized inputs, so serving raw greyscale would
-introduce train/serve skew immediately, with no exception to mark the
-moment it happened.}
 
 \newthought{The sklearn Pipeline} bundles preprocessing and model into one
-serialised object.
-Loading the pipeline is loading the preprocessing.
-There is no separate normalisation step that a future maintainer might
-forget; the same object that predicts also normalises, in the order the
+serialised object that is itself the contents of \texttt{digit\_classifier\_v1.pkl}.
+\texttt{joblib.load} returns the whole Pipeline, preprocessing steps
+included, so loading the file is loading the preprocessing, so we reduce steps a maintainer might
+forget; adhering the contract the
 training script established.
 
-\marginnote{scikit-learn\index{scikit-learn}: \url{https://scikit-learn.org/}\\
-joblib\index{joblib}: \url{https://joblib.readthedocs.io/}\\
-NumPy\index{NumPy}: \url{https://numpy.org/}}
+\marginnote{Documentation:
+\href{https://scikit-learn.org/}{scikit-learn}\index{scikit-learn},
+\href{https://joblib.readthedocs.io/}{joblib}\index{joblib},
+\href{https://numpy.org/}{NumPy}\index{NumPy}.}
+
+\newthought{The model card is where you write the contract down.}
+A model card answers four questions any consumer of the model should know
+the answer to before they trust it: where did the data come from, what
+can the model do, what does it fail at, and what is it intended for.
+The contract that runtime code enforces and the card that humans read
+are two views of the same thing.
+
+\marginnote{Model cards as a concept were proposed by Mitchell et al.\
+in 2018 and are now standard at Google, HuggingFace, and increasingly
+across the industry.\\
+\href{https://modelcards.withgoogle.com/}{Model Cards (Google)},
+\href{https://huggingface.co/docs/hub/model-cards}{HuggingFace Model Cards}.}
+
+\newthought{For PixelWise} the v1 model card lives in the central
+\texttt{pixelwise-model} repository alongside the \texttt{.pkl} it
+documents.
+The card travels with each tagged release, so anyone who pulls
+\texttt{v1.0} also gets the card describing what \texttt{v1.0} can and
+cannot do:
+
+\begin{verbatim}
+# MODELCARD.md: digit_classifier_v1
+
+## Training Data
+MNIST digits 1-9, ~54k train / ~9k test, public domain.
+Class 0 withheld intentionally.
+
+## Capabilities
+Predict handwritten digits 1-9.
+Expected accuracy: ~92% (LogisticRegression baseline).
+
+## Known Failures
+6/9 confusion, 3/8 confusion, messy or rotated digits.
+
+## Intended Use
+28x28 canvas drawings.
+Out of scope: photos, non-digit characters.
+\end{verbatim}
+
+\marginnote{\newthought{The card is a contract,} like any other.
+When v2 is published, the card is updated alongside it; the version
+number, the training data section, and the capabilities all change in
+lockstep.
+Traceability across versions is the entire reason the card is a separate
+file.}
+
+\newthought{The card does not replace the runtime checks} built into the
+loader.
+Documentation tells humans what to expect; the assertion at module load
+tells the program what to expect.
+Both are needed.
+Documentation drifts; assertions cannot.
 
 
 
 % ==============================================================================================
 \newpage
-\section{Exercise: Preprocessing and Binarization}\index{exercises}
+\section{Exercise: Scrutinize the Pipeline against the Card}\index{exercises}
 
-\newthought{Practise the preprocessing step} that matches the training
-contract.
-Load a sample MNIST digit and compare the raw and binarized representations
-side by side:
+\newthought{Verify what the pipeline does} rather than rebuild it.
+The preprocessing for the model is part of the artefact, not something
+you re-derive on the caller side; your job here is to confirm what is
+inside the \texttt{.pkl} matches what the canonical model card promises.
+
+\newthought{Get an MNIST sample onto your dev machine.}\index{MNIST}
+The dataset is available through scikit-learn and downloads on first
+access:
 
 \begin{verbatim}
 from sklearn.datasets import fetch_openml
-import numpy as np
-
-X, y = fetch_openml("mnist_784", version=1,
-    return_X_y=True, as_frame=False)
-sample = X[0].reshape(28, 28).astype(np.uint8)
-binary = (sample > 128).astype(float)
-print(sample[:5, :5])    # raw values
-print(binary[:5, :5])    # 0s and 1s
+X, y = fetch_openml(
+    "mnist_784", version=1,
+    return_X_y=True, as_frame=False,
+)
+sample = X[0].reshape(28, 28).astype("uint8")
+label = y[0]
 \end{verbatim}
 
-\marginnote{\newthought{Notice the structure survives.}\index{binarization}
-The raw image has anti-aliased grey edges; the binarized image is sharp
-black and white.
-The digit is still recognisable, the noise is gone, and the input now
-matches what the model saw during training.
-Serving raw greyscale would mean predicting against a distribution the
-model has never seen.}
+You now have one ground-truth example to scrutinise the pipeline against.
 
-\newthought{Plot if you have a notebook open.}
-A side-by-side image of the raw and binarized digit makes the effect
-visible at a glance.
-\texttt{matplotlib} is not in \texttt{requirements.txt} yet; install it
-locally with \texttt{pip install matplotlib} for this exercise only,
-then leave it out of the pinned requirements until a later block needs it.
+\newthought{Open the pipeline and look at its parts.}
+The Pipeline object exposes its named steps as a dictionary, and the
+classifier exposes the classes it knows:
 
-\marginnote{\newthought{Why threshold at 128?}\index{threshold}
-128 is the midpoint of the uint8 range, the simplest split between
-``ink'' and ``paper''.
-Otsu's method picks a smarter threshold per image, and for noisier
-inputs that is sometimes worth doing.
-For MNIST the simple split is enough and matches the training pipeline
-exactly.}
+\begin{verbatim}
+import joblib
+model = joblib.load("models/digit_classifier_v1.pkl")
+for name, step in model.named_steps.items():
+    print(name, type(step).__name__, step)
+print("classes:", model.classes_)
+print("n_features expected:", model.n_features_in_)
+\end{verbatim}
+
+\marginnote{\newthought{The point is verification.}\index{verification}
+You are not reproducing the model's preprocessing; you are confirming
+the artefact behaves the way the model card claims.
+A pipeline that contains an unexpected step, or is missing one you
+expected, is a contract violation you want to catch here, not later.}
+
+\newthought{Open the canonical model card} at
+\href{https://github.com/schutera/pixelwise-model/blob/v1.0/MODELCARD.md}{schutera/pixelwise-model}
+and put it side by side with your introspection output.
+Answer each of these against both sources:
+\begin{itemize}
+    \item Which preprocessing steps are inside the pipeline, and which
+    are the caller's responsibility?
+    Does the boundary match what the card claims is in scope?
+    \item Does \texttt{model.classes\_} match the class roster the card
+    promises?
+    \item Does \texttt{n\_features\_in\_} match the input shape the card
+    advertises?
+    \item Does the accuracy you can reproduce on a handful of MNIST
+    samples land near the figure the card cites?
+\end{itemize}
+
+\marginnote{\newthought{Reading is the exercise.}\index{model card}
+Authoring a card for a model that already ships with one is busywork.
+Authoring a card for a model you publish yourself is load-bearing
+documentation, and that is where the writing exercise lives, in the
+optional v2 exercise at the end of this block.}
+
+A mismatch between what the pipeline contains and what the canonical
+card promises is exactly the kind of contract violation the integration
+layer exists to catch.
+The next exercise turns this manual check into a smoke test that runs
+on every commit.
 
 
 
@@ -538,105 +615,26 @@ for r, t in zip(results, truth):
 \marginnote{\newthought{Read \texttt{predict.py} as the API preview.}\index{predict.py}
 This is what the API in Block~5 will do: take pixel data, call
 \texttt{classify\_batch}, return the result.
-Block~5 swaps stdin for HTTP and stdout for JSON; the inference logic
-is unchanged.}
+Block~5 swaps stdin for HTTP and stdout for JSON, and moves the service
+to \texttt{prod}; the inference logic itself is unchanged.}
 
-
-
-% ==============================================================================================
-\newpage
-\section{The Model Card}\index{model card}\index{MODELCARD.md}
-
-\newthought{A model card} is the documentation artefact that links a model
-to its provenance and limitations.
-It answers four questions any consumer of the model should know the answer
-to before they trust it: where did the data come from, what can the model
-do, what does it fail at, and what is it intended for.
-
-\marginnote{Model cards as a concept were proposed by Mitchell et al.\
-in 2018 and are now standard at Google, HuggingFace, and increasingly
-across the industry.\\
-Model Cards (Google):\\
-\url{https://modelcards.withgoogle.com/}\\
-HuggingFace Model Cards: \\
-\url{https://huggingface.co/docs/hub/model-cards}}
-
-\newthought{For PixelWise} the model card lives next to the artefact
-in \texttt{models/MODELCARD.md} and is committed to Git, so it travels
-with the repository even though the \texttt{.pkl} itself does not:
+\newthought{Run the smoke test on dev} and commit:
 
 \begin{verbatim}
-# MODELCARD.md: digit_classifier_v1
-
-## Training Data
-MNIST digits 1-9, ~54k train / ~9k test, public domain.
-Class 0 withheld intentionally.
-
-## Capabilities
-Predict handwritten digits 1-9.
-Expected accuracy: ~92% (LogisticRegression baseline).
-
-## Known Failures
-6/9 confusion, 3/8 confusion, messy or rotated digits.
-
-## Intended Use
-28x28 canvas drawings.
-Out of scope: photos, non-digit characters.
-\end{verbatim}
-
-\marginnote{\newthought{The card is a contract,} like any other.
-When v2 is deployed via the Block~8 feature flag, the card is updated
-alongside it; the version number, the training data section, and the
-capabilities all change in lockstep.
-Traceability across versions is the entire reason the card is a separate
-file.}
-
-\newthought{What the card is not} is a substitute for the runtime checks
-already built into the loader.
-Documentation tells humans what to expect; the assertion at module load
-tells the program what to expect.
-Both are needed.
-Documentation drifts; assertions cannot.
-
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: The Model Card}\index{exercises}
-
-\newthought{Write the documentation artefact} that travels with the project
-even though the \texttt{.pkl} does not.
-Write \texttt{models/MODELCARD.md} following the structure from the theory
-section: dataset, input format, performance per class, known failures,
-version, and date.
-
-\marginnote{\newthought{Use the values you measured.}\index{model card}
-Replace ``${\sim}92\%$'' with whatever \texttt{predict.py} reports as you
-expand it across the test set.
-The numbers you cite should match the numbers your code produces; a model
-card with optimistic round figures is the start of the documentation drift
-the previous section taught us to avoid.}
-
-\newthought{Commit the new files,} but not the \texttt{.pkl}:
-
-\begin{verbatim}
-git add app/classifier.py predict.py \
-    models/MODELCARD.md .env.example
-git commit -m "Add classifier module and model card"
+python predict.py
+git add app/classifier.py predict.py .env.example
+git commit -m "Add classifier module pinned to model v1.0"
 git push
 \end{verbatim}
 
 The repository is now at the state \texttt{v0.3} marks: a working classifier,
-a smoke test, a model card, and an updated configuration contract.
+a dev-side smoke test, and an updated configuration contract pinned to the
+model release.
 The \texttt{.pkl} stays on each developer's machine, the artefact path is
 in \texttt{.env}, and the rest of the team can reproduce the environment
 from the code in Git.
-
-\marginnote{\newthought{Verify the smoke test on \texttt{prod}.}\index{provisioning}
-SSH into the server, pull, copy the \texttt{.pkl} into
-\texttt{/opt/pixelwise/models/}, set \texttt{MODEL\_PATH} in the production
-\texttt{.env}, and run \texttt{python predict.py}.
-Identical output on both machines is the deliverable of this block.}
+Block~5 takes this dev-verified module and exposes it as an HTTP service
+on \texttt{prod}.
 
 
 
@@ -645,47 +643,70 @@ Identical output on both machines is the deliverable of this block.}
 \section{Optional: Add the Missing 0}\index{model versioning}
 
 \newthought{The digit class ``0'' was intentionally excluded from v1.}
-To produce v2: add \texttt{"0"} to \texttt{CLASSES}, include MNIST's class-0
-samples in the training split, re-run \texttt{train.py}, save as
-\texttt{digit\_classifier\_v2.pkl}.
+With v1 integrated and dev-verified, you can publish your own v2.
+Fork the course model repository so you have a place to push:
+
+\begin{verbatim}
+gh repo fork schutera/pixelwise-model --clone --remote
+cd pixelwise-model
+\end{verbatim}
+
+\marginnote{\newthought{Why fork instead of branching upstream?}\index{Git!fork}
+Forking is the standard pattern for publishing a derivative of someone
+else's repository.
+You get write access to your fork, the upstream stays canonical, and a
+pull request is the natural way to upstream improvements later.}
+
+The fork already contains \texttt{train.py}, \texttt{digit\_classifier\_v1.pkl},
+and the v1 \texttt{MODELCARD.md} from upstream.
+Add \texttt{"0"} to the class list, include MNIST's class-0 samples in
+the training split, re-run \texttt{python train.py}, and save the new
+artefact as \texttt{digit\_classifier\_v2.pkl}.
+
+\newthought{Now write a v2 model card.} This is the first time card
+authoring is load-bearing in the course: a consumer who pulls v2 will
+read this file to learn what changed.
+Rewrite \texttt{MODELCARD.md} so it documents v2 specifically:
+
+\begin{itemize}
+    \item training data section now reflects the full ten-class MNIST
+    split,
+    \item capabilities list all ten digits and the new accuracy you
+    measured,
+    \item known failures section reflects what your retrained model
+    actually struggles with (rotated digits, 4/9 confusion, whatever
+    the confusion matrix says),
+    \item intended use is the same as v1 unless you changed it.
+\end{itemize}
+
+Commit artefact, script changes, and card together, and cut a fresh tag:
+
+\begin{verbatim}
+git add digit_classifier_v2.pkl train.py MODELCARD.md
+git commit -m "v2: adds class 0"
+git tag -a v2.0 -m "Adds class 0"
+git push --follow-tags
+\end{verbatim}
+
+On the PixelWise side, bump \texttt{MODEL\_REPO=<you>/pixelwise-model}
+and \texttt{MODEL\_VERSION=v2.0} in \texttt{.env} and re-run
+\texttt{gh release download}.
 The assertion will break the moment v2 is loaded against v1's
 \texttt{CLASSES}; fix it by updating the constant.
-Update \texttt{MODELCARD.md} to document that v2 covers all ten digits and
-note any accuracy change.
 
 \marginnote{This challenge connects directly to Block~8: v2 is deployed
 via the feature flag, and Block~9's analytics compare v1 and v2 performance.
 No data collection is needed; MNIST has the 0s already.}
 
-\newthought{Could we have spotted the missing class at runtime?}
-\begin{itemize}
-    \item After a few hundred predictions, a missing class is invisible:
-    the model never predicts it, users never see an error, the database
-    just never accumulates any 0s.
-    \item When the model sees an input it was not trained on, it is often
-    less certain.
-    A systematic drop in average confidence could indicate
-    out-of-distribution inputs: a weak signal, but a runtime signal that
-    requires no labelled data.
-    \item Returning \texttt{null} when \texttt{confidence < threshold} turns
-    low confidence into a monitoring signal: the volume of rejected
-    predictions is itself a metric.
-\end{itemize}
-
-\marginnote{\newthought{Systematic detection of silent failures}\index{MLOps}
-is the domain of MLOps: uncertainty estimation, distribution shift,
-missing classes, silent degradation.
-This surface is intentionally shallow here.
-A dedicated MLOps course covers it in depth.}
-
 \newthought{A note on what comes next.}
-\texttt{app/classifier.py} works, but it is trapped in a Python script.
+\texttt{app/classifier.py} works on dev, but it is trapped in a Python
+script.
 A user with a browser cannot call it; a teammate on a different machine
-cannot reach it.
+cannot reach it; \texttt{prod} has not yet seen this artefact.
 The next block wraps \texttt{classify\_batch} in an HTTP endpoint, defines
 the request and response contract with Pydantic, and runs the result as a
-managed \texttt{systemd} service so the model becomes reachable without a
-human in the loop.
+managed \texttt{systemd} service on \texttt{prod} so the model becomes
+reachable without a human in the loop.
 
 
 
@@ -701,7 +722,8 @@ human in the loop.
     \item What is train/serve skew, and why is it the most common production ML defect?
     \item Why do we load the model once at module level instead of on every request?
     \item What does the startup assertion protect against, and what would happen without it?
-    \item Why is the \texttt{.pkl} in \texttt{.gitignore} but \texttt{MODELCARD.md} is committed?
+    \item Why does PixelWise pin a tagged model release rather than vendoring the \texttt{.pkl} into the repo?
+    \item What does the canonical model card promise, and which of its claims did you verify by introspecting the pipeline?
     \item How would you detect at runtime that the model is missing a class it should predict?
     \item Why is batch-first design the right default, even when most requests carry a single image?
 \end{itemize}
@@ -712,7 +734,7 @@ human in the loop.
     \item Train/serve skew is silent by default; the startup assertion is the loudest defence.
     \item Batch-first design scales from one user to $N$ concurrent users with no code changes.
     \item Module-level loading keeps the model in memory for the lifetime of the process.
-    \item The model card documents capabilities, limitations, and provenance, and updates with the model.
+    \item The model card travels with the tagged release in \texttt{pixelwise-model}; integration code reads it as part of contract verification.
     \item \texttt{predict.py} proves end-to-end correctness before any API exists.
 \end{itemize}
 
@@ -730,6 +752,7 @@ but who, outside your terminal, can reach it?}
 inference interface that scales from one student to $N$ concurrent users
 with no code changes.
 \texttt{predict.py} proves it works end to end on real MNIST samples.
-\texttt{MODELCARD.md} documents what the model is and is not.
+The canonical \texttt{MODELCARD.md} in \texttt{pixelwise-model} documents
+what the model is and is not, and the integration verifies against it.
 The next chapter wraps the inference function in a FastAPI service so the
 model becomes reachable over HTTP.

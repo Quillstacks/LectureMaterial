@@ -1,0 +1,56 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Papers Over Time
+% Author: Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+%\makeindex % disabled to avoid requiring makeindex/.ind during quick builds
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+\title{Papers Over Time}
+\author[\defaultauthor]{\defaultauthor}
+\publisher[\defaultpublisher]{\defaultpublisher}
+\renewcommand{\notesdir}{notes_papersovertime}
+
+% Load optional fonts
+\loadoptionalfonts
+
+% Additional packages
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+\usepackage{pgfplots}
+\usepackage{float}
+\usepackage[maxfloats=256]{morefloats}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\extrafloats{100}
+
+\begin{document}
+
+\makestandardfrontmatter
+\tableofcontents
+
+\makeintroduction{%
+  \newthought{Papers over time} reads the field through its primary literature.
+  Each session lifts a single paper, situates it in its moment, and asks what
+  it changed and what it left unfinished. The aim is fluency in the genre and
+  taste in the questions.
+}
+
+\mainmatter
+\authorinrectoheader
+
+\input{chapters/01_zebrafish_phenotype.tex}
+
+\bibliographystyle{abbrvnat}
+\bibliography{papersovertime}
+
+\end{document}

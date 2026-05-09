@@ -1,0 +1,55 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Everything Everywhere All at Once
+% Author: Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+%\makeindex % disabled to avoid requiring makeindex/.ind during quick builds
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+\title{Everything Everywhere All at Once}
+\author[\defaultauthor]{\defaultauthor}
+\publisher[\defaultpublisher]{\defaultpublisher}
+\renewcommand{\notesdir}{notes_everythingeverywhereallatonce}
+
+% Load optional fonts
+\loadoptionalfonts
+
+% Additional packages
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+\usepackage{pgfplots}
+\usepackage{float}
+\usepackage[maxfloats=256]{morefloats}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\extrafloats{100}
+
+\begin{document}
+
+\makestandardfrontmatter
+\tableofcontents
+
+\makeintroduction{%
+  \newthought{Everything everywhere all at once} is the working title for
+  these notes. Replace this introduction with the actual framing once the
+  course outline settles.
+}
+
+\mainmatter
+\authorinrectoheader
+
+\input{chapters/01_spikeball.tex}
+
+\bibliographystyle{abbrvnat}
+\bibliography{everythingeverywhereallatonce}
+
+\end{document}

@@ -58,6 +58,7 @@ Reh
 Reiher
 Rotkehlchen
 Salamander
+Schnabeltier
 Schnecke
 Specht
 Steinbock

@@ -1222,7 +1222,7 @@ A VAE with $k{=}8$ reports the following per-dimension posterior statistics, ave
 How many dimensions are doing real work? Which ones can you remove without losing reconstruction quality? If you re-trained at $k{=}4$, would you expect the same number of active dimensions?
 
 \newthought{Answer.}
-Five active dimensions: 1, 3, 5, 7, 8, identifiable by $\mathcal{L}_{\text{KL}}^{(j)}$ well above zero. Dimensions 2, 4, 6 have $\mathcal{L}_{\text{KL}}^{(j)} \approx 0$ and have collapsed to the prior; dropping them costs nothing. Note that dim 8 looks borderline by variance alone ($\sigma_8^2 = 0.95$), but its mean spread $\overline{\mu_8^2} = 0.70$ keeps it carrying information, which is why the KL is the cleaner diagnostic. Re-training at $k{=}4$ should still yield about four to five active units, because the active count is set by the data's information content, not by $k$ once $k$ is past the elbow.
+Five active dimensions: 1, 3, 5, 7, 8, identifiable by $\mathcal{L}_{\text{KL}}^{(j)}$ well above zero. Dimensions 2, 4, 6 have $\mathcal{L}_{\text{KL}}^{(j)} \approx 0$ and have collapsed to the prior; dropping them costs nothing. Note that dim 8 looks borderline by variance alone ($\sigma_8^2 = 0.95$), but its mean spread $\overline{\mu_8^2} = 0.70$ keeps it carrying information, which is why the KL is the cleaner diagnostic. Re-training at $k{=}4$ should still yield about four active units, because the active count is set by the data's information content, not by $k$ once $k$ is past the elbow.
 
 
 \vspace{2.5em}
