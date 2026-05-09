@@ -37,19 +37,17 @@ and our task is to integrate it into the codebase and make it callable.
         arr/.style={-latex, thick, black!70}
     ]
     \node[box] (img)   at (0, 0)    {input\\\texttt{(28,28)} uint8};
-    \node[box] (bin)   at (2.2, 0)  {binarize\\\texttt{>128}};
-    \node[box] (flat)  at (4.4, 0)  {flatten\\\texttt{(1,784)}};
-    \node[box] (model) at (6.6, 0)  {model\\\texttt{.pkl}};
-    \node[box] (pred)  at (8.8, 0)  {predict\\\texttt{\_proba}};
-    \node[box] (out)   at (11.0, 0) {result\\\texttt{dict}};
-    \draw[arr] (img.east)   -- (bin.west);
-    \draw[arr] (bin.east)   -- (flat.west);
-    \draw[arr] (flat.east)  -- (model.west);
+    \node[box] (prep)  at (2.5, 0)  {binarise\\+ flatten};
+    \node[box] (model) at (5.0, 0)  {model\\\texttt{.pkl}};
+    \node[box] (pred)  at (7.5, 0)  {predict\\\texttt{\_proba}};
+    \node[box] (out)   at (10.0, 0) {result\\\texttt{dict}};
+    \draw[arr] (img.east)   -- (prep.west);
+    \draw[arr] (prep.east)  -- (model.west);
     \draw[arr] (model.east) -- (pred.west);
     \draw[arr] (pred.east)  -- (out.west);
     \end{tikzpicture}
     \caption{\rule{0pt}{1.4cm}\\
-    The inference pipeline for one image: a raw \texttt{(28,28)} grayscale array is binarised at threshold 128, flattened into a \texttt{(1,784)} row vector, fed to the loaded \texttt{.pkl} model, and turned into a result dictionary by \texttt{predict\_proba}.}
+    The inference pipeline for one image: the caller binarises a raw \texttt{(28,28)} \texttt{uint8} array at threshold 128 and flattens it into a \texttt{(1,784)} row vector before feeding it to the loaded \texttt{.pkl} model. The model's internal \texttt{Binarizer} is a redundant idempotent guard on already-binarised input, and \texttt{predict\_proba} turns the result into a dictionary of class scores.}
     \label{fig:inference_pipeline}
     \end{figure}
 
@@ -61,6 +59,7 @@ trained on, and wrapped in an interface the rest of the application can
 depend on, suffice to say validated. The perfect mdoel however, is not useful if it 
 is not integrated into the system, so it can be exposed and put to work.
 
+\newpage
 \subsection{Hands On Experience}
 
 \newthought{Consider this scenario:} a colleague hands you a trained model
@@ -94,6 +93,77 @@ By the end you will have
 % ==============================================================================================
 % BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
+
+
+
+
+% ==============================================================================================
+\newpage
+\section{Optional Exercise: Catch Up to \texttt{v0.2}}\index{exercises}\index{Git!tag}\index{recovery}
+
+\newthought{Catching up via tag.}\index{Git!tag}\index{recovery}
+This catch-up extends the one in Block~3. If you have not yet done the
+Block~3 catch-up, do that first: it sets up your GitHub repository, SSH
+key, Git identity, and remote URL, and lands you at \texttt{v0.1}, the
+end-of-Block~2 state. The exercise here picks up from there and rewinds
+to \texttt{v0.2}, the end-of-Block~3 state, so you arrive at the starting
+point this block expects: a provisioned VM with the virtual environment,
+pinned dependencies, and \texttt{.env.example}
+in place.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.2} marks the end of Block~3, \texttt{v0.3} will mark the end
+of this block.
+Browse the full set at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{Two layers to restore.} Block~3 produced both Git-tracked
+files (\texttt{setup-server.sh}, \texttt{requirements.txt},
+\texttt{.env.example}, plus an updated \texttt{.gitignore}) and
+unversioned state (system \texttt{apt} packages, the \texttt{.venv/}
+directory, real \texttt{.env} values). \texttt{git reset -{}-hard v0.2}
+restores the first; the second has to be reproduced by replaying Block~3's
+setup commands. Both VMs need both layers, so run the sequence below on
+each.
+
+\newthought{Run the same sequence on both VMs.}
+Rewind the repository to \texttt{v0.2}, reinstall system packages, recreate
+the virtual environment, reinstall pinned dependencies, and copy
+\texttt{.env.example} to \texttt{.env}. The dev sequence runs in
+\texttt{\textasciitilde/pixelwise}; the prod sequence is identical except
+the directory is \texttt{/opt/pixelwise} and you reach it via
+\texttt{ssh produser@192.168.56.11} first. The exact commands are in the
+margin.
+
+\marginnote{\newthought{Sequence on \texttt{dev}.}\\[0.4em]
+\texttt{cd \textasciitilde/pixelwise}\\
+\texttt{git fetch origin -{}-tags}\\
+\texttt{git reset -{}-hard v0.2}\\
+\texttt{bash setup-server.sh}\\
+\texttt{python3 -m venv .venv}\\
+\texttt{source .venv/bin/activate}\\
+\texttt{pip install -r requirements.txt}\\
+\texttt{cp .env.example .env}\\[0.3em]
+Then edit \texttt{.env} with real values.}
+
+\marginnote{\newthought{Sequence on \texttt{prod}.}\\[0.4em]
+\texttt{ssh produser@192.168.56.11}\\
+\texttt{cd /opt/pixelwise}\\
+\texttt{git fetch origin -{}-tags}\\
+\texttt{git reset -{}-hard v0.2}\\
+\texttt{bash setup-server.sh}\\
+\texttt{python3 -m venv .venv}\\
+\texttt{source .venv/bin/activate}\\
+\texttt{pip install -r requirements.txt}\\
+\texttt{cp .env.example .env}}
+
+
+\newthought{You are now} at the state where Block~3 ended, with both machines
+aligned, ready to start Block~4. Did you realize how seamless this was, that is thanks to 
+our solid git practices, and our dependency and setup scripts.
+
+
+
 
 \newpage
 \section{What a Model File Actually Is}\index{pickle}\index{joblib}\index{.pkl}
@@ -178,74 +248,6 @@ trust.
 
 % ==============================================================================================
 \newpage
-\section{Optional Exercise: Catch Up to \texttt{v0.2}}\index{exercises}\index{Git!tag}\index{recovery}
-
-\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
-This block builds on the state at the end of Block~3: A provisioned VM
-with the virtual environment, pinned dependencies, the \texttt{app/}
-scaffold, and \texttt{.env.example} in place.
-If you joined late, missed Block~3, or your repository has drifted,
-restore from the snapshot and reset to \texttt{v0.2} rather than redoing
-every prior exercise.
-
-\marginnote{\newthought{Tag map.}\index{Git!tag}
-\texttt{v0.2} marks the end of Block~3, \texttt{v0.3} will mark the end
-of this block.
-Browse the full set at
-\url{https://github.com/schutera/pixelwise/tags}.}
-
-\newthought{Restore the snapshot.}
-On both VMs, restore the \texttt{B3-complete} snapshot from Block~3.
-The snapshot carries everything that is not in Git, the \texttt{.venv/},
-the system packages installed by \texttt{setup-server.sh}, and any real
-\texttt{.env} values you wrote.
-With the system layer back in place, only the repository state needs
-to be rewound.
-
-\newthought{Catch-up procedure on \texttt{dev}.}
-Reset PixelWise to the previous tag:
-
-\begin{verbatim}
-cd ~/pixelwise
-git fetch origin
-git reset --hard v0.2
-\end{verbatim}
-
-\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
-This rewrites your working tree to match the end of Block~3 exactly,
-including \texttt{setup-server.sh}, \texttt{requirements.txt}, and
-\texttt{.env.example}.
-There is no work to lose if you have not committed beyond \texttt{v0.2};
-if you have, branch off first with \texttt{git branch backup-pre-catchup}
-so the work is recoverable.}
-
-\newthought{Mirror it on \texttt{prod}.}
-
-\begin{verbatim}
-ssh produser@192.168.56.11
-cd /opt/pixelwise
-git fetch origin
-git reset --hard v0.2
-\end{verbatim}
-
-\marginnote{\newthought{Already have a fork?}\index{Git!fork}
-If your own fork carries the \texttt{v0.2} tag, swap \texttt{origin} to
-your fork URL on \texttt{dev} with
-\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
-so push and pull continue to target your account.
-The HTTPS clone on \texttt{prod} stays read-only.}
-
-\newthought{Without a snapshot,} replay Block~3 before continuing.
-The file state alone is not enough when the next exercise expects an
-active virtual environment and the system Python packages from
-\texttt{setup-server.sh}.
-You are now at the state where Block~3 ended, with both machines
-aligned, ready to start Block~4.
-
-
-
-% ==============================================================================================
-\newpage
 \section{Exercise: Pull the Model into Dev}\index{exercises}
 
 
@@ -262,7 +264,7 @@ release without collecting any new data.}
 
 \newthought{Treat the model artefact as something you load,} not something
 you commit to PixelWise.
-The course hosts \texttt{digit\_classifier\_v1.pkl} as a tagged release in
+The course hosts the model \texttt{pkl} as a tagged release in
 the central \texttt{pixelwise-model} repo; you pull it into \texttt{models/}
 of the main project, you do not redistribute it.
 
@@ -275,30 +277,67 @@ your own v2 to a fork of the model repo.}
 
 \newthought{Pin the model version} in PixelWise.
 Add to \texttt{.env.example} so others know which release the integration
-expects:
+expects, and \texttt{.env} so your code knows:
 
 \begin{verbatim}
-MODEL_REPO=schutera/pixelwise-model
+MODEL_REPO=https://github.com/schutera/pixelwise-model.git
 MODEL_VERSION=v1.0
 \end{verbatim}
 
-Then download the tagged artefact into \texttt{models/} using the GitHub
-CLI; the same call works locally and inside CI:
+\newthought{Teach \texttt{setup-server.sh} to fetch the model.}\index{setup-server.sh}\index{provisioning}
+Pulling the artefact by hand once is fine for understanding what happens;
+encoding the same steps in \texttt{setup-server.sh} means that re-running
+the script on \texttt{prod}, on a fresh VM, or after a snapshot restore
+brings the model back without any extra commands. Open
+\texttt{setup-server.sh} in nano and append a model-pull block after the
+existing \texttt{apt install} lines:
 
 \begin{verbatim}
-mkdir -p models/
-gh release download "$MODEL_VERSION" \
-    --repo "$MODEL_REPO" \
-    --dir models/
+nano setup-server.sh
+\end{verbatim}
+
+Add the following at the bottom of the file, save with \texttt{Ctrl+O},
+and exit with \texttt{Ctrl+X}:
+\marginnote{\newthought{Why all the guards?}\index{idempotence}
+The \texttt{if [ -f .env ]} check lets the script run on a VM that has
+not yet been configured (for example, immediately after the Block~3
+catch-up). The \texttt{rm -rf /tmp/pixelwise-model} before \texttt{git
+clone} keeps the script idempotent: a leftover temp directory from a
+previous run does not block the next one. Together these turn the model
+pull into a re-runnable provisioning step rather than a one-shot
+command.}
+\begin{verbatim}
+# Pull the pinned model artefact
+if [ -f .env ]; then
+    set -a; source .env; set +a
+    if [ -n "${MODEL_REPO:-}" ] && \
+       [ -n "${MODEL_VERSION:-}" ]; then
+        mkdir -p models/
+        rm -rf /tmp/pixelwise-model
+        git clone --depth 1 --branch "$MODEL_VERSION" \
+            "$MODEL_REPO" /tmp/pixelwise-model
+        cp /tmp/pixelwise-model/*.pkl models/
+        cp /tmp/pixelwise-model/MODELCARD.md models/
+        rm -rf /tmp/pixelwise-model
+    fi
+fi
+\end{verbatim}
+
+
+\marginnote{\newthought{If \texttt{digit\_classifier\_v1.pkl} appears in
+\texttt{git status},} your \texttt{.gitignore} from Block~3 needs an
+update. Add \texttt{models/*.pkl} on its own line and rerun \texttt{git
+status}. A model file accidentally committed once is in the history
+forever, even if the next commit deletes it.}
+\newthought{Run the updated script on \texttt{dev}:}
+
+\begin{verbatim}
+bash setup-server.sh
 ls models/
 git status
 \end{verbatim}
 
-\marginnote{\newthought{If \texttt{digit\_classifier\_v1.pkl} appears in
-\texttt{git status},} your \texttt{.gitignore} from Block~3 needs an update.
-Add \texttt{models/*.pkl} on its own line and rerun \texttt{git status}.
-A model file accidentally committed once is in the history forever, even
-if the next commit deletes it.}
+
 
 \newthought{Confirm the artefact loads} in a Python shell on dev:
 
@@ -313,6 +352,27 @@ python3
 If \texttt{joblib.load} returns a \texttt{Pipeline} object without raising,
 the artefact is sitting at \texttt{models/digit\_classifier\_v1.pkl} on
 your dev VM, ready to be scrutinised next.
+
+\newthought{Commit the script and \texttt{.env.example}}, then mirror
+the change to \texttt{prod}:
+
+\begin{verbatim}
+git add setup-server.sh .env.example
+git commit -m "Pull model artefact in setup-server.sh"
+git push
+
+ssh produser@192.168.56.11
+cd /opt/pixelwise
+git pull origin main
+cp .env.example .env       # if you have not yet
+bash setup-server.sh
+ls models/
+\end{verbatim}
+
+\marginnote{\newthought{Machine setup and Model provisioning becomes a single command.}\index{provisioning}
+After this block, both \texttt{dev} and \texttt{prod} are set up by one
+command, \texttt{bash setup-server.sh}, regardless of whether the machine setup or the model artefact, or both. 
+Optionally also do that for the virtual environment and the system packages.}
 
 
 
@@ -339,7 +399,7 @@ preprocessing step that mirrors training.
 
 \begin{marginfigure}
     \raggedleft
-    \includegraphics[width=0.55\marginparwidth]{./figures/mnist_eight.png}
+    \includegraphics[width=0.45\marginparwidth]{./figures/mnist_eight.png}
     \caption{An MNIST sample: a handwritten digit on a $28 \times 28$
     greyscale grid, the input shape every consumer of
     \texttt{digit\_classifier\_v1} must respect.}
@@ -432,31 +492,38 @@ inside the \texttt{.pkl} matches what the canonical model card promises.
 
 \newthought{Get an MNIST sample onto your dev machine.}\index{MNIST}
 The dataset is available through scikit-learn and downloads on first
-access:
+access. Activate the virtual environment and start an interactive
+\texttt{python3} session from the repository root, then run the snippet
+below at the \texttt{>>>} prompt:
 
 \begin{verbatim}
-from sklearn.datasets import fetch_openml
-X, y = fetch_openml(
-    "mnist_784", version=1,
-    return_X_y=True, as_frame=False,
-)
-sample = X[0].reshape(28, 28).astype("uint8")
-label = y[0]
+source .venv/bin/activate
+python3
+>>> from sklearn.datasets import fetch_openml
+>>> X, y = fetch_openml(
+...     "mnist_784", version=1,
+...     return_X_y=True, as_frame=False,
+...     parser="liac-arff",
+... )
+>>> sample = X[0].reshape(28, 28).astype("uint8")
+>>> label = y[0]
 \end{verbatim}
 
 You now have one ground-truth example to scrutinise the pipeline against.
 
+\marginnote{\newthought{Why \texttt{parser="liac-arff"}}.\index{scikit-learn}\index{pandas}
+Since scikit-learn 1.2, \texttt{fetch\_openml} defaults to \texttt{parser="auto"}, which prefers a pandas-based parser and raises if pandas is not installed. Naming the built-in liac-arff parser keeps the dependency footprint at what \texttt{requirements.txt} pins.}
+
 \newthought{Open the pipeline and look at its parts.}
-The Pipeline object exposes its named steps as a dictionary, and the
-classifier exposes the classes it knows:
+Still inside the same \texttt{python3} session, the Pipeline object
+exposes its named steps as a dictionary, and the classifier exposes the
+classes it knows:
 
 \begin{verbatim}
-import joblib
-model = joblib.load("models/digit_classifier_v1.pkl")
-for name, step in model.named_steps.items():
-    print(name, type(step).__name__, step)
-print("classes:", model.classes_)
-print("n_features expected:", model.n_features_in_)
+>>> for name, step in model.named_steps.items():
+...     print(name, type(step).__name__)
+>>> print("classes:", model.classes_)
+>>> print("n_features expected:", model.n_features_in_)
 \end{verbatim}
 
 \marginnote{\newthought{The point is verification.}\index{verification}
@@ -464,6 +531,17 @@ You are not reproducing the model's preprocessing; you are confirming
 the artefact behaves the way the model card claims.
 A pipeline that contains an unexpected step, or is missing one you
 expected, is a contract violation you want to catch here, not later.}
+
+\newthought{Now run the model on the sample} you fetched and compare
+against the ground-truth \texttt{label}:
+
+\begin{verbatim}
+>>> import numpy as np
+>>> arr = (sample > 128).astype(float).reshape(1, -1)
+>>> probs = model.predict_proba(arr)
+>>> pred = model.classes_[probs.argmax()]
+>>> print(f"pred={pred} true={label} conf={probs.max():.2f}")
+\end{verbatim}
 
 \newthought{Open the canonical model card} at
 \href{https://github.com/schutera/pixelwise-model/blob/v1.0/MODELCARD.md}{schutera/pixelwise-model}
@@ -481,12 +559,6 @@ Answer each of these against both sources:
     samples land near the figure the card cites?
 \end{itemize}
 
-\marginnote{\newthought{Reading is the exercise.}\index{model card}
-Authoring a card for a model that already ships with one is busywork.
-Authoring a card for a model you publish yourself is load-bearing
-documentation, and that is where the writing exercise lives, in the
-optional v2 exercise at the end of this block.}
-
 A mismatch between what the pipeline contains and what the canonical
 card promises is exactly the kind of contract violation the integration
 layer exists to catch.
@@ -499,95 +571,63 @@ on every commit.
 \newpage
 \section{Designing the Inference Interface}\index{inference interface}\index{batch inference}
 
-\newthought{Before writing any code,} design the contract.
-Start with the class roster, then the function signatures, then the
-loading strategy.
-Each is a decision that propagates: every later block reads from this
-interface, and every change to it ripples through the API, the database
-schema, and the frontend.
-
-\newthought{A named constant} makes the valid output set explicit and
-independent of the model file:
-
-\begin{verbatim}
-CLASSES = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
-# must match model.classes_, verified at startup
-# note: "0" is intentionally absent in v1
-\end{verbatim}
-
-This list belongs in the code, not only in the model.
-The frontend, the database schema, and the API documentation all reference it.
-If the model is swapped for one trained on different classes, the assertion
-described below fires loudly at startup rather than returning silently
-wrong labels for the rest of the service's lifetime.
+\newthought{Before writing any code,} design the contract. Three
+decisions propagate to every later block, the API, the database schema,
+the frontend, so they are worth naming up front: the class roster, the
+function shape, and the loading strategy.
 
 \marginnote{\newthought{Batch-first design.}\index{batch inference}
 What happens when 50 students submit a drawing in the same second?
-If the server processes each request individually, the model is called 50
-times with a $(1, 784)$ array.
-If it batches them, the model is called once with a $(50, 784)$ array.
-sklearn's \texttt{predict\_proba} is natively vectorised, so the cost is
-nearly identical.
-Design around batch; single-user is a special case.}
+If the server processes each request individually, the model is called
+50 times with a $(1, 784)$ array. If it batches them, the model is
+called once with a $(50, 784)$ array. sklearn's
+\texttt{predict\_proba} is natively vectorised, so the cost is nearly
+identical. Design around batch; single-user is a special case.}
 
-\newthought{The function signatures} fall out of the contract:
+\newthought{A named class constant} makes the valid output set explicit
+and independent of the model file. \texttt{CLASSES} lives in the code as
+a hardcoded list, not derived from \texttt{model.classes\_} at import
+time, so the integration has its own opinion about what labels it speaks.
+The frontend, the database schema, and the API documentation all
+reference it. If the model is swapped for one trained on different
+classes, an assertion described below fires loudly at startup rather than
+returning silently wrong labels for the rest of the service's lifetime.
 
-\begin{verbatim}
-def classify_batch(images: np.ndarray) -> list[dict]:
-    """
-    Args:
-        images: (N, 28, 28) uint8, values 0-255
-    Returns:
-        List of N dicts:
-        {"prediction": str, "confidence": float,
-         "scores": dict[str, float]}
-    """
-    if images.ndim != 3 or images.shape[1:] != (28, 28):
-        raise ValueError(
-            f"Expected (N,28,28), got {images.shape}")
-    arr = (images > 128).astype(float).reshape(
-        len(images), -1)
-    probs = _pipeline.predict_proba(arr)
-    return [
-        {"prediction": CLASSES[p.argmax()],
-         "confidence": float(p.max()),
-         "scores": dict(zip(CLASSES, p.tolist()))}
-        for p in probs
-    ]
 
-def classify(image: np.ndarray) -> dict:
-    """Single-image convenience wrapper."""
-    return classify_batch(image[np.newaxis])[0]
-\end{verbatim}
 
-\marginnote{\newthought{The wrapper is for tests only.}
-The API in Block~5 always calls \texttt{classify\_batch}, even for a single
-drawing: it passes a $(1, 28, 28)$ array.
-When a request queue is added later to amortise inference cost, no signature
-changes are needed; the queue assembles a batch and the function consumes it.}
-
-\newthought{Load \texttt{\_pipeline} once at module level:}
+\newthought{Two functions, one batch-first.} The public surface of
+\texttt{app/classifier.py} is:
 
 \begin{verbatim}
-import joblib, os
-_pipeline = joblib.load(os.getenv("MODEL_PATH"))
-assert list(_pipeline.classes_) == CLASSES, \
-    f"Model/CLASSES mismatch: {_pipeline.classes_}"
+classify_batch(images) -> list[dict]
+classify(image)        -> dict
 \end{verbatim}
 
-Deserialising on every request kills throughput; the model stays in memory
-for the lifetime of the process.
-The assertion is the key teaching moment: it fires at startup if the model's
-classes do not match the code constant.
-A swapped model with the wrong classes is caught the moment the service
-starts, not the next time a user gets a wrong digit.
+\texttt{classify\_batch} takes an \texttt{(N, 28, 28)} \texttt{uint8}
+array and returns a list of \texttt{N} dictionaries, each with
+\texttt{prediction}, \texttt{confidence}, and \texttt{scores}.
+\texttt{classify} is a single-image convenience wrapper that delegates
+to \texttt{classify\_batch} with \texttt{image[np.newaxis]}, so there is
+exactly one inference path. When a request queue is added later to
+amortise cost, the queue assembles a batch and the same function consumes
+it; no signature change.
 
-\marginnote{\newthought{\texttt{MODEL\_PATH} from \texttt{.env}.}\index{MODEL\_PATH}
-The path is configuration, not code.
-Swapping the model in production becomes an env-var change plus a service
-restart, not a code change and a deploy.
-This is the same pattern as the database URL in Block~6 and the API key
-from Block~3.}
+\newthought{Load the pipeline once at module level.}\index{MODEL\_PATH}
+Deserialising on every request kills throughput, so
+\texttt{joblib.load(os.getenv("MODEL\_PATH"))} runs at import time and
+the resulting \texttt{Pipeline} stays in memory for the lifetime of the
+process. The path comes from \texttt{.env}, not a hardcoded string, so
+swapping the model in production is an env-var change plus a service
+restart, the same pattern as the database URL in Block~6 and the API
+key from Block~5.
+
+\marginnote{\newthought{The startup assertion is the headline.}\index{assertion}
+Right after \texttt{joblib.load}, one line: \texttt{assert
+list(\_pipeline.classes\_) == CLASSES}. The assertion fires at startup
+if the model's classes disagree with the code constant. A swapped model
+with the wrong classes is caught the moment the service starts, not
+the next time a user gets a wrong digit. The next exercise has you
+trip it on purpose to feel the difference.}
 
 
 
@@ -595,9 +635,21 @@ from Block~3.}
 \newpage
 \section{Exercise: The Classifier Module}\index{exercises}
 
-\newthought{Implement the inference interface in \texttt{app/classifier.py}}
-with the class constant, module-level loading, the startup assertion, and
-the two functions:
+\newthought{Create the classifier module file} on the \texttt{dev} VM,
+inside the PixelWise repository. The module belongs in the \texttt{app/}
+package, so create the directory if it is not there yet and open the file
+in nano:
+
+\begin{verbatim}
+cd ~/pixelwise
+mkdir -p app
+nano app/classifier.py
+\end{verbatim}
+
+Paste the implementation below into the empty file, save with
+\texttt{Ctrl+O}, exit with \texttt{Ctrl+X}. It includes the class
+constant, module-level loading, the startup assertion, and the two
+functions discussed in the previous section:
 
 \begin{verbatim}
 import os
@@ -638,16 +690,28 @@ the assertion, restart, and observe the assertion firing.
 The startup error message is exactly what you want to see when a model
 swap goes wrong.}
 
-\newthought{Update \texttt{.env} and \texttt{.env.example}} so the loader
-knows where to find the artefact:
+\newthought{Update \texttt{.env.example} and \texttt{.env}} at the repo
+root so the loader knows where to find the artefact. Open each in nano
+and append the line below, save, exit:
+
+\begin{verbatim}
+nano .env.example   # commit this; safe to share
+nano .env           # local only; never commit
+\end{verbatim}
 
 \begin{verbatim}
 MODEL_PATH=models/digit_classifier_v1.pkl
 \end{verbatim}
 
-\newthought{Write \texttt{predict.py} as a smoke test.}
-Load five MNIST test samples, call \texttt{classify\_batch}, print the
-predictions next to the ground truth:
+\newthought{Write \texttt{predict.py} as a smoke test} at the repo root,
+next to \texttt{setup-server.sh}, not inside \texttt{app/}: it is a
+script you run, not a module the application imports. Open it in nano:
+
+\begin{verbatim}
+nano predict.py
+\end{verbatim}
+
+Paste the smoke test below, save, exit:
 
 \begin{verbatim}
 from app.classifier import classify_batch
@@ -655,7 +719,8 @@ from sklearn.datasets import fetch_openml
 import numpy as np
 
 X, y = fetch_openml("mnist_784", version=1,
-    return_X_y=True, as_frame=False)
+    return_X_y=True, as_frame=False,
+    parser="liac-arff")
 images = X[:5].reshape(-1, 28, 28).astype(np.uint8)
 truth  = y[:5]
 results = classify_batch(images)
@@ -670,21 +735,32 @@ This is what the API in Block~5 will do: take pixel data, call
 Block~5 swaps stdin for HTTP and stdout for JSON, and moves the service
 to \texttt{prod}; the inference logic itself is unchanged.}
 
-\newthought{Run the smoke test on dev} and commit:
+\newthought{Run the smoke test on dev} from the repo root with the
+virtual environment activated, then commit:
 
 \begin{verbatim}
+source .venv/bin/activate
 python predict.py
 git add app/classifier.py predict.py .env.example
 git commit -m "Add classifier module pinned to model v1.0"
 git push
 \end{verbatim}
 
-The repository is now at the state \texttt{v0.3} marks: a working classifier,
-a dev-side smoke test, and an updated configuration contract pinned to the
-model release.
-The \texttt{.pkl} stays on each developer's machine, the artefact path is
-in \texttt{.env}, and the rest of the team can reproduce the environment
-from the code in Git.
+\newthought{Tag the release as \texttt{v0.3}.}\index{Git!tag}
+The end of every block is a tagged, runnable state. Mark it now so
+future catch-up exercises can reset back here:
+
+\begin{verbatim}
+git tag -a v0.3 -m "End of Block 4: classifier module"
+git push origin v0.3
+\end{verbatim}
+
+The repository is now at the state \texttt{v0.3} marks: a working
+classifier, a dev-side smoke test, and an updated configuration contract
+pinned to the model release.
+The \texttt{.pkl} stays on each developer's machine, the artefact path
+is in \texttt{.env}, and the rest of the team can reproduce the
+environment from the code in Git.
 Block~5 takes this dev-verified module and exposes it as an HTTP service
 on \texttt{prod}.
 
@@ -740,9 +816,12 @@ git tag -a v2.0 -m "Adds class 0"
 git push --follow-tags
 \end{verbatim}
 
-On the PixelWise side, bump \texttt{MODEL\_REPO=<you>/pixelwise-model}
-and \texttt{MODEL\_VERSION=v2.0} in \texttt{.env} and re-run
-\texttt{gh release download}.
+On the PixelWise side, point \texttt{.env} at your fork and the new tag
+by setting
+\texttt{MODEL\_REPO=https://github.com/<you>/pixelwise-model.git}
+and \texttt{MODEL\_VERSION=v2.0}, then re-run
+\texttt{bash setup-server.sh} to pull the v2 artefact and card into
+\texttt{models/}.
 The assertion will break the moment v2 is loaded against v1's
 \texttt{CLASSES}; fix it by updating the constant.
 
@@ -806,5 +885,13 @@ with no code changes.
 \texttt{predict.py} proves it works end to end on real MNIST samples.
 The canonical \texttt{MODELCARD.md} in \texttt{pixelwise-model} documents
 what the model is and is not, and the integration verifies against it.
-The next chapter wraps the inference function in a FastAPI service so the
-model becomes reachable over HTTP.
+
+\newthought{We deliberately stop short of \texttt{prod}.}\index{deployment}
+The classifier works on \texttt{dev}, but \texttt{prod} has not been
+updated, on purpose. There is no service on \texttt{prod} yet that would
+call \texttt{classify\_batch}, no HTTP endpoint, no \texttt{systemd}
+unit, no entry point at all. Pulling the new code there now would just
+add an unused \texttt{app/classifier.py} to the production checkout.
+Block~5 introduces the FastAPI layer and the \texttt{systemd} service
+that make the model reachable; deployment to \texttt{prod} happens then,
+once there is something to deploy.

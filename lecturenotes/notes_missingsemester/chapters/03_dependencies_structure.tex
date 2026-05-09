@@ -693,7 +693,7 @@ Count how many lines \texttt{pip freeze} produced compared to the three
 packages you installed directly; the gap is the dependency graph
 working invisibly.
 
-\marginnote{\newthought{The habit to build:}\index{requirements.txt}
+\marginnote{\newthought{The habit to freeze and commit:}\index{requirements.txt}
 after installing or upgrading any package, immediately run
 \texttt{pip freeze > requirements.txt} and commit the change.
 Stale requirements files are the most common cause of
@@ -711,10 +711,8 @@ Inspect the output.
 What is a CVE\index{CVE}?
 What would you do if a critical vulnerability were reported in one of
 your dependencies?
-The reading you do here pays back in Block~8 when the audit becomes part
-of the deploy pipeline.
 
-\marginnote{\newthought{Read one CVE.}
+\marginnote{\newthought{(Optional) Read one CVE.}
 Pick any advisory \texttt{pip-audit} reports, click through to the CVE
 record, and read the description, the affected versions, and the fixed
 version.
@@ -831,8 +829,8 @@ cp .env.example .env
 
 Edit \texttt{.env} so \texttt{SECRET\_API\_KEY} holds a value of your own
 choosing.
-Run \texttt{git status} and confirm that \texttt{.env} does not appear:
-the \texttt{.gitignore} entry from the previous exercise is doing its job.
+Make sure to add \texttt{.env} to \texttt{.gitignore} if it is not already there, then
+Run \texttt{git status} and confirm that \texttt{.env} does not appear.
 
 \marginnote{\newthought{If \texttt{.env} appears in \texttt{git status},}
 the \texttt{.gitignore} entry is missing.
@@ -852,52 +850,6 @@ The example is now public, the real values stay on the machine.
 
 
 
-% ==============================================================================================
-\newpage
-\section{Exercise: Scaffolding the Project}\index{exercises}
-
-\newthought{Scaffold only what we need right now.}
-Other folders appear in the block that first needs them; the rest of the
-project map you saw in Block~1 stays intentionally empty until then.
-
-\begin{verbatim}
-mkdir -p app data models
-touch app/__init__.py
-\end{verbatim}
-
-\marginnote{\newthought{Empty folders matter.}\index{Git!empty directory}
-Git does not track empty directories, only files.
-\texttt{app/\_\_init\_\_.py} exists both to mark the folder as a Python
-package and to give Git a file to commit so the directory survives
-\texttt{git clone}.}
-
-\newthought{Confirm the shape:}
-
-\begin{verbatim}
-ls -la
-\end{verbatim}
-
-The repository now contains \texttt{app/}, \texttt{data/}, \texttt{models/},
-\texttt{requirements.txt}, \texttt{.env.example}, \texttt{.env},
-\texttt{setup-server.sh}, the existing \texttt{README.md}, and \texttt{.gitignore}.
-The skeleton matches the map from Block~1 for the parts this block requires.
-
-\marginnote{\newthought{Why three folders, not seven?}\index{scaffolding}
-The map you saw in Block~1 lists ten directories.
-Creating them all now would be a lie about the state of the project: empty
-folders that will not be touched for weeks confuse the reader and clutter
-\texttt{ls}.
-Each folder appears in the block that first uses it.}
-
-\newthought{Commit the scaffold:}
-
-\begin{verbatim}
-git add app/
-git commit -m "Add project scaffold"
-git push
-\end{verbatim}
-
-
 
 % ==============================================================================================
 \newpage
@@ -911,12 +863,19 @@ environment from the two files you committed:
 \begin{verbatim}
 ssh produser@192.168.56.11
 cd /opt/pixelwise
-git pull
+git pull origin main
 bash setup-server.sh
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 \end{verbatim}
+
+\marginnote{\newthought{Why \texttt{origin main}?}\index{Git!pull}
+After the catch-up \texttt{reset -{}-hard v0.1}, prod's local \texttt{main}
+may have lost its upstream tracking, in which case bare \texttt{git pull}
+asks you to specify a branch. Naming \texttt{origin main} explicitly
+sidesteps that. To restore the tracking once and let plain \texttt{git
+pull} work afterwards, run \texttt{git branch -{}-set-upstream-to=origin/main}.}
 
 \marginnote{\newthought{Watch the install output.}
 \texttt{pip} resolves the dependency graph from the lock-shaped
@@ -928,7 +887,6 @@ something has drifted.}
 \newthought{Verify the audit on \texttt{prod}:}
 
 \begin{verbatim}
-pip install pip-audit
 pip-audit
 \end{verbatim}
 
