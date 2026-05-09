@@ -572,6 +572,16 @@ next to it on disk with hundreds of files inside. That silence is
 \texttt{.gitignore} doing its job: the absence of \texttt{.venv/} in the
 output is the demonstration, not a missing piece.
 
+\newthought{Commit the change.}
+With the diff read and \texttt{git status} clean of surprises, record the
+update so the next exercise starts from a known state:
+
+\begin{verbatim}
+git add .gitignore
+git commit -m "Ignore .venv/ and stop ignoring *.py"
+git push
+\end{verbatim}
+
 
 
 % ==============================================================================================
@@ -590,6 +600,14 @@ pip install scikit-learn joblib python-dotenv
 pip freeze > requirements.txt
 pip install -r requirements.txt
 \end{verbatim}
+
+\marginnote{\newthought{The three packages.}\index{scikit-learn}\index{joblib}\index{python-dotenv}
+\texttt{scikit-learn} provides the classifier PixelWise will train and
+serve.
+\texttt{joblib} saves and loads trained models to disk as \texttt{.pkl}
+files.
+\texttt{python-dotenv} reads \texttt{.env} files into environment
+variables so secrets stay out of code.}
 
 \marginnote{\newthought{Read these three lines as a contract.}
 The first installs into the environment.
