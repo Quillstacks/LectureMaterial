@@ -117,6 +117,87 @@ By the end you will have
 
 
 % ==============================================================================================
+\newpage
+\section{Optional Exercise: Catch Up to \texttt{v0.4}}\index{exercises}\index{Git!tag}\index{recovery}
+
+\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
+This block builds on the state at the end of Block~5: A FastAPI service
+exposing \texttt{POST /classify} and \texttt{GET /health}, with API-key
+authentication and basic rate limiting, running under a \texttt{systemd}
+unit on \texttt{prod}, with request and response contracts defined as
+Pydantic models.
+If you joined late, missed Block~5, or your repository has drifted,
+restore from the snapshot and reset to \texttt{v0.4} rather than redoing
+every prior exercise.
+
+\marginnote{\newthought{Tag map.}\index{Git!tag}
+\texttt{v0.4} marks the end of Block~5, \texttt{v0.5} will mark the end
+of this block.
+Browse the full set at
+\url{https://github.com/schutera/pixelwise/tags}.}
+
+\newthought{Restore the snapshot.}
+On both VMs, restore the \texttt{B5-complete} snapshot from Block~5.
+The snapshot carries everything that is not in Git, the \texttt{.venv/},
+the model artefact in \texttt{models/}, the system packages from
+\texttt{setup-server.sh}, the \texttt{pixelwise.service} systemd unit
+installed on \texttt{prod}, and any real \texttt{.env} values you wrote.
+With the system layer back in place, only the repository state needs
+to be rewound.
+
+\newthought{Catch-up procedure on \texttt{dev}.}
+Reset PixelWise to the previous tag:
+
+\begin{verbatim}
+cd ~/pixelwise
+git fetch origin
+git reset --hard v0.4
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
+This rewrites your working tree to match the end of Block~5 exactly,
+including \texttt{app/main.py} and the updated \texttt{requirements.txt}.
+There is no work to lose if you have not committed beyond \texttt{v0.4};
+if you have, branch off first with \texttt{git branch backup-pre-catchup}
+so the work is recoverable.}
+
+\newthought{Mirror it on \texttt{prod}.}
+
+\begin{verbatim}
+ssh produser@192.168.56.11
+cd /opt/pixelwise
+git fetch origin
+git reset --hard v0.4
+sudo systemctl restart pixelwise
+\end{verbatim}
+
+\marginnote{\newthought{Already have a fork?}\index{Git!fork}
+If your own fork carries the \texttt{v0.4} tag, swap \texttt{origin} to
+your fork URL on \texttt{dev} with
+\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
+so push and pull continue to target your account.
+The HTTPS clone on \texttt{prod} stays read-only.}
+
+\newthought{Verify the service.}
+On \texttt{prod}, confirm the FastAPI service is reachable before moving
+on:
+
+\begin{verbatim}
+curl http://192.168.56.11:8000/health
+\end{verbatim}
+
+A \texttt{200 OK} response confirms the systemd unit is running against
+the rewound code.
+You are now at the state where Block~5 ended, with both machines
+aligned, ready to start Block~6.
+
+\newthought{Without a snapshot,} replay Block~5 before continuing.
+The file state alone is not enough when the next exercise expects an
+installed systemd unit and a running API service.
+
+
+
+% ==============================================================================================
 % BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
 
@@ -202,17 +283,10 @@ SQLite: \url{https://www.sqlite.org/}}
 
 \newthought{Setting up the database} on the server is two commands inside
 \texttt{psql}.
-You log in as the \texttt{postgres} superuser to create a dedicated user
-and database for the application:
-
-\begin{verbatim}
-sudo -u postgres psql
-
--- inside psql:
-CREATE USER pixelwise WITH PASSWORD 'secret';
-CREATE DATABASE pixelwise OWNER pixelwise;
-\q
-\end{verbatim}
+You log in as the \texttt{postgres} superuser, create a dedicated
+\texttt{pixelwise} user with a password, then create a \texttt{pixelwise}
+database owned by that user, and quit with \texttt{\textbackslash q}.
+The exercise below has the exact statements PixelWise needs.
 
 \marginnote{\newthought{Why a dedicated user?}\index{least privilege}
 The \texttt{postgres} superuser can drop any database, create any user,
@@ -222,106 +296,19 @@ which by default is read and write its own tables.
 The principle is the same as the non-root \texttt{produser} from Block~1:
 the account the application uses is the smallest one that works.}
 
-\newthought{Connect as the application user} to confirm the credentials work:
-
-\begin{verbatim}
-psql -U pixelwise -d pixelwise -h localhost
-\end{verbatim}
-
-The prompt that comes back is what your service will see when it connects
-through SQLAlchemy in the next section.
+\newthought{Connect as the application user} to confirm the credentials work
+before any Python is involved.
+The prompt that comes back from \texttt{psql} is the same one your service
+will see when it connects through SQLAlchemy in the next section.
 If \texttt{psql} cannot reach the database, neither can the API; debug here
-first, before any Python is involved.
+first.
+The exercise below runs the connection command end to end.
 
-
-
-% ==============================================================================================
-\newpage
-\section{Optional Exercise: Catch Up to \texttt{v0.4}}\index{exercises}\index{Git!tag}\index{recovery}
-
-\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
-This block builds on the state at the end of Block~5: A FastAPI service
-exposing \texttt{POST /classify} and \texttt{GET /health}, with API-key
-authentication and basic rate limiting, running under a \texttt{systemd}
-unit on \texttt{prod}, with request and response contracts defined as
-Pydantic models.
-If you joined late, missed Block~5, or your repository has drifted,
-restore from the snapshot and reset to \texttt{v0.4} rather than redoing
-every prior exercise.
-
-\marginnote{\newthought{Tag map.}\index{Git!tag}
-\texttt{v0.4} marks the end of Block~5, \texttt{v0.5} will mark the end
-of this block.
-Browse the full set at
-\url{https://github.com/schutera/pixelwise/tags}.}
-
-\newthought{Restore the snapshot.}
-On both VMs, restore the \texttt{B5-complete} snapshot from Block~5.
-The snapshot carries everything that is not in Git, the \texttt{.venv/},
-the model artefact in \texttt{models/}, the system packages from
-\texttt{setup-server.sh}, the \texttt{pixelwise.service} systemd unit
-installed on \texttt{prod}, and any real \texttt{.env} values you wrote.
-With the system layer back in place, only the repository state needs
-to be rewound.
-
-\newthought{Catch-up procedure on \texttt{dev}.}
-Reset PixelWise to the previous tag:
-
-\begin{verbatim}
-cd ~/pixelwise
-git fetch origin
-git reset --hard v0.4
-\end{verbatim}
-
-\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
-This rewrites your working tree to match the end of Block~5 exactly,
-including \texttt{app/main.py} and the updated \texttt{requirements.txt}.
-There is no work to lose if you have not committed beyond \texttt{v0.4};
-if you have, branch off first with \texttt{git branch backup-pre-catchup}
-so the work is recoverable.}
-
-\newthought{Mirror it on \texttt{prod}.}
-
-\begin{verbatim}
-ssh produser@192.168.56.11
-cd /opt/pixelwise
-git fetch origin
-git reset --hard v0.4
-sudo systemctl restart pixelwise
-\end{verbatim}
-
-\marginnote{\newthought{Already have a fork?}\index{Git!fork}
-If your own fork carries the \texttt{v0.4} tag, swap \texttt{origin} to
-your fork URL on \texttt{dev} with
-\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
-so push and pull continue to target your account.
-The HTTPS clone on \texttt{prod} stays read-only.}
-
-\newthought{Verify the service.}
-On \texttt{prod}, confirm the FastAPI service is reachable before moving
-on:
-
-\begin{verbatim}
-curl http://192.168.56.11:8000/health
-\end{verbatim}
-
-A \texttt{200 OK} response confirms the systemd unit is running against
-the rewound code.
-You are now at the state where Block~5 ended, with both machines
-aligned, ready to start Block~6.
-
-\newthought{Without a snapshot,} replay Block~5 before continuing.
-The file state alone is not enough when the next exercise expects an
-installed systemd unit and a running API service.
 
 
 % ==============================================================================================
 \newpage
 \section{Exercise: PostgreSQL on the Server}\index{exercises}
-
-\marginnote{\newthought{Exercises} sit next to the theory they exercise.
-Each pair takes you from concept to running command on the same topic, and
-the snapshot from Block~1 is your safety net if a step goes wrong.}
 
 \newthought{Install PostgreSQL on \texttt{prod}.}
 With the theory above as the why, the how is two commands.
@@ -380,25 +367,13 @@ SQLAlchemy Tutorial: \\
 \url{https://docs.sqlalchemy.org/en/20/tutorial/}}
 
 \newthought{The model class} declares the columns and their types in plain
-Python:
-
-\begin{verbatim}
-from sqlalchemy import (Column, Integer, String,
-                        DateTime)
-from sqlalchemy.orm import declarative_base
-from datetime import datetime
-
-Base = declarative_base()
-
-class Prediction(Base):
-    __tablename__ = "predictions"
-
-    id = Column(Integer, primary_key=True)
-    prediction = Column(String, nullable=False)
-    model_version = Column(String, nullable=False)
-    created_at = Column(DateTime,
-                        default=datetime.utcnow)
-\end{verbatim}
+Python.
+A \texttt{Prediction} class inherits from a SQLAlchemy declarative base,
+sets \texttt{\_\_tablename\_\_} to \texttt{predictions}, and lists each
+column as a class attribute: An auto-incrementing integer primary key, a
+non-null string for the predicted class, a non-null string for the model
+version, and a timestamp that defaults to the current UTC time.
+The exercise below has the full \texttt{app/models.py} the API will import.
 
 \marginnote{\newthought{Why an ORM?}\index{SQL injection}
 Two reasons.
@@ -409,18 +384,14 @@ which means user input never ends up concatenated into a SQL statement.
 SQL injection becomes a footgun the framework refuses to hand you.}
 
 \newthought{An engine and a session} are the runtime objects that connect
-the model to the database:
-
-\begin{verbatim}
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-engine = create_engine(os.getenv("DATABASE_URL"))
-SessionLocal = sessionmaker(bind=engine)
-
-# create the table on first run
-Base.metadata.create_all(engine)
-\end{verbatim}
+the model to the database.
+\texttt{create\_engine} reads the \texttt{DATABASE\_URL} from the
+environment and opens a pool of connections;
+\texttt{sessionmaker} returns a \texttt{SessionLocal} factory the handlers
+will call once per request;
+\texttt{Base.metadata.create\_all(engine)} creates the table on first run.
+The exercise wires these three lines into a small initialisation script
+the team runs on \texttt{prod} before the first deploy.
 
 \marginnote{\newthought{The connection string}\index{DATABASE\_URL} is a single
 URL: \\
@@ -430,17 +401,13 @@ in \texttt{.env} for the same reasons the API key did in Block~5.
 A leaked \texttt{DATABASE\_URL} is a leaked database.}
 
 \newthought{Inserting a row} from inside the API handler is now a few lines:
-
-\begin{verbatim}
-db = SessionLocal()
-db.add(Prediction(prediction=result["prediction"],
-                  model_version="v1"))
-db.commit()
-\end{verbatim}
-
+Open a session from \texttt{SessionLocal}, construct a \texttt{Prediction}
+with the fields from the classifier result, add it to the session, and
+commit.
 The handler still calls \texttt{classify\_batch} from Block~4 and returns
 \texttt{ClassifyResponse} from Block~5; the only addition is one round-trip
 to the database before the response leaves the server.
+The exercise below wires it up inside \texttt{POST /classify}.
 
 
 
@@ -600,18 +567,12 @@ migrations folder in Git.}
 It generates migration scripts from changes you made to the model,
 applies them in order, and tracks which migrations have run on which
 database.
-
-\begin{verbatim}
-# Initialise Alembic in the repo
-alembic init alembic
-
-# After you change app/models.py:
-alembic revision --autogenerate \
-    -m "add confidence column"
-
-# Apply the migration
-alembic upgrade head
-\end{verbatim}
+The cycle is three commands: \texttt{alembic init} once per repository
+to lay down the migrations folder, \texttt{alembic revision -{}-autogenerate}
+after every model edit to draft the migration, and \texttt{alembic upgrade
+head} to apply it.
+The exercise below runs the full cycle to add a missing \texttt{confidence}
+column.
 
 \marginnote{\newthought{The autogenerate is a draft, not a final answer.}
 Alembic compares the model in code against the schema in the database and

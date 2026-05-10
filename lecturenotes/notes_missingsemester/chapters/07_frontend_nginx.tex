@@ -18,58 +18,6 @@ You need something in front that handles the ports, serves static files, and for
 That something is Nginx\index{Nginx}.
 
 % ==============================================================================================
-% BLOCK 2: CONCEPTS AND PRACTICE
-% ==============================================================================================
-
-\newpage
-\section{The Frontend Stack}\index{JavaScript}\index{HTML}\index{CSS}
-
-\subsection{Why Vanilla JavaScript}
-
-\newthought{HTML for structure, CSS for layout, JavaScript for interactivity.} The \texttt{fetch} API
-sends requests to the backend.
-
-\marginnote{MDN Web Docs\index{MDN} (HTML/CSS/JS reference): \url{https://developer.mozilla.org/}\\
-Fetch API: \url{https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API}}
-
-\marginnote{Why not React, Vue, or Svelte? Frameworks solve problems that appear at scale, component reuse,
-state management, routing across dozens of views. PixelWise has one page with one canvas and one results panel.
-A framework would add a build toolchain (Node.js, npm, bundler), a learning curve orthogonal to this course,
-and complexity that hides what is actually happening between browser and server. Vanilla JS keeps the HTTP
-layer visible.}
-
-\newthought{The starter code is provided.} Students need to understand it well enough to wire it up
-and extend it later in the course. The key pieces:
-
-\begin{description}
-    \item[Drawing canvas] A 28$\times$28 pixel grid where users draw with the mouse.
-    \item[Submit button] Extracts the pixel array from the canvas and sends a \texttt{POST /api/classify} request.
-    \item[Results panel] Displays the predicted digit, confidence score, and a confidence bar.
-\end{description}
-
-\newthought{The \texttt{fetch} call} is the bridge between frontend and backend:
-
-\begin{verbatim}
-async function classifyDrawing() {
-    const pixels = getPixelsFromCanvas();  // 28x28 array
-    const response = await fetch("/api/classify", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": API_KEY
-        },
-        body: JSON.stringify({ pixels: pixels })
-    });
-    const result = await response.json();
-    displayResult(result);
-}
-\end{verbatim}
-
-\marginnote{No build step, no \texttt{node\_modules}, no framework version to maintain. The code runs in
-any browser, can be read by any developer, and deploys as static files served directly by Nginx. Students
-who later build larger applications will recognise when a framework becomes necessary, and why.}
-
-% ==============================================================================================
 \newpage
 \section{Optional Exercise: Catch Up to \texttt{v0.5}}\index{exercises}\index{Git!tag}\index{recovery}
 
@@ -156,11 +104,60 @@ running PostgreSQL instance with the \texttt{pixelwise} database and
 the migrations applied.
 
 % ==============================================================================================
+% BLOCK 2: CONCEPTS AND PRACTICE
+% ==============================================================================================
+
+\newpage
+\section{The Frontend Stack}\index{JavaScript}\index{HTML}\index{CSS}
+
+\subsection{Why Vanilla JavaScript}
+
+\newthought{HTML for structure, CSS for layout, JavaScript for interactivity.} The \texttt{fetch} API
+sends requests to the backend.
+
+\marginnote{MDN Web Docs\index{MDN} (HTML/CSS/JS reference): \url{https://developer.mozilla.org/}\\
+Fetch API: \url{https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API}}
+
+\marginnote{Why not React, Vue, or Svelte? Frameworks solve problems that appear at scale, component reuse,
+state management, routing across dozens of views. PixelWise has one page with one canvas and one results panel.
+A framework would add a build toolchain (Node.js, npm, bundler), a learning curve orthogonal to this course,
+and complexity that hides what is actually happening between browser and server. Vanilla JS keeps the HTTP
+layer visible.}
+
+\newthought{The starter code is provided.} Students need to understand it well enough to wire it up
+and extend it later in the course. The key pieces:
+
+\begin{description}
+    \item[Drawing canvas] A 28$\times$28 pixel grid where users draw with the mouse.
+    \item[Submit button] Extracts the pixel array from the canvas and sends a \texttt{POST /api/classify} request.
+    \item[Results panel] Displays the predicted digit, confidence score, and a confidence bar.
+\end{description}
+
+\newthought{The \texttt{fetch} call} is the bridge between frontend and backend:
+
+\begin{verbatim}
+async function classifyDrawing() {
+    const pixels = getPixelsFromCanvas();  // 28x28 array
+    const response = await fetch("/api/classify", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": API_KEY
+        },
+        body: JSON.stringify({ pixels: pixels })
+    });
+    const result = await response.json();
+    displayResult(result);
+}
+\end{verbatim}
+
+\marginnote{No build step, no \texttt{node\_modules}, no framework version to maintain. The code runs in
+any browser, can be read by any developer, and deploys as static files served directly by Nginx. Students
+who later build larger applications will recognise when a framework becomes necessary, and why.}
+
+% ==============================================================================================
 \newpage
 \section{Exercise: Deploy the Frontend}\index{exercises}
-
-\marginnote{\newthought{Exercises} are for practice and reinforcement. If your VM is broken, restore the
-\texttt{B6-complete} snapshot. At the end of this session, take a snapshot named \texttt{B7-complete}.}
 
 \newthought{Copy the provided starter code} to \texttt{frontend/} on the server. Walk through the code to
 understand: the \texttt{fetch} call to \texttt{/api/classify}, the pixel array extraction from the canvas,
@@ -193,27 +190,15 @@ Nginx Docs: \url{https://nginx.org/en/docs/}} in the PixelWise stack:
 
 \subsection{Nginx Config Anatomy}
 
-\newthought{Nginx configuration} is structured in nested blocks:
-
-\begin{verbatim}
-server {
-    listen 80;
-    server_name 192.168.56.11;
-
-    # Serve static files
-    location / {
-        root /opt/pixelwise/frontend;
-        index index.html;
-    }
-
-    # Proxy API requests to uvicorn
-    location /api/ {
-        proxy_pass http://localhost:8000/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-\end{verbatim}
+\newthought{Nginx configuration} is structured in nested blocks.
+A \texttt{server} block declares the listening port and host name, then
+groups one or more \texttt{location} blocks that match request paths.
+A \texttt{location /} block can serve static files from a \texttt{root}
+directory, and a \texttt{location /api/} block can hand traffic off to
+uvicorn with \texttt{proxy\_pass http://localhost:8000/}, where the
+trailing slash strips the \texttt{/api} prefix before the request reaches
+the backend.
+The exercise below has the full file PixelWise needs.
 
 \marginnote{The \texttt{proxy\_pass} directive is the reverse proxy: any request to \texttt{/api/classify}
 is forwarded to \texttt{http://localhost:8000/classify}. The browser sees \texttt{https://192.168.56.11/api/classify};
@@ -236,7 +221,29 @@ sudo apt install -y nginx
 sudo nano /etc/nginx/sites-available/pixelwise
 \end{verbatim}
 
-Use the config from the theory above. Enable the site and restart:
+Paste the following into the file:
+
+\begin{verbatim}
+server {
+    listen 80;
+    server_name 192.168.56.11;
+
+    # Serve static files
+    location / {
+        root /opt/pixelwise/frontend;
+        index index.html;
+    }
+
+    # Proxy API requests to uvicorn
+    location /api/ {
+        proxy_pass http://localhost:8000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+\end{verbatim}
+
+Enable the site and restart:
 
 \begin{verbatim}
 sudo ln -s /etc/nginx/sites-available/pixelwise \
@@ -264,19 +271,10 @@ frontend is served on port 443 and the API runs on port 8000, the browser consid
 and blocks the request.
 
 \newthought{During development,} CORS causes pain. The browser's console shows a cryptic error:
-\texttt{Access to fetch has been blocked by CORS policy}. The fix: configure FastAPI to allow requests
-from the frontend's origin:
-
-\begin{verbatim}
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://192.168.56.11"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-\end{verbatim}
+\texttt{Access to fetch has been blocked by CORS policy}. The fix is to register the FastAPI
+\texttt{CORSMiddleware} with an explicit \texttt{allow\_origins} list naming the frontend origin,
+plus the methods and headers the frontend will send.
+The exercise below wires it up.
 
 \marginnote{Never use \texttt{allow\_origins=["*"]} in production, it allows any website to call your API.
 Configure allowed origins explicitly.}
@@ -340,14 +338,11 @@ HTTPS encrypts the entire channel between browser and server.
     Renewal is automatic via \texttt{certbot}\index{certbot} (\url{https://certbot.eff.org/}).
 \end{description}
 
-\newthought{Generating a self-signed certificate:}
-
-\begin{verbatim}
-sudo openssl req -x509 -nodes -days 365 \
-    -newkey rsa:2048 \
-    -keyout /etc/ssl/private/pixelwise.key \
-    -out /etc/ssl/certs/pixelwise.crt
-\end{verbatim}
+\newthought{Generating a self-signed certificate} is a one-liner with
+\texttt{openssl req -x509}, which produces a key file under
+\texttt{/etc/ssl/private/} and a certificate file under
+\texttt{/etc/ssl/certs/} that Nginx can then point at.
+The exercise below has the full command.
 
 \subsection{Security Headers}\index{security headers}
 

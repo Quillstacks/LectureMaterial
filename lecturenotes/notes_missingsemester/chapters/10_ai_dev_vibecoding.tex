@@ -31,52 +31,6 @@ Chat-based tools: ChatGPT (\url{https://chatgpt.com/}), Claude (\url{https://cla
 CLI and IDE agents are the next level: they read your whole project, not just the current file.}
 
 % ==============================================================================================
-% BLOCK 2: CONCEPTS AND PRACTICE
-% ==============================================================================================
-
-\newpage
-\section{The Agent Loop}\index{agent loop}
-
-\newthought{How these tools actually work} the agent loop repeats until the task is done:
-
-\begin{itemize}
-    \item Observe: the agent collects context, your repo structure, git status, recent commits,
-    the files you point it at.
-    \item Inspect: it analyses the code and your request to understand what needs to change.
-    \item Choose: it selects an action, edit a file, run a command, ask you a question.
-    \item Act: it executes the action, gets the result, and loops back to observe.
-\end{itemize}
-
-\newthought{The harness} (the program wrapping the LLM\index{LLM}) validates every action before execution:
-is the tool recognised? Are the arguments valid? Is the file path inside the repo? The LLM proposes,
-the harness gatekeeps.
-
-\newthought{The quality depends entirely on what context you give the agent.} Garbage in, garbage out.
-A vague prompt produces vague code. A precise prompt with file references produces precise changes.
-
-\subsection{Sandboxing}\index{sandboxing}
-
-\newthought{AI agents run on your machine,} so what stops them from doing damage? An unrestricted agent
-can run \texttt{rm -rf /}, \texttt{curl} your secrets to an external server, install packages, or modify
-system files. It runs with your user's permissions.
-
-\newthought{How sandboxing works in practice:}
-
-\begin{description}
-    \item[Permission prompts] Agents like Claude Code ask before executing each command, you approve or deny.
-    The human stays in the loop.
-    \item[Code-only mode] Aider is code-only by default, it reads and edits files but does not run shell
-    commands at all.
-    \item[Restricted execution] Docker containers, VMs, or chroot jails, the agent runs in an isolated
-    environment where it physically cannot access the host system.
-    \item[Allow/deny lists] Configure which commands or directories the agent can access. Some tools let
-    you whitelist specific tools (e.g., ``can run \texttt{pytest} but nothing else'').
-\end{description}
-
-\marginnote{The principle: give the agent the minimum access it needs. Read your code, yes. Edit files, yes.
-Run arbitrary commands, only with explicit approval. Access \texttt{.env} or SSH keys, never.}
-
-% ==============================================================================================
 \newpage
 \section{Optional Exercise: Catch Up to \texttt{v0.8}}\index{exercises}\index{Git!tag}\index{recovery}
 
@@ -162,12 +116,54 @@ service that is already emitting structured logs and the Discord webhook
 already configured in \texttt{.env}.
 
 % ==============================================================================================
+% BLOCK 2: CONCEPTS AND PRACTICE
+% ==============================================================================================
+
+\newpage
+\section{The Agent Loop}\index{agent loop}
+
+\newthought{How these tools actually work} the agent loop repeats until the task is done:
+
+\begin{itemize}
+    \item Observe: the agent collects context, your repo structure, git status, recent commits,
+    the files you point it at.
+    \item Inspect: it analyses the code and your request to understand what needs to change.
+    \item Choose: it selects an action, edit a file, run a command, ask you a question.
+    \item Act: it executes the action, gets the result, and loops back to observe.
+\end{itemize}
+
+\newthought{The harness} (the program wrapping the LLM\index{LLM}) validates every action before execution:
+is the tool recognised? Are the arguments valid? Is the file path inside the repo? The LLM proposes,
+the harness gatekeeps.
+
+\newthought{The quality depends entirely on what context you give the agent.} Garbage in, garbage out.
+A vague prompt produces vague code. A precise prompt with file references produces precise changes.
+
+\subsection{Sandboxing}\index{sandboxing}
+
+\newthought{AI agents run on your machine,} so what stops them from doing damage? An unrestricted agent
+can run \texttt{rm -rf /}, \texttt{curl} your secrets to an external server, install packages, or modify
+system files. It runs with your user's permissions.
+
+\newthought{How sandboxing works in practice:}
+
+\begin{description}
+    \item[Permission prompts] Agents like Claude Code ask before executing each command, you approve or deny.
+    The human stays in the loop.
+    \item[Code-only mode] Aider is code-only by default, it reads and edits files but does not run shell
+    commands at all.
+    \item[Restricted execution] Docker containers, VMs, or chroot jails, the agent runs in an isolated
+    environment where it physically cannot access the host system.
+    \item[Allow/deny lists] Configure which commands or directories the agent can access. Some tools let
+    you whitelist specific tools (e.g., ``can run \texttt{pytest} but nothing else'').
+\end{description}
+
+\marginnote{The principle: give the agent the minimum access it needs. Read your code, yes. Edit files, yes.
+Run arbitrary commands, only with explicit approval. Access \texttt{.env} or SSH keys, never.}
+
+% ==============================================================================================
 \newpage
 \section{Exercise: Set up Aider}\index{exercises}
-
-\marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
-If your VM is broken, restore the \texttt{B9-complete} snapshot.
-No snapshot needed after this session, this is the final block.}
 
 \newthought{Set up Aider} on your dev VM. Aider\index{Aider} (\url{https://aider.chat/}) is an open-source CLI agent. Connect it to
 Qwen\index{Qwen} (\url{https://qwen.readthedocs.io/}) via Ollama\index{Ollama} (\url{https://ollama.com/}), self-hosted on the server, provided by the course.

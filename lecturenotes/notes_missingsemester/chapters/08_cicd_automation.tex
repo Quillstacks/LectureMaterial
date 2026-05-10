@@ -22,106 +22,6 @@ deploys to the server, with no manual SSH-and-pull.
 \newthought{The pipeline:} lint $\to$ test $\to$ deploy. Each step gates the next. If linting fails,
 tests do not run. If tests fail, the deploy does not happen.
 
-% ==============================================================================================
-% BLOCK 2: CONCEPTS AND PRACTICE
-% ==============================================================================================
-
-\newpage
-\section{GitHub Actions}\index{GitHub Actions}
-
-\newthought{GitHub Actions}\marginnote{GitHub Actions\index{GitHub Actions}:
-\url{https://docs.github.com/en/actions}\\
-Workflow syntax: \url{https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions}}
-run workflows in response to repository events. The configuration lives in
-YAML files under \texttt{.github/workflows/}.
-
-\begin{verbatim}
-# .github/workflows/ci.yml
-name: CI
-on: [push, pull_request]
-
-jobs:
-  lint-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install -r requirements.txt
-          pip install ruff pytest
-
-      - name: Lint
-        run: ruff check .
-
-      - name: Test
-        run: pytest tests/
-\end{verbatim}
-
-\marginnote{Key concepts: \emph{triggers}\index{GitHub Actions!triggers} (\texttt{push}, \texttt{pull\_request})
-define when a workflow runs. \emph{Jobs} run on \emph{runners}, GitHub-provided VMs. \emph{Steps} are
-sequential commands within a job.}
-
-\subsection{Using Secrets in Actions}\index{GitHub Actions!secrets}
-
-\newthought{Never hardcode secrets in workflow files.} Store them in GitHub's repository settings under
-Settings $\to$ Secrets and variables $\to$ Actions. Reference them as \texttt{\$\{\{ secrets.MY\_SECRET \}\}}.
-Never echo them in logs.
-
-\subsection{The Deploy Workflow}
-
-\begin{verbatim}
-# .github/workflows/deploy.yml
-name: Deploy
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/pixelwise
-            bash scripts/deploy.sh
-\end{verbatim}
-
-\subsection{Tests: Where They Live}\index{testing}\index{pytest}
-
-\newthought{The CI pipeline runs \texttt{pytest},}\marginnote{pytest\index{pytest}:
-\url{https://docs.pytest.org/}\\
-ruff\index{ruff} (linter): \url{https://docs.astral.sh/ruff/}} but writing tests is an entire discipline covered
-in dedicated courses. Here we show where tests live (\texttt{tests/}), what a test looks like, and how
-the CI pipeline runs them. A few example tests are provided in the boilerplate:
-
-\begin{verbatim}
-# tests/test_classifier.py
-from app.classifier import classify_batch
-import numpy as np
-
-def test_classify_batch_shape():
-    images = np.zeros((2, 28, 28), dtype=np.uint8)
-    results = classify_batch(images)
-    assert len(results) == 2
-    assert "prediction" in results[0]
-    assert "confidence" in results[0]
-\end{verbatim}
-
-The goal is to see the feedback loop: push code $\to$ tests run $\to$ green or red.
-
 
 % ==============================================================================================
 \newpage
@@ -208,12 +108,70 @@ running with a TLS certificate and the frontend already deployed.
 
 
 % ==============================================================================================
+% BLOCK 2: CONCEPTS AND PRACTICE
+% ==============================================================================================
+
+\newpage
+\section{GitHub Actions}\index{GitHub Actions}
+
+\newthought{GitHub Actions}\marginnote{GitHub Actions\index{GitHub Actions}:
+\url{https://docs.github.com/en/actions}\\
+Workflow syntax: \url{https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions}}
+run workflows in response to repository events. The configuration lives in
+YAML files under \texttt{.github/workflows/}.
+A continuous integration workflow declares the triggers that start it,
+typically \texttt{push} and \texttt{pull\_request}, the runner image,
+ubuntu-latest in our case, and a sequence of steps that check out the
+code, set up Python, install dependencies, lint with \texttt{ruff}, and
+run the test suite with \texttt{pytest}.
+The exercise below has the full \texttt{ci.yml} that PixelWise needs.
+
+\marginnote{Key concepts. Triggers\index{GitHub Actions!triggers}, namely \texttt{push} and \texttt{pull\_request},
+define when a workflow runs. Jobs run on runners, GitHub-provided VMs. Steps are
+sequential commands within a job.}
+
+\subsection{Using Secrets in Actions}\index{GitHub Actions!secrets}
+
+\newthought{Never hardcode secrets in workflow files.} Store them in GitHub's repository settings under
+Settings $\to$ Secrets and variables $\to$ Actions. Reference them as \texttt{\$\{\{ secrets.MY\_SECRET \}\}}.
+Never echo them in logs.
+
+\subsection{The Deploy Workflow}
+
+\newthought{The deploy workflow} fires only on pushes to \texttt{main},
+opens an SSH session to the server using the secrets configured in
+GitHub, and runs \texttt{scripts/deploy.sh} on the remote machine.
+We use the \texttt{appleboy/ssh-action} runner so the entire deploy step
+is a few lines of YAML.
+The exercise below wires it up.
+
+\subsection{Tests: Where They Live}\index{testing}\index{pytest}
+
+\newthought{The CI pipeline runs \texttt{pytest},}\marginnote{pytest\index{pytest}:
+\url{https://docs.pytest.org/}\\
+ruff\index{ruff} (linter): \url{https://docs.astral.sh/ruff/}} but writing tests is an entire discipline covered
+in dedicated courses. Here we show where tests live (\texttt{tests/}), what a test looks like, and how
+the CI pipeline runs them. A few example tests are provided in the boilerplate:
+
+\begin{verbatim}
+# tests/test_classifier.py
+from app.classifier import classify_batch
+import numpy as np
+
+def test_classify_batch_shape():
+    images = np.zeros((2, 28, 28), dtype=np.uint8)
+    results = classify_batch(images)
+    assert len(results) == 2
+    assert "prediction" in results[0]
+    assert "confidence" in results[0]
+\end{verbatim}
+
+The goal is to see the feedback loop: push code $\to$ tests run $\to$ green or red.
+
+
+% ==============================================================================================
 \newpage
 \section{Exercise: CI Workflow}\index{exercises}
-
-\marginnote{\newthought{Exercises} are for practice and reinforcing concepts.
-If your VM is broken, restore the \texttt{B7-complete} snapshot.
-At the end of this session, take a snapshot named \texttt{B8-complete} as a safety net.}
 
 \newthought{Write the CI workflow.} Create \texttt{.github/workflows/ci.yml} that on every push
 lints with \texttt{ruff}\index{ruff} and runs \texttt{pytest} against the boilerplate tests in \texttt{tests/}:
@@ -223,14 +181,103 @@ mkdir -p .github/workflows
 nano .github/workflows/ci.yml
 \end{verbatim}
 
-Use the YAML from the theory above. Push and watch the workflow run on GitHub.
+Paste the workflow:
+
+\begin{verbatim}
+# .github/workflows/ci.yml
+name: CI
+on: [push, pull_request]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+          pip install ruff pytest
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test
+        run: pytest tests/
+\end{verbatim}
+
+Push and watch the workflow run on GitHub.
 
 
 % ==============================================================================================
 \newpage
 \section{The Deploy Script}\index{deploy.sh}
 
-\newthought{A standalone deploy script} is reusable from both Actions and manual deploys:
+\newthought{A standalone deploy script} is reusable from both Actions
+and manual deploys.
+The script lives at \texttt{scripts/deploy.sh}, runs with
+\texttt{set -euo pipefail} so any failure aborts the run, changes into
+\texttt{/opt/pixelwise}, pulls \texttt{main}, activates the virtual
+environment, installs dependencies, applies database migrations with
+\texttt{alembic upgrade head}, restarts the systemd unit, and prints a
+timestamped completion line.
+Keeping the steps in a script means the GitHub Actions runner and a
+human on the server execute the same path.
+The exercise below has the full file PixelWise needs.
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Deploy Workflow}\index{exercises}
+
+\newthought{Write the deploy workflow.} Create \texttt{.github/workflows/deploy.yml} that on merge
+to \texttt{main}, SSHs to the server and runs the deploy script. Add your SSH key and server IP
+as GitHub Actions secrets.
+
+\begin{verbatim}
+# .github/workflows/deploy.yml
+name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/pixelwise
+            bash scripts/deploy.sh
+\end{verbatim}
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Deploy Script}\index{exercises}
+
+\newthought{Write the deploy script.} Create \texttt{scripts/deploy.sh} that pulls \texttt{main},
+installs dependencies, runs migrations, and restarts the service.
+
+\begin{verbatim}
+mkdir -p scripts
+nano scripts/deploy.sh
+chmod +x scripts/deploy.sh
+\end{verbatim}
+
+Paste:
 
 \begin{verbatim}
 #!/bin/bash
@@ -244,29 +291,6 @@ pip install -r requirements.txt
 alembic upgrade head
 sudo systemctl restart pixelwise
 echo "Deploy complete: $(date)"
-\end{verbatim}
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: Deploy Workflow}\index{exercises}
-
-\newthought{Write the deploy workflow.} Create \texttt{.github/workflows/deploy.yml} that on merge
-to \texttt{main}, SSHs to the server and runs the deploy script. Add your SSH key and server IP
-as GitHub Actions secrets.
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: Deploy Script}\index{exercises}
-
-\newthought{Write the deploy script.} Create \texttt{scripts/deploy.sh} with the steps from the
-theory above: pull, install deps, run migrations, restart service.
-
-\begin{verbatim}
-mkdir -p scripts
-nano scripts/deploy.sh
-chmod +x scripts/deploy.sh
 \end{verbatim}
 
 
@@ -340,22 +364,29 @@ The database contains data that cannot be recreated. Every prediction, every tim
 
 \newthought{How:} \texttt{pg\_dump}\index{pg\_dump} exports the database to a SQL file.
 
-\newthought{Where:} off-site. A backup on the same server dies with the server. The \texttt{dev} VM
-is the natural off-site target: \texttt{pg\_dump} creates the dump, \texttt{rsync}\index{rsync} copies it
-to the dev VM over SSH. The two-machine setup from Block~1 pays off again.
+\newthought{Where:} Off-site. A backup on the same server dies with
+the server. The \texttt{dev} VM is the natural off-site target:
+\texttt{pg\_dump} creates the dump, \texttt{rsync}\index{rsync} copies
+it to the dev VM over SSH, and the two-machine setup from Block~1 pays
+off again.
+The exercise on the next page schedules the dump and the rsync as a
+single nightly cron line.
 
-\begin{verbatim}
-# Backup script
-pg_dump -U pixelwise pixelwise \
-    > /tmp/pixelwise_$(date +%Y%m%d).sql
-rsync -avz /tmp/pixelwise_$(date +%Y%m%d).sql \
-    user@192.168.56.10:/backups/pixelwise/
-\end{verbatim}
+\marginnote{\texttt{rsync}\index{rsync}, see \url{https://rsync.samba.org/}, is efficient file sync over SSH, incremental
+because it only transfers changed bytes, fast, and scriptable. The right tool for moving backup files between machines.}
 
-\marginnote{\texttt{rsync}\index{rsync} (\url{https://rsync.samba.org/}) is efficient file sync over SSH, incremental
-(only transfers changed bytes), fast, scriptable. The right tool for moving backup files between machines.}
+\newthought{How to verify:} Restore from a backup at least once.
+An untested backup is not a backup, so the next exercise restores the
+dump into a test database on the dev VM and confirms the data is
+intact.
 
-\newthought{How to verify:} restore from a backup at least once. An untested backup is not a backup:
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Verify the Backup}\index{exercises}
+
+\newthought{Verify the backup.} Run the backup manually once. Then restore it into a test database
+on the dev VM and verify the data is intact:
 
 \begin{verbatim}
 # On the dev VM: restore into a test database
@@ -366,27 +397,16 @@ psql -U pixelwise -d pixelwise_test \
 
 % ==============================================================================================
 \newpage
-\section{Exercise: Verify the Backup}\index{exercises}
-
-\newthought{Verify the backup.} Run the backup manually once. Then restore it into a test database
-on the dev VM and verify the data is intact.
-
-
-% ==============================================================================================
-\newpage
 \section{Feature Flags}\index{feature flag}
 
-\newthought{Deploying new behaviour without deploying new code.} The simplest form: an env var that
+\newthought{Deploying new behaviour without deploying new code.} The simplest form: An env var that
 controls which code path runs. Change the flag, restart the service, and the new behaviour is live.
 No code change, no PR, no CI pipeline.
-
-\begin{verbatim}
-# .env
-MODEL_VERSION=v1
-
-# In classifier.py
-model_path = f"models/digit_classifier_{MODEL_VERSION}.pkl"
-\end{verbatim}
+For PixelWise, a \texttt{MODEL\_VERSION} entry in \texttt{.env} selects
+which model file \texttt{classifier.py} loads, so swapping
+\texttt{v1} for \texttt{v2} is a one-line config change followed by a
+service restart.
+The exercise below wires it up.
 
 \marginnote{This is how teams roll out features gradually or switch between model versions without risk.
 Both \texttt{v1} and \texttt{v2} model files are available. Switching the model is a config change plus

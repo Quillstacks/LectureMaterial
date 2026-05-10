@@ -23,61 +23,6 @@ it is working well? Three pillars:
     \item[Analytics] Patterns in your data that reveal how the system behaves over time.
 \end{description}
 
-% ==============================================================================================
-% BLOCK 2: CONCEPTS AND PRACTICE
-% ==============================================================================================
-
-\newpage
-\section{Structured Logging}\index{structured logging}\index{JSON logging}
-
-\newthought{Plain strings are not enough.} \texttt{print("got request")} tells you something happened.
-It does not tell you what, when, from whom, how long it took, or what the result was. You cannot filter,
-aggregate, or search plain strings at scale.
-
-\newthought{Structured logging} means every log line is a JSON dict:
-
-\begin{verbatim}
-{
-  "timestamp": "2026-04-05T14:23:01Z",
-  "level": "INFO",
-  "endpoint": "/classify",
-  "request_id": "abc-123",
-  "latency_ms": 42,
-  "predicted_class": "7",
-  "confidence": 0.94,
-  "model_version": "v1"
-}
-\end{verbatim}
-
-\marginnote{Structured logs are parseable by machines, readable by humans, and queryable with \texttt{jq}\index{jq}
-(\url{https://jqlang.github.io/jq/})
-or piped into any log aggregation tool.\\
-Python \texttt{logging}\index{logging}: \url{https://docs.python.org/3/library/logging.html}}
-
-\newthought{In Python,} configure structured logging:
-
-\begin{verbatim}
-import logging
-import json
-from datetime import datetime
-
-class JSONFormatter(logging.Formatter):
-    def format(self, record):
-        log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "level": record.levelname,
-            "message": record.getMessage(),
-        }
-        # Add extra fields if present
-        for key in ["endpoint", "request_id",
-                     "latency_ms", "predicted_class",
-                     "confidence", "model_version"]:
-            if hasattr(record, key):
-                log_data[key] = getattr(record, key)
-        return json.dumps(log_data)
-\end{verbatim}
-
-% ==============================================================================================
 \newpage
 \section{Optional Exercise: Catch Up to \texttt{v0.7}}\index{exercises}\index{Git!tag}\index{recovery}
 
@@ -170,6 +115,43 @@ The file state alone is not enough when the next exercises expect
 working CI/CD, scheduled cron jobs on \texttt{prod}, and feature flags
 that the runtime can already read.
 
+% ==============================================================================================
+% BLOCK 2: CONCEPTS AND PRACTICE
+% ==============================================================================================
+
+\newpage
+\section{Structured Logging}\index{structured logging}\index{JSON logging}
+
+\newthought{Plain strings are not enough.} \texttt{print("got request")} tells you something happened.
+It does not tell you what, when, from whom, how long it took, or what the result was. You cannot filter,
+aggregate, or search plain strings at scale.
+
+\newthought{Structured logging} means every log line is a JSON dict:
+
+\begin{verbatim}
+{
+  "timestamp": "2026-04-05T14:23:01Z",
+  "level": "INFO",
+  "endpoint": "/classify",
+  "request_id": "abc-123",
+  "latency_ms": 42,
+  "predicted_class": "7",
+  "confidence": 0.94,
+  "model_version": "v1"
+}
+\end{verbatim}
+
+\marginnote{Structured logs are parseable by machines, readable by humans, and queryable with \texttt{jq}\index{jq}
+(\url{https://jqlang.github.io/jq/})
+or piped into any log aggregation tool.\\
+Python \texttt{logging}\index{logging}: \url{https://docs.python.org/3/library/logging.html}}
+
+\newthought{In Python,} the standard \texttt{logging} module accepts a custom formatter that overrides
+\texttt{format(record)} to serialise each record as JSON. The formatter pulls the timestamp, level,
+and message from the record itself, then copies known extra fields if the calling code attached them
+through \texttt{logger.info(..., extra=\{...\})}. The exercise below wires the formatter into
+\texttt{app/main.py} and lists the fields PixelWise emits.
+
 \newpage
 \section{Exercise: Add Structured JSON Logging}\index{exercises}
 
@@ -191,14 +173,10 @@ in the theory above. Every request should log: \texttt{timestamp}, \texttt{level
     \item[Readiness] Can it serve requests? Is the DB reachable? Is the model loaded?
 \end{description}
 
-\begin{verbatim}
-@app.get("/health")
-def health():
-    db_ok = check_db_connection()
-    model_ok = _pipeline is not None
-    status = "ok" if (db_ok and model_ok) else "degraded"
-    return {"status": status, "model_version": MODEL_VERSION}
-\end{verbatim}
+The upgraded handler runs both checks in sequence, opens a short test query against PostgreSQL,
+and confirms that the global model pipeline is loaded. If either fails, the response status flips
+from \texttt{"ok"} to \texttt{"degraded"} so the cron-driven monitor can react. The exercise below
+has the full handler PixelWise needs.
 
 \marginnote{What to expose externally vs what to keep internal: the public \texttt{/health} endpoint
 returns \texttt{"ok"} or \texttt{"degraded"}. It does not expose DB passwords, stack traces, or version
@@ -217,27 +195,15 @@ log detailed diagnostics internally.
 If the response is not \texttt{"ok"}, it sends a Discord webhook notification. Your service talks to you
 when something breaks, on your phone, in your pocket.
 
-\begin{verbatim}
-#!/bin/bash
-# scripts/health_check.sh
-HEALTH=$(curl -s http://localhost:8000/health)
-STATUS=$(echo $HEALTH | jq -r '.status')
-
-if [ "$STATUS" != "ok" ]; then
-    curl -H "Content-Type: application/json" \
-      -d "{\"content\": \"PixelWise ALERT: $HEALTH\"}" \
-      $DISCORD_WEBHOOK_URL
-fi
-\end{verbatim}
+\newthought{The shape of the script.} A short bash file under \texttt{scripts/health\_check.sh}
+calls \texttt{curl} against the local \texttt{/health} endpoint, parses the \texttt{status} field
+with \texttt{jq}, and posts a JSON payload to the webhook URL when the status is anything other
+than \texttt{"ok"}. The webhook URL itself comes from the environment, so the script carries no
+secrets in the repository. The exercise below has the full script and the cron registration.
 
 \marginnote{The Discord webhook URL is stored in \texttt{.env}. It is a secret that grants posting
 access to your channel. The cron job runs the script; the script talks to Discord when there is a problem.\\
 Discord Webhooks: \url{https://discord.com/developers/docs/resources/webhook}}
-
-\newthought{Register as a cron job:}
-\begin{verbatim}
-*/5 * * * * /opt/pixelwise/scripts/health_check.sh
-\end{verbatim}
 
 \newpage
 \section{Exercise: Set Up Discord Webhook Monitoring}\index{exercises}
@@ -266,16 +232,9 @@ Discord Webhooks: \url{https://discord.com/developers/docs/resources/webhook}}
 \section{Event-Driven Notifications}\index{alerting}
 
 \newthought{The Discord pattern generalises.} Any event worth knowing about can trigger a notification.
-A second example: notify when the model produces a low-confidence prediction (below a threshold).
-
-\begin{verbatim}
-# In the classify endpoint
-if result["confidence"] < CONFIDENCE_THRESHOLD:
-    send_discord_alert(
-        f"Low confidence: {result['prediction']} "
-        f"({result['confidence']:.2f})"
-    )
-\end{verbatim}
+A second example sits inside the classify endpoint: After the model returns a result, compare its
+confidence against a threshold constant, and call a small \texttt{send\_discord\_alert} helper with the
+predicted class and the confidence score whenever the value falls short. The exercise below wires it up.
 
 \newthought{If these spike,} the model may be struggling with inputs it was not trained on, a real signal,
 not noise. This is the natural step toward model monitoring: tracking confidence over time, spotting
@@ -315,24 +274,14 @@ Discuss: what does a spike in clears tell you about model performance?
 
 \subsection{The \texttt{/analytics} Endpoint}\index{/analytics}
 
-\newthought{Provided as boilerplate.} It returns prediction counts, average confidence, and model version
-breakdown. Students hit the endpoint and see the data. The lesson is not how to write the queries, but
-what the numbers tell you about your app.
-
-\begin{verbatim}
-@app.get("/api/analytics")
-def analytics():
-    # Boilerplate: queries predictions table
-    return {
-        "total_predictions": ...,
-        "predictions_per_class": {...},
-        "avg_confidence": ...,
-        "model_versions": {...}
-    }
-\end{verbatim}
+\newthought{Provided as boilerplate.} The endpoint queries the \texttt{predictions} table and returns
+total prediction counts, a per-class breakdown, the average confidence value, and a tally of which model
+versions served traffic. Students hit the endpoint and see the data. The lesson is not how to write the
+queries, but what the numbers tell you about your app. The exercise below has the full handler and the
+\texttt{curl} call that exercises it.
 
 \marginnote{In production, analytics panels are never public. They reveal usage patterns and internal metrics.
-They belong behind authentication on a separate internal route (e.g., \texttt{/admin/analytics}).}
+They belong behind authentication on a separate internal route, for example \texttt{/admin/analytics}.}
 
 \subsection{Frontend Analytics}
 
