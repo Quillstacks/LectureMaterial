@@ -94,6 +94,8 @@
 |  02  | Version Everything: Git & GitHub | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/02_git_github.pdf) |
 |  03  | Dependencies & Structure | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/03_dependencies_structure.pdf) |
 |  04  | Integrate the Model | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/04_model_integration.pdf) |
+|  05  | The Backend: APIs & Services | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/05_apis_services.pdf) |
+|  06  | Databases & SQL | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/06_databases_sql.pdf) |
 
 </details>
 <!-- END:lecture:notes_missingsemester -->

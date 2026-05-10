@@ -26,6 +26,23 @@ if [[ ! -d "$BOOK_DIR/chapters" ]]; then
   exit 1
 fi
 
+# Pick a working Python >= 3.9 (version_word.py uses PEP 585 generics).
+# On macOS/Linux this is normally python3. On Windows, python3.exe in PATH
+# is often the Microsoft Store stub that just prints an install hint, and
+# the system python may be too old, so prefer the py launcher when present.
+need_py="import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)"
+PYTHON=
+for cand in python3 python "py -3"; do
+  if $cand -c "$need_py" >/dev/null 2>&1; then
+    PYTHON="$cand"
+    break
+  fi
+done
+if [[ -z "$PYTHON" ]]; then
+  echo "No Python >= 3.9 found (need python3, python, or py -3)" >&2
+  exit 1
+fi
+
 today="$(date +%Y-%m-%d)"
 
 stamp_for() {
@@ -39,7 +56,7 @@ stamp_for() {
     date="$today"
     name="local draft"
   else
-    name="$(python3 "$SCRIPT_DIR/version_word.py" "$hash" \
+    name="$($PYTHON "$SCRIPT_DIR/version_word.py" "$hash" \
       "$WORDS_DIR/adjectives.txt" \
       "$WORDS_DIR/fruits.txt" \
       "$WORDS_DIR/tiere.txt")"

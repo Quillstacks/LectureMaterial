@@ -21,87 +21,86 @@ That something is Nginx\index{Nginx}.
 \newpage
 \section{Optional Exercise: Catch Up to \texttt{v0.5}}\index{exercises}\index{Git!tag}\index{recovery}
 
-\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
-This block builds on the state at the end of Block~6: PostgreSQL running
-on \texttt{prod}, the \texttt{pixelwise} database and application user
-created, SQLAlchemy models in \texttt{app/models.py}, Alembic migrations
-applied, \texttt{DATABASE\_URL} set in \texttt{.env}, and the FastAPI
-handler writing prediction rows to the database.
-If you joined late, missed Block~6, or your repository has drifted,
-restore from the snapshot and reset to \texttt{v0.5} rather than redoing
-every prior exercise.
-
 \marginnote{\newthought{Tag map.}\index{Git!tag}
 \texttt{v0.5} marks the end of Block~6, \texttt{v0.6} will mark the end
 of this block.
 Browse the full set at
 \url{https://github.com/schutera/pixelwise/tags}.}
 
-\newthought{Restore the snapshot.}
-On both VMs, restore the \texttt{B6-complete} snapshot from Block~6.
-The snapshot carries everything that is not in Git, the \texttt{.venv/},
-the model artefact, the systemd service, the PostgreSQL installation
-with the populated \texttt{pixelwise} database, and any real
-\texttt{.env} values you wrote.
-With the system layer back in place, only the repository state needs
-to be rewound.
+\newthought{Catching up via tag.}\index{Git!tag}\index{recovery}
+This catch-up extends the one in Block~6. If you have not done that one,
+do it first: It lands you at \texttt{v0.4}, the end-of-Block~5 state.
+The exercise here picks up from there and rewinds to \texttt{v0.5}, the
+end-of-Block~6 state, with PostgreSQL running on \texttt{prod}, the
+\texttt{pixelwise} database and application user created, SQLAlchemy
+models in \texttt{app/models.py}, Alembic migrations applied,
+\texttt{DATABASE\_URL} set in \texttt{.env}, and the FastAPI handler
+writing prediction rows to the database.
 
-\newthought{Catch-up procedure on \texttt{dev}.}
-Reset PixelWise to the previous tag:
+\newthought{Both VMs this time.} Block~6 ended with the service writing
+to PostgreSQL on \texttt{prod}, so this catch-up brings both machines up
+to \texttt{v0.5}. The Git-tracked changes since \texttt{v0.4} include
+\texttt{app/models.py} with the \texttt{Prediction} class, the
+\texttt{alembic/} directory and \texttt{alembic.ini} for migrations, an
+updated \texttt{app/main.py} where \texttt{POST /classify} writes a row
+and \texttt{GET /results} reads from the database, an extended
+\texttt{requirements.txt} with SQLAlchemy, \texttt{psycopg2-binary}, and
+Alembic, a \texttt{setup-server.sh} that installs PostgreSQL and creates
+the \texttt{pixelwise} database and user on \texttt{prod}, and a refreshed
+\texttt{.env.example} with \texttt{DATABASE\_URL}. The local \texttt{.env}
+on each VM needs the database password written by hand;
+\texttt{setup-server.sh} then provisions PostgreSQL, applies the
+migrations, and restarts the service in one shot.
 
-\begin{verbatim}
-cd ~/pixelwise
-git fetch origin
-git reset --hard v0.5
-\end{verbatim}
+\newthought{Run the catch-up on \texttt{dev}.}
+Rewind the repository to \texttt{v0.5}, refresh \texttt{.env} from the
+updated example and edit it to set \texttt{DATABASE\_URL} with the
+database password, reinstall pinned dependencies if your virtual
+environment was wiped, then run \texttt{setup-server.sh}. The exact
+commands are in the margin.
 
-\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
-This rewrites your working tree to match the end of Block~6 exactly,
-including \texttt{app/models.py}, the \texttt{alembic/} directory, and
-\texttt{alembic.ini}.
-There is no work to lose if you have not committed beyond \texttt{v0.5};
-if you have, branch off first with \texttt{git branch backup-pre-catchup}
-so the work is recoverable.}
+\marginnote{\newthought{Sequence on \texttt{dev}.}\\[0.4em]
+\texttt{cd \textasciitilde/pixelwise}\\
+\texttt{git fetch origin -{}-tags}\\
+\texttt{git reset -{}-hard v0.5}\\
+\texttt{cp .env.example .env}\\
+\texttt{nano .env}\\
+\texttt{source .venv/bin/activate}\\
+\texttt{pip install -r requirements.txt}\\
+\texttt{bash setup-server.sh}\\[0.3em]
+Edit \texttt{.env} to set \texttt{DATABASE\_URL} with the database
+password and any local overrides. If \texttt{.venv/} is missing, run
+\texttt{python3 -m venv .venv} before the \texttt{source} step.}
 
-\newthought{Mirror it on \texttt{prod}.}
+\newthought{Run the catch-up on \texttt{prod}.}
+Same sequence on prod, where \texttt{setup-server.sh} also installs
+PostgreSQL, creates the \texttt{pixelwise} database and user, applies
+the Alembic migrations, and restarts the service. After the script
+finishes, verify the API is reachable from \texttt{dev}.
 
-\begin{verbatim}
-ssh produser@192.168.56.11
-cd /opt/pixelwise
-git fetch origin
-git reset --hard v0.5
-sudo systemctl restart pixelwise
-\end{verbatim}
+\marginnote{\newthought{Sequence on \texttt{prod}.}\\[0.4em]
+\texttt{ssh produser@192.168.56.11}\\
+\texttt{cd /opt/pixelwise}\\
+\texttt{git fetch origin -{}-tags}\\
+\texttt{git reset -{}-hard v0.5}\\
+\texttt{cp .env.example .env}\\
+\texttt{nano .env}\\
+\texttt{source .venv/bin/activate}\\
+\texttt{pip install -r requirements.txt}\\
+\texttt{bash setup-server.sh}\\[0.3em]
+Then from \texttt{dev}:
+\texttt{curl http://192.168.56.11:8000/health}
+should return \texttt{\{"status":"ok"\dots\}}.}
 
 \marginnote{\newthought{Already have a fork?}\index{Git!fork}
-If your own fork carries the \texttt{v0.5} tag, swap \texttt{origin} to
-your fork URL on \texttt{dev} with
+If your own fork carries the \texttt{v0.5} tag, swap \texttt{origin} on
+\texttt{dev} with
 \texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
 so push and pull continue to target your account.
 The HTTPS clone on \texttt{prod} stays read-only.}
 
-\newthought{Verify persistence.}
-On \texttt{prod}, post a digit through the API and confirm the row
-appears in PostgreSQL:
-
-\begin{verbatim}
-curl -X POST http://192.168.56.11:8000/classify \
-    -H "Content-Type: application/json" \
-    -H "X-API-Key: $SECRET_API_KEY" \
-    -d '{"pixels": [[0,0,...]]}'
-psql -U pixelwise -d pixelwise -h localhost \
-    -c "SELECT count(*) FROM predictions;"
-\end{verbatim}
-
-A nonzero row count means the persistence layer is alive against the
-rewound code.
-You are now at the state where Block~6 ended, with both machines
-aligned, ready to start Block~7.
-
-\newthought{Without a snapshot,} replay Block~6 before continuing.
-The file state alone is not enough when the next exercises expect a
-running PostgreSQL instance with the \texttt{pixelwise} database and
-the migrations applied.
+\newthought{You are now} at the state where Block~6 ended, with both
+machines aligned, ready to start Block~7.
 
 % ==============================================================================================
 % BLOCK 2: CONCEPTS AND PRACTICE
@@ -209,21 +208,19 @@ prefix.}
 \newpage
 \section{Exercise: Install and Configure Nginx}\index{exercises}
 
-\newthought{Install Nginx} on the server:
+\newthought{Install Nginx} on \texttt{prod}:
 
 \begin{verbatim}
 sudo apt install -y nginx
 \end{verbatim}
 
-\newthought{Create the PixelWise site configuration:}
+\newthought{Author the site configuration} on \texttt{dev} at
+\texttt{deploy/nginx/pixelwise.conf} in the repository, alongside the
+systemd unit from Block~5. The config is part of how the app runs, so
+it lives next to the code.
 
 \begin{verbatim}
-sudo nano /etc/nginx/sites-available/pixelwise
-\end{verbatim}
-
-Paste the following into the file:
-
-\begin{verbatim}
+# deploy/nginx/pixelwise.conf
 server {
     listen 80;
     server_name 192.168.56.11;
@@ -243,9 +240,13 @@ server {
 }
 \end{verbatim}
 
-Enable the site and restart:
+Commit, push from \texttt{dev}, and pull on \texttt{prod}. Then install
+the site by copying the committed file into Nginx's search path,
+enable it, and restart:
 
 \begin{verbatim}
+sudo cp /opt/pixelwise/deploy/nginx/pixelwise.conf \
+    /etc/nginx/sites-available/pixelwise
 sudo ln -s /etc/nginx/sites-available/pixelwise \
     /etc/nginx/sites-enabled/
 sudo rm /etc/nginx/sites-enabled/default
@@ -260,6 +261,40 @@ a syntax error caught here is cheaper than a daemon that refuses to start in pro
 \texttt{http://192.168.56.11}. You should see the PixelWise frontend. Draw a digit and submit, the
 request goes through Nginx to uvicorn and back. The browser sees a single origin; uvicorn never appears
 in any URL.
+
+\newthought{Teach \texttt{setup-server.sh} to install the site.}\index{setup-server.sh}
+The five commands you just typed belong in
+\texttt{scripts/setup-server.sh} so a fresh VM picks up the site
+without manual steps. Open the file in nano on \texttt{dev}:
+
+\begin{verbatim}
+nano setup-server.sh
+\end{verbatim}
+
+\marginnote{\newthought{Same prod-only guard.}\index{idempotence}
+The \texttt{id produser} check from Block~5 keeps Nginx out of
+\texttt{dev}, where there is no public traffic to serve. The
+\texttt{ln -sf} flag overwrites an existing symlink instead of
+failing, so the stanza is safe to rerun.}
+
+\begin{verbatim}
+# Install the Nginx site on prod
+if [ -f deploy/nginx/pixelwise.conf ] && \
+   command -v nginx >/dev/null 2>&1 && \
+   id produser >/dev/null 2>&1; then
+    sudo cp deploy/nginx/pixelwise.conf \
+        /etc/nginx/sites-available/pixelwise
+    sudo ln -sf /etc/nginx/sites-available/pixelwise \
+        /etc/nginx/sites-enabled/pixelwise
+    sudo rm -f /etc/nginx/sites-enabled/default
+    sudo nginx -t && sudo systemctl reload nginx
+fi
+\end{verbatim}
+
+Add \texttt{nginx} to the \texttt{apt install} line so the binary is
+present before the stanza runs. Commit, push, and verify on
+\texttt{prod} that \texttt{bash setup-server.sh} reaches the same
+state on a second run without errors.
 
 % ==============================================================================================
 \newpage
@@ -367,18 +402,19 @@ sudo openssl req -x509 -nodes -days 365 \
     -out /etc/ssl/certs/pixelwise.crt
 \end{verbatim}
 
-\newthought{Update the Nginx config} to listen on port 443 with the certificate:
+\newthought{Update \texttt{deploy/nginx/pixelwise.conf}} on \texttt{dev}
+to listen on port 443 with the certificate. Replace the
+\texttt{listen 80;} line with:
 
 \begin{verbatim}
-server {
-    listen 443 ssl;
-    ssl_certificate /etc/ssl/certs/pixelwise.crt;
-    ssl_certificate_key /etc/ssl/private/pixelwise.key;
-    # ... rest of config
-}
+listen 443 ssl;
+ssl_certificate /etc/ssl/certs/pixelwise.crt;
+ssl_certificate_key /etc/ssl/private/pixelwise.key;
 \end{verbatim}
 
-Restart Nginx and verify \texttt{https://192.168.56.11} works (accept the browser warning).
+Commit, push, pull on \texttt{prod}, then rerun
+\texttt{setup-server.sh} to reinstall the site and reload Nginx. Open
+\texttt{https://192.168.56.11} in the browser and accept the warning.
 
 \newthought{Add security headers} to the Nginx config: \texttt{X-Frame-Options}, \texttt{X-Content-Type-Options},
 and \texttt{Content-Security-Policy}. Restart and verify they appear in the response headers:
@@ -406,7 +442,7 @@ a few commands and stays out of the way once configured.
 
 % ==============================================================================================
 \newpage
-\section{Exercise: Commit and Snapshot}\index{exercises}
+\section{Exercise: Commit and Tag}\index{exercises}
 
 \newthought{Commit the frontend and Nginx work}:
 
@@ -416,11 +452,17 @@ git commit -m "Add frontend and Nginx reverse proxy"
 git push
 \end{verbatim}
 
-\newthought{Take a snapshot} of both VMs. Name them \texttt{B7-complete}. This is your known good state
-with the full stack live: frontend, reverse proxy, HTTPS, and security headers all in place.
+\newthought{Tag the release as \texttt{v0.6}.}\index{Git!tag}
+The end of every block is a tagged, runnable state. Mark it now so
+future catch-up exercises can reset back here:
+
+\begin{verbatim}
+git tag -a v0.6 -m "End of Block 7: frontend and Nginx reverse proxy"
+git push origin v0.6
+\end{verbatim}
 
 \marginnote{\newthought{A note on what comes next.}
-The full stack now answers the browser, but every step you took to get here was manual: copying files,
+The full stack now answers the browser, but every step you took to get here was manual: Copying files,
 editing configs, restarting services. Automating that path is a thread we will revisit, so that a single
 command can take code from \texttt{dev} to \texttt{prod} without you remembering anything.}
 

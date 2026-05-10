@@ -27,84 +27,88 @@ tests do not run. If tests fail, the deploy does not happen.
 \newpage
 \section{Optional Exercise: Catch Up to \texttt{v0.6}}\index{exercises}\index{Git!tag}\index{recovery}
 
-\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
-This block builds on the state at the end of Block~7: Nginx installed
-on \texttt{prod} as a reverse proxy in front of the FastAPI service, the
-static frontend served from \texttt{/opt/pixelwise/frontend/}, a
-self-signed TLS certificate in place, the site reachable at
-\texttt{https://192.168.56.11}, and security headers set on every
-response.
-If you joined late, missed Block~7, or your repository has drifted,
-restore from the snapshot and reset to \texttt{v0.6} rather than redoing
-every prior exercise.
-
 \marginnote{\newthought{Tag map.}\index{Git!tag}
 \texttt{v0.6} marks the end of Block~7, \texttt{v0.7} will mark the end
 of this block.
 Browse the full set at
 \url{https://github.com/schutera/pixelwise/tags}.}
 
-\newthought{Restore the snapshot.}
-On both VMs, restore the \texttt{B7-complete} snapshot from Block~7.
-The snapshot carries everything that is not in Git, the \texttt{.venv/},
-the model artefact, the systemd service, the PostgreSQL installation,
-the Nginx configuration, the TLS certificate, and any real \texttt{.env}
-values you wrote.
-With the system layer back in place, only the repository state needs
-to be rewound.
+\newthought{Catching up via tag.}\index{Git!tag}\index{recovery}
+This catch-up extends the one in Block~7. If you have not done that one,
+do it first: It lands you at \texttt{v0.5}, the end-of-Block~6 state.
+The exercise here picks up from there and rewinds to \texttt{v0.6}, the
+end-of-Block~7 state, with Nginx running on \texttt{prod} as a reverse
+proxy in front of the FastAPI service, a static frontend served from
+\texttt{/opt/pixelwise/frontend/}, a self-signed Transport Layer
+Security, TLS, certificate in place, the site reachable at
+\texttt{https://192.168.56.11}, Cross-Origin Resource Sharing, CORS,
+configured on the API, and security headers set on every response.
 
-\newthought{Catch-up procedure on \texttt{dev}.}
-Reset PixelWise to the previous tag:
+\newthought{Both VMs this time.} Block~7 changed both the application
+code and the public surface on \texttt{prod}, so this catch-up brings
+both machines up to \texttt{v0.6}. The Git-tracked changes since
+\texttt{v0.5} include the new \texttt{frontend/} directory with the
+HyperText Markup Language, HTML, JavaScript, and Cascading Style
+Sheets, CSS, that render the drawing canvas, an \texttt{nginx/}
+directory carrying the reverse-proxy configuration committed to the
+repository, an extended \texttt{setup-server.sh} that installs Nginx,
+deploys the frontend, and provisions the self-signed TLS certificate,
+updated CORS middleware in \texttt{app/main.py} together with the
+security-header configuration, and a refreshed \texttt{.env.example}
+with any new entries Block~7 introduced. The local \texttt{.env} on
+each VM needs the new values written by hand; \texttt{setup-server.sh}
+then reloads Nginx and restarts the service in one shot.
 
-\begin{verbatim}
-cd ~/pixelwise
-git fetch origin
-git reset --hard v0.6
-\end{verbatim}
+\newthought{Run the catch-up on \texttt{dev}.}
+Rewind the repository to \texttt{v0.6}, refresh \texttt{.env} from the
+updated example and edit it for any new secrets, reinstall pinned
+dependencies if your virtual environment was wiped, then run
+\texttt{setup-server.sh} to align the development tree with the
+release. The exact commands are in the margin.
 
-\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
-This rewrites your working tree to match the end of Block~7 exactly,
-including \texttt{frontend/}, the Nginx configuration committed to the
-repository, and the updated CORS middleware in \texttt{app/main.py}.
-There is no work to lose if you have not committed beyond \texttt{v0.6};
-if you have, branch off first with \texttt{git branch backup-pre-catchup}
-so the work is recoverable.}
+\marginnote{\newthought{Sequence on \texttt{dev}.}\\[0.4em]
+\texttt{cd \textasciitilde/pixelwise}\\
+\texttt{git fetch origin -{}-tags}\\
+\texttt{git reset -{}-hard v0.6}\\
+\texttt{cp .env.example .env}\\
+\texttt{nano .env}\\
+\texttt{source .venv/bin/activate}\\
+\texttt{pip install -r requirements.txt}\\
+\texttt{bash setup-server.sh}\\[0.3em]
+Edit \texttt{.env} to set any new secrets and local overrides. If
+\texttt{.venv/} is missing, run
+\texttt{python3 -m venv .venv} before the
+\texttt{source} step.}
 
-\newthought{Mirror it on \texttt{prod}.}
+\newthought{Run the catch-up on \texttt{prod}.}
+Same sequence on prod, where \texttt{setup-server.sh} also installs
+Nginx, deploys the \texttt{frontend/} files, provisions the TLS
+certificate, reloads Nginx, and restarts the service. After the script
+finishes, verify the API is reachable from \texttt{dev}.
 
-\begin{verbatim}
-ssh produser@192.168.56.11
-cd /opt/pixelwise
-git fetch origin
-git reset --hard v0.6
-sudo systemctl reload nginx
-sudo systemctl restart pixelwise
-\end{verbatim}
+\marginnote{\newthought{Sequence on \texttt{prod}.}\\[0.4em]
+\texttt{ssh produser@192.168.56.11}\\
+\texttt{cd /opt/pixelwise}\\
+\texttt{git fetch origin -{}-tags}\\
+\texttt{git reset -{}-hard v0.6}\\
+\texttt{cp .env.example .env}\\
+\texttt{nano .env}\\
+\texttt{source .venv/bin/activate}\\
+\texttt{pip install -r requirements.txt}\\
+\texttt{bash setup-server.sh}\\[0.3em]
+Then from \texttt{dev}:
+\texttt{curl http://192.168.56.11:8000/health}
+should return \texttt{\{"status":"ok"\dots\}}.}
 
 \marginnote{\newthought{Already have a fork?}\index{Git!fork}
-If your own fork carries the \texttt{v0.6} tag, swap \texttt{origin} to
-your fork URL on \texttt{dev} with
+If your own fork carries the \texttt{v0.6} tag, swap \texttt{origin} on
+\texttt{dev} with
 \texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
 so push and pull continue to target your account.
 The HTTPS clone on \texttt{prod} stays read-only.}
 
-\newthought{Verify the public surface.}
-From \texttt{dev} or your host browser, hit the HTTPS endpoint and
-confirm the frontend renders and the API responds:
-
-\begin{verbatim}
-curl -kI https://192.168.56.11
-curl -k https://192.168.56.11/api/health
-\end{verbatim}
-
-The first call should return \texttt{200 OK} with the security headers
-visible; the second should return the health JSON.
-You are now at the state where Block~7 ended, with both machines
-aligned, ready to start Block~8.
-
-\newthought{Without a snapshot,} replay Block~7 before continuing.
-The file state alone is not enough when the next exercises expect Nginx
-running with a TLS certificate and the frontend already deployed.
+\newthought{You are now} at the state where Block~7 ended, with both
+machines aligned, ready to start Block~8.
 
 
 % ==============================================================================================
@@ -333,15 +337,14 @@ everywhere under the hood.
 \newpage
 \section{Exercise: Nightly Backup Cron}\index{exercises}
 
-\newthought{Set up the nightly backup cron.} On the server, create a cron job that runs nightly
-at 2:00~AM. \texttt{pg\_dump} the database, then \texttt{rsync} the dump to the dev VM:
+\newthought{Author the cron schedule on \texttt{dev}.} Create
+\texttt{deploy/cron/pixelwise.cron} in the repository, alongside the
+systemd unit from Block~5 and the Nginx config from Block~7. The
+schedule is part of how the service operates, so it lives next to
+the code:
 
 \begin{verbatim}
-crontab -e
-\end{verbatim}
-
-Add:
-\begin{verbatim}
+# deploy/cron/pixelwise.cron
 0 2 * * * pg_dump -U pixelwise pixelwise \
     > /tmp/pixelwise_$(date +\%Y\%m\%d).sql \
     && rsync -avz \
@@ -349,10 +352,51 @@ Add:
     user@192.168.56.10:/backups/pixelwise/
 \end{verbatim}
 
-On the dev VM, create the backup directory:
+Commit, push, pull on \texttt{prod}, then install the schedule for
+the \texttt{produser} crontab:
+
+\begin{verbatim}
+crontab /opt/pixelwise/deploy/cron/pixelwise.cron
+crontab -l                # confirm what is now active
+\end{verbatim}
+
+\marginnote{\newthought{\texttt{crontab} with a file argument}\index{cron!crontab}
+replaces the whole crontab with the contents of the file. \texttt{-e}
+opens an editor; the file form is what you reach for once the
+schedule lives under version control. \texttt{-l} prints the active
+crontab.}
+
+On the \texttt{dev} VM, create the backup directory:
 \begin{verbatim}
 mkdir -p /backups/pixelwise
 \end{verbatim}
+
+\newthought{Teach \texttt{setup-server.sh} to install the schedule.}\index{setup-server.sh}
+Append a prod-only stanza so a fresh VM picks up the cron file
+without manual steps. Open the file in nano on \texttt{dev}:
+
+\begin{verbatim}
+nano setup-server.sh
+\end{verbatim}
+
+\marginnote{\newthought{\texttt{crontab} is idempotent.}\index{idempotence}
+\texttt{crontab <file>} replaces the whole crontab atomically, so
+running the stanza twice leaves the same schedule in place. The
+\texttt{id produser} guard from Block~5 keeps the install from
+running on \texttt{dev}, where there are no scheduled jobs to run.}
+
+\begin{verbatim}
+# Install the cron schedule on prod
+if [ -f /opt/pixelwise/deploy/cron/pixelwise.cron ] && \
+   command -v crontab >/dev/null 2>&1 && \
+   id produser >/dev/null 2>&1; then
+    crontab /opt/pixelwise/deploy/cron/pixelwise.cron
+fi
+\end{verbatim}
+
+Commit, push, and verify on \texttt{prod} that
+\texttt{bash setup-server.sh} produces the same active schedule on
+every run.
 
 
 % ==============================================================================================
@@ -452,7 +496,14 @@ git push
 
 Watch the CI workflow on GitHub. If green, merge. The deploy workflow should update the server automatically.
 
-\newthought{Take a snapshot} of both VMs. Name them \texttt{B8-complete}.
+\newthought{Tag the release as \texttt{v0.7}.}\index{Git!tag}
+The end of every block is a tagged, runnable state. Mark it now so
+future catch-up exercises can reset back here:
+
+\begin{verbatim}
+git tag -a v0.7 -m "End of Block 8: CI/CD, backups, feature flags"
+git push origin v0.7
+\end{verbatim}
 
 \marginnote{\newthought{Where this leaves you.}
 The pipeline now runs without you. Every push is linted and tested, every merge deploys, every night

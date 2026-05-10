@@ -7,9 +7,9 @@
 % 2. Provide a pre-baked v0.4 reference repo so catch-up takes a single clone.
 
 \index{PostgreSQL}\index{SQL}\index{SQLAlchemy}\index{database}\index{Alembic}\index{ORM}
-\chapter{Data Lives Here: Databases \& SQL}
+\chapter{Databases \& SQL}
 \printchapterversion{06_databases_sql}
-\newthought{Your API works. Now make it remember.}
+\newthought{In Comparison, Dumbledore's Pensieve is a joke.}
 
 % ==============================================================================================
 % BLOCK 1: INTRODUCTION
@@ -17,22 +17,46 @@
 
 \section{The Why}\index{persistence}\index{relational database}
 
-Block~5 left us with a service that turns drawings into predictions over
-HTTP.
-The classifier loads at startup, the API validates each request, the
-\texttt{systemd} unit keeps it running.
-What it does not do is remember anything.
+
+\marginnote{\newthought{SQLAlchemy.}\index{SQLAlchemy}\index{ORM}\index{SQL}
+The Object-Relational Mapper, abbreviated ORM, that bridges Python
+objects and relational tables. You write Python classes; SQLAlchemy
+generates the Structured Query Language, abbreviated SQL, behind them,
+so the handler talks to PostgreSQL without composing query strings by
+hand.\\
+\url{https://www.sqlalchemy.org/}}
+
+
+We have a service that classifies, but it does not remember anything.
 The moment the response leaves the server, the prediction is gone.
+This makes it hard to track the model's performance over time, compare versions, or
+build any type of features and functionality that revolve around
+past predictions.
 
-\marginnote{\newthought{PixelWise} now has an HTTP service that classifies
-digits.
-The \texttt{GET /results} endpoint from Block~5 is a stub returning an
-empty list, with a note pointing at this block.
-This block fills that stub by wiring the API to a PostgreSQL database.}
-
-\newthought{Across ten lecture blocks we build PixelWise}\index{PixelWise}.
+\newthought{We need to wire the API onto a database.}\index{PixelWise}
 This block is the first that adds persistent state.
 Every later block depends on the database schema you design today.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\footnotesize, align=center},
+    box/.style={rectangle, draw=black, thick, rounded corners=2pt, minimum width=2.2cm, minimum height=0.9cm, inner sep=4pt},
+    arr/.style={-latex, thick, black!70}
+]
+\node[box] (api) at (0, 0)    {FastAPI\\\texttt{/classify}};
+\node[box] (cb)  at (3.4, 0)  {\texttt{classify\_}\\\texttt{batch}};
+\node[box] (pg)  at (7.4, 0)  {PostgreSQL\\\texttt{predictions}};
+\draw[arr] (api.east) -- (cb.west);
+\draw[arr] (cb.east)  -- node[above]{\scriptsize SQLAlchemy} (pg.west);
+\end{tikzpicture}
+\caption{The persistence flow. \texttt{POST /classify} computes a prediction with \texttt{classify\_batch}, the handler maps the result through the \texttt{Prediction} SQLAlchemy model, and a row lands in the \texttt{predictions} table in PostgreSQL before the response goes out.}
+\label{fig:persistence_flow}
+\end{figure}
+
+
+
+
 
 \newthought{Why persist at all?}
 A response that vanishes the moment it is sent is a response that cannot be
@@ -40,53 +64,27 @@ counted, compared, or queried.
 A database makes the prediction permanent: Every drawing becomes a row, the
 class label becomes a column, the confidence becomes another, and the model
 version becomes a third.
-Later in the course, analytics endpoints will read from this table, feature
-flags will rely on the version field, and a frontend will fetch recent
-results to show in the UI.
 
-\marginnote{\newthought{Beyond this course,}
+\newthought{Beyond this course,}
 the same table is where production teams build retraining datasets, let
 users correct wrong predictions for labelled data, and detect distribution
 drift.
-We do not do any of those here, but every one of them starts with having
-the database.}
+We do not do any of those here, but it is trivial to see how every one of them starts with having
+the database.
 
-\begin{figure}
-\centering
-\begin{tikzpicture}[
-    every node/.style={font=\footnotesize, align=center},
-    box/.style={rectangle, draw=black, thick, rounded corners=2pt, minimum width=2.0cm, minimum height=0.9cm, inner sep=4pt},
-    arr/.style={-latex, thick, black!70}
-]
-\node[box] (api) at (0, 0)   {FastAPI\\\texttt{/classify}};
-\node[box] (cb)  at (3.0, 0) {\texttt{classify\_}\\\texttt{batch}};
-\node[box] (orm) at (6.0, 0) {SQLAlchemy\\\texttt{Prediction}};
-\node[box] (pg)  at (9.0, 0) {PostgreSQL\\\texttt{predictions}};
-\draw[arr] (api.east) -- (cb.west);
-\draw[arr] (cb.east)  -- (orm.west);
-\draw[arr] (orm.east) -- (pg.west);
-\end{tikzpicture}
-\caption{The persistence flow. \texttt{POST /classify} computes a prediction with \texttt{classify\_batch}, maps it through the \texttt{Prediction} SQLAlchemy model, and writes a row to the \texttt{predictions} table in PostgreSQL before returning the response.}
-\label{fig:persistence_flow}
-\end{figure}
 
+
+\newpage
 \subsection{Hands On Experience}
 
-\newthought{Consider this scenario:} a teammate asks how confident the
+\newthought{Consider this scenario:} A teammate asks how confident the
 model has been on average across the last hundred predictions.
 You realise nobody can answer that question.
-The API returned the confidence to every caller, but nothing recorded it,
-and ``the last hundred predictions'' is not a thing your service can talk
-about because it never wrote them down.
+The API returned the confidence to every caller, but nothing recorded it.
 The only way back to those numbers is to ask the users to draw their digits
-again, which is not an option.
-
-\marginnote{\newthought{The cost of forgetting.}\index{persistence}
-Anything not stored is not analysable.
-A model running for a month without persistence has produced a month of
-data that can never be recovered.
-The decision to write the database schema now is the decision to make the
-next month answerable.}
+again, which is not an option. In an increasingly data-driven world, data defines your product, 
+your moat, and your competitive advantage. Not having the data is like throwing away your most valuable asset, and 
+until someone comes up with a solution for time-travel, it's a non-recoverable loss.
 
 \newthought{The schema is a contract,} the same way the API contract is a
 contract.
@@ -120,80 +118,83 @@ By the end you will have
 \newpage
 \section{Optional Exercise: Catch Up to \texttt{v0.4}}\index{exercises}\index{Git!tag}\index{recovery}
 
-\newthought{Catching up via snapshot and tag.}\index{Git!tag}\index{recovery}
-This block builds on the state at the end of Block~5: A FastAPI service
-exposing \texttt{POST /classify} and \texttt{GET /health}, with API-key
-authentication and basic rate limiting, running under a \texttt{systemd}
-unit on \texttt{prod}, with request and response contracts defined as
-Pydantic models.
-If you joined late, missed Block~5, or your repository has drifted,
-restore from the snapshot and reset to \texttt{v0.4} rather than redoing
-every prior exercise.
-
 \marginnote{\newthought{Tag map.}\index{Git!tag}
 \texttt{v0.4} marks the end of Block~5, \texttt{v0.5} will mark the end
 of this block.
 Browse the full set at
 \url{https://github.com/schutera/pixelwise/tags}.}
 
-\newthought{Restore the snapshot.}
-On both VMs, restore the \texttt{B5-complete} snapshot from Block~5.
-The snapshot carries everything that is not in Git, the \texttt{.venv/},
-the model artefact in \texttt{models/}, the system packages from
-\texttt{setup-server.sh}, the \texttt{pixelwise.service} systemd unit
-installed on \texttt{prod}, and any real \texttt{.env} values you wrote.
-With the system layer back in place, only the repository state needs
-to be rewound.
+\newthought{Catching up via tag.}\index{Git!tag}\index{recovery}
+This catch-up extends the one in Block~5. If you have not done that one,
+do it first: It lands you at \texttt{v0.3}, the end-of-Block~4 state.
+The exercise here picks up from there and rewinds to \texttt{v0.4}, the
+end-of-Block~5 state, with the FastAPI service exposing
+\texttt{POST /classify} and \texttt{GET /health}, API key authentication,
+basic rate limiting, and a \texttt{systemd}-supervised \texttt{uvicorn}
+running on \texttt{prod}.
 
-\newthought{Catch-up procedure on \texttt{dev}.}
-Reset PixelWise to the previous tag:
+\newthought{Both VMs this time.} Block~5 ended with the service actually
+running on \texttt{prod}, so unlike the previous catch-up, this one
+brings both machines up to \texttt{v0.4}. The Git-tracked changes since
+\texttt{v0.3} include \texttt{app/main.py},
+\texttt{deploy/pixelwise.service}, an extended \texttt{setup-server.sh}
+that installs the systemd unit on \texttt{prod}, an updated
+\texttt{requirements.txt} adding \texttt{fastapi}, \texttt{uvicorn},
+\texttt{slowapi}, and \texttt{pydantic}, and a refreshed
+\texttt{.env.example} with \texttt{SECRET\_API\_KEY}. The local
+\texttt{.env} on \texttt{prod} needs the new key written by hand;
+\texttt{setup-server.sh} then pulls the model, copies the unit,
+enables, and restarts the service in one shot.
 
-\begin{verbatim}
-cd ~/pixelwise
-git fetch origin
-git reset --hard v0.4
-\end{verbatim}
+\newthought{Run the catch-up on \texttt{dev}.}
+Rewind the repository to \texttt{v0.4}, refresh \texttt{.env} from the
+updated example and edit it to set \texttt{SECRET\_API\_KEY}, reinstall
+pinned dependencies if your virtual environment was wiped, then run
+\texttt{setup-server.sh} to pull the model artefact. The exact commands
+are in the margin.
 
-\marginnote{\newthought{Why \texttt{reset -{}-hard}?}\index{Git!reset}
-This rewrites your working tree to match the end of Block~5 exactly,
-including \texttt{app/main.py} and the updated \texttt{requirements.txt}.
-There is no work to lose if you have not committed beyond \texttt{v0.4};
-if you have, branch off first with \texttt{git branch backup-pre-catchup}
-so the work is recoverable.}
+\marginnote{\newthought{Sequence on \texttt{dev}.}\\[0.4em]
+\texttt{cd \textasciitilde/pixelwise}\\
+\texttt{git fetch origin -{}-tags}\\
+\texttt{git reset -{}-hard v0.4}\\
+\texttt{cp .env.example .env}\\
+\texttt{nano .env}\\
+\texttt{source .venv/bin/activate}\\
+\texttt{pip install -r requirements.txt}\\
+\texttt{bash setup-server.sh}\\[0.3em]
+Edit \texttt{.env} to set \texttt{SECRET\_API\_KEY} to any string of
+your choosing; \texttt{openssl rand -hex 32} prints a clean random
+value if you want one.
+If you already have a \texttt{.env} from earlier work, skip the
+\texttt{cp} and just edit the file in place.
+If \texttt{.venv/} is missing, run
+\texttt{python3 -m venv .venv} before the \texttt{source} step.}
 
-\newthought{Mirror it on \texttt{prod}.}
+\newthought{Run the catch-up on \texttt{prod}.}
+Same sequence on prod, where \texttt{setup-server.sh} also copies the
+systemd unit into place and restarts the service. After the script
+finishes, verify the API is reachable from \texttt{dev}.
 
-\begin{verbatim}
-ssh produser@192.168.56.11
-cd /opt/pixelwise
-git fetch origin
-git reset --hard v0.4
-sudo systemctl restart pixelwise
-\end{verbatim}
+\marginnote{\newthought{Sequence on \texttt{prod}.}\\[0.4em]
+\texttt{ssh produser@192.168.56.11}\\
+\texttt{cd /opt/pixelwise}\\
+\texttt{git fetch origin -{}-tags}\\
+\texttt{git reset -{}-hard v0.4}\\
+\texttt{cp .env.example .env}\\
+\texttt{nano .env}\\
+\texttt{source .venv/bin/activate}\\
+\texttt{pip install -r requirements.txt}\\
+\texttt{bash setup-server.sh}\\[0.3em]
+Use the same \texttt{SECRET\_API\_KEY} value as on \texttt{dev}.
+If you already have a \texttt{.env} on \texttt{prod}, skip the
+\texttt{cp} and edit the file in place.
+Then from \texttt{dev}:
+\texttt{curl http://192.168.56.11:8000/health}
+should return \texttt{\{"status":"ok"\dots\}}.}
 
-\marginnote{\newthought{Already have a fork?}\index{Git!fork}
-If your own fork carries the \texttt{v0.4} tag, swap \texttt{origin} to
-your fork URL on \texttt{dev} with
-\texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
-so push and pull continue to target your account.
-The HTTPS clone on \texttt{prod} stays read-only.}
 
-\newthought{Verify the service.}
-On \texttt{prod}, confirm the FastAPI service is reachable before moving
-on:
-
-\begin{verbatim}
-curl http://192.168.56.11:8000/health
-\end{verbatim}
-
-A \texttt{200 OK} response confirms the systemd unit is running against
-the rewound code.
-You are now at the state where Block~5 ended, with both machines
-aligned, ready to start Block~6.
-
-\newthought{Without a snapshot,} replay Block~5 before continuing.
-The file state alone is not enough when the next exercise expects an
-installed systemd unit and a running API service.
+\newthought{You are now} at the state where Block~5 ended, with both
+machines aligned, ready to start Block~6.
 
 
 
@@ -321,20 +322,39 @@ sudo apt install -y postgresql
 sudo systemctl status postgresql
 \end{verbatim}
 
-\marginnote{\newthought{Update \texttt{setup-server.sh}.}\index{setup-server.sh}
-The provisioning script from Block~3 should now install PostgreSQL too.
-Add \texttt{postgresql} to the \texttt{apt install} line, commit, and push.
-A fresh VM provisioned from the script after this change has the database
-ready without you typing a second command.}
-
-\newthought{Create a dedicated user and database:}
+\newthought{Set the database password in \texttt{.env}.}
+The password is a secret, so it lives in \texttt{.env} on each VM and
+never in version control. Add the variable on \texttt{prod}, plus a
+placeholder in \texttt{.env.example} on \texttt{dev} so the contract
+is documented while the value stays local:
 
 \begin{verbatim}
+# on prod
+echo "DB_PASSWORD=secret" >> /opt/pixelwise/.env
+
+# on dev, then commit and push
+echo "DB_PASSWORD=" >> .env.example
+\end{verbatim}
+
+\newthought{Create the role and database.}
+Source \texttt{.env} so the password is available as a shell variable,
+then create the role and database in two \texttt{psql -c} calls:
+
+\begin{verbatim}
+set -a; source /opt/pixelwise/.env; set +a
 sudo -u postgres psql -c \
-  "CREATE USER pixelwise WITH PASSWORD 'secret';"
+  "CREATE USER pixelwise \
+   WITH PASSWORD '$DB_PASSWORD';"
 sudo -u postgres psql -c \
   "CREATE DATABASE pixelwise OWNER pixelwise;"
 \end{verbatim}
+
+\marginnote{\newthought{Why \texttt{set -a}?}\index{set -a}
+\texttt{set -a} tells bash to export every variable defined from now
+on. \texttt{source .env} reads the file as shell commands, so the
+assignments happen in the current shell. \texttt{set +a} turns the
+auto-export back off. The same pattern lets a script load
+\texttt{.env} before running anything that depends on it.}
 
 \newthought{Verify the connection} with the application user:
 
@@ -346,6 +366,46 @@ If \texttt{psql} fails to connect, fix the credentials before going any
 further; SQLAlchemy will report the same error in a less direct way.
 A working \texttt{psql} is the foundation of everything the rest of the
 block builds on.
+
+\newthought{Teach \texttt{setup-server.sh} to provision the database.}\index{setup-server.sh}
+Add \texttt{postgresql} to the \texttt{apt install} line, then append
+a prod-only stanza next to the systemd block from Block~5. Open the
+file in nano on \texttt{dev}:
+
+\begin{verbatim}
+nano setup-server.sh
+\end{verbatim}
+
+\marginnote{\newthought{Idempotent by design.}\index{idempotence}
+Each \texttt{psql -tAc} probe asks PostgreSQL whether the role or
+database already exists; the \texttt{||} short-circuits the create
+when the answer is yes. Run the script ten times, the role and
+database are still there exactly once. The same \texttt{id produser}
+guard from Block~5 keeps the stanza from running on \texttt{dev},
+where there is no PostgreSQL server.}
+
+\begin{verbatim}
+# Provision the pixelwise role and database on prod
+if command -v psql >/dev/null 2>&1 && \
+   id produser >/dev/null 2>&1 && \
+   [ -f /opt/pixelwise/.env ]; then
+    set -a; source /opt/pixelwise/.env; set +a
+    sudo -u postgres psql -tAc \
+        "SELECT 1 FROM pg_roles WHERE rolname='pixelwise'" \
+        | grep -q 1 || \
+    sudo -u postgres psql -c \
+        "CREATE USER pixelwise \
+         WITH PASSWORD '$DB_PASSWORD';"
+    sudo -u postgres psql -tAc \
+        "SELECT 1 FROM pg_database WHERE datname='pixelwise'" \
+        | grep -q 1 || \
+    sudo -u postgres createdb -O pixelwise pixelwise
+fi
+\end{verbatim}
+
+Commit, push, and on \texttt{prod} run \texttt{bash setup-server.sh}
+to verify the stanza is idempotent. The second run should change
+nothing because the role and database already exist.
 
 
 
@@ -416,16 +476,26 @@ The exercise below wires it up inside \texttt{POST /classify}.
 \section{Exercise: The \texttt{Prediction} Model}\index{exercises}
 
 \newthought{Turn the theory above into code.}
-On \texttt{dev}, install the driver and the ORM into the virtual environment:
+On \texttt{dev}, install the driver and the ORM into the virtual
+environment from the repository root:
 
 \begin{verbatim}
+cd ~/pixelwise
 source .venv/bin/activate
 pip install sqlalchemy psycopg2-binary
 pip freeze > requirements.txt
 \end{verbatim}
 
 \newthought{Write \texttt{app/models.py}} with the minimal schema, only the
-class label and the model version:
+class label and the model version. From the repository root on
+\texttt{dev}:
+
+\begin{verbatim}
+cd ~/pixelwise
+nano app/models.py
+\end{verbatim}
+
+Paste the following, save with \texttt{Ctrl+O}, exit with \texttt{Ctrl+X}:
 
 \begin{verbatim}
 from sqlalchemy import (Column, Integer, String,
@@ -450,13 +520,25 @@ Confidence is missing on purpose; you will feel the gap in the next
 exercise and use Alembic to fix it.
 The point is to feel the migration cycle, not to skip past it.}
 
-\newthought{Add \texttt{DATABASE\_URL}} to \texttt{.env} and \texttt{.env.example}:
+\newthought{Add \texttt{DATABASE\_URL}} to
+\texttt{\textasciitilde{}/pixelwise/.env} and
+\texttt{\textasciitilde{}/pixelwise/.env.example} on \texttt{dev}.
+The URL interpolates \texttt{DB\_PASSWORD} from the same file, so the
+secret lives in one place:
 
 \begin{verbatim}
-DATABASE_URL=postgresql://pixelwise:secret@localhost/pixelwise
+DATABASE_URL=postgresql://pixelwise:${DB_PASSWORD}@localhost/pixelwise
 \end{verbatim}
 
-\newthought{Create the table once} from a small initialisation script:
+\newthought{Create the table once} from a small initialisation script
+saved as \texttt{init\_db.py} at the repository root on \texttt{dev}:
+
+\begin{verbatim}
+cd ~/pixelwise
+nano init_db.py
+\end{verbatim}
+
+Paste the following:
 
 \begin{verbatim}
 from sqlalchemy import create_engine
@@ -469,7 +551,16 @@ engine = create_engine(os.getenv("DATABASE_URL"))
 Base.metadata.create_all(engine)
 \end{verbatim}
 
-Run it on \texttt{prod}.
+Commit and push from \texttt{dev}, then run the script on \texttt{prod}
+where the database lives:
+
+\begin{verbatim}
+# on prod, after git pull
+cd /opt/pixelwise
+source .venv/bin/activate
+python init_db.py
+\end{verbatim}
+
 Confirm with \texttt{psql} that \texttt{\textbackslash dt} lists the
 \texttt{predictions} table.
 
@@ -480,7 +571,14 @@ Confirm with \texttt{psql} that \texttt{\textbackslash dt} lists the
 \section{Exercise: Wiring the API to the Database}\index{exercises}
 
 \newthought{Update \texttt{app/main.py}} so \texttt{POST /classify} writes
-a row before returning the response.
+a row before returning the response. Reopen the file from the repository
+root on \texttt{dev}:
+
+\begin{verbatim}
+cd ~/pixelwise
+nano app/main.py
+\end{verbatim}
+
 The handler from Block~5 stays the same shape; one new dependency creates
 a database session per request:
 
@@ -512,7 +610,8 @@ The framework patterns FastAPI documents (\texttt{Depends} for sessions)
 do this more elegantly; the manual version above is the simplest one that
 shows what is happening.}
 
-\newthought{Replace the \texttt{GET /results} stub} with a real query:
+\newthought{Replace the \texttt{GET /results} stub} in the same
+\texttt{app/main.py} with a real query:
 
 \begin{verbatim}
 @app.get("/results")
@@ -603,10 +702,14 @@ Redis: \url{https://redis.io/}}
 \section{Exercise: First Migration with Alembic}\index{exercises}
 
 \newthought{Initialise Alembic in the repo.}
-With the migration cycle from the theory above in mind, configure the tool
-to use the same engine as the application:
+With the migration cycle from the theory above in mind, configure the
+tool to use the same engine as the application. \texttt{alembic init}
+writes its scaffold into the current directory, so run everything from
+the repository root on \texttt{dev}:
 
 \begin{verbatim}
+cd ~/pixelwise
+source .venv/bin/activate
 pip install alembic
 pip freeze > requirements.txt
 alembic init alembic
@@ -621,7 +724,14 @@ from \texttt{app.models} so autogenerate sees your tables.
 Skim them once before you change anything; the structure is small and the
 mental model becomes obvious by reading the templates.}
 
-\newthought{Add the missing column} to the model in \texttt{app/models.py}:
+\newthought{Add the missing column} to the model. Reopen
+\texttt{app/models.py} from \texttt{\textasciitilde{}/pixelwise} on
+\texttt{dev}:
+
+\begin{verbatim}
+cd ~/pixelwise
+nano app/models.py
+\end{verbatim}
 
 \begin{verbatim}
 from sqlalchemy import Float
@@ -636,11 +746,22 @@ class Prediction(Base):
                         default=datetime.utcnow)
 \end{verbatim}
 
-\newthought{Generate and apply the migration:}
+\newthought{Generate the migration} from the repository root on
+\texttt{dev}, commit the new file under \texttt{alembic/versions/}, and
+push:
 
 \begin{verbatim}
+cd ~/pixelwise
 alembic revision --autogenerate \
     -m "add confidence column"
+\end{verbatim}
+
+Apply the migration on \texttt{prod}, where the database lives:
+
+\begin{verbatim}
+# on prod, after git pull
+cd /opt/pixelwise
+source .venv/bin/activate
 alembic upgrade head
 \end{verbatim}
 
@@ -651,7 +772,7 @@ and only then run \texttt{upgrade head}.
 A wrong migration on a populated table is much harder to undo than to
 prevent.}
 
-\newthought{Verify with \texttt{psql}:}
+\newthought{Verify on \texttt{prod} with \texttt{psql}:}
 
 \begin{verbatim}
 psql -U pixelwise -d pixelwise -h localhost \
@@ -666,7 +787,8 @@ That gap between old and new rows is the visible signature of a migration:
 the column exists everywhere, but its values are populated only from the
 moment the new code shipped.
 
-\newthought{Wire confidence into the handler:}
+\newthought{Wire confidence into the handler} in
+\texttt{\textasciitilde{}/pixelwise/app/main.py} on \texttt{dev}:
 
 \begin{verbatim}
 db.add(Prediction(
@@ -680,6 +802,7 @@ Draw a digit; confirm the new row in \texttt{psql} has both fields populated.
 Commit, push, and the repository now matches \texttt{v0.5}:
 
 \begin{verbatim}
+cd ~/pixelwise
 git add app/main.py app/models.py alembic/ \
     alembic.ini requirements.txt .env.example
 git commit -m "Add PostgreSQL persistence and first migration"
