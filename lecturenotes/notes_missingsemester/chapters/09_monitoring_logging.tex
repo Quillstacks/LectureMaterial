@@ -356,6 +356,16 @@ The \texttt{/health} endpoint confirms the system is alive but does not expose i
     \item What would a spike in canvas clears correlated with low-confidence predictions indicate?
 \end{itemize}
 
-\newthought{Milestone:} PixelWise is fully observable. Logs are structured and queryable. Discord alerts
-on health check failure and low-confidence predictions. Analytics endpoint and frontend counters show
-usage patterns. Students can answer: ``how is my app being used, and how is my model performing?''
+\newthought{Bridge.} PixelWise can now see itself.
+Logs are structured and queryable, Discord alerts fire on health check
+failures and on spikes of low-confidence predictions, and the
+analytics endpoint together with frontend counters answer the two
+questions a maintainer keeps asking: how is the app being used, and how
+is the model performing.
+With that, the operational stack is complete.
+What changes in the final chapter is not the service but the workshop
+around it: terminal AI agents and IDE-integrated assistants that read
+the same repository, write code, run commands, and read the very logs
+this chapter set up.
+The next block looks at how to keep the fundamentals from this course
+load-bearing once an LLM is doing some of the typing.

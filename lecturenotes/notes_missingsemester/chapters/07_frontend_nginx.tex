@@ -32,25 +32,26 @@ This catch-up extends the one in Block~6. If you have not done that one,
 do it first: It lands you at \texttt{v0.4}, the end-of-Block~5 state.
 The exercise here picks up from there and rewinds to \texttt{v0.5}, the
 end-of-Block~6 state, with PostgreSQL running on \texttt{prod}, the
-\texttt{pixelwise} database and application user created, SQLAlchemy
-models in \texttt{app/models.py}, Alembic migrations applied,
-\texttt{DATABASE\_URL} set in \texttt{.env}, and the FastAPI handler
-writing prediction rows to the database.
+\texttt{pixelwise} database and application user created, the
+\texttt{predictions} table created from the SQLAlchemy model in
+\texttt{app/models.py}, \texttt{DATABASE\_URL} set in \texttt{.env}, and
+the FastAPI handler writing prediction rows to the database.
 
 \newthought{Both VMs this time.} Block~6 ended with the service writing
 to PostgreSQL on \texttt{prod}, so this catch-up brings both machines up
 to \texttt{v0.5}. The Git-tracked changes since \texttt{v0.4} include
-\texttt{app/models.py} with the \texttt{Prediction} class, the
-\texttt{alembic/} directory and \texttt{alembic.ini} for migrations, an
-updated \texttt{app/main.py} where \texttt{POST /classify} writes a row
-and \texttt{GET /results} reads from the database, an extended
-\texttt{requirements.txt} with SQLAlchemy, \texttt{psycopg2-binary}, and
-Alembic, a \texttt{setup-server.sh} that installs PostgreSQL and creates
-the \texttt{pixelwise} database and user on \texttt{prod}, and a refreshed
+\texttt{app/models.py} with the \texttt{Prediction} class, an
+\texttt{init\_db.py} that creates the \texttt{predictions} table on first
+run, an updated \texttt{app/main.py} where \texttt{POST /classify} writes
+a row and \texttt{GET /results} reads from the database, an extended
+\texttt{requirements.txt} with SQLAlchemy and \texttt{psycopg2-binary}, a
+\texttt{setup-server.sh} that installs PostgreSQL and provisions the
+\texttt{pixelwise} database and user on \texttt{prod}, and a refreshed
 \texttt{.env.example} with \texttt{DATABASE\_URL}. The local \texttt{.env}
 on each VM needs the database password written by hand;
-\texttt{setup-server.sh} then provisions PostgreSQL, applies the
-migrations, and restarts the service in one shot.
+\texttt{setup-server.sh} then provisions PostgreSQL and restarts the
+service in one shot, and a one-off \texttt{python init\_db.py} on
+\texttt{prod} creates the \texttt{predictions} table.
 
 \newthought{Run the catch-up on \texttt{dev}.}
 Rewind the repository to \texttt{v0.5}, refresh \texttt{.env} from the
@@ -74,9 +75,10 @@ password and any local overrides. If \texttt{.venv/} is missing, run
 
 \newthought{Run the catch-up on \texttt{prod}.}
 Same sequence on prod, where \texttt{setup-server.sh} also installs
-PostgreSQL, creates the \texttt{pixelwise} database and user, applies
-the Alembic migrations, and restarts the service. After the script
-finishes, verify the API is reachable from \texttt{dev}.
+PostgreSQL, creates the \texttt{pixelwise} database and user, and
+restarts the service. Then run \texttt{python init\_db.py} once to
+create the \texttt{predictions} table. After that, verify the API is
+reachable from \texttt{dev}.
 
 \marginnote{\newthought{Sequence on \texttt{prod}.}\\[0.4em]
 \texttt{ssh produser@192.168.56.11}\\
@@ -87,7 +89,10 @@ finishes, verify the API is reachable from \texttt{dev}.
 \texttt{nano .env}\\
 \texttt{source .venv/bin/activate}\\
 \texttt{pip install -r requirements.txt}\\
-\texttt{bash setup-server.sh}\\[0.3em]
+\texttt{bash setup-server.sh}\\
+\texttt{python init\_db.py}\\[0.3em]
+\texttt{init\_db.py} is idempotent; running it on a database where the
+table already exists is a no-op.
 Then from \texttt{dev}:
 \texttt{curl http://192.168.56.11:8000/health}
 should return \texttt{\{"status":"ok"\dots\}}.}
@@ -489,6 +494,15 @@ deployment bug, configure allowed origins explicitly, never \texttt{*} in produc
     \item What is the difference between a self-signed certificate and one from Let's Encrypt?
 \end{itemize}
 
-\newthought{Milestone:} PixelWise accessible in a browser at \texttt{https://192.168.56.11}. Draw a digit,
-get a prediction. Nginx serves static files and proxies the API. The full stack is live:
-browser $\to$ Nginx $\to$ uvicorn $\to$ FastAPI $\to$ PostgreSQL.
+\newthought{Bridge.} PixelWise is now reachable in a browser at
+\texttt{https://192.168.56.11}: draw a digit, get a prediction.
+Nginx serves the static frontend and proxies the API, and the full stack
+is live, browser $\to$ Nginx $\to$ uvicorn $\to$ FastAPI $\to$
+PostgreSQL.
+Every step that brought us here was manual though, editing configs on
+\texttt{dev}, copying files to \texttt{prod}, restarting services by
+hand.
+The next chapter turns that path into a pipeline: every push to
+\texttt{main} is linted and tested in GitHub Actions, every merge
+deploys to \texttt{prod} on its own, and nightly cron jobs back up the
+database so a broken release is no longer a broken weekend.

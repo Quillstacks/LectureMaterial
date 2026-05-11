@@ -229,9 +229,8 @@ and manual deploys.
 The script lives at \texttt{scripts/deploy.sh}, runs with
 \texttt{set -euo pipefail} so any failure aborts the run, changes into
 \texttt{/opt/pixelwise}, pulls \texttt{main}, activates the virtual
-environment, installs dependencies, applies database migrations with
-\texttt{alembic upgrade head}, restarts the systemd unit, and prints a
-timestamped completion line.
+environment, installs dependencies, restarts the systemd unit, and prints
+a timestamped completion line.
 Keeping the steps in a script means the GitHub Actions runner and a
 human on the server execute the same path.
 The exercise below has the full file PixelWise needs.
@@ -273,7 +272,7 @@ jobs:
 \section{Exercise: Deploy Script}\index{exercises}
 
 \newthought{Write the deploy script.} Create \texttt{scripts/deploy.sh} that pulls \texttt{main},
-installs dependencies, runs migrations, and restarts the service.
+installs dependencies, and restarts the service.
 
 \begin{verbatim}
 mkdir -p scripts
@@ -292,10 +291,18 @@ cd /opt/pixelwise
 git pull origin main
 source .venv/bin/activate
 pip install -r requirements.txt
-alembic upgrade head
 sudo systemctl restart pixelwise
 echo "Deploy complete: $(date)"
 \end{verbatim}
+
+\marginnote{\newthought{Why no schema step.}\index{schema}
+The \texttt{predictions} table is created once on \texttt{prod} by
+\texttt{init\_db.py} during the Block~6 setup, and nothing later in the
+course changes its shape. The deploy script therefore only ships code,
+not schema. If a future change needs to alter the live schema, that is
+the point at which the optional Block~6 Alembic detour pays off, and the
+deploy script grows a single \texttt{alembic upgrade head} line above the
+restart.}
 
 
 % ==============================================================================================
@@ -535,6 +542,15 @@ entire database. Protect them accordingly with file permissions and consider enc
     \item What happens if the CI pipeline fails? Does the deploy still happen?
 \end{itemize}
 
-\newthought{Milestone:} Every push to \texttt{main} automatically lints and tests. Every merge deploys to
-the server. Nightly database backup is running and has been verified by restoring once. Feature flag for
-model version switching is in place.
+\newthought{Bridge.} The pipeline now ships code on its own.
+Every push to \texttt{main} is linted and tested, every merge deploys to
+the server, a nightly cron job backs up the database and has been
+verified by restoring once, and a feature flag lets a new model version
+be switched on without a redeploy.
+What we cannot yet see is what happens after the deploy lands.
+Is the service still answering? Are predictions still confident? Is
+anybody actually using it? The next chapter wires up the senses:
+structured logs, a \texttt{/health} endpoint watched by a Discord
+webhook, and analytics on top of the rows PixelWise has been writing
+since Block~6, so the team learns about a problem before a user
+complains about it.

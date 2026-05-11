@@ -161,10 +161,6 @@ The hypervisor partitions the host's CPU, memory, and disk, and presents each vi
 with what appears to be its own hardware.
 From the guest operating system's perspective, it is running on a physical machine.
 
-\marginnote{\newthought{Oracle VirtualBox Manager} at \url{https://www.oracle.com/virtualization/virtualbox/}
-is the hypervisor we install on the host. Virt-manager and VMWare serve the same role with different trade-offs,
-and we could run this course on any of them.}
-
 \newthought{Hypervisors} are often categorised as type~1 or type~2.
 A type~1\index{type-1 hypervisor} hypervisor runs directly on the hardware,
 with the host operating system built into the hypervisor itself.
@@ -633,6 +629,7 @@ into a script that any future VM can run end to end, without you remembering any
 \marginnote{\newthought{Teaser.} You and a classmate both want to improve PixelWise at the same time.
 How do you work on the same codebase without overwriting each other's changes,
 review what the other person did, and merge the results safely?}
+
 \newthought{Milestone.} So far, we own the machine.
 The next step is to own the way we build software on it.
 In the next chapter we introduce Git and GitHub: not just a version history,
