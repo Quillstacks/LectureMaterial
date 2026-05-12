@@ -2,7 +2,11 @@
 % Chapter 8: Automate Everything: CI/CD, Cron, Webhooks & Backups
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\index{CI/CD}\index{GitHub Actions}\index{cron}\index{backup}\index{feature flag}
+% POST IMPROVEMENTS 2026:
+% 1. Pre-bake a v0.6 reference repo so the catch-up takes a single clone.
+% 2. Add a TikZ figure of the cron timeline alongside the pipeline figure.
+
+\index{CI/CD}\index{GitHub Actions}\index{cron}\index{backup}\index{feature flag}\index{webhook}\index{pg\_dump}\index{rsync}\index{YAML}\index{SSH}
 \chapter{Automate Everything: CI/CD, Cron, Webhooks \& Backups}
 \printchapterversion{08_cicd_automation}
 \newthought{Manual deploys are technical debt. Automate or regret.}
@@ -11,16 +15,117 @@
 % BLOCK 1: INTRODUCTION
 % ==============================================================================================
 
-\section{CI/CD: What It Is and Why It Matters}\index{CI/CD}
+\section{The Why}\index{automation}\index{deploy}
 
-\newthought{Continuous Integration\index{continuous integration}} means every push is automatically linted and
-tested. Broken code is caught before it reaches the server.
+Block~7 left us with a service a human can use.
+The browser at \texttt{https://192.168.56.11} renders a canvas, the
+canvas posts to \texttt{/api/classify}, Nginx forwards the request to
+FastAPI, FastAPI writes a row to PostgreSQL, and the page renders the
+answer.
+The contract is signed at every layer.
 
-\newthought{Continuous Deployment\index{continuous deployment}} means every merge to \texttt{main} automatically
-deploys to the server, with no manual SSH-and-pull.
+\newthought{What none of that delivers} is the day after the demo.
+Every deploy is still a human ssh'ing into \texttt{prod}, running
+\texttt{git pull}, restarting the service, and hoping nothing broke.
+Every test is whatever the author thought to type into \texttt{curl}
+before pushing.
+The database has no backup, so the day the disk dies, every prediction
+the service has ever stored dies with it.
+Behaviour can only change by editing code and shipping a new version,
+so the smallest tweak goes through the same heavyweight path as a real
+feature.
 
-\newthought{The pipeline:} lint $\to$ test $\to$ deploy. Each step gates the next. If linting fails,
-tests do not run. If tests fail, the deploy does not happen.
+\newthought{This Block} closes those gaps.
+Every push runs a linter and a test suite on a clean machine before
+anything lands on \texttt{prod}.
+Every merge to \texttt{main} ships to \texttt{prod} without a human
+touching a terminal.
+A scheduled task on \texttt{prod} dumps the database every night, and
+the dump moves to \texttt{dev} over Secure Shell, SSH, so the backup
+survives a dead \texttt{prod}.
+A flag in \texttt{.env} gates one new code path on the API, so we can
+ship the path silent and switch it on without redeploying.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\footnotesize, align=center},
+    box/.style={rectangle, draw=black, thick, rounded corners=2pt, minimum width=2.0cm, minimum height=0.9cm, inner sep=4pt},
+    arr/.style={-latex, thick, black!70}
+]
+\node[box] (dev) at (-1.0, 0) {\texttt{git push}\\from \texttt{dev}};
+\node[box] (gh)  at (2.4, 0)  {GitHub\\Actions};
+\node[box] (lint) at (5.4, 0) {\texttt{ruff}\\lint};
+\node[box] (test) at (8.0, 0) {\texttt{pytest}\\test};
+\node[box] (dep) at (5.4, -1.8) {SSH deploy\\to \texttt{prod}};
+\node[box] (prod) at (8.0, -1.8) {\texttt{systemctl}\\restart};
+\draw[arr] (dev.east) -- (gh.west);
+\draw[arr] (gh.east) -- (lint.west);
+\draw[arr] (lint.east) -- (test.west);
+\draw[arr] (test.south) -- ++(0,-0.45) -| (dep.north);
+\draw[arr] (dep.east) -- (prod.west);
+\node[font=\scriptsize, anchor=west] at (-1.0, -1.8) {\texttt{main} only};
+\end{tikzpicture}
+\caption{The Continuous Integration, CI, and Continuous Deployment, CD, pipeline. Every push triggers a GitHub Actions run that lints with \texttt{ruff} and tests with \texttt{pytest}. The deploy job fires only for pushes to \texttt{main}, opens an SSH session to \texttt{produser@192.168.56.11}, and runs \texttt{setup-server.sh} to reinstall dependencies, apply migrations, and restart the systemd unit. A red lint or red test breaks the chain before deploy.}
+\label{fig:cicd_pipeline}
+\end{figure}
+
+\newthought{Why now and not earlier?}
+Automation has prerequisites.
+You cannot deploy automatically until the service deploys by hand,
+which Block~5 fixed, and you cannot back up a database until there
+is a database, which Block~6 fixed.
+The reverse proxy from Block~7 means the production URL is stable,
+which is what makes a webhook deployment safe.
+Each layer below makes the layer above worth automating.
+
+\newpage
+\subsection{Hands On Experience}
+
+\newthought{Consider this scenario:} It is Friday at 18:30.
+A user reports that \texttt{/api/classify} returns the wrong label
+on images that contain a stray ink mark.
+You write a fix, run it locally on \texttt{dev}, the prediction
+looks right, you push to \texttt{main}, ssh to \texttt{prod}, pull,
+restart, and head home.
+Saturday morning the service is down.
+The fix passed your single manual check and shipped a regression
+that broke the response shape on every other input.
+No tests ran the existing endpoints, no guard sat between your push
+and \texttt{prod}, and the only person who would have noticed before
+the weekend ended is you.
+
+\newthought{The lesson generalises.}
+Every undocumented manual step is a step a tired human will skip,
+and every skipped step is a regression waiting to ship.
+Automation does not replace careful engineering: It encodes the
+steps careful engineers already do, so they happen every time, in
+the same order, without anyone remembering.
+
+\marginnote{\newthought{Outside the classroom.}\index{operations}
+Teams call this practice DevOps.
+The artefacts are different at scale, with Jenkins, GitLab CI, or
+Argo replacing GitHub Actions, and Kubernetes deployments replacing
+\texttt{systemctl restart}, but the shape is identical: One human
+push, many automated gates, one observable change to production.}
+
+\newthought{This eighth block} introduces automation around the
+PixelWise pipeline.
+By the end you will have
+\begin{itemize}
+    \item written a GitHub Actions workflow that lints and tests on every push,
+    \item written a smoke test for \texttt{classify\_batch} and an HTTP test for \texttt{POST /classify},
+    \item shipped a deploy job that ssh's into \texttt{prod} on every merge to \texttt{main},
+    \item scheduled a nightly database backup on \texttt{prod} through \texttt{cron},
+    \item moved each backup off the \texttt{prod} VM with \texttt{rsync} over SSH,
+    \item and gated one new API behaviour behind a feature flag read from \texttt{.env}.
+\end{itemize}
+
+\marginnote{\newthought{The pipeline is the product surface.}\index{pipeline}
+Once a pipeline runs on every push, the test suite, the deploy script,
+and the cron schedule become part of how the application behaves.
+A broken pipeline is a broken product, even when the running service
+is fine.}
 
 
 % ==============================================================================================
@@ -28,19 +133,20 @@ tests do not run. If tests fail, the deploy does not happen.
 \section{Optional Exercise: Catch Up to \texttt{v0.6}}\index{exercises}\index{Git!tag}\index{recovery}
 
 \marginnote{\newthought{Tag map.}\index{Git!tag}
-\texttt{v0.6} marks the end of Block~7, \texttt{v0.7} will mark the end
-of this block.
+\texttt{v0.6} marks the end of Block~7, \texttt{v0.7} will mark the
+end of this block.
 Browse the full set at
 \url{https://github.com/schutera/pixelwise/tags}.}
 
 \newthought{Catching up via tag.}\index{Git!tag}\index{recovery}
-This catch-up extends the one in Block~7. If you have not done that one,
-do it first: It lands you at \texttt{v0.5}, the end-of-Block~6 state.
-The exercise here picks up from there and rewinds to \texttt{v0.6}, the
-end-of-Block~7 state, with Nginx running on \texttt{prod} as a reverse
-proxy in front of the FastAPI service, a static frontend served from
-\texttt{/opt/pixelwise/frontend/}, a self-signed Transport Layer
-Security, TLS, certificate in place, the site reachable at
+This catch-up extends the one in Block~7.
+If you have not done that one, do it first: It lands you at
+\texttt{v0.5}, the end-of-Block~6 state.
+The exercise here picks up from there and rewinds to \texttt{v0.6},
+the end-of-Block~7 state, with Nginx running on \texttt{prod} as a
+reverse proxy in front of the FastAPI service, a static frontend
+served from \texttt{/opt/pixelwise/frontend/}, a self-signed Transport
+Layer Security, TLS, certificate in place, the site reachable at
 \texttt{https://192.168.56.11}, Cross-Origin Resource Sharing, CORS,
 configured on the API, and security headers set on every response.
 
@@ -56,15 +162,9 @@ deploys the frontend, and provisions the self-signed TLS certificate,
 updated CORS middleware in \texttt{app/main.py} together with the
 security-header configuration, and a refreshed \texttt{.env.example}
 with any new entries Block~7 introduced. The local \texttt{.env} on
-each VM needs the new values written by hand; \texttt{setup-server.sh}
-then reloads Nginx and restarts the service in one shot.
-
-\newthought{Run the catch-up on \texttt{dev}.}
-Rewind the repository to \texttt{v0.6}, refresh \texttt{.env} from the
-updated example and edit it for any new secrets, reinstall pinned
-dependencies if your virtual environment was wiped, then run
-\texttt{setup-server.sh} to align the development tree with the
-release. The exact commands are in the margin.
+each VM needs the new values written by hand;
+\texttt{setup-server.sh} then reloads Nginx and restarts the service
+in one shot.
 
 \marginnote{\newthought{Sequence on \texttt{dev}.}\\[0.4em]
 \texttt{cd \textasciitilde/pixelwise}\\
@@ -80,11 +180,12 @@ Edit \texttt{.env} to set any new secrets and local overrides. If
 \texttt{python3 -m venv .venv} before the
 \texttt{source} step.}
 
-\newthought{Run the catch-up on \texttt{prod}.}
-Same sequence on prod, where \texttt{setup-server.sh} also installs
-Nginx, deploys the \texttt{frontend/} files, provisions the TLS
-certificate, reloads Nginx, and restarts the service. After the script
-finishes, verify the API is reachable from \texttt{dev}.
+\newthought{Run the catch-up on \texttt{dev}.}
+Rewind the repository to \texttt{v0.6}, refresh \texttt{.env} from the
+updated example and edit it for any new secrets, reinstall pinned
+dependencies if your virtual environment was wiped, then run
+\texttt{setup-server.sh} to align the development tree with the
+release. The exact commands are in the margin.
 
 \marginnote{\newthought{Sequence on \texttt{prod}.}\\[0.4em]
 \texttt{ssh produser@192.168.56.11}\\
@@ -97,12 +198,19 @@ finishes, verify the API is reachable from \texttt{dev}.
 \texttt{pip install -r requirements.txt}\\
 \texttt{bash setup-server.sh}\\[0.3em]
 Then from \texttt{dev}:
-\texttt{curl http://192.168.56.11:8000/health}
+\texttt{curl -k https://192.168.56.11/api/health}
 should return \texttt{\{"status":"ok"\dots\}}.}
 
+\newthought{Run the catch-up on \texttt{prod}.}
+Same sequence on \texttt{prod}, where \texttt{setup-server.sh} also
+installs Nginx, deploys the \texttt{frontend/} files, provisions the
+TLS certificate, reloads Nginx, and restarts the service. After the
+script finishes, verify the API is reachable from \texttt{dev} over
+the proxied path.
+
 \marginnote{\newthought{Already have a fork?}\index{Git!fork}
-If your own fork carries the \texttt{v0.6} tag, swap \texttt{origin} on
-\texttt{dev} with
+If your own fork carries the \texttt{v0.6} tag, swap \texttt{origin}
+on \texttt{dev} with
 \texttt{git remote set-url origin git@github.com:<you>/pixelwise.git}
 so push and pull continue to target your account.
 The HTTPS clone on \texttt{prod} stays read-only.}
@@ -111,81 +219,175 @@ The HTTPS clone on \texttt{prod} stays read-only.}
 machines aligned, ready to start Block~8.
 
 
+
 % ==============================================================================================
 % BLOCK 2: CONCEPTS AND PRACTICE
 % ==============================================================================================
 
 \newpage
-\section{GitHub Actions}\index{GitHub Actions}
+\section{Continuous Integration and Continuous Deployment}\index{CI/CD}\index{continuous integration}\index{continuous deployment}
 
-\newthought{GitHub Actions}\marginnote{GitHub Actions\index{GitHub Actions}:
-\url{https://docs.github.com/en/actions}\\
-Workflow syntax: \url{https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions}}
-run workflows in response to repository events. The configuration lives in
-YAML files under \texttt{.github/workflows/}.
-A continuous integration workflow declares the triggers that start it,
-typically \texttt{push} and \texttt{pull\_request}, the runner image,
-ubuntu-latest in our case, and a sequence of steps that check out the
-code, set up Python, install dependencies, lint with \texttt{ruff}, and
-run the test suite with \texttt{pytest}.
-The exercise below has the full \texttt{ci.yml} that PixelWise needs.
+\newthought{Continuous Integration, CI,} is the practice of merging
+every change into a shared branch as soon as it passes an automated
+gate.
+The gate is a pipeline: A linter that rejects broken style, a test
+suite that rejects broken behaviour, a build step that rejects code
+that does not even compile.
+The pipeline runs on a clean machine, not on the author's laptop, so
+the result is reproducible.
+Green is safe to merge; red does not enter \texttt{main}.
 
-\marginnote{Key concepts. Triggers\index{GitHub Actions!triggers}, namely \texttt{push} and \texttt{pull\_request},
-define when a workflow runs. Jobs run on runners, GitHub-provided VMs. Steps are
-sequential commands within a job.}
+\marginnote{\newthought{Why a clean machine?}\index{reproducibility}
+Your laptop has packages your colleague's laptop does not.
+A pipeline that runs on a fresh \texttt{ubuntu-latest} image each
+time catches the missing dependency the day the author pushes, not
+the day the colleague clones.}
 
-\subsection{Using Secrets in Actions}\index{GitHub Actions!secrets}
+\newthought{Continuous Deployment, CD,} extends the chain by one
+step.
+The pipeline that passes the gate also pushes the green commit to
+production, with no human between the merge and the restart.
+The unit of release shrinks from "a quarter of features" to "every
+merge to \texttt{main}", which makes each release small enough to
+reason about and small enough to revert.
+A regression that ships in a five-line commit is a regression you
+can find in five lines.
 
-\newthought{Never hardcode secrets in workflow files.} Store them in GitHub's repository settings under
-Settings $\to$ Secrets and variables $\to$ Actions. Reference them as \texttt{\$\{\{ secrets.MY\_SECRET \}\}}.
-Never echo them in logs.
+\marginnote{\newthought{Continuous Delivery vs Continuous Deployment.}\index{continuous delivery}
+Two practices share the abbreviation CD.
+Continuous Delivery means every merge produces a release artefact
+ready to deploy, with a human pressing the button.
+Continuous Deployment removes the button.
+PixelWise runs the latter because the surface is small and the cost
+of a bad deploy is bounded by a one-line revert.}
 
-\subsection{The Deploy Workflow}
+\newthought{The PixelWise pipeline} has three gates and one effect.
+Gate one is \texttt{ruff}, the Python linter.
+Gate two is \texttt{pytest}, which runs the test suite against the
+checked-out code.
+Gate three is the branch filter on the deploy job: It runs only when
+the push lands on \texttt{main}.
+The effect is one SSH session from the runner into
+\texttt{produser@192.168.56.11}, followed by
+\texttt{bash setup-server.sh}.
 
-\newthought{The deploy workflow} fires only on pushes to \texttt{main},
-opens an SSH session to the server using the secrets configured in
-GitHub, and runs \texttt{scripts/deploy.sh} on the remote machine.
-We use the \texttt{appleboy/ssh-action} runner so the entire deploy step
-is a few lines of YAML.
-The exercise below wires it up.
+\newthought{Each gate gates the next.}
+A failing lint stops the test step.
+A failing test stops the deploy.
+Lint is cheap so it runs first, tests are slower so they only run on
+code that lints, deploy is the only step that changes \texttt{prod}
+so it only runs on code that lints and tests.
+The shape is a pyramid with the expensive, irreversible work at the
+top.
 
-\subsection{Tests: Where They Live}\index{testing}\index{pytest}
+\marginnote{\newthought{Why \texttt{ruff} and \texttt{pytest}?}\index{ruff}\index{pytest}
+\texttt{ruff} is a Python linter written in Rust that runs ten times
+faster than \texttt{flake8} and replaces a dozen older tools with one
+binary.
+\texttt{pytest} is the de-facto test runner for Python: A function
+named \texttt{test\_*} is a test, \texttt{assert} is the assertion,
+no class scaffolding required.
+Both are pinned in \texttt{requirements.txt} so the CI image and
+\texttt{dev} agree on the version.\\
+ruff: \url{https://docs.astral.sh/ruff/}\\
+pytest: \url{https://docs.pytest.org/}}
 
-\newthought{The CI pipeline runs \texttt{pytest},}\marginnote{pytest\index{pytest}:
-\url{https://docs.pytest.org/}\\
-ruff\index{ruff} (linter): \url{https://docs.astral.sh/ruff/}} but writing tests is an entire discipline covered
-in dedicated courses. Here we show where tests live (\texttt{tests/}), what a test looks like, and how
-the CI pipeline runs them. A few example tests are provided in the boilerplate:
-
-\begin{verbatim}
-# tests/test_classifier.py
-from app.classifier import classify_batch
-import numpy as np
-
-def test_classify_batch_shape():
-    images = np.zeros((2, 28, 28), dtype=np.uint8)
-    results = classify_batch(images)
-    assert len(results) == 2
-    assert "prediction" in results[0]
-    assert "confidence" in results[0]
-\end{verbatim}
-
-The goal is to see the feedback loop: push code $\to$ tests run $\to$ green or red.
 
 
 % ==============================================================================================
 \newpage
-\section{Exercise: CI Workflow}\index{exercises}
+\section{GitHub Actions}\index{GitHub Actions}\index{YAML}
 
-\newthought{Write the CI workflow.} Create \texttt{.github/workflows/ci.yml} that on every push
-lints with \texttt{ruff}\index{ruff} and runs \texttt{pytest} against the boilerplate tests in \texttt{tests/}:
+\newthought{GitHub Actions} runs workflows on machines GitHub
+provides, in response to events on the repository.
+The configuration lives in YAML, short for Yet Another Markup
+Language, the indentation-sensitive serialisation format that maps
+nicely onto nested job and step definitions.
+Files go under \texttt{.github/workflows/}; every file in that folder
+becomes one workflow.
+
+\marginnote{GitHub Actions:
+\url{https://docs.github.com/en/actions}\\
+Workflow syntax:
+\url{https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions}}
+
+\newthought{Four top-level keys} shape every workflow.
+\texttt{name} is the human-readable label that shows up on the Actions
+tab.
+\texttt{on} declares the triggers, typically \texttt{push} for every
+commit and \texttt{pull\_request} for proposed changes that have not
+landed on \texttt{main} yet.
+\texttt{jobs} is a map from job name to job definition.
+Each job pins a runner image with \texttt{runs-on} and lists its
+\texttt{steps}, which run in order.
+
+\marginnote{\newthought{Runners.}\index{GitHub Actions!runner}
+A runner is the VM that executes the workflow.
+\texttt{ubuntu-latest} is a fresh Ubuntu image GitHub provisions on
+every run, throws away when the job finishes, and bills against the
+account's free-tier minutes.
+Self-hosted runners exist for teams that need custom hardware or
+private network access; the classroom does not.}
+
+\newthought{Steps} come in two flavours.
+\texttt{uses} pulls a prebuilt action, a packaged unit of work
+published by GitHub or the community;
+\texttt{actions/checkout@v4} checks out the repository at the
+triggering commit, \texttt{actions/setup-python@v5} installs a
+specific Python version.
+A \texttt{run} step is a shell command, executed in the runner's
+working directory with the repository already checked out.
+
+\newthought{Secrets are values the workflow needs but the repository
+must not store in plain text:} An SSH private key, a database
+password, a third-party API token.
+GitHub stores them encrypted under Settings, then Secrets and
+variables, then Actions, and exposes them inside the workflow as
+\texttt{\$\{\{ secrets.NAME \}\}}.
+The runtime substitutes the value, the logs mask any line that
+contains it, and the same value never lands in Git.
+
+\marginnote{\newthought{Why mask in logs?}\index{secrets}
+Action logs are world-readable on public repositories.
+A workflow that prints a secret prints it forever.
+The only safe rule is to never \texttt{echo} them.}
+
+\newthought{Matrices and environments} are advanced features the
+PixelWise pipeline does not use yet.
+A matrix multiplies one job into many, useful for running the same
+tests against three Python versions in parallel.
+An environment is a named protection layer with required reviewers
+and dedicated secrets, useful when the same workflow targets staging
+and production.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: The Continuous Integration Workflow}\index{exercises}\index{GitHub Actions}
+
+\newthought{Author \texttt{.github/workflows/ci.yml} on \texttt{dev}.}
+The workflow runs on every push and every pull request, sets up
+Python 3.11, installs pinned dependencies plus \texttt{ruff} and
+\texttt{pytest}, lints, and runs the test suite.
+Create the directory and the file at the repository root:
 
 \begin{verbatim}
+cd ~/pixelwise
 mkdir -p .github/workflows
 nano .github/workflows/ci.yml
 \end{verbatim}
 
-Paste the workflow:
+\marginnote{\newthought{The workflow file is the contract.}\index{GitHub Actions!workflow}
+Everything CI does on every push is in this file.
+A reviewer should be able to read it in one sitting and predict the
+outcome of any push, without opening the Actions tab.}
+
+Paste the workflow body.
+The \texttt{name} surfaces in the Actions tab; the \texttt{on} block
+fires the workflow on both branch pushes and pull requests; the
+\texttt{lint-and-test} job runs on a fresh Ubuntu runner; each step
+either uses a prebuilt action or runs a shell command:
 
 \begin{verbatim}
 # .github/workflows/ci.yml
@@ -217,45 +419,359 @@ jobs:
         run: pytest tests/
 \end{verbatim}
 
-Push and watch the workflow run on GitHub.
+\marginnote{\newthought{Why pin the Python version?}\index{Python!version}
+\texttt{ubuntu-latest} ships a Python that drifts over time.
+Pinning \texttt{3.11} means the runner installs the same minor version
+on every run, which keeps the CI outcome reproducible across months.
+The \texttt{dev} VM should match.}
 
-
-% ==============================================================================================
-\newpage
-\section{The Deploy Script}\index{deploy.sh}
-
-\newthought{A standalone deploy script} is reusable from both Actions
-and manual deploys.
-The script lives at \texttt{scripts/deploy.sh}, runs with
-\texttt{set -euo pipefail} so any failure aborts the run, changes into
-\texttt{/opt/pixelwise}, pulls \texttt{main}, activates the virtual
-environment, installs dependencies, restarts the systemd unit, and prints
-a timestamped completion line.
-Keeping the steps in a script means the GitHub Actions runner and a
-human on the server execute the same path.
-The exercise below has the full file PixelWise needs.
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: Deploy Workflow}\index{exercises}
-
-\newthought{Write the deploy workflow.} Create \texttt{.github/workflows/deploy.yml} that on merge
-to \texttt{main}, SSHs to the server and runs the deploy script. Add your SSH key and server IP
-as GitHub Actions secrets.
+\newthought{Commit and push to watch it run.}
+The workflow registers itself the moment it lands in \texttt{main},
+so the first push that includes the file also triggers the first run:
 
 \begin{verbatim}
-# .github/workflows/deploy.yml
-name: Deploy
-on:
-  push:
-    branches: [main]
+git add .github/workflows/ci.yml
+git commit -m "Add CI workflow"
+git push
+\end{verbatim}
 
-jobs:
+\marginnote{\newthought{Did it take?}\\[0.4em]
+Open the repository's Actions tab on GitHub.
+The latest run should be listed with a yellow dot while it runs and a
+green check when it finishes.
+A red cross means a step failed; expand the run and read the failing
+step's log.}
+
+\newthought{Expect a red run on the first push.}
+The repository does not yet contain a \texttt{tests/} directory, so
+\texttt{pytest} exits with code 5, "no tests collected".
+The next section adds the first tests and turns the run green.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Writing the First Tests}\index{testing}\index{pytest}
+
+\newthought{Testing is its own discipline.}
+A full treatment of unit testing, integration testing, contract
+testing, fuzzing, and property-based testing belongs in a dedicated
+course.
+What you need here is the smallest set of tests that prove the
+service still works after a push.
+Two tests is enough: One for the classifier function directly, one
+for the HTTP layer on top of it.
+
+\marginnote{\newthought{The test pyramid.}\index{testing!pyramid}
+Many fast unit tests at the base, fewer integration tests in the
+middle, a handful of end-to-end tests at the top.
+The classifier test is a unit test, the HTTP test is an integration
+test.
+The end-to-end test, a browser driving the canvas, lands in a later
+block.}
+
+\newthought{Where tests live.}
+The convention in Python is a \texttt{tests/} directory at the
+repository root, with files named \texttt{test\_*.py} and functions
+named \texttt{test\_*}.
+\texttt{pytest} discovers them automatically; no registration, no
+configuration.
+The CI workflow above runs \texttt{pytest tests/}, which scans the
+directory once per push.
+
+\newthought{What a test looks like.}
+A \texttt{pytest} test is a plain Python function that uses
+\texttt{assert} to state a property the code must satisfy.
+A pass is a function that runs to completion; a fail is any
+exception, including \texttt{AssertionError}.
+
+\newthought{FastAPI's \texttt{TestClient}}\index{FastAPI!TestClient}
+wraps the application in an in-process HTTP client.
+A call to \texttt{client.post("/classify", json=\{...\})} does the
+same work \texttt{curl} does at the wire level, but without sockets,
+without \texttt{uvicorn}, and without a port to free between tests.
+The test runs in the same Python process as the app, so it is fast
+enough that the CI gate stays cheap.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: A Smoke Test and an HTTP Test}\index{exercises}\index{pytest}
+
+\newthought{Add \texttt{httpx} to the dev environment} so
+\texttt{TestClient} has the asynchronous HTTP library it depends on,
+then pin it in \texttt{requirements.txt} so the CI runner picks it
+up:
+
+\begin{verbatim}
+cd ~/pixelwise
+source .venv/bin/activate
+pip install pytest httpx
+pip freeze > requirements.txt
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{httpx}?}\index{httpx}
+FastAPI's \texttt{TestClient} delegates to \texttt{httpx} under the
+hood since version 0.87.
+The package is small, has no native build, and installs cleanly on
+the CI runner.
+The pin makes the test step reproducible.}
+
+\newthought{Create \texttt{tests/test\_classifier.py}} on \texttt{dev}
+with a smoke test for \texttt{classify\_batch}.
+The test builds a batch of two blank images, passes them through the
+classifier, and asserts the response shape.
+A blank image is not a meaningful prediction, but it is meaningful
+proof that the function runs, returns the right number of entries,
+and exposes the expected keys:
+
+\begin{verbatim}
+mkdir -p tests
+nano tests/test_classifier.py
+\end{verbatim}
+
+\marginnote{\newthought{Smoke test.}\index{testing!smoke}
+A smoke test proves the wiring works without claiming anything about
+correctness.
+The name comes from electronics: Turn the power on and see whether
+smoke comes out.
+A smoke test that fails means the code does not even run; a smoke
+test that passes does not mean the code is right, only that it
+runs.}
+
+\begin{verbatim}
+# tests/test_classifier.py
+import numpy as np
+from app.classifier import classify_batch
+
+
+def test_classify_batch_returns_one_per_image():
+    images = np.zeros((2, 28, 28), dtype=np.uint8)
+    results = classify_batch(images)
+    assert len(results) == 2
+
+
+def test_classify_batch_result_shape():
+    images = np.zeros((1, 28, 28), dtype=np.uint8)
+    result = classify_batch(images)[0]
+    assert "prediction" in result
+    assert "confidence" in result
+    assert isinstance(result["confidence"], float)
+\end{verbatim}
+
+\newthought{Create \texttt{tests/test\_api.py}} for the HTTP layer.
+\texttt{TestClient(app)} mounts the FastAPI application in-process,
+so the test can issue requests without a running server.
+The classify endpoint needs the API key header from Block~5, so the
+test reads \texttt{SECRET\_API\_KEY} from the environment, which the
+CI runner sets through a workflow secret in a later iteration; for
+now, an explicit key keeps the test self-contained:
+
+\marginnote{\newthought{Self-contained tests.}\index{testing}
+A test that depends on a running \texttt{prod} server is not a test,
+it is a probe.
+\texttt{TestClient} pulls the application into the test process so
+the test depends only on the code in the repository, which is what
+makes the CI gate trustworthy.}
+
+\begin{verbatim}
+nano tests/test_api.py
+\end{verbatim}
+
+\begin{verbatim}
+# tests/test_api.py
+import os
+from fastapi.testclient import TestClient
+from app.main import app
+
+os.environ.setdefault("SECRET_API_KEY", "test-key")
+client = TestClient(app)
+
+
+def test_health_is_ok():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+
+def test_classify_round_trip():
+    pixels = [[0] * 28 for _ in range(28)]
+    response = client.post(
+        "/classify",
+        headers={"X-API-Key": "test-key"},
+        json={"pixels": pixels},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert "prediction" in body
+    assert "confidence" in body
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{setdefault}?}\index{environment variable}
+\texttt{os.environ.setdefault} writes the key only when the
+environment does not already define it.
+A developer running \texttt{pytest} locally with a real \texttt{.env}
+loaded keeps their value; a fresh CI runner with no
+\texttt{SECRET\_API\_KEY} falls back to the test default.}
+
+\newthought{Run the tests locally on \texttt{dev}} before pushing,
+from the repository root so \texttt{pytest} resolves the
+\texttt{app} package against the on-disk source tree:
+
+\begin{verbatim}
+cd ~/pixelwise
+source .venv/bin/activate
+pytest tests/
+\end{verbatim}
+
+\marginnote{\newthought{Did it take on \texttt{dev}?}\\[0.4em]
+\texttt{pytest tests/} should print four passes.\\[0.3em]
+\newthought{Wipe and start fresh.}
+If \texttt{pytest} reports import errors, run
+\texttt{pip install -r requirements.txt}
+again to pull in \texttt{httpx} and the dependencies the test client
+needs.
+If the API test returns 401, double-check that
+\texttt{SECRET\_API\_KEY} is set or that
+\texttt{os.environ.setdefault} ran before
+\texttt{from app.main import app}.}
+
+\newthought{Commit and push.}
+The CI workflow runs the same tests on the GitHub runner, against
+the same \texttt{requirements.txt}.
+A green run means lint and tests both passed; a red run means at
+least one did not, and the Actions log says which:
+
+\begin{verbatim}
+git add tests/ requirements.txt
+git commit -m "Add smoke tests for classifier and API"
+git push
+\end{verbatim}
+
+
+
+% ==============================================================================================
+\newpage
+\section{Continuous Deployment}\index{continuous deployment}\index{deploy}
+
+\newthought{The deploy job} is one extra job in the same workflow.
+It depends on the CI job through the \texttt{needs} keyword, so it
+runs only after lint and tests pass, and it filters on the branch
+so it runs only for pushes to \texttt{main}.
+A push to a feature branch triggers CI alone; a merge to
+\texttt{main} triggers CI followed by deploy.
+
+\marginnote{\newthought{Two jobs or two workflows?}\index{GitHub Actions!jobs}
+One workflow with two jobs works because the second needs the first.
+Splitting into two workflows is fine when the second is independent,
+for example a nightly job.
+The \texttt{needs} keyword is what makes the single-workflow shape
+cheap.}
+
+\newthought{The runner needs three things on \texttt{prod}.}
+The IP, read from \texttt{secrets.SERVER\_IP} and set to
+\texttt{192.168.56.11}.
+The username, read from \texttt{secrets.SERVER\_USER} and set to
+\texttt{produser}.
+An SSH private key the runner can present to \texttt{prod}, generated
+on \texttt{dev}, public half appended to \texttt{produser}'s
+\texttt{authorized\_keys} on \texttt{prod}, private half stored in
+\texttt{secrets.SSH\_PRIVATE\_KEY}.
+
+\marginnote{\newthought{Why a deploy key?}\index{SSH!key}
+A deploy key is a dedicated SSH key whose only job is to let the
+runner reach \texttt{prod}.
+It lives in GitHub Secrets and on \texttt{prod}'s
+\texttt{authorized\_keys}, nowhere else.
+Rotating the key revokes deploy access without touching any other
+credential.}
+
+\newthought{The deploy step} uses
+\texttt{appleboy/ssh-action}\index{appleboy/ssh-action}, a community
+action that opens an SSH session and runs a script on the remote
+machine.
+The script the classroom runs is the same
+\texttt{bash setup-server.sh} a human would run by hand: It pulls
+the latest \texttt{main}, installs pinned dependencies, applies any
+schema migrations, copies the systemd unit, and restarts the
+service.
+The script is idempotent, so running it on every merge leaves the
+server in a known state.
+
+\newthought{The webhook alternative.}
+The same shape works without GitHub Actions: A tiny HTTP server on
+\texttt{prod} that listens for a POST and runs
+\texttt{bash setup-server.sh} in response.
+A listener on \texttt{prod} is one more attack surface, but it
+removes the need to store an SSH key in GitHub.
+The optional section near the end of this block sketches the
+listener pattern; the mainline uses Actions because the runner is
+trusted infrastructure GitHub already operates.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: The Deploy Job}\index{exercises}\index{SSH}\index{deploy}
+
+\newthought{Generate the deploy key on \texttt{dev}} and copy the
+public half to \texttt{produser}'s \texttt{authorized\_keys} on
+\texttt{prod}:
+
+\begin{verbatim}
+ssh-keygen -t ed25519 \
+    -f ~/.ssh/pixelwise_deploy \
+    -C "pixelwise-deploy"
+ssh-copy-id -i ~/.ssh/pixelwise_deploy.pub \
+    produser@192.168.56.11
+\end{verbatim}
+
+\marginnote{\newthought{Why \texttt{ed25519}?}\index{SSH!key}
+\texttt{ed25519} is the modern elliptic-curve key format: Smaller,
+faster, and at least as strong as \texttt{rsa-4096}.
+Every recent OpenSSH version supports it.}
+
+\newthought{Register the secrets on GitHub.}
+In the browser, open the repository on GitHub, then Settings, then
+Secrets and variables, then Actions.
+Add three repository secrets:
+\texttt{SERVER\_IP} with value \texttt{192.168.56.11},
+\texttt{SERVER\_USER} with value \texttt{produser}, and
+\texttt{SSH\_PRIVATE\_KEY} with the entire contents of
+\texttt{\textasciitilde/.ssh/pixelwise\_deploy}, including the
+\texttt{-----BEGIN} and \texttt{-----END} lines.
+
+\marginnote{\newthought{Paste the full key.}\index{secrets}
+The private key is a multi-line text block.
+Paste every line including the header and footer; an SSH client
+rejects a truncated key with a confusing error like "invalid format"
+that points nowhere useful.}
+
+\newthought{Extend the workflow on \texttt{dev}.}
+Open \texttt{.github/workflows/ci.yml} and append a second job after
+\texttt{lint-and-test}.
+The \texttt{needs} keyword chains the deploy job behind the lint and
+test job, and the \texttt{if} guard restricts it to pushes that land
+on \texttt{main}:
+
+\begin{verbatim}
+nano .github/workflows/ci.yml
+\end{verbatim}
+
+\marginnote{\newthought{The guard is the headline.}\index{GitHub Actions!if}
+\texttt{if: github.ref == 'refs/heads/main'} is the line that turns
+the workflow from "lint and test on every push" into "and only
+deploy on \texttt{main}".
+Without it, every feature branch would ship to \texttt{prod}.}
+
+\begin{verbatim}
   deploy:
+    needs: lint-and-test
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to server
+      - name: Deploy to prod
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -263,37 +779,49 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/pixelwise
-            bash scripts/deploy.sh
+            git pull origin main
+            source .venv/bin/activate
+            pip install -r requirements.txt
+            bash setup-server.sh
 \end{verbatim}
 
+\marginnote{\newthought{Why not call a script?}\index{deploy}
+The inline \texttt{script} block is short enough to read on the
+Actions log, which keeps the trail clear when a deploy fails.
+A separate \texttt{scripts/deploy.sh} is fine once the steps grow;
+for now, the inline version keeps everything in one file.}
 
-% ==============================================================================================
-\newpage
-\section{Exercise: Deploy Script}\index{exercises}
-
-\newthought{Write the deploy script.} Create \texttt{scripts/deploy.sh} that pulls \texttt{main},
-installs dependencies, and restarts the service.
+\newthought{Commit and push to \texttt{main}.}
+The first push triggers both jobs: Lint and test run first, the
+deploy job follows on success, the runner opens an SSH session to
+\texttt{produser@192.168.56.11}, and the server pulls the new commit
+and restarts itself:
 
 \begin{verbatim}
-mkdir -p scripts
-nano scripts/deploy.sh
-chmod +x scripts/deploy.sh
+git add .github/workflows/ci.yml
+git commit -m "Add deploy job for pushes to main"
+git push
 \end{verbatim}
 
-Paste:
+\marginnote{\newthought{Did it deploy?}\\[0.4em]
+From \texttt{dev}:\\
+\texttt{curl -k https://192.168.56.11/api/health}\\[0.3em]
+The response should include the current commit's behaviour, including
+any test or workflow change you just pushed.
+\texttt{sudo systemctl status pixelwise} on \texttt{prod} should show
+a recent \texttt{Active: active (running)} timestamp matching the
+deploy run.
 
-\begin{verbatim}
-#!/bin/bash
-# scripts/deploy.sh
-set -euo pipefail
+\vspace{0.4em}
+\newthought{Wipe and start fresh.}
+If the deploy job hangs at the SSH step, the runner cannot reach
+\texttt{192.168.56.11}.
+The classroom VM lives on a host-only adapter, which means GitHub's
+public runners cannot route to it.
+The deploy job will only complete from a self-hosted runner or from
+a runner with network access to the lab; the workflow is otherwise
+correct and ships as written to any reachable production server.}
 
-cd /opt/pixelwise
-git pull origin main
-source .venv/bin/activate
-pip install -r requirements.txt
-sudo systemctl restart pixelwise
-echo "Deploy complete: $(date)"
-\end{verbatim}
 
 \marginnote{\newthought{Why no schema step.}\index{schema}
 The \texttt{predictions} table is created once on \texttt{prod} by
@@ -307,250 +835,685 @@ restart.}
 
 % ==============================================================================================
 \newpage
-\section{Cron: Scheduled Automation}\index{cron}
+\section{Cron: Scheduled Tasks}\index{cron}\index{scheduling}
 
-\newthought{Cron runs commands on a schedule,} no human required. The syntax has five fields:
+\newthought{Cron is the unix scheduler.}
+A line in a crontab pairs a schedule expression with a command;
+\texttt{cron} wakes up every minute, checks every line, and runs the
+ones whose schedule matches.
+The schedule is five fields: Minute, hour, day of month, month, day
+of week.
+A \texttt{*} matches every value, a number matches that value,
+\texttt{*/N} matches every Nth value.
 
-\begin{verbatim}
-# +-------- minute (0-59)
-# | +------ hour (0-23)
-# | | +---- day of month (1-31)
-# | | | +-- month (1-12)
-# | | | | + day of week (0-7, Sun=0 or 7)
-# | | | | |
-  * * * * *  command
-\end{verbatim}
+\marginnote{\newthought{Read the fields out loud.}\index{cron!syntax}
+\texttt{0 2 * * *} reads as "minute 0, hour 2, every day, every
+month, every weekday", which is two in the morning.
+\texttt{*/5 * * * *} reads as "every five minutes".
+\texttt{0 0 * * 0} reads as "Sunday at midnight".
+The schedule field is the part most people misread; saying it out
+loud usually fixes that.}
 
-\newthought{Common patterns:}
-\begin{verbatim}
-0 2 * * *    # daily at 2:00 AM
-*/5 * * * *  # every 5 minutes
-0 0 * * 0    # weekly, Sunday midnight
-\end{verbatim}
+\newthought{Where the crontab lives.}
+Every Linux user has a private crontab, edited with
+\texttt{crontab -e} and listed with \texttt{crontab -l}.
+The file form, \texttt{crontab path/to/file}, replaces the whole
+crontab atomically.
+The classroom uses the file form because the schedule is part of
+how the service operates and belongs under version control next to
+the systemd unit and the Nginx config.
 
-Edit with \texttt{crontab -e}. List with \texttt{crontab -l}.
+\newthought{What runs on a schedule.}
+Database backups, log rotation, certificate renewal, model artefact
+refresh, cleanup of temporary files, health probes that alert when
+they fail.
+Anything that needs to happen reliably without a human remembering
+is a cron candidate.
+The PixelWise schedule runs one job: A nightly database dump that
+moves off the \texttt{prod} VM before sunrise.
 
-\marginnote{Real-world cron uses: database backups, clearing temporary files, health checks that ping your
-service and alert on failure, certificate renewal, triggering retraining pipelines, sending summary reports.
-The common thread: anything that needs to happen reliably on a schedule without a human remembering.}
+\marginnote{\newthought{Cron's failure modes.}\index{cron!debugging}
+A cron job that fails is silent by default; \texttt{cron} mails the
+output to the local user, which on a server with no mail relay goes
+nowhere.
+Redirect both streams to a known log file with
+\texttt{>>/var/log/pixelwise-backup.log 2>\&1} so you have something
+to read when the backup did not land.}
 
-\newthought{Students have already seen automation:} \texttt{systemd} restarts their crashed service
-automatically (Block~5). \texttt{journalctl} rotates its own logs. Package managers run unattended
-security updates. Cron jobs are the explicit, user-controlled version of automation that is already
-everywhere under the hood.
+\newthought{Cron versus a webhook deploy.}
+Both are automation, but they fail differently.
+Cron runs on a fixed schedule, so a missed run is invisible until
+someone checks the log.
+A webhook deploy runs in response to a trigger, so a failed run
+fails the trigger, and the operator sees the red Actions run
+immediately.
+Use cron for work that does not have a trigger; use a webhook deploy
+for work that follows an event.
+
 
 
 % ==============================================================================================
 \newpage
-\section{Exercise: Nightly Backup Cron}\index{exercises}
+\section{Database Backups}\index{backup}\index{pg\_dump}\index{rsync}
 
-\newthought{Author the cron schedule on \texttt{dev}.} Create
-\texttt{deploy/cron/pixelwise.cron} in the repository, alongside the
-systemd unit from Block~5 and the Nginx config from Block~7. The
-schedule is part of how the service operates, so it lives next to
-the code:
+\newthought{What to back up.}
+The database.
+The code is on GitHub and reproducible from any tagged commit, the
+model artefact is reproducible from \texttt{train.py} and the seed,
+the configuration is reproducible from \texttt{setup-server.sh} and
+\texttt{.env.example}.
+The database is the only piece of state that exists only on
+\texttt{prod} and cannot be recreated.
+
+\marginnote{\newthought{Reproducible vs irreplaceable.}\index{state}
+Reproducible state can be rebuilt from inputs you control.
+Irreplaceable state is whatever a real user generated, and the
+database fills with it after every deploy.
+A backup strategy protects irreplaceable state first.}
+
+\newthought{How to dump.}\index{pg\_dump}
+\texttt{pg\_dump} writes the database to a SQL file, a plain-text
+script of \texttt{INSERT} statements that any PostgreSQL of the same
+or newer major version can replay.
+The dump runs as the database owner and exits zero on success.
+The cron line pipes through \texttt{gzip} so the compressed output
+replaces the uncompressed one atomically when the dump succeeds.
+
+\newthought{Where to put the dump.}
+A backup on the same server as the database is a backup that dies
+with the server.
+The classroom has a natural off-site target: The \texttt{dev} VM,
+which lives on the same host but is independent of \texttt{prod} in
+every way that matters for this exercise.
+\texttt{rsync} over SSH copies the dump to \texttt{dev}, where it
+sits on a different disk away from any disaster that takes out
+\texttt{prod}.
+
+\marginnote{\newthought{Real off-site.}\index{backup}
+In production, off-site means a different cloud region, provider, or
+an air-gapped tape.
+The classroom uses \texttt{dev} because the two-VM setup from
+Block~1 makes it free; the pattern is identical, only the target
+changes.}
+
+\newthought{Retention and restore.}
+A backup folder that grows forever fills the disk and obscures the
+recent dumps.
+A retention policy keeps the last N nights and deletes older files;
+the classroom keeps the last seven.
+A restore is the only test that proves the backup is real: A dump
+that has never been restored is a dump that may or may not work, and
+the night you find out is the night you cannot afford to.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Exercise: Nightly Backup on \texttt{prod}}\index{exercises}\index{backup}
+
+\newthought{Author the backup script on \texttt{dev}.}
+Create \texttt{deploy/backup.sh} at the repository root.
+The script dumps the database, compresses the result with
+\texttt{gzip}, writes the file under
+\texttt{/var/backups/pixelwise/}, and prunes anything older than
+seven days:
+
+\begin{verbatim}
+cd ~/pixelwise
+mkdir -p deploy
+nano deploy/backup.sh
+\end{verbatim}
+
+\marginnote{\newthought{Why a script and not an inline cron line?}\index{cron}
+A script can be read, version-controlled, and reused.
+A cron line that does the same work in one screen-wide command is
+unreadable in the dark at 03:00 when the dump did not land.
+The cron entry stays a one-liner that calls the script.}
+
+\begin{verbatim}
+#!/bin/bash
+# deploy/backup.sh
+# Nightly PostgreSQL dump for PixelWise.
+set -euo pipefail
+
+BACKUP_DIR="/var/backups/pixelwise"
+STAMP="$(date +%Y%m%d)"
+OUT="$BACKUP_DIR/pixelwise-$STAMP.sql.gz"
+
+mkdir -p "$BACKUP_DIR"
+
+PGPASSWORD="${DB_PASSWORD:-}" \
+    pg_dump -U pixelwise -h localhost pixelwise \
+    | gzip > "$OUT"
+
+# Keep the last seven nights, prune the rest.
+find "$BACKUP_DIR" -name 'pixelwise-*.sql.gz' \
+    -mtime +7 -delete
+
+echo "Backup complete: $OUT"
+\end{verbatim}
+
+\marginnote{\newthought{The \texttt{set -euo pipefail} line.}\index{bash!set}
+\texttt{-e} exits on any non-zero command, \texttt{-u} errors on
+unset variables, \texttt{-o pipefail} fails the whole pipeline if any
+stage fails.
+Without \texttt{pipefail}, a \texttt{pg\_dump} that crashes mid-stream
+would still produce a valid empty gzip and a green script exit, which
+is the worst failure mode a backup can have.}
+
+\newthought{Mark the script executable and commit.}
+The executable bit travels with the file in Git, so \texttt{prod}
+gets it on pull without a second \texttt{chmod}:
+
+\begin{verbatim}
+chmod +x deploy/backup.sh
+git add deploy/backup.sh
+git commit -m "Add nightly backup script"
+\end{verbatim}
+
+\newthought{Author the cron file on \texttt{dev}.}
+Two schedule lines: The backup script runs at 02:30, and
+\texttt{rsync} copies whatever landed in
+\texttt{/var/backups/pixelwise/} to the dev VM fifteen minutes later:
+
+\begin{verbatim}
+mkdir -p deploy/cron
+nano deploy/cron/pixelwise.cron
+\end{verbatim}
+
+\marginnote{\newthought{Why 02:30?}\index{cron!schedule}
+Local quiet hours, before any morning traffic, with enough margin
+that the dump and the \texttt{rsync} both finish before anyone logs
+in.
+A real production schedule depends on the user base; 02:30 is a
+classroom default.}
 
 \begin{verbatim}
 # deploy/cron/pixelwise.cron
-0 2 * * * pg_dump -U pixelwise pixelwise \
-    > /tmp/pixelwise_$(date +\%Y\%m\%d).sql \
-    && rsync -avz \
-    /tmp/pixelwise_$(date +\%Y\%m\%d).sql \
-    user@192.168.56.10:/backups/pixelwise/
+# m h dom mon dow command
+30 2 * * * /opt/pixelwise/deploy/backup.sh \
+    >> /var/log/pixelwise-backup.log 2>&1
+
+45 2 * * * rsync -avz \
+    /var/backups/pixelwise/ \
+    user@192.168.56.10:/backups/pixelwise/ \
+    >> /var/log/pixelwise-backup.log 2>&1
 \end{verbatim}
 
-Commit, push, pull on \texttt{prod}, then install the schedule for
-the \texttt{produser} crontab:
+\marginnote{\newthought{Two lines, one effect.}\index{cron}
+The first line writes the dump locally; the second copies it off-VM.
+Splitting the two means a failed \texttt{rsync} does not lose the
+local dump, and a failed dump does not trigger an \texttt{rsync} of
+yesterday's file.
+The output of both lines appends to the same log so you have one
+place to look when something went wrong overnight.}
 
-\begin{verbatim}
-crontab /opt/pixelwise/deploy/cron/pixelwise.cron
-crontab -l                # confirm what is now active
-\end{verbatim}
-
-\marginnote{\newthought{\texttt{crontab} with a file argument}\index{cron!crontab}
-replaces the whole crontab with the contents of the file. \texttt{-e}
-opens an editor; the file form is what you reach for once the
-schedule lives under version control. \texttt{-l} prints the active
-crontab.}
-
-On the \texttt{dev} VM, create the backup directory:
-\begin{verbatim}
-mkdir -p /backups/pixelwise
-\end{verbatim}
+\newthought{Document \texttt{DB\_PASSWORD} for the backup user.}
+The script reads \texttt{DB\_PASSWORD} from the environment because
+PostgreSQL on \texttt{prod} expects the application user to present
+a password.
+The cron runner inherits a minimal environment, so either the
+variable is exported from \texttt{.env} at the top of the script, or
+the cron entry invokes the script under a wrapper that loads it.
 
 \newthought{Teach \texttt{setup-server.sh} to install the schedule.}\index{setup-server.sh}
-Append a prod-only stanza so a fresh VM picks up the cron file
-without manual steps. Open the file in nano on \texttt{dev}:
+Append a prod-only stanza so a fresh \texttt{prod} VM picks up the
+cron file, the backup directory, and the log file without any
+manual steps.
+On \texttt{dev}:
 
 \begin{verbatim}
 nano setup-server.sh
 \end{verbatim}
 
-\marginnote{\newthought{\texttt{crontab} is idempotent.}\index{idempotence}
-\texttt{crontab <file>} replaces the whole crontab atomically, so
-running the stanza twice leaves the same schedule in place. The
-\texttt{id produser} guard from Block~5 keeps the install from
-running on \texttt{dev}, where there are no scheduled jobs to run.}
+\marginnote{\newthought{Idempotent by design.}\index{idempotence}
+The stanza creates directories with \texttt{-p}, which is a no-op
+when they already exist, and replaces the crontab with
+\texttt{crontab <file>}, which is an atomic overwrite of the same
+schedule on every run.
+Run the script ten times; the schedule is in place exactly once.}
 
 \begin{verbatim}
 # Install the cron schedule on prod
-if [ -f /opt/pixelwise/deploy/cron/pixelwise.cron ] && \
-   command -v crontab >/dev/null 2>&1 && \
-   id produser >/dev/null 2>&1; then
-    crontab /opt/pixelwise/deploy/cron/pixelwise.cron
+if [ -f "$SCRIPT_DIR/deploy/cron/pixelwise.cron" ] \
+   && command -v crontab >/dev/null 2>&1 \
+   && id produser >/dev/null 2>&1; then
+    sudo mkdir -p /var/backups/pixelwise
+    sudo chown produser:produser \
+        /var/backups/pixelwise
+    sudo touch /var/log/pixelwise-backup.log
+    sudo chown produser:produser \
+        /var/log/pixelwise-backup.log
+    crontab "$SCRIPT_DIR/deploy/cron/pixelwise.cron"
 fi
 \end{verbatim}
 
-Commit, push, and verify on \texttt{prod} that
-\texttt{bash setup-server.sh} produces the same active schedule on
-every run.
-
-
-% ==============================================================================================
-\newpage
-\section{Backup Strategy}\index{backup}\index{pg\_dump}\index{rsync}
-
-\newthought{What to back up:} the database. Code is on GitHub; the model is reproducible from \texttt{train.py}.
-The database contains data that cannot be recreated. Every prediction, every timestamp, every confidence score.
-
-\newthought{How:} \texttt{pg\_dump}\index{pg\_dump} exports the database to a SQL file.
-
-\newthought{Where:} Off-site. A backup on the same server dies with
-the server. The \texttt{dev} VM is the natural off-site target:
-\texttt{pg\_dump} creates the dump, \texttt{rsync}\index{rsync} copies
-it to the dev VM over SSH, and the two-machine setup from Block~1 pays
-off again.
-The exercise on the next page schedules the dump and the rsync as a
-single nightly cron line.
-
-\marginnote{\texttt{rsync}\index{rsync}, see \url{https://rsync.samba.org/}, is efficient file sync over SSH, incremental
-because it only transfers changed bytes, fast, and scriptable. The right tool for moving backup files between machines.}
-
-\newthought{How to verify:} Restore from a backup at least once.
-An untested backup is not a backup, so the next exercise restores the
-dump into a test database on the dev VM and confirms the data is
-intact.
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: Verify the Backup}\index{exercises}
-
-\newthought{Verify the backup.} Run the backup manually once. Then restore it into a test database
-on the dev VM and verify the data is intact:
+\newthought{Prepare the off-site target on \texttt{dev}.}
+The \texttt{rsync} on \texttt{prod} writes into
+\texttt{/backups/pixelwise/} on \texttt{user@192.168.56.10}.
+Create the directory, give \texttt{user} ownership, then authorise
+\texttt{produser} from \texttt{prod} to log in over SSH:
 
 \begin{verbatim}
-# On the dev VM: restore into a test database
-psql -U pixelwise -d pixelwise_test \
-    < /backups/pixelwise/pixelwise_20260405.sql
+# on dev
+sudo mkdir -p /backups/pixelwise
+sudo chown user:user /backups/pixelwise
+
+# on prod
+sudo -u produser ssh-keygen -t ed25519 \
+    -f /home/produser/.ssh/dev_backup -N ""
+sudo cat /home/produser/.ssh/dev_backup.pub
 \end{verbatim}
+
+\marginnote{\newthought{Why a separate key?}\index{SSH!key}
+The deploy key earlier lets the GitHub runner reach \texttt{prod}.
+This backup key lets \texttt{prod} reach \texttt{dev}.
+Two purposes, two keys; revoking one does not break the other.}
+
+Paste the printed public key into \texttt{user@192.168.56.10}'s
+\texttt{\textasciitilde/.ssh/authorized\_keys}.
+
+\newthought{Commit, push, and deploy.}
+Stage the cron file, the backup script, and the updated
+\texttt{setup-server.sh}, then push.
+The CI workflow runs; on green, the deploy job ships the new files
+to \texttt{prod} and \texttt{setup-server.sh} installs the
+schedule:
+
+\begin{verbatim}
+git add deploy/backup.sh \
+    deploy/cron/pixelwise.cron \
+    setup-server.sh
+git commit -m "Add nightly database backup"
+git push
+\end{verbatim}
+
+\marginnote{\newthought{Did the cron install?}\\[0.4em]
+On \texttt{prod}:\\
+\texttt{crontab -l}\\[0.3em]
+Should print the two schedule lines exactly as they live in
+\texttt{deploy/cron/pixelwise.cron}.
+A missing entry means the prod-only guard in
+\texttt{setup-server.sh} did not fire, usually because
+\texttt{id produser} fails or the cron file is not in the expected
+path.
+
+\vspace{0.4em}
+\newthought{Run it once by hand.}
+Waiting until 02:30 to learn the script broke is bad style.
+On \texttt{prod}:\\[0.3em]
+\texttt{sudo -u produser bash /opt/pixelwise/deploy/backup.sh}\\[0.3em]
+The script should print
+\texttt{Backup complete: /var/backups/pixelwise/pixelwise-YYYYMMDD.sql.gz}
+and the file should exist with non-zero size.}
+
+\newthought{Verify the restore on \texttt{dev}.}
+A backup that has never been restored is not a backup.
+Create a throwaway database, replay the dump into it, and confirm
+the row count matches:
+
+\begin{verbatim}
+sudo -u postgres createdb pixelwise_restore_test
+gunzip -c /backups/pixelwise/pixelwise-*.sql.gz \
+    | sudo -u postgres \
+        psql -d pixelwise_restore_test
+
+sudo -u postgres \
+    psql -d pixelwise_restore_test \
+    -c "SELECT COUNT(*) FROM predictions;"
+\end{verbatim}
+
+\marginnote{\newthought{Throwaway by name.}\index{restore}
+\texttt{pixelwise\_restore\_test} signals to the next person that
+the database exists only to validate a restore.
+Drop it when you are done:\\[0.3em]
+\texttt{sudo -u postgres dropdb pixelwise\_restore\_test}}
+
 
 
 % ==============================================================================================
 \newpage
 \section{Feature Flags}\index{feature flag}
 
-\newthought{Deploying new behaviour without deploying new code.} The simplest form: An env var that
-controls which code path runs. Change the flag, restart the service, and the new behaviour is live.
-No code change, no PR, no CI pipeline.
-For PixelWise, a \texttt{MODEL\_VERSION} entry in \texttt{.env} selects
-which model file \texttt{classifier.py} loads, so swapping
-\texttt{v1} for \texttt{v2} is a one-line config change followed by a
-service restart.
-The exercise below wires it up.
+\newthought{A feature flag is a runtime switch.}
+The code path exists in the binary, but a check at the start of the
+path decides whether to take it.
+The check usually reads a boolean from \texttt{.env}, an environment
+variable, or a row in a config table.
+Flipping the flag changes behaviour without changing code, without a
+deploy, and without a build.
 
-\marginnote{This is how teams roll out features gradually or switch between model versions without risk.
-Both \texttt{v1} and \texttt{v2} model files are available. Switching the model is a config change plus
-service restart, a hook for comparing model performance later in the course.}
+\marginnote{\newthought{The shape of the flag.}\index{feature flag}
+A simple flag is a boolean.
+A multi-arm flag is a string from a known set, like \texttt{v1} vs
+\texttt{v2}.
+A percentage flag rolls a feature out to a fraction of traffic.
+The classroom uses the boolean form.}
+
+\newthought{Why this beats commenting code in and out.}
+A commented-out code path is invisible to the test suite, the type
+checker, the linter, and any reviewer who searches for usages.
+A flag-gated path is real code: It compiles, it runs the linter, it
+runs in CI, and it lights up in production the moment the flag
+flips.
+The cost is one branch in the code and one line in
+\texttt{.env}.
+
+\newthought{What this enables.}
+Progressive rollout, where you ship the new path off, watch the
+service, flip the flag on, watch again, and roll back instantly if
+anything breaks.
+Dark launch, where you ship the path before the user-visible work is
+ready and turn it on when the rest lands.
+Operational kill switch, where a path that turns out wrong stays
+gated until the fix ships, without a redeploy.
+
+\marginnote{\newthought{Outside the classroom.}\index{feature flag}
+Production teams use hosted flag systems like LaunchDarkly or
+Unleash that store flags out of band and push changes to running
+services in seconds.
+The classroom uses \texttt{.env} because it is the lightest possible
+implementation of the same pattern.}
+
 
 
 % ==============================================================================================
 \newpage
-\section{Exercise: Feature Flag for Model Version}\index{exercises}
+\section{Exercise: A Pagination Flag for \texttt{/results}}\index{exercises}\index{feature flag}
 
-\newthought{Add a feature flag for model version.} Add \texttt{MODEL\_VERSION=v1} to \texttt{.env}
-and \texttt{.env.example}. Update \texttt{classifier.py} to load the model path dynamically.
-Place both \texttt{v1.pkl} and \texttt{v2.pkl} in \texttt{models/}. Switch the flag to \texttt{v2},
-restart the service, and verify the model changed:
+\newthought{Pick a behaviour to gate.}
+\texttt{GET /results} from Block~6 returns the twenty newest
+predictions.
+A natural enhancement is to make the page size configurable through
+a query parameter, defaulting to twenty, with a maximum of one
+hundred.
+The flag \texttt{FEATURE\_RESULTS\_PAGINATION} controls whether the
+endpoint accepts the new parameter or ignores it.
+
+\marginnote{\newthought{Small flag, real path.}\index{feature flag}
+The endpoint reads the flag at request time, branches once, and the
+rest of the handler stays unchanged.
+Real flags wrap larger changes; the mechanics are identical.}
+
+\newthought{Document the flag} in
+\texttt{\textasciitilde/pixelwise/.env.example} on \texttt{dev}, and
+add the same line to your local \texttt{.env} on both VMs.
+A default of \texttt{false} keeps existing behaviour for any caller
+that has not opted in:
 
 \begin{verbatim}
-curl https://192.168.56.11/api/health -k
-# Should show "model_version": "v2"
+nano .env.example
 \end{verbatim}
 
+\begin{verbatim}
+FEATURE_RESULTS_PAGINATION=false
+\end{verbatim}
 
-% ==============================================================================================
-\newpage
-\section{Optional: Webhooks}\index{webhooks}
+\marginnote{\newthought{Why default off?}\index{feature flag}
+A new flag that defaults to \texttt{true} ships the new behaviour on
+every machine that picks up the new \texttt{.env.example}.
+\texttt{false} keeps the existing contract and lets each environment
+opt in explicitly.
+The day you trust the new path, change the default; until then,
+default off.}
 
-\newthought{Webhooks are HTTP endpoints triggered by external events.} The internet is event-driven.
-GitHub can call your server when code is pushed; Discord can receive a message when your deploy succeeds.
-The pattern is always the same: an event happens $\to$ an HTTP POST is sent to a URL you control.
-
-
-% ==============================================================================================
-\newpage
-\section{Exercise: Trigger the Pipeline}\index{exercises}
-
-\newthought{Commit and trigger the pipeline.} Push everything you have built in this session and
-watch the automation run end to end:
+\newthought{Read the flag in \texttt{app/main.py} on \texttt{dev}.}
+The handler reads \texttt{FEATURE\_RESULTS\_PAGINATION} on every
+call, so flipping the flag and restarting the service is enough to
+change behaviour.
+Open the file and replace the \texttt{results} handler:
 
 \begin{verbatim}
-git add .github/ scripts/ tests/ .env.example
-git commit -m "Add CI/CD pipeline, backup cron, feature flag"
+nano app/main.py
+\end{verbatim}
+
+\marginnote{\newthought{Two new imports.}
+\texttt{Query} marks the \texttt{limit} parameter as a query-string
+field and gives FastAPI the type information it needs to validate
+it.
+\texttt{os} reads the flag from the environment.}
+
+\begin{verbatim}
+from fastapi import Query
+import os
+\end{verbatim}
+
+\marginnote{\newthought{The branch is the headline.}\index{feature flag}
+The first line of the handler reads the flag.
+The branch is one \texttt{if}; everything else is shared.
+A reviewer can see at a glance which path is gated, and a search for
+\texttt{FEATURE\_RESULTS\_PAGINATION} finds every effect of the flag
+across the codebase.}
+
+\begin{verbatim}
+@app.get("/results")
+def results(limit: int = Query(20, ge=1, le=100)):
+    pagination_on = (
+        os.getenv("FEATURE_RESULTS_PAGINATION", "false")
+        .lower() == "true"
+    )
+    page_size = limit if pagination_on else 20
+
+    db = SessionLocal()
+    rows = (db.query(Prediction)
+              .order_by(Prediction.created_at.desc())
+              .limit(page_size).all())
+    db.close()
+    return {"results": [
+        {"id": r.id,
+         "prediction": r.prediction,
+         "confidence": r.confidence,
+         "model_version": r.model_version,
+         "created_at": r.created_at.isoformat()}
+        for r in rows]}
+\end{verbatim}
+
+\newthought{Smoke test the flag off, then on.}
+On \texttt{dev}, with \texttt{FEATURE\_RESULTS\_PAGINATION=false},
+the \texttt{limit} parameter parses but is ignored and the response
+holds at most twenty rows.
+Flip the flag in \texttt{.env} to \texttt{true}, restart the running
+\texttt{uvicorn} on \texttt{dev} or
+\texttt{sudo systemctl restart pixelwise} on \texttt{prod}, and the
+same \texttt{curl} honours \texttt{limit=50}:
+
+\begin{verbatim}
+curl -s "http://localhost:8000/results?limit=50" \
+    | python3 -m json.tool | head
+\end{verbatim}
+
+\marginnote{\newthought{Did the flag take?}\\[0.4em]
+With the flag off, the response length stays at twenty no matter
+which \texttt{limit} value you pass.
+With the flag on, the response length tracks \texttt{limit} up to
+one hundred.
+If the response is identical in both cases, the handler is reading
+the flag once at import time instead of on every call; move the
+\texttt{os.getenv} call inside the function body.}
+
+\newthought{Commit the gated path.}
+The flag, the example, and the handler change all land in one
+commit so a future bisect can find them together:
+
+\begin{verbatim}
+git add app/main.py .env.example
+git commit -m "Gate /results pagination behind feature flag"
 git push
 \end{verbatim}
 
-Watch the CI workflow on GitHub. If green, merge. The deploy workflow should update the server automatically.
-
-\newthought{Tag the release as \texttt{v0.7}.}\index{Git!tag}
-The end of every block is a tagged, runnable state. Mark it now so
-future catch-up exercises can reset back here:
-
-\begin{verbatim}
-git tag -a v0.7 -m "End of Block 8: CI/CD, backups, feature flags"
-git push origin v0.7
-\end{verbatim}
-
-\marginnote{\newthought{Where this leaves you.}
-The pipeline now runs without you. Every push is linted and tested, every merge deploys, every night
-the database is dumped off-site. Automating the system is one half of operating it reliably;
-observing it is a thread we will pick up later.}
 
 
 % ==============================================================================================
 \newpage
-\section{Security Thread}
+\section{Optional: A Webhook Listener on \texttt{prod}}\index{webhook}\index{Discord}
 
-\newthought{Store all deployment credentials} (SSH keys, server IP) as GitHub Actions secrets, never in
-workflow files. \texttt{rsync} and SSH-based deploys only, never plain protocols. Backup files contain your
-entire database. Protect them accordingly with file permissions and consider encryption for off-site storage.
+\newthought{The deploy job above relies on GitHub Actions.}
+An alternative shape skips the runner entirely: A tiny HTTP listener
+on \texttt{prod} accepts a POST from a webhook provider, validates a
+shared secret, and runs \texttt{bash setup-server.sh} in response.
+The trigger source can be GitHub, a Discord slash command, or any
+other system that can POST to a URL.
+
+\marginnote{\newthought{Trade-offs.}\index{webhook}
+The listener removes the SSH key on GitHub at the cost of adding a
+public endpoint on \texttt{prod}.
+Both shapes work; the choice depends on which attack surface is
+easier to defend in your environment.}
+
+\newthought{The sketch.}
+A FastAPI application with one POST endpoint, run by its own systemd
+unit, mounted behind Nginx on a path the public does not know:
+
+\begin{verbatim}
+# deploy/webhook.py
+import os, subprocess
+from fastapi import FastAPI, Header, HTTPException
+
+webhook_app = FastAPI()
+
+@webhook_app.post("/deploy")
+def deploy(x_token: str = Header(...)):
+    if x_token != os.getenv("WEBHOOK_TOKEN"):
+        raise HTTPException(status_code=401,
+                            detail="Bad token")
+    result = subprocess.run(
+        ["bash", "/opt/pixelwise/setup-server.sh"],
+        capture_output=True, text=True)
+    if result.returncode != 0:
+        raise HTTPException(status_code=500,
+                            detail=result.stderr[-500:])
+    return {"status": "deployed"}
+\end{verbatim}
+
+\marginnote{\newthought{The Discord variant.}\index{Discord}
+Discord can fire a slash command at a webhook URL.
+The handler shape is the same, with the secret in a Discord-specific
+signature header instead of \texttt{X-Token}.
+A team member types \texttt{/deploy} in a channel, the listener
+runs, the chat shows the result.
+This is genuinely how some teams ship.}
+
+Wiring it up properly needs a second systemd unit, an Nginx
+location, a hardened secret, and rate limiting on the endpoint, none
+of which the mainline of this block needs.
+The sketch is enough to recognise the shape when you see it in the
+wild.
+
+
+
+% ==============================================================================================
+\newpage
+\section{Tag \texttt{v0.7}}\index{Git!tag}
+
+\newthought{The pipeline is the artefact.}
+The end of every block is a tagged, runnable state.
+Stage every file the block added or changed, commit, push, tag, and
+push the tag.
+Future catch-ups reset to this tag and arrive at the same place you
+are now:
+
+\marginnote{\newthought{What lands in \texttt{v0.7}.}\index{Git!tag}
+\texttt{.github/workflows/ci.yml} with the lint, test, and deploy
+jobs; \texttt{tests/} with the classifier and API tests;
+\texttt{deploy/backup.sh} and \texttt{deploy/cron/pixelwise.cron}
+for the nightly dump; an extended \texttt{setup-server.sh} that
+installs the cron schedule; an updated \texttt{.env.example} with
+\texttt{FEATURE\_RESULTS\_PAGINATION}; the gated
+\texttt{/results} handler in \texttt{app/main.py}.}
+
+\begin{verbatim}
+cd ~/pixelwise
+git add .github/workflows/ci.yml \
+    tests/ \
+    deploy/backup.sh \
+    deploy/cron/pixelwise.cron \
+    setup-server.sh \
+    .env.example \
+    app/main.py \
+    requirements.txt
+git commit -m "End of Block 8: CI/CD, cron, backups, flag"
+git tag -a v0.7 \
+    -m "End of Block 8: CI/CD, backups, feature flags"
+git push --follow-tags
+\end{verbatim}
+
+\marginnote{\newthought{Watch the pipeline land its own tag.}\index{CI/CD}
+The push that creates \texttt{v0.7} is a push to \texttt{main}, so
+the deploy job fires on it.
+The runner pulls the tagged commit on \texttt{prod}, installs the
+cron schedule, restarts the service, and writes back its exit
+status.
+The first time a chapter ships its own deploy is a moment worth
+pausing for.}
+
+\newthought{The pipeline now runs without you.}
+Every push is linted and tested.
+Every merge to \texttt{main} ships.
+Every night the database is dumped to \texttt{prod} and rsynced to
+\texttt{dev}.
+One code path is gated behind a flag, ready to switch on or off in
+\texttt{.env} alone.
+The service is automated.
+
 
 
 % ==============================================================================================
 % BLOCK 3: CONSOLIDATION
 % ==============================================================================================
 
+\newpage
 \section{Self-Reflection and Recap}\index{reflection}\index{recap}
 
-\newthought{Reflection questions:}
+\newthought{Self-Reflection} questions to guide your thoughts during
+and after the exercises:
 \begin{itemize}
-    \item What is the difference between Continuous Integration and Continuous Deployment?
-    \item Why should secrets never appear in workflow YAML files?
-    \item Why is a backup on the same server not a real backup?
-    \item How do feature flags let you deploy new behaviour without deploying new code?
-    \item What happens if the CI pipeline fails? Does the deploy still happen?
+    \item If you automate an undocumented manual deploy, what guarantees the automation does not bake in a bug the manual process used to skip past?
+    \item A test catches a regression on a feature branch; a user catches it in \texttt{prod}. What does each cost, and where in the pipeline is the cheapest place to catch the next one?
+    \item A feature flag stays \texttt{false} for three months and the code path never runs. How is that different from code commented out, and what makes the flag-gated version safer?
+    \item Cron runs at 02:30 and the backup fails silently. How would you find out before the next disaster, and what is the smallest change to your schedule that surfaces the failure?
+    \item A webhook deploy fails because \texttt{setup-server.sh} hit a non-zero exit. How does that failure mode differ from a cron job that hits a non-zero exit, and why does the operator notice one but not the other?
+    \item The deploy key sits in two places: GitHub Secrets and \texttt{authorized\_keys} on \texttt{prod}. What does rotating the key require, and what breaks if you forget either side?
+    \item A backup that has never been restored is not a backup. Which of the steps in the restore exercise is the one most teams skip in real production, and why?
 \end{itemize}
 
-\newthought{Bridge.} The pipeline now ships code on its own.
-Every push to \texttt{main} is linted and tested, every merge deploys to
-the server, a nightly cron job backs up the database and has been
-verified by restoring once, and a feature flag lets a new model version
-be switched on without a redeploy.
-What we cannot yet see is what happens after the deploy lands.
-Is the service still answering? Are predictions still confident? Is
-anybody actually using it? The next chapter wires up the senses:
-structured logs, a \texttt{/health} endpoint watched by a Discord
-webhook, and analytics on top of the rows PixelWise has been writing
-since Block~6, so the team learns about a problem before a user
-complains about it.
+\newthought{Recap} of key concepts:
+\begin{itemize}
+    \item Continuous Integration runs lint and tests on every push from a clean machine; Continuous Deployment ships every green merge to \texttt{main} without a human in the loop.
+    \item A GitHub Actions workflow is YAML under \texttt{.github/workflows/}; jobs run on runners, steps run in order, secrets live in repository settings and never in the file.
+    \item Tests live in \texttt{tests/}, run with \texttt{pytest}, and double as the gate that CI uses to decide whether a push is safe to deploy.
+    \item Cron schedules recurring work on a unix machine; the schedule lives under version control alongside the service it supports.
+    \item Database backups dump to a file with \texttt{pg\_dump}, move off-VM with \texttt{rsync}, are pruned by age, and are only real after a successful restore.
+    \item Feature flags gate code that lives in the binary, so flipping behaviour is a config change and a restart instead of a deploy.
+\end{itemize}
+
+\marginnote{\newthought{Security thread.}\index{security}
+Three new credentials enter the system in this block.
+The GitHub Actions deploy key on the runner reaches
+\texttt{produser@192.168.56.11}; the backup SSH key on \texttt{prod}
+reaches \texttt{user@192.168.56.10}; the database password the cron
+job inherits to drive \texttt{pg\_dump}.
+Each key has one purpose, each lives in one place, and each rotates
+independently.
+The backup files themselves carry every prediction the service has
+ever stored; file permissions on \texttt{/var/backups/pixelwise/}
+should restrict reads to \texttt{produser} alone, and any real
+off-site target encrypts the dump at rest.}
+
+\marginnote{\newthought{Teaser.}
+The pipeline runs, the deploy lands, the service is alive.
+How do you know it is healthy?}
+
+\newthought{Bridge to Block~9.}
+The service is now automated end to end, and the operator is blind.
+There are no metrics on the request rate, no structured logs on the
+classify path, no alert when a deploy lands and the error rate
+spikes ten minutes later.
+A green CI run says the code compiles, lints, and passes its tests;
+a green deploy says \texttt{systemctl} agreed to restart; neither
+says the service is doing the right thing for real users right
+now.
+Block~9 closes that gap.
+Monitoring sees the service's pulse, structured logs make the
+classify path searchable, and a Discord webhook turns a silent
+overnight failure into a chat message that wakes the right person
+up.

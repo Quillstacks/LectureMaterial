@@ -32,6 +32,12 @@
 \RequirePackage{fancyvrb}
 \fvset{fontsize=\normalsize}
 
+% Force straight, upright apostrophes and backticks inside verbatim/texttt
+% so copy-paste from the PDF yields ASCII U+0027 and U+0060 instead of the
+% curly U+2019 / U+2018 that shells and SQL refuse to parse.
+\RequirePackage{textcomp}
+\RequirePackage{upquote}
+
 % For trailing spaces
 \RequirePackage{xspace}
 
