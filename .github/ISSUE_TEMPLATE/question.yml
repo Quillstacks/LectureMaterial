@@ -1,0 +1,75 @@
+name: Unclear passage / Question
+description: A passage in the notes is hard to follow and you would like a clarification or rewording.
+title: "[Question] <short description>"
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when something is not technically wrong, but unclear, ambiguous, or jumps a step.
+        Show your own attempt at understanding it first. This makes the issue much more useful, both for the answer you get back and for future students reading the thread.
+
+  - type: dropdown
+    id: series
+    attributes:
+      label: Lecture series
+      options:
+        - notes_missingsemester
+        - notes_numerischemethoden
+        - notes_unsupervisedlearning
+        - notes_papersovertime
+        - notes_philosophyofai
+        - notes_everythingeverywhereallatonce
+        - other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Chapter and page
+      placeholder: "e.g. Ch05, page 23, Section 5.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: passage
+    attributes:
+      label: The passage in question
+      description: Quote or paraphrase the exact sentence, equation, or paragraph you are asking about.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Paste a screenshot of the passage. Drag and drop the image into this field.
+    validations:
+      required: true
+
+  - type: textarea
+    id: confusion
+    attributes:
+      label: What specifically confuses you
+      description: Be concrete. "I do not see why step X follows from step Y" is much more useful than "this is unclear".
+    validations:
+      required: true
+
+  - type: textarea
+    id: own_attempt
+    attributes:
+      label: What you already tried
+      description: |
+        How did you try to make sense of it? Which lecture, textbook, reference, or AI tool did you consult?
+        What is your current best guess at the answer?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_fix
+    attributes:
+      label: Proposed rewording (optional but encouraged)
+      description: How could the passage be rewritten so that the next student does not stumble on the same point?
+    validations:
+      required: false

@@ -1,0 +1,84 @@
+name: Bug / Error in the notes
+description: Report a typo, wrong formula, broken reference, missing figure, or anything that looks incorrect.
+title: "[Bug] <short description>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the lecture notes!
+        Please fill in every required field. A screenshot is mandatory — it removes any ambiguity about where the problem sits.
+        A proposed fix is optional, but you are strongly encouraged to suggest one: even a rough guess is useful and shows you engaged with the material.
+
+  - type: dropdown
+    id: series
+    attributes:
+      label: Lecture series
+      description: Which set of notes is affected?
+      options:
+        - notes_missingsemester
+        - notes_numerischemethoden
+        - notes_unsupervisedlearning
+        - notes_papersovertime
+        - notes_philosophyofai
+        - notes_everythingeverywhereallatonce
+        - other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Chapter and page
+      description: Where in the document does the issue appear?
+      placeholder: "e.g. Ch03, page 17, Section 3.2, Equation (3.4)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed
+    attributes:
+      label: What you see
+      description: Describe the problem as it currently appears in the notes.
+      placeholder: "The matrix in Eq. (3.4) is shown as 2x3, but the surrounding text says it is 3x2."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What should it say or show instead?
+      placeholder: "The matrix dimensions should match the text, i.e. 3x2."
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Paste a screenshot of the affected passage. Drag and drop the image directly into this field.
+      placeholder: "Drag and drop your screenshot here."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_fix
+    attributes:
+      label: Proposed fix (optional but encouraged)
+      description: |
+        How would you fix it? A LaTeX snippet, a reformulated sentence, a corrected equation, or a one-line description is all fine.
+        You are strongly encouraged to propose something, even if you are not sure it is right.
+      placeholder: "Change `\\mathbb{R}^{2 \\times 3}` to `\\mathbb{R}^{3 \\times 2}` in line 142."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the latest compiled PDF on the course website to confirm the issue still exists.
+          required: true
+        - label: I searched existing issues and this has not been reported yet.
+          required: true

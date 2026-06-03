@@ -1,0 +1,69 @@
+name: Content suggestion
+description: Propose new content, an additional example, a missing reference, an exercise, or a structural change.
+title: "[Content] <short description>"
+labels: ["content"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to suggest content that is not currently in the notes: a worked example, a missing citation, an exercise, a section reorganisation, or a topic that deserves coverage.
+        Concrete proposals win. A specific paragraph, snippet, reference, or sketch is much more likely to land than a vague wish.
+
+  - type: dropdown
+    id: series
+    attributes:
+      label: Lecture series
+      options:
+        - notes_missingsemester
+        - notes_numerischemethoden
+        - notes_unsupervisedlearning
+        - notes_papersovertime
+        - notes_philosophyofai
+        - notes_everythingeverywhereallatonce
+        - other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Target chapter or section
+      description: Where should the new content live?
+      placeholder: "e.g. Ch04 (new subsection after 4.2), or 'new chapter on X'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What should be added or changed
+      description: Describe the addition or change in one or two paragraphs.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why this helps
+      description: |
+        Who benefits, and how? A concrete pain point from your own study is the strongest motivation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Concrete proposal (optional but encouraged)
+      description: |
+        A draft paragraph, a LaTeX snippet, a sketched figure, a reference (BibTeX entry, paper link, textbook section), or an exercise prompt.
+        You are strongly encouraged to propose something concrete, even if rough.
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot or sketch (optional)
+      description: If your suggestion relates to a specific existing passage or figure, paste a screenshot here.
+    validations:
+      required: false
