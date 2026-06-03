@@ -46,12 +46,24 @@ fi
 today="$(date +%Y-%m-%d)"
 
 stamp_for() {
-  # Derive a (date, name) stamp from the most recent commit touching the
-  # given path. Falls back to today + "local draft" if no commit yet.
+  # Derive a (date, name) stamp for the given path.
+  # If the working tree under that path has uncommitted changes, stamp with
+  # today and a triple derived from a hash of the diff content — so a render
+  # before commit already shows a fresh stamp, and the date lines up with the
+  # commit day in the usual render -> commit -> push flow.
+  # Otherwise, stamp from the most recent commit touching the path.
+  # Falls back to today + "local draft" if neither yields a hash.
   local target_rel="$1"
   local hash date name
-  hash="$(git -C "$REPO_ROOT" log -1 --format='%h' -- "$target_rel" 2>/dev/null || true)"
-  date="$(git -C "$REPO_ROOT" log -1 --format='%ad' --date=short -- "$target_rel" 2>/dev/null || true)"
+  if ! git -C "$REPO_ROOT" diff --quiet HEAD -- "$target_rel" 2>/dev/null; then
+    date="$today"
+    hash="$(git -C "$REPO_ROOT" diff HEAD -- "$target_rel" 2>/dev/null \
+            | git hash-object --stdin 2>/dev/null \
+            | cut -c1-7)"
+  else
+    hash="$(git -C "$REPO_ROOT" log -1 --format='%h' -- "$target_rel" 2>/dev/null || true)"
+    date="$(git -C "$REPO_ROOT" log -1 --format='%ad' --date=short -- "$target_rel" 2>/dev/null || true)"
+  fi
   if [[ -z "$hash" ]]; then
     date="$today"
     name="local draft"
