@@ -1,15 +1,9 @@
-$force_mode = 1;
-$bibtex_use = 2;
+# Per-book latexmk config. All real settings live in tools/latexmkrc.shared
+# at the repo root; this file just sources them. To set up a new book,
+# copy this file verbatim into the new book directory -- no edits needed.
 
-# After a successful main-book compile, also (re)build the standalone chapter
-# PDFs under chapter_pdfs/. The env-var guard prevents infinite recursion:
-# tools/build_chapter_pdfs.sh invokes latexmk per chapter wrapper, and those
-# nested latexmk runs read this same .latexmkrc — without the guard their
-# own $success_cmd would re-trigger the script.
-$success_cmd = '[ "%R" = "$(basename "$(pwd)")" ] && '
-             . '[ -z "$LECTURENOTES_AUTOBUILD_CHAPTERS" ] && '
-             . 'export LECTURENOTES_AUTOBUILD_CHAPTERS=1 && '
-             . 'TOOLS_DIR="$(git rev-parse --show-toplevel 2>/dev/null)/tools" && '
-             . '[ -x "$TOOLS_DIR/build_chapter_pdfs.sh" ] && '
-             . '"$TOOLS_DIR/build_chapter_pdfs.sh" "$(pwd)" '
-             . '|| true';
+my $repo_root_stub = `git rev-parse --show-toplevel 2>/dev/null`;
+chomp $repo_root_stub;
+if ($repo_root_stub ne '' && -f "$repo_root_stub/tools/latexmkrc.shared") {
+    do "$repo_root_stub/tools/latexmkrc.shared";
+}
