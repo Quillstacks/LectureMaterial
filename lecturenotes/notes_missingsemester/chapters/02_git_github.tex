@@ -262,7 +262,12 @@ exist, press Enter to accept the default; if it does, type a distinct path such 
 It then prompts for a passphrase, optional but recommended, it encrypts the private key on
 disk so a stolen key file is not immediately usable.
 
+Remember to check and set permissions for the key, if necessary.
 
+\begin{verbatim}
+chmod 600 ~/.ssh/id_ed25519           # owner-only read and write
+sudo chown user:user file.txt         # assign user and group
+\end{verbatim}
 
 
 
