@@ -259,6 +259,7 @@ ssh-keygen -t ed25519 -C "your@email.com"
 The tool prompts for a file location. If \texttt{\textasciitilde/.ssh/id\_ed25519} does not yet
 exist, press Enter to accept the default; if it does, type a distinct path such as
 \texttt{\textasciitilde/.ssh/id\_ed25519\_github} so the existing key is preserved.
+Depending on your setup, you might need to use an absolute path like \texttt{/home/<user>/.ssh/id\_ed25519\_github} .
 It then prompts for a passphrase, optional but recommended, it encrypts the private key on
 disk so a stolen key file is not immediately usable.
 
