@@ -7,28 +7,16 @@
     \begin{flushright}
     \newthought{R.U.R.}\\
     Karel Čapek (1920)\\
-    Full text via Wikisource:\\[4pt]
-    {\color{black}\qrcode[height=1.2cm]{https://en.wikisource.org/wiki/R._U._R._(Rossum_Universal_Robots)}}
+    {\color{black}\qrcode[height=0.9cm]{https://en.wikisource.org/wiki/R._U._R._(Rossum_Universal_Robots)}}
     \end{flushright}%
-    \vspace{1em}
+    \medskip
     \begin{flushright}
     \newthought{Der Zauberlehrling}\\
     J.W. von Goethe (1798)\\
-    Full text via Wikisource:\\[4pt]
-    {\color{black}\qrcode[height=1.2cm]{https://de.wikisource.org/wiki/Der_Zauberlehrling_1798}}
+    {\color{black}\qrcode[height=0.9cm]{https://de.wikisource.org/wiki/Der_Zauberlehrling_1798}}
     \end{flushright}%
 }
 
-\marginnote{\newthought{Case.}
-    \begin{enumerate}
-        \item 6 May 2010: automated algorithms trigger the Flash Crash; Dow drops
-              1{,}000 points in minutes; \$1~trillion in market value erased.
-        \item Market recovers within the hour. No human decided to sell at scale;
-              no human decided to stop.
-        \item 2015: one trader in London charged with market manipulation, arrested
-              at home in his pyjamas.
-    \end{enumerate}
-}
 % As a leading group, you are required to moderate this session. Add margin notes in this script in case you want to add any additional questions or points to the discussion.
 
 \newthought{R.U.R.\ coined the word} \emph{robot} and traces the full
@@ -38,6 +26,18 @@ into fifteen stanzas.\\
 \newthought{Agentic workflows} (systems that browse, transact, and execute multi-step
 plans) blur the line between assistance and agency, raising questions of control,
 incentives, and unintended alignment.
+
+\medskip
+\noindent\textbf{Running case: the Flash Crash.}
+\begin{itemize}
+    \item 6 May 2010: automated algorithms trigger the Flash Crash;
+          the Dow drops 1{,}000 points in minutes; \$1~trillion in
+          market value erased.
+    \item The market recovers within the hour. No human decided to
+          sell at scale; no human decided to stop.
+    \item 2015: one trader in London is charged with market
+          manipulation, arrested at home in his pyjamas.
+\end{itemize}
 
 \vspace{3.5em}
 
@@ -103,10 +103,18 @@ moderator scripts.
 \noindent \textbf{Opening question:} If an autonomous system causes a
 trillion-dollar event in minutes and human review would have taken hours,
 is the problem the system's autonomy, or the humans' speed?
-\marginnote{\newthought{Corrigibility.} A system's willingness to be corrected or shut down. Fully corrigible:
-does whatever instructed. Fully autonomous: acts on its own values. Deployed AI sits somewhere
-between, and that position is a design choice.}
-\marginnote{\newthought{Asimov's Three Laws.\cite{asimov1950robot}} (1)~A robot may not injure a human being, or through inaction allow a human being to come to harm. (2)~A robot must obey orders given by humans, except where this conflicts with Law~1. (3)~A robot must protect its own existence, except where this conflicts with Laws~1 or~2. Asimov spent his career writing stories about how these laws fail: conflicts, misinterpretation, and edge cases that no ranked rule set can anticipate.}
+\medskip
+\noindent\textbf{Asimov's Three Laws}\cite{asimov1950robot} remain the
+most cited rules-based approach to constraining machine behaviour:
+\begin{itemize}
+    \item A robot may not injure a human being, or through inaction allow a human being to come to harm.
+    \item A robot must obey orders given by humans, except where this conflicts with the first law.
+    \item A robot must protect its own existence, except where this conflicts with the first two laws.
+\end{itemize}
+Asimov spent his career writing stories about how these laws fail:
+conflicts, misinterpretation, and edge cases that no ranked rule set
+can anticipate. The debate below revisits the same question in a
+modern setting.
 
 \newthought{Opinion~A, Authorisation.}\quad Consequential distributive
 decisions made by autonomous systems require traceable human mandate;
@@ -135,9 +143,6 @@ without it, the decision-making is constitutionally illegitimate.
         oversight in name only.}
     \end{itemize}
 
-\marginnote{\newthought{Democratic Legitimacy.} Consequential decisions must be traceable to a mandate from
-those affected. Delegating distributive policy to an algorithm without a clear mandate severs
-this chain entirely.}
 \medskip
 \noindent\textbf{The Rural Representative} argues that communities not represented
     in the training data have been systematically deprioritised without recourse.
@@ -160,9 +165,10 @@ this chain entirely.}
 
 
 \newthought{Opinion~B, Specification.}\quad The autonomous AI executed
-correctly; the failure is upstream goal specification and oversight
-architecture; per-decision human authorisation is not the answer,
-better design is.
+correctly; the failure is upstream goal misspecification, the
+divergence of the optimised objective from actual human intent, and
+oversight architecture; per-decision human authorisation is not the
+answer, better design is.
 \vspace{1.5em}
 
 
@@ -184,9 +190,6 @@ better design is.
         decision-making is automated; the accountability is not.}
     \end{itemize}
 
-\marginnote{\newthought{Goal Misspecification.} When the objective a system optimises diverges from the
-actual human intent. R.U.R.'s robots optimise for collective survival; the Zauberlehrling's
-brooms optimise for water-fetching. Neither intends harm.}
 \medskip
 \noindent\textbf{The AI Systems Architect} explains the technical constraints and
     argues for a human-in-the-loop override mechanism.
@@ -209,9 +212,6 @@ brooms optimise for water-fetching. Neither intends harm.}
 
 
 \newthought{Key Learnings}
-\marginnote{\newthought{Teaser.} The four themes of this course are not independent. An agent that looks
-human, acts without oversight, in physical space, with no clear accountability chain, concentrates
-all four challenges at once. What governance architecture would you build to contain it?}
 Agency is a spectrum, not a binary: the relevant policy question is not whether AI acts autonomously,
 but in which domains, to what degree, and under what oversight. R.U.R.\ and Der Zauberlehrling
 together illustrate the alignment problem in miniature: a system optimising for an aggregate goal
@@ -223,3 +223,7 @@ more than audit trails: legible goals, clear mandates, defined override conditio
 capable of exercising them. The four themes of this course (Anthropomorphism, Accountability,
 Embodiment, Agency) are not independent: an agent that looks human, acts without oversight,
 in physical space, with no clear accountability chain, concentrates all four challenges at once.
+
+\medskip
+\noindent\textit{Teaser: what governance architecture would you build
+to contain such an agent?}
