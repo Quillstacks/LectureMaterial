@@ -62,3 +62,8 @@ solutions/
 grades*.csv
 gradebook*
 students*.csv
+
+# Per-book exam workspaces. Active exams stay local; only old exams that should
+# be published as "Altklausuren" get moved out of these directories and tracked
+# explicitly.
+lecturenotes/*/exams/
