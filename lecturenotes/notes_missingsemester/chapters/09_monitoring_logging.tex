@@ -1346,6 +1346,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+DATABASE_URL = (
+    "postgresql://pixelwise:"
+    f"{os.getenv('DB_PASSWORD')}@localhost/pixelwise")
+
 QUERIES = {
     "volume_per_hour": """
         SELECT date_trunc('hour', created_at)
@@ -1372,8 +1376,7 @@ QUERIES = {
 }
 
 def main():
-    engine = create_engine(
-        os.environ["DATABASE_URL"])
+    engine = create_engine(DATABASE_URL)
     with engine.connect() as conn:
         for name, sql in QUERIES.items():
             print(f"\n== {name} ==")

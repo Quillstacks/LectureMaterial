@@ -490,6 +490,19 @@ The preprocessing for the model is part of the artefact, not something
 you re-derive on the caller side; your job here is to confirm what is
 inside the \texttt{.pkl} matches what the canonical model card promises.
 
+\newthought{Pin pandas as a dependency} before the first
+\texttt{fetch\_openml} call: Its default parser loads dense datasets such
+as MNIST through pandas, so the dependency has to be installed and pinned.
+Install it into the virtual environment, refreeze, and commit:
+
+\begin{verbatim}
+source .venv/bin/activate
+pip install pandas
+pip freeze > requirements.txt
+git add requirements.txt
+git commit -m "Pin pandas"
+\end{verbatim}
+
 \newthought{Get an MNIST sample onto your dev machine.}\index{MNIST}
 The dataset is available through scikit-learn and downloads on first
 access. Activate the virtual environment and start an interactive
@@ -499,20 +512,18 @@ below at the \texttt{>>>} prompt:
 \begin{verbatim}
 source .venv/bin/activate
 python3
+>>> import joblib
+>>> model = joblib.load("models/digit_classifier_v1.pkl")
 >>> from sklearn.datasets import fetch_openml
 >>> X, y = fetch_openml(
 ...     "mnist_784", version=1,
 ...     return_X_y=True, as_frame=False,
-...     parser="liac-arff",
 ... )
 >>> sample = X[0].reshape(28, 28).astype("uint8")
 >>> label = y[0]
 \end{verbatim}
 
 You now have one ground-truth example to scrutinise the pipeline against.
-
-\marginnote{\newthought{Why \texttt{parser="liac-arff"}}.\index{scikit-learn}\index{pandas}
-Since scikit-learn 1.2, \texttt{fetch\_openml} defaults to \texttt{parser="auto"}, which prefers a pandas-based parser and raises if pandas is not installed. Naming the built-in liac-arff parser keeps the dependency footprint at what \texttt{requirements.txt} pins.}
 
 \newthought{Open the pipeline and look at its parts.}
 Still inside the same \texttt{python3} session, the Pipeline object
@@ -682,18 +693,6 @@ def classify(image: np.ndarray) -> dict:
     return classify_batch(image[np.newaxis])[0]
 \end{verbatim}
 
-\marginnote{\newthought{Optional: pin pandas.}\index{pandas}\index{requirements.txt}
-\texttt{fetch\_openml} pulls in \texttt{pandas} under the hood, and we
-have leaned on it implicitly more than once already. If you want it as
-an explicit, pinned dependency rather than a transitive one, install
-and refreeze:
-\\[0.5em]
-\texttt{pip install pandas}\\
-\texttt{pip freeze > requirements.txt}\\
-\texttt{git add requirements.txt}\\
-\texttt{git commit -m "Pin pandas"}\\
-}
-
 \marginnote{\newthought{(Optional) The assertion is the headline.}\index{assertion}
 Comment it out, save, restart Python, and import the module.
 Now mutate \texttt{CLASSES} to add a fake \texttt{"10"} entry, restore
@@ -730,8 +729,7 @@ from sklearn.datasets import fetch_openml
 import numpy as np
 
 X, y = fetch_openml("mnist_784", version=1,
-    return_X_y=True, as_frame=False,
-    parser="liac-arff")
+    return_X_y=True, as_frame=False)
 images = X[:5].reshape(-1, 28, 28).astype(np.uint8)
 truth  = y[:5]
 results = classify_batch(images)

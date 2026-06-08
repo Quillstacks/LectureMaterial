@@ -1,0 +1,52 @@
+% !TEX root = ../notes_missingsemester.tex
+% Chapter: HighFive — Contribute to a Real Full Stack Application
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{HighFive}\index{citizen science}\index{contribution}
+\chapter{HighFive}
+\printchapterversion{11_highfive_contribution}
+\newthought{The best way to learn a stack is to ship into one that already runs.}
+
+\section{The Why}\index{citizen science}\index{wild bees}
+
+The Projektbericht lets you extend a block of this course on your own snapshot.
+HighFive offers the other path: A real full stack application, running live at
+\href{https://highfive.schutera.com}{highfive.schutera.com}, with its source on my
+GitHub and an open invitation to ship into it. Where the report proves you can build
+in isolation, a contribution proves you can build inside a system that other people
+already depend on.
+
+\marginnote{\newthought{Find HighFive here.} The deployment runs at
+\href{https://highfive.schutera.com}{highfive.schutera.com}, and the source lives at
+\href{https://github.com/schutera/highfive}{github.com/schutera/highfive}.
+
+\medskip
+\null\hfill\qrcode[height=1.0cm]{https://github.com/schutera/highfive}
+\medskip
+
+Read the arc42 architecture document in the repository before you touch code; it explains how the pieces fit together.}
+
+\newthought{HighFive is an open monitoring pipeline} for wild bee nesting activity,
+built as a citizen science kit. Camera modules running on solar power photograph bee hotels,
+an analysis pipeline turns those images into counts and trends, and an interactive dashboard
+with a map puts the results in front of anyone who cares about pollinators. The whole thing
+runs locally, orchestrated by Docker Compose, with no cloud account required.
+
+\newthought{It is the full stack you just learned}, end to end.
+The frontend is React with Vite and TypeScript. The backend is Node.js with Express
+alongside Python services on Flask. Data lives in DuckDB. Firmware for the ESP32-CAM
+camera modules is written in C++. Every layer from this course, from the Linux box up to the
+served frontend, has a home somewhere in this repository.
+
+\marginnote{\newthought{Before you open a pull request.} HighFive is source available rather
+than open source: Free for any noncommercial use under the PolyForm Noncommercial License
+1.0.0, with commercial use under a separate license. Contributions require you to accept the
+Contributor License Agreement in the repository. For commercial questions, write to
+\href{mailto:mark.schutera@mailbox.org}{mark.schutera@mailbox.org}.}
+
+\newthought{Pick something and make it better.}
+Sharpen the image pipeline, harden a backend service, tidy the dashboard, document a rough edge,
+or write the test that was missing. Open an issue describing what you want to do,
+agree the scope with me, then send a pull request. By prior agreement a merged contribution
+can form the basis of your Projektbericht: Same evaluation, real impact, and your name in the
+history of a project that outlives the semester.

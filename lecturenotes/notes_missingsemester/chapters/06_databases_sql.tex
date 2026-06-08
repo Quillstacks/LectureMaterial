@@ -482,17 +482,19 @@ up concatenated into a SQL statement. SQL injection becomes a footgun the
 framework refuses to hand you.
 
 \newthought{An engine and a session} are the runtime objects that connect
-the model to the database. \texttt{create\_engine} reads the
-\texttt{DATABASE\_URL} from the environment and opens a pool of connections;
+the model to the database. \texttt{create\_engine} takes the connection
+string \texttt{models.py} assembles from \texttt{DB\_PASSWORD} and opens a
+pool of connections;
 \texttt{sessionmaker} returns a \texttt{SessionLocal} factory the handlers
 call once per request; \texttt{Base.metadata.create\_all(engine)} creates
 the table on first run.
 
 \marginnote{\newthought{The connection string}\index{DATABASE\_URL} is a single
 URL: \texttt{postgresql://user:pass@host/dbname}.
-It encodes everything the driver needs to reach the database, and it lives
-in \texttt{.env} for access restrictions and security.
-A leaked \texttt{DATABASE\_URL} is a leaked database.}
+It encodes everything the driver needs to reach the database.
+\texttt{models.py} assembles it from the \texttt{DB\_PASSWORD} secret in
+\texttt{.env}, so the secret stays in one place and a leaked connection
+string is still a leaked database.}
 
 % ==============================================================================================
 \newpage
@@ -509,9 +511,14 @@ deploy.
 \texttt{pip install sqlalchemy psycopg2-binary}\\
 \texttt{pip freeze > requirements.txt}}
 
-\newthought{Write \texttt{app/models.py}} on \texttt{dev} with the
-schema for one prediction, the class label, the confidence, and the
-model version:
+\newthought{Write \texttt{app/models.py}} on \texttt{dev} with both the
+schema for one prediction and the session factory the handlers will use:
+The class label, the confidence, and the model version, plus an engine
+that assembles its connection string from \texttt{DB\_PASSWORD} and a
+\texttt{SessionLocal} bound to it.
+\texttt{DB\_PASSWORD} is already in \texttt{.env} from the provisioning
+exercise, and \texttt{create\_engine} only opens a connection when a
+query runs, so defining the engine here is safe:
 
 \marginnote{\newthought{Three columns plus bookkeeping.}\index{schema}
 \texttt{prediction}, \texttt{confidence}, and \texttt{model\_version}
@@ -522,9 +529,13 @@ table.}
 
 \begin{verbatim}
 from sqlalchemy import (Column, Integer, String,
-                        Float, DateTime)
-from sqlalchemy.orm import declarative_base
+                        Float, DateTime, create_engine)
+from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 Base = declarative_base()
 
@@ -536,34 +547,52 @@ class Prediction(Base):
     model_version = Column(String, nullable=False)
     created_at = Column(DateTime,
                         default=datetime.utcnow)
+
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DATABASE_URL = (
+    "postgresql://pixelwise:"
+    f"{DB_PASSWORD}@localhost/pixelwise")
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
 \end{verbatim}
 
 
 
-\newthought{Document \texttt{DATABASE\_URL}} in
-\texttt{\textasciitilde{}/pixelwise/.env.example} on \texttt{dev}, and
-add the same line to your local \texttt{.env} on both VMs so the engine
-can find the database. The URL interpolates \texttt{DB\_PASSWORD} from
-the same file, so the secret lives in one place:
+\marginnote{\newthought{One engine, one factory.}\index{SQLAlchemy!session}
+\texttt{create\_engine} holds the connection pool and \texttt{sessionmaker}
+turns it into \texttt{SessionLocal}, the callable each handler invokes to
+open a database session. The engine is lazy: It connects only when a
+session first runs a query, so importing this module never needs a live
+database.}
 
-\begin{verbatim}
-DATABASE_URL=postgresql://pixelwise:${DB_PASSWORD}@localhost/pixelwise
-\end{verbatim}
+\marginnote{\newthought{Three parsers, one file.}\index{systemd!EnvironmentFile}
+\texttt{.env} is read by bash in \texttt{setup-server.sh}, by
+python-dotenv in the app, and by \texttt{systemd} through its
+\texttt{EnvironmentFile}. The first two expand \texttt{\$\{...\}}
+references; \texttt{systemd} does not. Keep every value a plain literal
+and the three parsers have nothing to disagree about.}
+
+\newthought{No \texttt{DATABASE\_URL} line goes in \texttt{.env}.}
+The engine assembles its connection string from \texttt{DB\_PASSWORD},
+which you already wrote into \texttt{.env} during the provisioning
+exercise, so the password stays in exactly one place. Writing a
+\texttt{DATABASE\_URL} that interpolates \texttt{\$\{DB\_PASSWORD\}}
+inside \texttt{.env} looks tidier but is a trap: Bash and python-dotenv
+expand the reference, yet \texttt{systemd} reads its
+\texttt{EnvironmentFile} without expanding anything, so the service would
+try to authenticate with the literal variable text and Postgres would
+reject it. Assembling the URL in \texttt{models.py} keeps every reader of
+\texttt{.env} in agreement, no matter who starts the process.
 
 \newthought{Create the table once} from a small initialisation script
 saved as \texttt{init\_db.py} at the repository root on \texttt{dev}.
-The script reads \texttt{DATABASE\_URL} you set in the previous
-exercise and calls \texttt{Base.metadata.create\_all} to materialise
+The script imports the engine that \texttt{app/models.py} already
+configured and calls \texttt{Base.metadata.create\_all} to materialise
 every model class into a table:
 
 \begin{verbatim}
-from sqlalchemy import create_engine
-from app.models import Base
-import os
-from dotenv import load_dotenv
+from app.models import Base, engine
 
-load_dotenv()
-engine = create_engine(os.getenv("DATABASE_URL"))
 Base.metadata.create_all(engine)
 \end{verbatim}
 
@@ -625,9 +654,9 @@ The change lands in three pieces: Two new imports at the top of the
 file, an addition to the classify handler, and a real body for results.
 
 \marginnote{\newthought{Two new imports.}
-\texttt{Prediction} is the row class you defined in \texttt{app/models.py};
-\texttt{SessionLocal} is the session factory built from the engine. Add
-the line at the top of \texttt{main.py} next to the existing imports.}
+\texttt{Prediction} is the row class and \texttt{SessionLocal} the
+session factory, both defined in \texttt{app/models.py}. Add the line at
+the top of \texttt{main.py} next to the existing imports.}
 
 \begin{verbatim}
 from app.models import Prediction, SessionLocal
@@ -777,9 +806,10 @@ The \texttt{pip freeze} step captures the new package in
 \texttt{requirements.txt} so \texttt{prod} picks it up on the next
 deploy.
 
-Edit \texttt{alembic.ini} so \texttt{sqlalchemy.url} reads from
-\texttt{.env}, and edit \texttt{alembic/env.py} to import \texttt{Base}
-from \texttt{app.models} so autogenerate sees your tables.
+Edit \texttt{alembic/env.py} to import \texttt{Base} and \texttt{engine}
+from \texttt{app.models} so autogenerate sees your tables and runs against
+the same connection string the application builds, rather than the
+\texttt{sqlalchemy.url} placeholder in \texttt{alembic.ini}.
 
 \marginnote{\newthought{Read the generated config.}\index{alembic.ini}
 \texttt{alembic init alembic} writes a folder of starter files.
@@ -888,7 +918,7 @@ its values populate only from the moment the new code shipped.
     \item Relational databases store data in typed tables; SQL is the language that queries and changes them.
     \item SQLite is the database for this course: a single file, no server, no users, no passwords. PostgreSQL is the production next step we stop short of here.
     \item SQLAlchemy maps tables to Python classes and uses parameterised queries by default, so the model code looks the same against either backend.
-    \item \texttt{DATABASE\_URL} lives in \texttt{.env} so each host can point at a different file without code changes.
+    \item The one database secret, \texttt{DB\_PASSWORD}, lives in \texttt{.env}; \texttt{models.py} builds the connection string from it, so the same code runs on \texttt{dev}, on \texttt{prod}, and under \texttt{systemd} alike.
     \item Optionally, Alembic generates and applies migrations so schemas can evolve without losing rows.
 \end{itemize}
 
