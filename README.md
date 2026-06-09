@@ -98,6 +98,8 @@
 |  05  | The Backend: APIs & Services | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/05_apis_services.pdf) |
 |  06  | Databases & SQL | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/06_databases_sql.pdf) |
 |  07  | Reverse Proxy & Frontend | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/07_frontend_nginx.pdf) |
+|  08  | Continuous Integration Continuous Deployment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/08_cicd_automation.pdf) |
+|  11  | Ship on something that runs | [📄 PDF](https://material.schutera.com/lecturenotes/notes_missingsemester/chapter_pdfs/11_highfive_contribution.pdf) |
 
 </details>
 <!-- END:lecture:notes_missingsemester -->
