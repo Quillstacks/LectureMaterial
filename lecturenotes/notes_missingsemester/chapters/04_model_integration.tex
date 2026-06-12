@@ -296,8 +296,8 @@ existing \texttt{apt install} lines:
 nano setup-server.sh
 \end{verbatim}
 
-Add the following at the bottom of the file, save with \texttt{Ctrl+O},
-and exit with \texttt{Ctrl+X}:
+Add the following at the bottom of the file, then save and exit nano with
+\texttt{Ctrl+X, Y, Enter}:
 \marginnote{\newthought{Why all the guards?}\index{idempotence}
 The \texttt{if [ -f .env ]} check lets the script run on a VM that has
 not yet been configured (for example, immediately after the Block~3
@@ -656,8 +656,8 @@ mkdir -p app
 nano app/classifier.py
 \end{verbatim}
 
-Paste the implementation below into the empty file, save with
-\texttt{Ctrl+O}, exit with \texttt{Ctrl+X}. It includes the class
+Paste the implementation below into the empty file, then save and exit nano with
+\texttt{Ctrl+X, Y, Enter}. It includes the class
 constant, module-level loading, the startup assertion, and the two
 functions discussed in the previous section:
 
