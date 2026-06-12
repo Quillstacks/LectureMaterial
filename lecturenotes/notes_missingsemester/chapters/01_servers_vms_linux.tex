@@ -265,6 +265,14 @@ sudo apt install openssh-server
 \end{verbatim}
 This step is required for both Desktop and Server editions. Reboot after installation.
 
+\marginnote{\newthought{German keyboard?}\index{keyboard layout}
+The interactive installer often defaults to a US layout, which turns
+every hunt for a slash, tilde, or brace into a guessing game. Switch
+to German with:\\[0.4em]
+\texttt{sudo dpkg-reconfigure keyboard-configuration}\\[0.3em]
+Pick \texttt{Generic 105-key} when prompted, then \texttt{German},
+and accept the defaults for the rest.}
+
 
 \marginnote{\newthought{Host-only network.} In \texttt{File}, \texttt{Host Network Manager} (or \texttt{File}, \texttt{Tools}, \texttt{Network Manager} on version~7+), create a host-only network if none exists, typically $192.168.56.1/24$. \textbf{Disable DHCP} for this network so you can assign static IPs manually.}
 
