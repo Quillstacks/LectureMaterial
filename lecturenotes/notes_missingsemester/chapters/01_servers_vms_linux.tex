@@ -274,7 +274,10 @@ Pick \texttt{Generic 105-key} when prompted, then \texttt{German},
 and accept the defaults for the rest.}
 
 
-\marginnote{\newthought{Host-only network.} In \texttt{File}, \texttt{Host Network Manager} (or \texttt{File}, \texttt{Tools}, \texttt{Network Manager} on version~7+), create a host-only network if none exists, typically $192.168.56.1/24$. \textbf{Disable DHCP} for this network so you can assign static IPs manually.}
+\marginnote{\newthought{Host-only network.} In \texttt{File}, \texttt{Host Network Manager} (or \texttt{File}, \texttt{Tools}, \texttt{Network Manager} on version~7+), create a host-only network if none exists, typically $192.168.56.1/24$.
+
+\vspace{0.4em}
+\newthought{Disable DHCP} on this network so the static IPs you assign by hand in the next step are not overwritten.}
 
 \newthought{Configure the network adapters for each VM:}
 Select the VM in VirtualBox Manager and open \texttt{Settings}, then go to the \texttt{Network} section. 
