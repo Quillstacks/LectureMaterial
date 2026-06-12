@@ -236,31 +236,39 @@ without a password. That same key is sitting in \texttt{\textasciitilde/.ssh/} n
 which is exactly why \texttt{ls} matters before the next step: accepting the default
 path would overwrite the production key and lock you out of the server.}
 
-If you see a file called \texttt{id\_ed25519}, that path is already in use. Either reuse it
-for GitHub as well, or generate a new key under a distinct filename so both keep working.
-Otherwise, generate the default key pair on the \texttt{dev} VM:
-\marginnote{\newthought{Multiple SSH keys?}\index{SSH!config}
-If you keep one key for production servers and another for GitHub, tell SSH which to use
-for each host with an \texttt{\textasciitilde/.ssh/config} entry:
-\\[0.5em]
-\texttt{Host github.com}\\
-\texttt{\quad HostName github.com}\\
-\texttt{\quad User git}\\
-\texttt{\quad IdentityFile \textasciitilde/.ssh/id\_ed25519\_github}\\
-\texttt{\quad IdentitiesOnly yes}
-\\[0.5em]
-Then \texttt{chmod 600 \textasciitilde/.ssh/config}. Without
-\texttt{IdentitiesOnly}, SSH may offer the wrong key first and GitHub will reject the
-connection after a handful of auth failures.}
+The listing includes \texttt{id\_ed25519}, the key you generated in Block~1 for the
+\texttt{prod} VM. Leave it alone and add a second key for GitHub under a distinct
+filename:
+
 \begin{verbatim}
-ssh-keygen -t ed25519 -C "your@email.com"
+ssh-keygen -t ed25519 -C "your@email.com" \
+    -f ~/.ssh/id_ed25519_github
 \end{verbatim}
 
-The tool prompts for a file location. If \texttt{\textasciitilde/.ssh/id\_ed25519} does not yet
-exist, press Enter to accept the default; if it does, type a distinct path such as
-\texttt{\textasciitilde/.ssh/id\_ed25519\_github} so the existing key is preserved.
-It then prompts for a passphrase, optional but recommended, it encrypts the private key on
-disk so a stolen key file is not immediately usable.
+Passing \texttt{-f} writes the key straight to the named path and skips the interactive
+prompt where one stray Enter would have overwritten the production key. Set a passphrase
+when prompted; it encrypts the private key on disk so a stolen file is not immediately
+usable.
+
+\newthought{Tell SSH which key to use for GitHub.}\index{SSH!config}
+A second key in \texttt{\textasciitilde/.ssh/} is invisible to SSH unless you name it.
+Pin \texttt{id\_ed25519\_github} to the \texttt{github.com} host:
+
+\marginnote{\newthought{Why \texttt{IdentitiesOnly}?}\index{SSH!IdentitiesOnly}
+Without it SSH offers every key it can find, starting with \texttt{id\_ed25519}.
+GitHub counts each as a failed attempt and slams the door after a handful, even if the
+correct key sits later in the queue.}
+
+\begin{verbatim}
+cat >> ~/.ssh/config <<'EOF'
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_github
+    IdentitiesOnly yes
+EOF
+chmod 600 ~/.ssh/config
+\end{verbatim}
 
 
 
@@ -270,7 +278,7 @@ disk so a stolen key file is not immediately usable.
 beginning with \texttt{ssh-ed25519} and ending with the comment:
 
 \begin{verbatim}
-cat ~/.ssh/id_ed25519.pub
+cat ~/.ssh/id_ed25519_github.pub
 \end{verbatim}
 
 In GitHub, navigate to Settings, then SSH and GPG keys, then New SSH key. Give it a
@@ -279,11 +287,11 @@ paste the public key into the Key field, and save.
 
 \marginnote{\newthought{What did just happened?}\index{SSH!public key}\index{SSH!private key}
 \texttt{ssh-keygen} created two files in \texttt{\textasciitilde/.ssh/}.
-\texttt{id\_ed25519} is the private key: never share it, never commit it, never copy it
-to another machine without good reason.
-\texttt{id\_ed25519.pub} is the public key, safe to share, this is the file you paste into GitHub.
-The \texttt{-t ed25519} flag picks a modern signature algorithm; the \texttt{-C} comment
-labels the key so you can recognise it later when you have several.}
+\texttt{id\_ed25519\_github} is the private key: never share it, never commit it, never copy
+it to another machine without good reason.
+\texttt{id\_ed25519\_github.pub} is the public key, safe to share, this is the file you
+paste into GitHub. The \texttt{-t ed25519} flag picks a modern signature algorithm; the
+\texttt{-C} comment labels the key so you can recognise it later when you have several.}
 
 
 \newthought{Test the connection:}
