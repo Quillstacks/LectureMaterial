@@ -313,6 +313,15 @@ cd ~/pixelwise
 nano setup-server.sh
 \end{verbatim}
 
+\marginnote{\newthought{If \texttt{psql} is missing}\index{postgresql-client-common}
+after the script runs, the provisioning stanza fails. The
+\texttt{postgresql} meta-package normally pulls \texttt{postgresql-client-common}
+in transitively; on older Ubuntu releases, minimal cloud images, or
+when the apt cache is stale, that chain breaks and the package has
+to be installed by hand:\\[0.4em]
+\texttt{sudo apt install postgresql-client-common}\\[0.3em]
+\texttt{bash setup-server.sh}}
+
 \marginnote{\newthought{The connection string}\index{DATABASE\_URL} is a
 single URL: \\
 \texttt{sqlite:////absolute/path/to/file.db}.
