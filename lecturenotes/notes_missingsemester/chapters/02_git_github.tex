@@ -254,6 +254,12 @@ prompt where one stray Enter would have overwritten the production key. Set a pa
 when prompted; it encrypts the private key on disk so a stolen file is not immediately
 usable.
 
+\marginnote{\newthought{Check the permissions.}\index{SSH!file permissions}
+\texttt{ssh-keygen} writes the private key with mode \texttt{600} by default, which is
+what SSH wants. If anything looks off, \texttt{ls -l \textasciitilde/.ssh/} confirms
+\texttt{-rw-{}-{}-{}-{}-{}-{}-} for \texttt{id\_ed25519\_github}; \texttt{chmod 600} restores
+it if it is not.}
+
 \newthought{Tell SSH which key to use for GitHub.}\index{SSH!config}
 A second key in \texttt{\textasciitilde/.ssh/} is invisible to SSH unless you name it.
 Pin \texttt{id\_ed25519\_github} to the \texttt{github.com} host:
