@@ -7,6 +7,11 @@ extract the human-readable chapter title from the matching
 `lecturenotes/<book>/chapters/<stem>.tex` via `\\chapter{...}`, then
 rewrite the block as a `<details>` dropdown with a 3-column table.
 
+If `lecturenotes/<book>/open_exams/*.pdf` exists, an additional
+"Exercises" `<details>` block is appended. Each exam's title comes
+from an optional sidecar `<stem>.title` file (single line, UTF-8);
+otherwise the stem is humanized.
+
 Usage:
     tools/update_readme_chapters.py
 """
@@ -61,6 +66,42 @@ def number_label(stem: str) -> str:
     return head.upper()
 
 
+def exercise_title(book_dir: Path, stem: str) -> str:
+    sidecar = book_dir / "open_exams" / f"{stem}.title"
+    if sidecar.exists():
+        line = sidecar.read_text(encoding="utf-8", errors="replace").strip().splitlines()
+        if line and line[0].strip():
+            return line[0].strip()
+    return stem.replace("_", " ").title()
+
+
+def build_exercises_block(book_dir: Path, base: str) -> str:
+    exam_dir = book_dir / "open_exams"
+    if not exam_dir.is_dir():
+        return ""
+    pdfs = sorted(exam_dir.glob("*.pdf"))
+    if not pdfs:
+        return ""
+
+    rows = []
+    for i, p in enumerate(pdfs):
+        label = f"{i:02d}"
+        title = exercise_title(book_dir, p.stem)
+        url = f"{base}/open_exams/{p.name}"
+        rows.append(f"|  {label}  | {title} | [📄 PDF]({url}) |")
+
+    return (
+        '<details markdown="1">\n'
+        "<summary>📝 <b>Exercises</b></summary>\n"
+        "\n"
+        "|   #  | Exercise | Download |\n"
+        "| :--: | :--- | :-: |\n"
+        + "\n".join(rows) + "\n"
+        "\n"
+        "</details>"
+    )
+
+
 def build_block(book: str) -> str:
     full_title = LECTURE_TITLES.get(book, book)
     book_dir = REPO_ROOT / "lecturenotes" / book
@@ -87,7 +128,7 @@ def build_block(book: str) -> str:
             url = f"{base}/chapter_pdfs/{p.name}"
             rows.append(f"|   {label}  | {title} *(Appendix)* | [📄 PDF]({url}) |")
 
-    return (
+    notes_block = (
         '<details markdown="1">\n'
         "<summary>📑 <b>Lecture Notes</b></summary>\n"
         "\n"
@@ -97,6 +138,11 @@ def build_block(book: str) -> str:
         "\n"
         "</details>"
     )
+
+    exercises_block = build_exercises_block(book_dir, base)
+    if exercises_block:
+        return notes_block + "\n\n" + exercises_block
+    return notes_block
 
 
 def main() -> int:

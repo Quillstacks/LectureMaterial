@@ -73,7 +73,15 @@
 |  04  | Newton Methods | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/4_newton_methods.pdf) |
 |  05  | Global Optimization | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/5_global_optimization.pdf) |
 |  06  | Numerical Integration | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/6_integration_and_sgd.pdf) |
-|  07  | Training a Model from First Principles | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/chapter_pdfs/7_training_a_model.pdf) |
+
+</details>
+
+<details markdown="1">
+<summary>📝 <b>Exercises</b></summary>
+
+|   #  | Exercise | Download |
+| :--: | :--- | :-: |
+|  00  | Probeklausur 2026 | [📄 PDF](https://material.schutera.com/lecturenotes/notes_numerischemethoden/open_exams/exam_00.pdf) |
 
 </details>
 <!-- END:lecture:notes_numerischemethoden -->
