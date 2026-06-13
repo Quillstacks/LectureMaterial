@@ -204,7 +204,7 @@ named \texttt{test\_*}.
 \texttt{pytest} discovers them automatically; no registration, no
 configuration.
 The auto-deploy script in the next exercise runs
-\texttt{pytest tests/} from \texttt{/opt/pixelwise} and refuses to
+\texttt{python -m pytest tests/} from \texttt{/opt/pixelwise} and refuses to
 deploy on any non-zero exit code.
 
 
@@ -263,18 +263,18 @@ and returns the expected shape.}
 on-disk source tree:
 
 \marginnote{\newthought{Same gate, different trigger.}\index{CI}
-The same \texttt{pytest tests/} invocation that you just did locally and we will gate deployment
+The same \texttt{python -m pytest tests/} invocation that you just did locally and we will gate deployment
 later is exactly what a CI runner would also execute on every pull request before merging into \texttt{main}.}
 
 \begin{verbatim}
 cd ~/pixelwise
 source .venv/bin/activate
 pip install pytest
-pytest tests/
+python -m pytest tests/
 \end{verbatim}
 
 \marginnote{\newthought{Did it take on \texttt{dev}?}\\[0.4em]
-\texttt{pytest tests/} should print two passes.
+\texttt{python -m pytest tests/} should print two passes.
 If \texttt{pytest} reports an import error like
 \texttt{ModuleNotFoundError: No module named 'app'},
 you ran the command from the wrong directory; \texttt{cd} into
@@ -512,7 +512,7 @@ git pull origin main
 source .venv/bin/activate
 pip install -r requirements.txt > /dev/null
 
-if ! pytest tests/; then
+if ! python -m pytest tests/; then
     echo "Tests failed, refusing to deploy."
     exit 1
 fi
@@ -906,7 +906,7 @@ The full set of release tags lives at
 \newthought{Recap} of key concepts:
 \begin{itemize}
     \item Continuous Integration runs tests on every change against a known state; Continuous Deployment ships every green commit to \texttt{main} without a human in the loop.
-    \item The classroom pipeline is three primitives: a systemd timer as the trigger, \texttt{pytest tests/} as the gate, and one bash script as the deploy step.
+    \item The classroom pipeline is three primitives: a systemd timer as the trigger, \texttt{python -m pytest tests/} as the gate, and one bash script as the deploy step.
     \item The smoke test in \texttt{tests/test\_classifier.py} doubles as the gate: a non-zero exit from \texttt{pytest} stops the deploy before \texttt{systemctl restart}.
     \item \texttt{systemctl list-timers} shows the schedule and \texttt{journalctl -u pixelwise-deploy} reads its history; swap the timer for a GitHub Actions cron and the script body barely changes.
     \item Feature flags gate code that lives in the binary, so flipping behaviour is a config edit and a restart instead of a deploy.
