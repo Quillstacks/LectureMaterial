@@ -761,7 +761,17 @@ where $\sigma_f^2 = \mathrm{Var}(f(\mathbf{X}))$. Hence the standard error is
     \mathrm{SE}(\hat I_N) = \frac{|\Omega|\,\sigma_f}{\sqrt{N}}.
 \end{equation}
 
-\newthought{Dimension independent.} 
+% TODO: Make the break-even dimension between grid quadrature and Monte
+% Carlo explicit. For a $d$-dimensional grid with $N$ total evaluations,
+% the per-axis spacing is $h = N^{-1/d}$, so a second-order rule
+% (midpoint, trapez) yields error $O(h^2) = O(N^{-2/d})$. Setting this
+% equal to the Monte Carlo rate $O(N^{-1/2})$ gives $2/d = 1/2$, hence
+% $d = 4$. Currently the chapter says only "MC is attractive in high
+% dimensions" qualitatively; the concrete break-even at $d \approx 4$
+% should be added (e.g. as a worked margin note here) so that exam
+% questions asking for the crossover dimension are answerable purely
+% from the script. Referenced by exam_01 2(c).
+\newthought{Dimension independent.}
 It is trivial to see, that for large $N$ the sampling error converges with, $O(1/\sqrt{N})$ for Monte Carlo, which makes it attractive in high dimensions.
 Quadrature rules outperform in terms of their convergence rates, but the convergence effort explodes with the dimension, as we need $N^d$ points to maintain the same accuracy.
 
@@ -947,11 +957,11 @@ stochastic gradient descent on a high-dimensional function. Only watch compute t
 
 
 
-\marginnote{\newthought{Teaser.} Why do high-order quadrature methods become unstable when approximating low-degree polynomials?}
+\marginnote{\newthought{Teaser.} Are these six chapters really six things?}
 
-\newthought{So far stability} referred to the sensitivity of the numerical solution to small changes in the input data.
-But we can also talk about stability in terms of the numerical method itself, and how it behaves when approximating different types of functions.
-In the next chapter, we will see other types of stability issues that arise in numerical methods,
-and how to mitigate them by sophisticated method selection and configuration.
+\newthought{Six chapters in,} we have learned to represent numbers, reason about error,
+find roots, optimize, integrate, and sample.
+These felt like distinct topics.
+In the next chapter, we will run them all once on one small dataset, and we will notice that they were facets of a single workflow all along: fitting a model to data.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
