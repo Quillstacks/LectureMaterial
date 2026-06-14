@@ -59,7 +59,7 @@ Values are rounded and intended as a teaching dataset rather than as a research 
 \fi
 
 
-\newthought{The model} is a univariate linear regression of Nobel laureates on chocolate consumption (Figure~\ref{fig:chocolate_nobel_scatter}), fit by gradient descent on the mean squared error. The seven correspondences below are illustrated against this model and dataset.
+\newthought{The model} is a univariate linear regression of Nobel laureates on chocolate consumption (Figure~\ref{fig:chocolate_nobel_scatter}), fit by gradient descent on the mean squared error. The five correspondences below are illustrated against this model and dataset.
 
 
 \begin{figure}[h]
@@ -580,7 +580,7 @@ and the run with the lowest loss is the candidate global solution \cite{picard20
 \newthought{Composing} the slope from two parameters, with a quadratic trick on $w$ to 
 introduce a symmetry, gives a concrete example of the principle.
 \begin{align*}
-    \hat{y}(x) = w^2 + b.
+    \hat{y}(x) = w^2 x + b.
 \end{align*}
 with minima at $w \approx \pm 1.53$ ($L \approx 60$) and a saddle at $w = 0$ ($L \approx 100$).
 
@@ -819,7 +819,6 @@ Figure~\ref{fig:binary_fit} overlays the three on the dataset.
 
 \vfill
 \newthought{And another tradeoff,} where we give up precision and predictive performacnce, for runtime, memory and energy savings.
-
 
 \marginnote{\newthought{Question.}
 Integer precision matched the full-precision error on this dataset.
