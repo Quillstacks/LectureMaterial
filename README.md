@@ -52,6 +52,15 @@
 |  11  | Reinforcement Learning Fundamentals | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/chapter_pdfs/11_reinforcement_learning.pdf) |
 
 </details>
+
+<details markdown="1">
+<summary>📝 <b>Exercises</b></summary>
+
+|   #  | Exercise | Download |
+| :--: | :--- | :-: |
+|  00  | Probeklausur 2026 | [📄 PDF](https://material.schutera.com/lecturenotes/notes_unsupervisedlearning/open_exams/exam_00.pdf) |
+
+</details>
 <!-- END:lecture:notes_unsupervisedlearning -->
 
 <br>
