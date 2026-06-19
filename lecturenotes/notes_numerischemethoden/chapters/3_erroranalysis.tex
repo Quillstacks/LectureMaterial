@@ -428,25 +428,68 @@ data $x$ is perturbed by $\tilde{x} = x \pm 0.25$ due to measurement errors and 
 Now analyze the conditioning, stability, consistency, and convergence of the numerical method used 
 to find the minimum in both cases. Quantify the characteristics using the formulas provided in the previous section.
 
+\begin{marginfigure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+              width=\marginparwidth,
+              height=\marginparwidth,
+              axis x line=middle,
+              axis y line=middle,
+              xlabel={$x$},
+              ylabel={$f(x)$},
+              label style={font=\tiny, gray},
+              domain=-3:1,
+              samples=100,
+              xmin=-3.3, xmax=1.3,
+              ymin=-1.25, ymax=1.05,
+              xtick={-2,-1.6,-1,0},
+              ytick={-1,0},
+              xticklabel style={font=\tiny},
+              yticklabel style={font=\tiny},
+              tick style={gray},
+              axis line style={gray},
+        ]
+        \draw[gray, densely dashed] (axis cs:-1.5708,-1.25) -- (axis cs:-1.5708,0);
+        \draw[gray, densely dashed] (axis cs:-3.3,-1) -- (axis cs:-1.5708,-1);
+        \addplot[black, thick, smooth] {sin(deg(x))};
+        \addplot[gray, only marks, mark=*, mark size=0.6pt] coordinates {
+            (-3,-0.14112) (-2.8,-0.33499) (-2.6,-0.5155) (-2.4,-0.67546)
+            (-2.2,-0.8085) (-2,-0.9093) (-1.8,-0.97385) (-1.6,-0.99957)
+            (-1.4,-0.98545) (-1.2,-0.93204) (-1,-0.84147) (-0.8,-0.71736)
+            (-0.6,-0.56464) (-0.4,-0.38942) (-0.2,-0.19867) (0,0)
+            (0.2,0.19867) (0.4,0.38942) (0.6,0.56464) (0.8,0.71736) (1,0.84147)
+        };
+        \addplot[black, only marks, mark=o, mark size=1.6pt] coordinates {
+            (-3,-0.14112) (-2,-0.9093) (-1,-0.84147) (0,0) (1,0.84147)
+        };
+        \addplot[black, only marks, mark=*, mark size=1.4pt] coordinates {(-2,-0.9093) (-1.6,-0.99957)};
+        \node[gray, font=\tiny, anchor=south west] at (axis cs:-1.5708,0) {$x^\ast$};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Reference grid for the exercise: $\sin(x)$ on $[-3,1]$ with the $h=1$ grid (open circles)
+    and the $h=0.2$ grid (dots). The true minimum sits at $x^\ast = -\frac{\pi}{2}$ with $f(x^\ast) = -1$ (dashed).
+    The nearest grid point, which is also the grid minimum, is $x=-2$ for $h=1$ and $x=-1.6$ for $h=0.2$ (filled).}
+    \label{fig:grid_reference}
+\end{marginfigure}
+
 
 \newthought{Conditioning} is independent of the numerical method used, as it describes the sensitivity of the problem itself to changes in input data.
 Thus, the conditioning can be analyzed by purely examining how small changes in $x$ affect the value of $\sin(x)$. 
-We can see that around $x=-1$, where the minimum is, the sine function is relatively flat, indicating good conditioning. For sake of comparison we also consider
-$x=0$, where the sine function changes rapidly, indicating poor conditioning. Solving this on paper we focus on these 
-two regions to quantify the conditioning.
+We can see that around $x=-1$, near the minimum at $x^\ast = -\frac{\pi}{2}$, the sine function is relatively flat, indicating good conditioning. For sake of comparison we also consider
+$x=0$, where the sine function changes rapidly, indicating poor conditioning. 
 
 
 % Quantitative analysis of conditioning at two regions: x = -1 (well-conditioned) and x = 0 (ill-conditioned)
 \begin{align*}
     \kappa(-1, +0.25) &= |\sin(-1) - \sin(-0.75)| \\
     &\approx |{-0.8415} - ({-0.6816})| \\
-    &= 0.1599 \\[1em]   
+    &= 0.1599 \\[1em]
     \kappa(-1, -0.25) &= |\sin(-1) - \sin(-1.25)| \\
     &\approx |{-0.8415} - ({-0.9489})| \\
     &= 0.1074 \\[1em]
 \end{align*}
 Which shows well-conditioning with $0.1074 \leq \kappa \leq 0.1599$.
-
 
 \begin{align*}
     \kappa(0, +0.25) &= |\sin(0) - \sin(0.25)|\\
@@ -456,13 +499,13 @@ Which shows well-conditioning with $0.1074 \leq \kappa \leq 0.1599$.
     &\approx |0 - (-0.2474)| \\
     &= 0.2474 \\
 \end{align*}
-Which shows ill-conditioning with $\kappa \leq 0.247$.
+Which shows ill-conditioning with $\kappa = 0.2474$.
 
 
 
 
 \newthought{Stability} depends on the numerical method used to approximate the sine function and find its minimum.
-For the discretization with step size $h=1$, the method is stable as small changes in $\tilde{x}$ lead to small changes in the computed values of $\hat{f}(\tilde{x})$.
+We probe stability at the working point $x=-1$, the same point used for conditioning, near the minimum at $x^\ast = -\frac{\pi}{2}$. For the discretization with step size $h=1$, the method is stable as small changes in $\tilde{x}$ lead to small changes in the computed values of $\hat{f}(\tilde{x})$.
 For the discretization with step size $h=0.2$, the method is less stable, as small changes in $\tilde{x}$ can lead to larger fluctuations in the computed values of $\hat{f}(\tilde{x})$.
 Quantifying stability for both cases involves calculating the constant $s$ in the stability inequality:
 
@@ -473,32 +516,43 @@ Quantifying stability for both cases involves calculating the constant $s$ in th
     \left| \hat{f}(\tilde{x}) - \hat{f}(x) \right| \leq s \cdot \left| \tilde{x} - x \right|
 \end{equation}
 
-Due to symmetry we only consider the case $\tilde{x} = x + 0.25$.
-\marginnote{\newthought{a)} See how the step size $h=1$ leads to the same function value at both points. For reference, Fig.~\ref{fig:consistency_h1}}
+At $x=-1$ the sine curve is not symmetric, so the two perturbation directions give different errors and we consider both $\tilde{x} = x \pm 0.25$.
+\marginnote{\newthought{a)} See how, for $h=1$, both perturbed inputs round back to $-1$, leaving the value unchanged. For reference, Fig.~\ref{fig:grid_reference}}
 
-\vspace{1em}
-For $h=1$:
 \begin{align*}
-    s_{h=1, x=-1} \cdot |\tilde{x} - x| &= |\hat{f}(\tilde{x}) - \hat{f}(x)| \\
-    &= |\hat{f}_1(-0.75) - \hat{f}_1(-1)|\\ 
-    &= |\hat{f}_1(-1) - \hat{f}_1(-1)| \text{ see A)}\\ 
-    s_{h=1, x=0} &\approx 0 \div 0.25 \\
-    &\approx 0
+    s^{+}_{h=1, x=-1} \cdot |\tilde{x} - x| &= |\hat{f}_1(-0.75) - \hat{f}_1(-1)| \\
+    &= |\hat{f}_1(-1) - \hat{f}_1(-1)| \text{ see A)} \\
+    &= 0 \\
+    s^{+}_{h=1, x=-1} &= 0 \div 0.25 \\
+    &\approx 0 \\[1em]
+    s^{-}_{h=1, x=-1} \cdot |\tilde{x} - x| &= 0 \\
+    s^{-}_{h=1, x=-1} &\approx 0
 \end{align*}
+\marginnote{\newthought{One side suffices.} When the perturbation $0.25$ stays below half a grid step, $\tilde{x} = x \pm 0.25$ rounds back to the same grid point on both sides, so the two directions coincide. For $h=1$ the half-step is $0.5 > 0.25$; for $h=0.2$ it is only $0.1 < 0.25$, which is why $h=0.2$ needs both sides.}
 
 \vspace{1em}
-For $h=0.2$:
+For $h=0.2$ the two directions differ, so we evaluate both:
 \begin{align*}
-    s_{h=0.2, x=-1} \cdot |\tilde{x} - x| &= |\hat{f}(\tilde{x}) - \hat{f}(x)| \\
-    &= |\hat{f}_{0.2}(-0.75) - \hat{f}_{0.2}(-1)| \\
-    &= |\hat{f}_{0.2}(-0.8) - \hat{f}_{0.2}(-1)| \\ 
+    s^{+}_{h=0.2, x=-1} \cdot |\tilde{x} - x| &= |\hat{f}_{0.2}(-0.75) - \hat{f}_{0.2}(-1)| \\
+    &= |\hat{f}_{0.2}(-0.8) - \hat{f}_{0.2}(-1)| \\
     &= |-0.71736 - (-0.84147)| \\
-    s_{h=0.2, x=-1}  &= 0.12411 \div 0.25 \\
-    &\approx 0.4964
+    &= 0.12411 \\
+    s^{+}_{h=0.2, x=-1} &= 0.12411 \div 0.25 \\
+    &\approx 0.4964 \\[1em]
+    s^{-}_{h=0.2, x=-1} \cdot |\tilde{x} - x| &= |\hat{f}_{0.2}(-1.25) - \hat{f}_{0.2}(-1)| \\
+    &= |\hat{f}_{0.2}(-1.2) - \hat{f}_{0.2}(-1)| \\
+    &= |-0.93204 - (-0.84147)| \\
+    &= 0.09057 \\
+    s^{-}_{h=0.2, x=-1} &= 0.09057 \div 0.25 \\
+    &\approx 0.3623
 \end{align*}
+\marginnote{\newthought{Border regions.} The two directions bracket the stability constant, so $0.3623 \leq s_{h=0.2, x=-1} \leq 0.4964$.
+ Stability has anomalies in the border regions of the discretization. This is especially a problem for piece-wise constant approximations.}
 
-Be aware that stability has anomalies in border regions of the discretization. This is especially a problem for piece-wise constant approximations.
 
+
+
+ 
 \newthought{Consistency} is determined by comparing the numerical solution $\hat{f}(x)$ with the exact solution $f(x)$ for the minimum of the sine function in $[-3,1]$.
 To again quantify consistency for both step sizes, we calculate the constant $c$ in the consistency inequality:
 
@@ -511,18 +565,18 @@ To again quantify consistency for both step sizes, we calculate the constant $c$
 For $h=1$:
 \begin{align*}
     c_1 &\geq \left| \hat{f}_1(-\frac{\pi}{2}) - f(-\frac{\pi}{2}) \right| \\
-    &\geq \left| \hat{f}_{1}(-1) - f(-\frac{\pi}{2}) \right| \\
-    &\geq \left| -0.84147 - (-1) \right| \\
-    &\geq 0.15853
+    &\geq \left| \hat{f}_{1}(-2) - f(-\frac{\pi}{2}) \right| \\
+    &\geq \left| -0.90930 - (-1) \right| \\
+    &\geq 0.0907
 \end{align*}
 
 
 For $h=0.2$:
 \begin{align*}
     c_{0.2} &\geq \left| \hat{f}_{0.2}(-\frac{\pi}{2}) - f(-\frac{\pi}{2}) \right| \\
-    &\geq \left| \hat{f}_{0.2}(-1.2) - f(-\frac{\pi}{2}) \right| \\
-    &\geq \left| -0.94898 - (-1) \right| \\
-    &\geq 0.05102
+    &\geq \left| \hat{f}_{0.2}(-1.6) - f(-\frac{\pi}{2}) \right| \\
+    &\geq \left| -0.99957 - (-1) \right| \\
+    &\geq 0.00043
 \end{align*}
 
 Consistency improves with smaller step sizes, as expected.
@@ -538,33 +592,39 @@ To quantify convergence we calculate the total error between the numerical solut
 \end{equation}
 
 \vspace{1em}
-Due to symmetry we only consider the case $\tilde{x} = x + 0.25$.
+We perturb the minimizer, $\tilde{x} = -\frac{\pi}{2} \pm 0.25$, and discretize. Because the discretization rounds $\tilde{x}$ 
+to a different grid point in each direction, the two sides differ and we evaluate both.
 
 For $h=1$:
 \begin{align*}
-    \left| \hat{f}_1(\tilde{x}) - f(x) \right| 
-    \left| \hat{f}_1(-1) - f(-\frac{\pi}{2}) \right| \\
-    \left| \hat{f}_1(-0.75) - f(-\frac{\pi}{2}) \right| \\
-    \left| \hat{f}_1(-1) - f(-\frac{\pi}{2}) \right| \\
-    \left| -0.84147 - (-1) \right| \\
-    = 0.1599
+    \left| \hat{f}_1(\tilde{x}) - f(x) \right| &= \left| \hat{f}_1(-1.32) - f(-\frac{\pi}{2}) \right| \\
+    &= \left| \hat{f}_1(-1) - f(-\frac{\pi}{2}) \right| \\
+    &= \left| -0.84147 - (-1) \right| \\
+    &= 0.15853 \\[1em]
+    \left| \hat{f}_1(\tilde{x}) - f(x) \right| &= \left| \hat{f}_1(-1.82) - f(-\frac{\pi}{2}) \right| \\
+    &= \left| \hat{f}_1(-2) - f(-\frac{\pi}{2}) \right| \\
+    &= \left| -0.90930 - (-1) \right| \\
+    &= 0.0907
 \end{align*}
+so $0.0907 \leq \left| \hat{f}_1(\tilde{x}) - f(x) \right| \leq 0.15853$.
 
 \vspace{1em}
 For $h=0.2$:
 \begin{align*}
-    \left| \hat{f}_{0.2}(\tilde{x}) - f(x) \right| 
-    \left| \hat{f}_1(-1.2) - f(-\frac{\pi}{2}) \right| \\
-    \left| \hat{f}_{0.2}(-0.95) - f(-\frac{\pi}{2}) \right| \\
-    \left| \hat{f}_{0.2}(-1) - f(-\frac{\pi}{2}) \right| \\
-    \left| -0.84147 - (-1) \right| \\
-    = 0.1599
+    \left| \hat{f}_{0.2}(\tilde{x}) - f(x) \right| &= \left| \hat{f}_{0.2}(-1.32) - f(-\frac{\pi}{2}) \right| \\
+    &= \left| \hat{f}_{0.2}(-1.4) - f(-\frac{\pi}{2}) \right| \\
+    &= \left| -0.98545 - (-1) \right| \\
+    &= 0.01455 \\[1em]
+    \left| \hat{f}_{0.2}(\tilde{x}) - f(x) \right| &= \left| \hat{f}_{0.2}(-1.82) - f(-\frac{\pi}{2}) \right| \\
+    &= \left| \hat{f}_{0.2}(-1.8) - f(-\frac{\pi}{2}) \right| \\
+    &= \left| -0.97385 - (-1) \right| \\
+    &= 0.02615
 \end{align*}
+so $0.01455 \leq \left| \hat{f}_{0.2}(\tilde{x}) - f(x) \right| \leq 0.02615$.
 
-\newthought{Due to} the stability issues in the $h=0.2$ case, convergence does not improve with smaller step sizes in this operation point.
-This allows us to understand two things, both numerical solutions convergence to the same limit. 
-Judging from these two results we could also say that the method of iteratively reducing the step size $h$ converges to the same limit as well.
-Notice that we use the characteristics for both a numerical solution and the numerical method.
+\newthought{Convergence improves} with smaller step sizes: the $h=0.2$ interval $[0.01455, 0.02615]$ lies well below the $h=1$ interval $[0.0907, 0.15853]$.
+Each total error is at least the consistency error and grows by the stability contribution once the perturbation pushes the discretized estimate into a neighbouring cell.
+Convergence thus combines consistency and stability, exactly as its definition promises.
 
 
 % CODE
