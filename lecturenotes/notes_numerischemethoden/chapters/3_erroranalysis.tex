@@ -520,33 +520,33 @@ At $x=-1$ the sine curve is not symmetric, so the two perturbation directions gi
 \marginnote{\newthought{a)} See how, for $h=1$, both perturbed inputs round back to $-1$, leaving the value unchanged. For reference, Fig.~\ref{fig:grid_reference}}
 
 \begin{align*}
-    s^{+}_{h=1, x=-1} \cdot |\tilde{x} - x| &= |\hat{f}_1(-0.75) - \hat{f}_1(-1)| \\
+    s^{+}_{h=1} \cdot |\tilde{x} - x| &= |\hat{f}_1(-0.75) - \hat{f}_1(-1)| \\
     &= |\hat{f}_1(-1) - \hat{f}_1(-1)| \text{ see A)} \\
     &= 0 \\
-    s^{+}_{h=1, x=-1} &= 0 \div 0.25 \\
+    s^{+}_{h=1} &= 0 \div 0.25 \\
     &\approx 0 \\[1em]
-    s^{-}_{h=1, x=-1} \cdot |\tilde{x} - x| &= 0 \\
-    s^{-}_{h=1, x=-1} &\approx 0
+    s^{-}_{h=1} \cdot |\tilde{x} - x| &= 0 \\
+    s^{-}_{h=1} &\approx 0
 \end{align*}
 \marginnote{\newthought{One side suffices.} When the perturbation $0.25$ stays below half a grid step, $\tilde{x} = x \pm 0.25$ rounds back to the same grid point on both sides, so the two directions coincide. For $h=1$ the half-step is $0.5 > 0.25$; for $h=0.2$ it is only $0.1 < 0.25$, which is why $h=0.2$ needs both sides.}
 
 \vspace{1em}
 For $h=0.2$ the two directions differ, so we evaluate both:
 \begin{align*}
-    s^{+}_{h=0.2, x=-1} \cdot |\tilde{x} - x| &= |\hat{f}_{0.2}(-0.75) - \hat{f}_{0.2}(-1)| \\
+    s^{+}_{h=0.2} \cdot |\tilde{x} - x| &= |\hat{f}_{0.2}(-0.75) - \hat{f}_{0.2}(-1)| \\
     &= |\hat{f}_{0.2}(-0.8) - \hat{f}_{0.2}(-1)| \\
     &= |-0.71736 - (-0.84147)| \\
     &= 0.12411 \\
-    s^{+}_{h=0.2, x=-1} &= 0.12411 \div 0.25 \\
+    s^{+}_{h=0.2} &= 0.12411 \div 0.25 \\
     &\approx 0.4964 \\[1em]
-    s^{-}_{h=0.2, x=-1} \cdot |\tilde{x} - x| &= |\hat{f}_{0.2}(-1.25) - \hat{f}_{0.2}(-1)| \\
+    s^{-}_{h=0.2} \cdot |\tilde{x} - x| &= |\hat{f}_{0.2}(-1.25) - \hat{f}_{0.2}(-1)| \\
     &= |\hat{f}_{0.2}(-1.2) - \hat{f}_{0.2}(-1)| \\
     &= |-0.93204 - (-0.84147)| \\
     &= 0.09057 \\
-    s^{-}_{h=0.2, x=-1} &= 0.09057 \div 0.25 \\
+    s^{-}_{h=0.2} &= 0.09057 \div 0.25 \\
     &\approx 0.3623
 \end{align*}
-\marginnote{\newthought{Border regions.} The two directions bracket the stability constant, so $0.3623 \leq s_{h=0.2, x=-1} \leq 0.4964$.
+\marginnote{\newthought{Border regions.} The two directions bracket the stability constant, so $0.3623 \leq s_{h=0.2} \leq 0.4964$.
  Stability has anomalies in the border regions of the discretization. This is especially a problem for piece-wise constant approximations.}
 
 
@@ -560,7 +560,7 @@ To again quantify consistency for both step sizes, we calculate the constant $c$
     \left| \hat{f}(x) - f(x) \right| \leq c
 \end{equation}
 
-\marginnote{\newthought{Remember} the analytical solution of min(sin(x)) on $[-3,1]$ - revisit Chapter 1.}
+\marginnote{\newthought{Remember} the analytical solution of min(sin(x)) on $[-3,1]$. Revisit Chapter 1.}
 
 For $h=1$:
 \begin{align*}
