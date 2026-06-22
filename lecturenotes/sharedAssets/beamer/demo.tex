@@ -1,0 +1,265 @@
+%% demo.tex -- Showcase deck for the tuftedark beamer theme.
+%% Compile from this directory:  latexmk -pdf demo.tex   (or pdflatex x2)
+%% Exercises every layout, plus one real equation and one real dark-native
+%% figure adapted from the Unsupervised Learning lecture notes.
+
+\documentclass[aspectratio=169]{beamer}
+\usetheme{tuftedark}
+
+\title[Unsupervised Deep Learning]{Unsupervised Deep Learning}
+\subtitle{A Tufte-dark slide template}
+\author[Schutera]{Prof.\ Dr.-Ing.\ Mark Schutera}
+\institute{DHBW Ravensburg}
+\date{\today}
+
+% auto section-divider slides
+\AtBeginSection[]{\begin{frame}\sectionpage\end{frame}}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% --- Agenda: the "lecture in one slide" (why it matters + what you'll learn) ---
+\begin{frame}{Why this lecture}
+  \begin{withmargin}
+    \begin{tdmain}
+      Most data arrives without labels. If structure only existed where someone
+      drew it, we would be blind to most of what is there.
+      \par\bigskip
+      \centering
+      \begin{tikzpicture}[node distance=8mm]
+        \node[tdbox] (a) {unlabelled\\data};
+        \node[tdbox, right=of a] (b) {hidden\\structure};
+        \node[tdboxhi, right=of b] (c) {decisions};
+        \draw[tdarr] (a) -- (b);
+        \draw[tdarr] (b) -- (c);
+      \end{tikzpicture}
+    \end{tdmain}
+    \begin{tdmargin}
+      \textbf{After this lecture}
+      \par\smallskip
+      you can find groups without labels, judge how many there are, and read
+      what they mean.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% ======================================================================
+\section{Foundations}
+% ======================================================================
+
+\begin{frame}{What clustering buys us}
+  Given unlabelled data $\{x_1,\dots,x_n\}$, we want structure without
+  supervision: a partition into $K$ groups that are internally coherent.
+  There is no ground truth, so the objective \alert{is} the supervision,
+  and our choice of distance and of $K$ encodes the prior over what
+  ``coherent'' should mean.
+  \par\medskip
+  Two failure modes follow directly:
+  \begin{itemize}
+    \item Euclidean distance silently assumes isotropic, comparable scales.
+    \item The wrong $K$ hides real structure, or invents structure that is not there.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Margin notes}
+  \begin{withmargin}
+    \begin{tdmain}
+      Lloyd's algorithm alternates assignment and update until the partition
+      stops changing. Each step cannot increase $\mathcal{J}$, so it
+      converges, though only to a local minimum.
+      \par\medskip
+      The centroid update is just the per-cluster mean: the choice that
+      minimises that cluster's contribution to the objective.
+    \end{tdmain}
+    \begin{tdmargin}
+      Lloyd, 1957; published 1982.
+      \par\smallskip
+      The margin holds the aside, the citation, the small caveat: present,
+      but out of the main line of thought.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{The $k$-means objective}
+  We minimise within-cluster squared distance to the centroids:
+  \[
+    \mathcal{J}(C,\mu)
+      \;=\; \sum_{k=1}^{K}\;\sum_{x \in C_k}
+            \bigl\lVert\, x - \textcolor{DHBWred}{\mu_k}\,\bigr\rVert^{2},
+    \qquad
+    \textcolor{DHBWred}{\mu_k} = \frac{1}{|C_k|}\sum_{x\in C_k} x .
+  \]
+  Ward linkage extends the same variance idea to merges:
+  \[
+    D_{\mathrm{Ward}}(C_i,C_j)
+      \;=\; \frac{|C_i|\,|C_j|}{|C_i|+|C_j|}\,
+            \bigl\lVert \mu_i - \mu_j \bigr\rVert^{2}.
+  \]
+  The accent marks the centroid: the one quantity every step recomputes.
+\end{frame}
+
+% --- Equation on the 2/3 + 1/3 grid: artefact left, reading right ---
+\begin{frame}{Reading the objective}
+  \begin{withmargin}
+    \begin{tdmain}
+      \vspace*{1.2em}
+      \[
+        \mathcal{J}(C,\mu)
+          \;=\; \sum_{k=1}^{K}\;\sum_{x \in C_k}
+                \bigl\lVert\, x - \textcolor{DHBWred}{\mu_k}\,\bigr\rVert^{2}
+      \]
+    \end{tdmain}
+    \begin{tdmargin}
+      The summed squared distance from every point to \textcolor{DHBWred}{its own
+      centroid}. Driving it down is precisely what we mean by a coherent cluster.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% --- Derivation slide: multiple steps, smaller font, no side column ---
+\begin{frame}{Derivation: one Ward merge}
+  \small
+  \begin{align*}
+    D_{\mathrm{Ward}}\!\left(\{x_1,x_2\},\, x_3\right)
+      &= \frac{n_{12}\, n_3}{n_{12}+n_3}\,\bigl\lVert \mu_{12} - x_3 \bigr\rVert^{2} \\[2pt]
+      &= \frac{2 \cdot 1}{2 + 1}\,\bigl\lVert (2,1) - (8,7) \bigr\rVert^{2} \\[2pt]
+      &= \tfrac{2}{3}\,\bigl\lVert (-6,-6) \bigr\rVert^{2} \\[2pt]
+      &= \tfrac{2}{3}\cdot 72 \;=\; 48
+  \end{align*}
+\end{frame}
+
+\begin{frame}{Definition block}
+  \begin{tddef}{Centroid}
+    The centroid $\mu_k$ of cluster $C_k$ is the mean of its members.
+    It is the point that minimises the summed squared distance within the
+    cluster, which is exactly the per-cluster term of $\mathcal{J}$.
+  \end{tddef}
+  \vskip1ex
+  \begin{tdblock}
+    A plain statement block: same rounded, thick-bordered vocabulary as the
+    print TikZ boxes, no title bar.
+  \end{tdblock}
+\end{frame}
+
+\begin{frame}{Blocks}
+  \begin{block}{Standard block}
+    The native beamer block, rounded with a grey title bar (KIT structure,
+    DHBW colours). For definitions, statements, summaries.
+  \end{block}
+  \begin{exampleblock}{Example block}
+    A second tone for worked examples and asides.
+  \end{exampleblock}
+  \begin{alertblock}{Alert block}
+    Red, reserved: a warning or the one thing not to miss.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Two columns}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Lloyd's algorithm}
+      \begin{itemize}
+        \item Assign each $x$ to nearest $\mu_k$.
+        \item Recompute each $\mu_k$.
+        \item Repeat until assignments settle.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Caveats}
+      \begin{itemize}
+        \item Converges to a local minimum.
+        \item Sensitive to initialisation.
+        \item Assumes roughly spherical clusters.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Figure: the elbow (dark-native tufteplot)}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[tufteplotdark, width=0.72\textwidth, height=0.40\textwidth,
+        xlabel={number of clusters $K$}, ylabel={inertia $\mathcal{J}$},
+        xtick={1,2,3,4,5,6}, ytick={0,40,80,120},
+        ymin=0, ymax=130, xmin=0.6, xmax=6.4]
+      \addplot[mark=*, mark size=1.2pt, thick, tdfg]
+        coordinates {(1,120)(2,72)(3,40)(4,30)(5,24)(6,20)};
+      \addplot[mark=*, mark size=2.2pt, only marks, DHBWred]
+        coordinates {(3,40)};
+    \end{axis}
+  \end{tikzpicture}
+  \par\smallskip
+  {\small\color{tddim}The marginal gain flattens past $K=3$ (accent): the elbow.}
+\end{frame}
+
+\begin{frame}{Figure: a pipeline (dark-native TikZ)}
+  \centering
+  \begin{tikzpicture}[node distance=8mm]
+    \node[tdbox] (x)   {input $x$};
+    \node[tdbox, right=of x] (enc) {encoder};
+    \node[tdboxhi, right=of enc] (z) {latent $z$};
+    \node[tdbox, right=of z] (dec) {decoder};
+    \node[tdbox, right=of dec] (xh) {$\hat{x}$};
+    \draw[tdarr] (x) -- (enc);
+    \draw[tdarr] (enc) -- (z);
+    \draw[tdarr] (z) -- (dec);
+    \draw[tdarr] (dec) -- (xh);
+    \draw[tdarrdim] (xh.south) to[out=-90,in=-90] node[below,td,font=\scriptsize]{reconstruction loss} (x.south);
+  \end{tikzpicture}
+\end{frame}
+
+% ======================================================================
+\section{Results}
+% ======================================================================
+
+\begin{frame}{Comparison table}
+  \centering
+  {\arrayrulecolor{tddim}%
+  \begin{tabular}{lcc}
+    \toprule
+    method & needs $K$ & cluster shape \\
+    \midrule
+    $k$-means        & yes & spherical \\
+    Ward linkage     & no  & compact \\
+    DBSCAN           & no  & arbitrary \\
+    \bottomrule
+  \end{tabular}}
+\end{frame}
+
+\begin{frame}{Big takeaway}
+  \begin{takeaway}
+    The objective is the only teacher.\\
+    Choose it before you choose the algorithm.
+  \end{takeaway}
+\end{frame}
+
+\begin{frame}[fragile]{Code}
+  Running $k$-means in scikit-learn:
+  \vskip1ex
+  \begin{tdcode}
+\begin{Verbatim}
+from sklearn.cluster import KMeans
+km = KMeans(n_clusters=3, n_init=10)
+labels = km.fit_predict(X)
+print(km.inertia_)
+\end{Verbatim}
+  \end{tdcode}
+\end{frame}
+
+% ======================================================================
+\section{Outlook}
+% ======================================================================
+
+\begin{frame}{Closing}
+  Everything on this slide is serif Palatino, near-black canvas, DHBW red
+  for the one thing that matters. The footer fills as we go.
+  \begin{itemize}
+    \item Margin notes are on-demand, not a standing column.
+    \item Figures are recolored at the source, not inverted.
+  \end{itemize}
+\end{frame}
+
+\end{document}

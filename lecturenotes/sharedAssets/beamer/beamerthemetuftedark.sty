@@ -1,0 +1,322 @@
+%% beamerthemetuftedark.sty -- a dark, DHBW-coloured beamer theme whose
+%% structure is ported from the KIT corporate-design beamer template
+%% (beamerthemekit.sty by E. Burger / C. Hammer) and recoloured for a dark
+%% canvas. Author: Dr.-Ing. Mark Schutera
+%%
+%% What is taken from KIT: the overall structure -- a rounded content card,
+%% the mini-frame navigation footer (\insertnavigation), the title-page and
+%% section-page layout, real rounded blocks (block / alertblock / example),
+%% and the rounded-square "KIT point" itemize marker. What is ours: a dark
+%% card on a darker page, a modern sans (Source Sans) with Palatino math, and
+%% the official DHBW palette -- DHBW red #E2001A as the single accent, used
+%% sparingly; everything else off-white and grey.
+%%
+%% Usage:
+%%   \documentclass[aspectratio=169]{beamer}
+%%   \usetheme{tuftedark}
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamerthemetuftedark}[2026/06/22 v0.2 KIT-structured dark DHBW theme]
+
+\mode<presentation>
+
+%% ----------------------------------------------------------------------
+%% Packages
+%% ----------------------------------------------------------------------
+\RequirePackage{etoolbox}
+\RequirePackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\RequirePackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\RequirePackage{booktabs}
+\RequirePackage{colortbl}
+\RequirePackage{tcolorbox}
+\tcbuselibrary{skins}
+\RequirePackage{fancyvrb}
+
+%% ----------------------------------------------------------------------
+%% Palette -- DHBW corporate colours on a dark, layered canvas
+%% ----------------------------------------------------------------------
+\definecolor{DHBWred}{HTML}{E2001A}   % HKS 14, the single accent
+\definecolor{DHBWgray}{HTML}{717776}  % HKS 92, secondary
+\definecolor{tdpage}{HTML}{050505}    % page / margin (darkest, behind the card)
+\definecolor{tdcard}{HTML}{17181A}    % content card (slightly elevated)
+\definecolor{tdfg}{HTML}{F2F2F2}      % primary text (off-white)
+\definecolor{tddim}{HTML}{9A9A9A}     % dimmed grey
+\definecolor{tdrule}{gray}{0.40}      % hairline rules
+% block fills
+\definecolor{tdblocktitle}{HTML}{3A3B3D} % block title bar
+\definecolor{tdblockbody}{HTML}{1F2022}  % block body
+\definecolor{tdexbody}{HTML}{202326}     % example block body
+
+%% ----------------------------------------------------------------------
+%% Fonts -- modern sans (Source Sans) for text, Palatino for math
+%% ----------------------------------------------------------------------
+\usefonttheme{professionalfonts}
+\RequirePackage{mathpazo}                      % Palatino math (and rm)
+\RequirePackage[scale=0.96]{sourcesanspro}     % Source Sans -> \sfdefault
+\renewcommand{\familydefault}{\sfdefault}
+
+\setbeamerfont{title}{size=\LARGE,series=\bfseries}
+\setbeamerfont{subtitle}{size=\large,series=\mdseries}
+\setbeamerfont{frametitle}{size=\Large,series=\bfseries}
+\setbeamerfont{section title}{size=\huge,series=\bfseries}
+\setbeamerfont{section in head/foot}{size=\scriptsize}
+\setbeamerfont{author in head/foot}{size=\scriptsize}
+\setbeamerfont{block title}{size=\normalsize,series=\bfseries}
+
+%% ----------------------------------------------------------------------
+%% Colours -- map beamer roles onto the palette
+%% ----------------------------------------------------------------------
+\setbeamercolor{background canvas}{bg=tdpage}
+\setbeamercolor{normal text}{fg=tdfg,bg=tdcard}
+\setbeamercolor{structure}{fg=DHBWred}
+\setbeamercolor{alerted text}{fg=DHBWred}
+
+\setbeamercolor{title}{fg=tdfg}
+\setbeamercolor{subtitle}{fg=tddim}
+\setbeamercolor{frametitle}{fg=tdfg}
+\setbeamercolor{author}{fg=tddim}
+\setbeamercolor{date}{fg=tddim}
+\setbeamercolor{institute}{fg=tddim}
+\setbeamercolor{section title}{fg=tdfg}
+\setbeamercolor{section number}{fg=DHBWred}
+
+\setbeamercolor{itemize item}{fg=tddim}
+\setbeamercolor{itemize subitem}{fg=tddim}
+\setbeamercolor{itemize subsubitem}{fg=tddim}
+\setbeamercolor{enumerate item}{fg=tddim}
+\setbeamercolor{caption name}{fg=tddim}
+
+% navigation / footer roles
+\setbeamercolor{mini frame}{fg=tdfg,bg=tdpage}
+\setbeamercolor{section in head/foot}{fg=tddim,bg=tdpage}
+\setbeamercolor{author in head/foot}{fg=tddim,bg=tdpage}
+\setbeamercolor{title in head/foot}{fg=tddim,bg=tdpage}
+
+% blocks
+\setbeamercolor{block title}{fg=tdfg,bg=tdblocktitle}
+\setbeamercolor{block body}{fg=tdfg,bg=tdblockbody}
+\setbeamercolor{block title alerted}{fg=tdfg,bg=DHBWred}
+\setbeamercolor{block body alerted}{fg=tdfg,bg=DHBWred!16!tdcard}
+\setbeamercolor{block title example}{fg=tdfg,bg=DHBWgray}
+\setbeamercolor{block body example}{fg=tdfg,bg=tdexbody}
+
+%% ----------------------------------------------------------------------
+%% Inner theme -- rounded blocks (no shadow on dark)
+%% ----------------------------------------------------------------------
+\useinnertheme[shadow=false]{rounded}
+\setbeamersize{text margin left=6mm,text margin right=6mm}
+
+% KIT point: a square with two opposite rounded corners (grey)
+\setbeamertemplate{itemize item}{%
+  \begin{pgfpicture}{0mm}{0mm}{1ex}{1ex}%
+  {\pgfsetcornersarced{\pgfpoint{.3ex}{.3ex}}%
+   \pgfpathmoveto{\pgfpoint{0cm}{1ex}}%
+   \pgfpathlineto{\pgfpoint{1ex}{1ex}}%
+   \pgfpathlineto{\pgfpoint{1ex}{0cm}}}%
+  {\pgfsetcornersarced{\pgfpoint{.3ex}{.3ex}}%
+   \pgfpathmoveto{\pgfpoint{1ex}{0cm}}%
+   \pgfpathlineto{\pgfpointorigin}%
+   \pgfpathlineto{\pgfpoint{0cm}{1ex}}}%
+  \color{tddim}\pgfusepath{fill}\end{pgfpicture}%
+}
+\setbeamertemplate{itemize subitem}{\small\raise0.2ex\hbox{\color{tddim}\rule{0.5ex}{0.5ex}}}
+\setbeamertemplate{itemize subsubitem}{\small\raise0.2ex\hbox{\color{tddim}\rule{0.35ex}{0.35ex}}}
+\setbeamertemplate{enumerate item}{\color{tddim}\insertenumlabel.}
+\setbeamertemplate{navigation symbols}{}
+
+%% ----------------------------------------------------------------------
+%% Background -- a rounded dark card on a darker page (KIT card, inverted).
+%% The footer strip lives in the darker margin below the card.
+%% ----------------------------------------------------------------------
+\newlength{\tdcardbottom}
+\usebackgroundtemplate{%
+  \setlength{\tdcardbottom}{\ifbeamer@plainframe1.2mm\else12mm\fi}%
+  \begin{tikzpicture}
+    \useasboundingbox (0,0) rectangle (\paperwidth,\paperheight);
+    \fill[tdpage] (0,0) rectangle (\paperwidth,\paperheight);
+    \fill[tdcard,rounded corners=2mm]
+      (1mm,\tdcardbottom) rectangle
+      (\dimexpr\paperwidth-1mm\relax,\dimexpr\paperheight-1mm\relax);
+  \end{tikzpicture}%
+}
+
+%% ----------------------------------------------------------------------
+%% Frame title -- bold sans with a hairline grey rule
+%% ----------------------------------------------------------------------
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip%
+  \vskip2.4ex%
+  {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\strut\insertframetitle\par}%
+  \vskip0.2ex%
+  {\color{tdrule}\rule{\textwidth}{0.4pt}}%
+  \vskip0.4ex%
+}
+
+%% ----------------------------------------------------------------------
+%% Title page -- KIT-style structure: institute strip, accent band, title,
+%% subtitle, author | date.
+%% ----------------------------------------------------------------------
+\setbeamertemplate{title page}{%
+  \vskip2mm%
+  {\color{DHBWred}\rule[-0.05ex]{1.5ex}{1.5ex}}\hskip1ex%
+  {\small\color{tddim}\uppercase\expandafter{\insertinstitute}}\par%
+  \vfill
+  {\color{DHBWred}\rule{0.16\paperwidth}{2pt}}\par\vskip0.8em%
+  {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}%
+  \ifx\insertsubtitle\@empty\else
+    \vskip0.35em{\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}%
+  \fi
+  \vskip1.3em%
+  {\normalsize\usebeamercolor[fg]{author}\insertauthor%
+    \ifx\insertdate\@empty\else\;\textbar\;\insertdate\fi\par}%
+  \vfill
+}
+
+%% ----------------------------------------------------------------------
+%% Section divider -- a mini title page
+%% ----------------------------------------------------------------------
+\setbeamertemplate{section page}{%
+  \vfill
+  {\color{DHBWred}\rule{0.13\paperwidth}{2pt}}\par\vskip0.7em%
+  {\usebeamercolor[fg]{section number}\large\bfseries
+    \ifnum\c@section>0 \insertsectionnumber\fi}\par\vskip0.25em%
+  {\usebeamerfont{section title}\usebeamercolor[fg]{section title}\insertsectionhead\par}%
+  \vfill
+}
+
+%% ----------------------------------------------------------------------
+%% Footline -- KIT layout: mini-frame navigation (cumulative fill, off-white,
+%% no red) on top; author -- title (left) and date + slide counter (right)
+%% beneath, sitting in the dark margin strip. Compression keeps each section
+%% to one circle row.
+%% ----------------------------------------------------------------------
+\beamer@compresstrue
+\setbeamersize{mini frame size=0.10cm,mini frame offset=0.04cm}
+\setbeamertemplate{section in head/foot}{\color{tdfg}\insertsectionhead}
+\setbeamertemplate{section in head/foot shaded}{\color{tddim}\insertsectionhead}
+
+% filled off-white once a frame's first page is reached, hollow grey ahead
+\def\tuftedark@pagecmp#1/#2\relax{%
+  \ifnum\c@page<#1\relax
+    {\color{tddim}\usebeamertemplate{mini frame in current subsection}}%
+  \else
+    {\color{tdfg}\usebeamertemplate{mini frame}}%
+  \fi}
+\def\tuftedark@slideentry#1#2#3#4#5#6{%
+  \ifnum#6=\c@part\ifnum#1>0\ifnum#3>0%
+    \ifbeamer@compress%
+      \advance\beamer@xpos by1\relax%
+    \else%
+      \ifnum#2=0%
+        \beamer@ypos@offset=1\relax%
+      \fi
+      \beamer@xpos=#3\relax%
+      \beamer@ypos=#2\relax%
+      \advance\beamer@ypos by \beamer@ypos@offset\relax
+    \fi%
+    \hbox to 0pt{%
+      \beamer@tempdim=-\beamer@vboxoffset%
+      \advance\beamer@tempdim by-\beamer@boxsize%
+      \multiply\beamer@tempdim by\beamer@ypos%
+      \advance\beamer@tempdim by -.05cm%
+      \raise\beamer@tempdim\hbox{%
+        \beamer@tempdim=\beamer@boxsize%
+        \multiply\beamer@tempdim by\beamer@xpos%
+        \advance\beamer@tempdim by -\beamer@boxsize%
+        \advance\beamer@tempdim by 1pt%
+        \kern\beamer@tempdim
+        \global\beamer@section@min@dim\beamer@tempdim
+        \hbox{\beamer@link(#4){%
+            \usebeamerfont{mini frame}%
+            \tuftedark@pagecmp#4\relax%
+          }}}\hskip-10cm plus 1fil%
+    }\fi\fi%
+  \else%
+    \fakeslideentry{#1}{#2}{#3}{#4}{#5}{#6}%
+  \fi\ignorespaces%
+}
+
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{%
+  \vskip1pt%
+  {\let\slideentry\tuftedark@slideentry\insertnavigation{\paperwidth}}%
+  \vskip0.5pt%
+  \hbox to \paperwidth{\hskip6mm%
+    {\usebeamerfont{author in head/foot}\usebeamercolor[fg]{author in head/foot}%
+      \insertshortauthor\ifx\insertshorttitle\@empty\else\;\textendash\;\insertshorttitle\fi}%
+    \hfill%
+    {\usebeamerfont{author in head/foot}\usebeamercolor[fg]{author in head/foot}%
+      \ifx\insertshortdate\@empty\else\insertshortdate\hskip1.6em\fi
+      \insertframenumber\,/\,\inserttotalframenumber}%
+    \hskip6mm}%
+  \vskip2mm%
+}
+
+%% ----------------------------------------------------------------------
+%% Special blocks -- kept from the previous design (well liked):
+%% titled definition/theorem box, plain box, dark code panel, big takeaway.
+%% ----------------------------------------------------------------------
+\newtcolorbox{tdblock}[1][]{%
+  enhanced, arc=2pt, boxrule=0.8pt,
+  colframe=DHBWgray, colback=tdblockbody, coltext=tdfg,
+  left=7pt,right=7pt,top=5pt,bottom=5pt, #1}
+
+\newtcolorbox{tddef}[1]{%
+  enhanced, arc=2pt, boxrule=0.8pt,
+  colframe=DHBWgray, colback=tdblockbody, coltext=tdfg,
+  coltitle=DHBWred, colbacktitle=tdblockbody, fonttitle=\bfseries,
+  titlerule=0pt, toptitle=2pt, bottomtitle=0pt,
+  left=7pt,right=7pt,top=3pt,bottom=5pt, title={#1}}
+
+\newtcolorbox{tdcode}{%
+  enhanced, arc=2pt, boxrule=0.8pt,
+  colframe=DHBWgray, colback=black!88, coltext=tdfg,
+  fontupper=\ttfamily\small, left=7pt,right=7pt,top=5pt,bottom=5pt}
+
+\newenvironment{takeaway}{%
+  \par\vfill\begin{center}\Large\itshape\color{DHBWred}}{%
+  \end{center}\vfill\par}
+
+%% ----------------------------------------------------------------------
+%% Tufte margin column -- narrow right column for sidenotes / citations.
+%%   \begin{withmargin}\begin{tdmain}...\end{tdmain}
+%%   \begin{tdmargin}...\end{tdmargin}\end{withmargin}
+%% ----------------------------------------------------------------------
+\newenvironment{withmargin}{\begin{columns}[T]}{\end{columns}}
+\newenvironment{tdmain}{\begin{column}{0.64\textwidth}}{\end{column}}
+\newenvironment{tdmargin}{%
+  \begin{column}{0.30\textwidth}%
+    \usebeamercolor[fg]{normal text}\color{tddim}%
+    \footnotesize\raggedright}{%
+  \end{column}}
+
+%% ----------------------------------------------------------------------
+%% Dark-native figure vocabulary -- light-on-dark twin of the print TikZ /
+%% tufteplot styles.
+%% ----------------------------------------------------------------------
+\tikzset{
+  td/.style={font=\small, align=center, text=tdfg},
+  tdbox/.style={rectangle, draw=tdfg, thick, rounded corners=2pt,
+    minimum width=2.0cm, minimum height=0.9cm, inner sep=4pt, text=tdfg, align=center},
+  tdboxhi/.style={tdbox, draw=DHBWred, text=DHBWred},
+  tdarr/.style={-{Triangle[length=4pt,width=4pt,fill=tdfg]}, thick, tdfg},
+  tdarrhi/.style={-{Triangle[length=4pt,width=4pt,fill=DHBWred]}, thick, DHBWred},
+  tdarrdim/.style={-{Triangle[length=4pt,width=4pt,fill=tddim]}, thick, tddim, densely dashed},
+}
+\pgfplotsset{
+  tufteplotdark/.style={
+    axis line style={draw=none},
+    tick style={tdfg, thin},
+    tick align=outside,
+    tick pos=left,
+    every axis label/.append style={text=tdfg},
+    label style={text=tdfg},
+    tick label style={text=tdfg, font=\tiny},
+    legend style={draw=none, fill=none, text=tdfg, font=\scriptsize},
+    every axis plot/.append style={tdfg},
+  },
+}
+
+\mode<all>
