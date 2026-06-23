@@ -672,7 +672,11 @@ from app.models import Prediction, SessionLocal
 \end{verbatim}
 
 \marginnote{\newthought{Classify now writes a row.}\index{SQLAlchemy!session}
-The decorators and signature from Block~5 stay untouched. 
+The handler keeps its mainline signature from Block~5. If you ran the
+optional API key and rate limiting exercise, leave your
+\texttt{Depends(verify\_api\_key)} dependency, the \texttt{@limiter.limit}
+decorator, and the \texttt{request: Request} parameter in place; only the
+body changes either way.
 The body picks up one new intermediate, \texttt{result},
 so the same dict can be persisted and returned, then a five-line
 session block that opens a \texttt{SessionLocal}, adds the new
@@ -687,11 +691,8 @@ response body stays identical to the contract we defined in Block~5.}
 
 \begin{verbatim}
 @app.post("/classify",
-          response_model=ClassifyResponse,
-          dependencies=[Depends(verify_api_key)])
-@limiter.limit("30/minute")
-def classify(request: Request,
-             req: ClassifyRequest):
+          response_model=ClassifyResponse)
+def classify(req: ClassifyRequest):
     arr = np.array(req.pixels,
                    dtype=np.uint8)[np.newaxis]
     result = classify_batch(arr)[0]
@@ -815,10 +816,30 @@ The \texttt{pip freeze} step captures the new package in
 \texttt{requirements.txt} so \texttt{prod} picks it up on the next
 deploy.
 
-Edit \texttt{alembic/env.py} to import \texttt{Base} and \texttt{engine}
-from \texttt{app.models} so autogenerate sees your tables and runs against
-the same connection string the application builds, rather than the
-\texttt{sqlalchemy.url} placeholder in \texttt{alembic.ini}.
+Edit \texttt{alembic/env.py} so autogenerate sees your tables and runs
+against the same connection string the application builds, rather than the
+\texttt{sqlalchemy.url} placeholder in \texttt{alembic.ini}. Two edits do
+this: point \texttt{target\_metadata} at \texttt{Base.metadata}, and make
+\texttt{run\_migrations\_online} connect through the application
+\texttt{engine}.
+
+\begin{verbatim}
+# alembic/env.py
+from app.models import Base, engine
+target_metadata = Base.metadata
+
+def run_migrations_online() -> None:
+    with engine.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata)
+        with context.begin_transaction():
+            context.run_migrations()
+\end{verbatim}
+
+Without these two edits autogenerate connects to the placeholder URL and
+sees no metadata, so it emits an empty migration with no
+\texttt{add\_column} operation.
 
 \marginnote{\newthought{Read the generated config.}\index{alembic.ini}
 \texttt{alembic init alembic} writes a folder of starter files.
@@ -848,10 +869,13 @@ to prevent.}
 
 \newthought{Wire \texttt{client\_ip} into the handler} in
 \texttt{\textasciitilde{}/pixelwise/app/main.py} on \texttt{dev}.
-\texttt{Request} is already imported and \texttt{request: Request} is
-already a parameter on \texttt{classify} from the Block~5 rate limiter,
-so the only change is one keyword argument in the
-\texttt{Prediction(...)} call:
+The column reads the caller address off the request, so \texttt{classify}
+needs the FastAPI \texttt{Request} object. If you ran the optional rate
+limiter, \texttt{request: Request} is already a parameter and
+\texttt{Request} is already imported; otherwise add
+\texttt{from fastapi import Request} and a \texttt{request: Request}
+parameter to \texttt{classify} first. Then the only further change is one
+keyword argument in the \texttt{Prediction(...)} call:
 
 \begin{verbatim}
 db.add(Prediction(
