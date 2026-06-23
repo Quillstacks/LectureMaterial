@@ -226,14 +226,14 @@ solving directly for:
 let's approximate the value through integration with width \\ $h=0.2$:
 
 \begin{align*}
-    h \cdot f(-0.4) &\approx \int_{-0.5}^{-0.3} f(x) \, dx \\ 
+    h \cdot f(-0.4) &\approx \int_{-0.5}^{-0.3} f(x) \, dx \\
             &\approx \frac{h}{2}[f(-0.5) + f(-0.3)] \\
-            &\approx 0.2 \cdot \frac{-1.14973 - 0.97720}{2} \\
-            &= -0.11285
+            &\approx 0.2 \cdot \frac{-0.47943 - 1.24658}{2} \\
+            &= -0.17260
 \end{align*}
 \begin{align*}
-    f(-0.4) &\approx \frac{-1.14973 - 0.97720}{2} \\
-            &= -1.06347
+    f(-0.4) &\approx \frac{-0.47943 - 1.24658}{2} \\
+            &= -0.86300
 \end{align*}
 
 \newthought{This is a much better approximation} having global optima in mind, than the direct evaluation at $x=-0.4$ which gave us $-0.97720$.
@@ -842,9 +842,9 @@ This gives us:
     h &= 0.5 \\
     \hat{I} &\approx h \cdot [f(-1.75) + f(-1.25)] \\
       &= 0.5 \cdot [\sin(-1.75) + \sin(-1.25)] \\
-      &\approx -0.927228.
+      &\approx -0.96649.
 \end{align*}
-The error is $|\tilde{I} - \hat{I}| \approx 0.02922$, which is smaller than the error with $n=1$ interval, illustrating how composites, or increasing the number of intervals improves the approximation.
+The error is $|\tilde{I} - \hat{I}| \approx 0.01004$, which is smaller than the error with $n=1$ interval, illustrating how composites, or increasing the number of intervals improves the approximation.
 
 
 \newthought{Trapezoid by hand.}
@@ -854,9 +854,9 @@ The endpoints are $-2$, $-1.5$, and $-1$. The trapezoid rule gives us:
     h &= 0.5 \\
     T_2 &= \frac{h}{2} [f(-2) + 2f(-1.5) + f(-1)] \\
         &= 0.25 \cdot [-0.90930 + 2(-0.99749) + (-0.84147)] \\
-        &\approx -0.927228.
+        &\approx -0.93644.
 \end{align*}
-The error is the same as the midpoint rule with $n=2$ intervals, which is not necessarily a coincidence, as both methods are second-order accurate and can yield similar results for certain functions and interval choices.
+The error is $|\tilde{I} - T_2| \approx 0.02001$, roughly twice the midpoint error and on the opposite side of the true value. Both rules are second-order accurate, and for a smooth function the trapezoid error is about $-2$ times the midpoint error, so the two bracket the exact integral rather than agreeing.
 
 
 
@@ -868,9 +868,9 @@ The endpoints are $-2$, $-1.5$, and $-1$. Simpson's rule gives us:
     h &= 0.5 \\
     S_2 &= \frac{h}{3} [f(-2) + 4f(-1.5) + f(-1)] \\
         &= \frac{0.5}{3} \cdot [-0.90930 + 4(-0.99749) + (-0.84147)] \\
-        &\approx -0.9564491424.
+        &\approx -0.95679.
 \end{align*}
-The error is $|\tilde{I} - S_2| \approx 0.0000000000$, which is essentially zero, illustrating that Simpson's rule is exact for this particular integral, as $\sin(x)$ can be well approximated by a quadratic polynomial over the interval $[-2, -1]$.
+The error is $|\tilde{I} - S_2| \approx 0.00034$, far smaller than the trapezoid and midpoint errors. Simpson's rule integrates cubic polynomials exactly and is fourth-order accurate, so it tracks a smooth function like $\sin(x)$ over $[-2, -1]$ very closely, though not exactly.
 
 
 \marginnote{\newthought{Try with more intervals,} see how the error decreases and check whether you know your way around composites in Simpson's and Trapezoid rules.}
@@ -891,7 +891,7 @@ The Monte Carlo estimate is:
             &= 1 \cdot \frac{1}{4} (-0.92895 - 0.99978 - 0.91276 - 0.86742) \\
             &\approx -0.927228.
 \end{align*}
-The error is $|\tilde{I} - \hat{I}| \approx 0.02922$, which is the same as the midpoint method. 
+The error is $|\tilde{I} - \hat{I}| \approx 0.02922$. For a stochastic estimator the meaningful yardstick is not another quadrature rule but its own standard error, the $1/\sqrt{N}$ spread of the estimate, which we work out next. The strength of Monte Carlo is not accuracy at small $N$ but that this error scales independently of the dimension.
 
 
 
@@ -904,16 +904,18 @@ The error is $|\tilde{I} - \hat{I}| \approx 0.02922$, which is the same as the m
 We obtain the sample variance and standard error of the Monte Carlo estimator as follows:
 \begin{align*}
     \sigma_f^2 &= Var(f(\mathbf{X}))  \\ 
-               &\approx 0.003036, \\
-    \sigma_{f} &\approx 0.05512, \\
+               &\approx 0.003018, \\
+    \sigma_{f} &\approx 0.05493, \\
     \mathrm{SE}(\hat I_N) &\approx \frac{|\Omega|\, \sigma_f}{\sqrt{N}} \\
-    &= \frac{1\cdot 0.05512}{2} \\
-    &\approx 0.02756.
+    &= \frac{1\cdot 0.05493}{2} \\
+    &\approx 0.02747.
 \end{align*}
 
-What happens if we increase $N$ to 16? 
+The observed error of $0.02922$ is about one standard error, just as the $1/\sqrt{N}$ scaling predicts.
+
+What happens if we increase $N$ to 16?
 The error should decrease by a factor of 2, since the standard error scales as $1/\sqrt{N}$.
-Briefly elaborate on how the error of the Monte Carlo estimator is dimension independant.
+Briefly elaborate on how the error of the Monte Carlo estimator is dimension independent.
 
 
 
