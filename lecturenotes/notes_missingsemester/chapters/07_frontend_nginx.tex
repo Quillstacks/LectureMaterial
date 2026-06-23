@@ -382,6 +382,17 @@ you on port 8000, except now Nginx is the one that took the request.
 Two different programs answered two paths, and from the outside they
 look like one service on one port.
 
+\marginnote{\newthought{Keep the backend route bare.}\index{routing}\index{proxy\_pass}
+That \texttt{/api/health} answer came out of a handler registered as
+\texttt{/health}: the \texttt{/api/} prefix is a public label Nginx peels
+off before the request reaches FastAPI.
+Do not rename the handler to \texttt{/api/health} so it matches the
+browser. Nginx would still strip \texttt{/api/} and forward
+\texttt{/health}, which then matches no route, and every proxied call
+answers \texttt{404}.
+Test \texttt{uvicorn} on port 8000 at \texttt{/health}, never
+\texttt{/api/health}.}
+
 
 
 
