@@ -1,0 +1,668 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Disciplined Vibe Coding - A 4-Block Lecture Series
+% Author: Prof. Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+\title{Disciplined Vibe}
+\author[Prof. Dr.-Ing. Mark Schutera]{Prof. Dr.-Ing. Mark Schutera}
+\publisher[\defaultpublisher]{\defaultpublisher}
+
+%%
+% Load optional fonts
+\loadoptionalfonts
+
+% Additional packages
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+
+\begin{document}
+
+% Standard front matter
+\makestandardfrontmatter
+
+% Dedication
+\makededication{%
+  \openepigraph{There's a new kind of coding I call ``vibe coding'', where you fully give in to the vibes, embrace exponentials, and forget that the code even exists.}{Andrej Karpathy, 2025}
+  \vspace{2em}
+  \openepigraph{Wir wollen offensiv spielen, aber mit h\"ochster Disziplin.}{Joachim L\"ow, 2010}%
+}
+
+\tableofcontents
+
+% Introduction
+\makeintroduction{%
+  These notes accompany a four-block seminar on Disciplined Vibe Coding:
+  programming in which the developer steers a Large Language Model in natural
+  language while the model writes, edits, and reasons about the code. We take
+  Karpathy's framing\sidenote{Coined by Andrej Karpathy in February 2025 and
+  building on his earlier essays Software 2.0 and Software
+  3.0.\cite{karpathy2025vibe}} as the starting point but ground it in concrete
+  craft: the \textsc{skills} catalogue maintained by Matt
+  Pocock\cite{pocock2025skills} supplies a working vocabulary of reusable agent
+  behaviours, from \texttt{to-prd} to \texttt{tdd} to \texttt{write-a-skill}.\\
+
+  \newthought{The structure} is deliberately interleaved. Each of the four blocks
+  opens with a short theoretical introduction and closes with a hands-on
+  breakout in which students operate a local model (\textsc{ollama}) through
+  the \texttt{opencode} terminal client inside an editor of their choice.\\
+
+  \newthought{These notes are a living thing,} subject to continuous updates.
+  They favour breadth and orientation over completeness; the breakouts are
+  where the actual learning happens.
+}
+
+%% Start the main matter
+\mainmatter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Foundations and the Local Workbench}
+\label{ch:foundations}
+
+\section{What Vibe Coding Actually Is}
+\label{sec:what-is-vibe}
+
+\newthought{Karpathy's coinage} describes a shift in the locus of authorship.
+In Software 1.0, humans wrote explicit instructions; in Software
+2.0, gradient descent wrote the weights of neural networks; in Software
+3.0\sidenote{Karpathy's Software is Changing (Again) talk frames
+\textsc{llm}s as a new computing substrate, ``\textsc{llm}s are the new
+operating system'', with prompts as programs and context windows as
+\textsc{ram}.\cite{karpathy2025software3}} the program is a natural-language
+prompt, and the \textsc{llm} compiles it to behaviour.\index{Software 2.0}\index{Software 3.0}\index{Karpathy}
+
+\begin{quote}
+``The hottest new programming language is English.'', Andrej Karpathy
+\end{quote}
+
+\newthought{Vibe coding} is the working style that follows from this shift.
+The developer states intent, accepts diffs, runs the result, and iterates
+without necessarily reading every line. Simon Willison has argued that the
+term should be reserved for cases where the code is genuinely not read
+by the human, and that most professional \textsc{ai}-assisted development
+is something more disciplined.\cite{willison2025notvibe}\index{vibe coding!definition}
+
+This seminar treats vibe coding as a spectrum, parameterised by
+how much the human inspects, structures, and constrains the model's
+output. \textsc{skills} are the means by which we move along that
+spectrum deliberately rather than by accident, hence the qualifier
+disciplined.
+
+\newthought{A useful counterweight} to the exponentials rhetoric is
+Fred Brooks's No Silver Bullet\cite{brooks1987silver}: the
+essential complexity of software, specification, design,
+verification, is irreducible, and no tool eliminates it. \textsc{llm}s
+attack accidental complexity (typing, boilerplate, look-up); the
+essential part still belongs to you. The skills catalogue is, in
+effect, a set of disciplines for keeping the essential work in human
+hands while delegating the accidental work to the model.\index{Brooks!No Silver Bullet}\index{essential complexity}
+
+\section{Skills as Reusable Prompt Modules}
+\label{sec:skills-concept}
+
+\newthought{A skill}, in the Pocock sense, is a small, named, reusable
+bundle of instructions and examples that an agent loads on demand, a
+``cheat sheet'' in Yegge's terms\cite{yegge2024cheating}, a ``recipe''
+in Crawshaw's.\cite{crawshaw2024sketch}\index{skills}\index{prompt engineering}
+The underlying principle is the oldest one in the Pragmatic Programmer's
+catalogue\cite{hunt1999pragmatic}: \textsc{dry}, Don't Repeat
+Yourself. A prompt you have written twice is a skill waiting to be
+extracted.\index{DRY}\index{Pragmatic Programmer}
+
+\newthought{Skills are not the only} composable layer. The
+Model Context Protocol\sidenote{\textsc{mcp} is an open standard
+introduced by Anthropic in late 2024 for connecting \textsc{llm} agents
+to external data sources and tools through a uniform
+interface.\cite{anthropic2024mcp}} (\textsc{mcp}) provides the
+complementary half: where a skill is a prompt module that shapes
+how the agent thinks, an \textsc{mcp} server is a tool surface
+that determines what the agent can reach, a database, a ticket
+system, a filesystem, a browser. Skills and \textsc{mcp}s are
+orthogonal; a mature workbench uses both.\index{MCP}\index{Model Context Protocol}
+
+\begin{table*}[ht]
+\begin{tabular}{p{0.18\textwidth}p{0.32\textwidth}p{0.34\textwidth}}
+\toprule
+\textbf{Layer} & \textbf{Artifact} & \textbf{Example} \\
+\midrule
+Model        & Weights              & Llama 3.2, Qwen 2.5 Coder \\
+Harness      & Agent loop, permissions & opencode, Claude Code \\
+\textsc{mcp} server & External tool surface & Filesystem, GitHub, Postgres \\
+Skill        & Prompt module        & \texttt{tdd}, \texttt{to-prd} \\
+Project      & Repository, CLAUDE.md & Your codebase \\
+Intent       & The user             & You \\
+\bottomrule
+\end{tabular}
+\vspace{1em}
+\caption{The six layers of a vibe-coding stack.}
+\label{tab:layers}
+\end{table*}
+
+\section{Breakout 1: Setting Up the Local Workbench}
+\label{sec:breakout-1}
+
+\newthought{The goal} of this breakout is a fully local, offline-capable
+vibe-coding environment: an \textsc{ide}, a local model served by
+\textsc{ollama}, and the \texttt{opencode} terminal client wired to it.
+
+\subsection*{Step 1: Install an Editor}
+
+Vibe coding can in principle be done from a bare terminal, but an editor
+that renders diffs and shows the file tree makes inspection radically
+easier.\marginnote{The default in our bootstrap script is \texttt{micro},
+a $\sim$10\,\textsc{mb} terminal editor with mouse support and no learning
+curve, \texttt{Ctrl-S} to save, \texttt{Ctrl-Q} to quit. It keeps the whole
+workbench (editor, opencode, shell) in one window. Heavier alternatives,
+Zed, Sublime, \textsc{vs code}, JetBrains, all work equally well; the point
+is: you should be able to see what the agent changes.}
+
+\begin{fullwidth}
+\begin{verbatim}
+# macOS
+brew install micro
+
+# Linux (Debian/Ubuntu)
+sudo apt-get install micro
+\end{verbatim}
+\end{fullwidth}
+
+\marginnote{The companion \texttt{setup/bootstrap.sh} script in the lecture
+repository performs all four steps of this breakout in one shot, with
+\texttt{EDITOR=micro|zed|vscode|none} and \texttt{MODEL=...} as override
+knobs. Re-runs are idempotent.}
+
+\subsection*{Step 2: Install Ollama and Pull a Coding Model}
+
+\textsc{ollama}\cite{ollama2024} is a local model runner that exposes an
+\textsc{http} \textsc{api} compatible with much of the OpenAI surface.
+On a machine with \(\geq 16\,\text{GB}\) of \textsc{ram} a 7B coder model
+runs comfortably; on \(\geq 32\,\text{GB}\) you can host a 14B model.
+
+\begin{fullwidth}
+\begin{verbatim}
+# Install Ollama
+brew install ollama          # macOS
+curl -fsSL https://ollama.com/install.sh | sh   # Linux
+
+# Start the server (runs on http://localhost:11434)
+ollama serve
+
+# Pull a coding-tuned model in another terminal
+ollama pull qwen2.5-coder:7b
+ollama run  qwen2.5-coder:7b "write a python fizzbuzz"
+\end{verbatim}
+\end{fullwidth}
+
+\marginnote{If \texttt{qwen2.5-coder} is too heavy, fall back to
+\texttt{llama3.2:3b} or \texttt{deepseek-coder:6.7b}. The skill of
+choosing the smallest model that does the job is itself part of
+vibe coding.}
+
+\subsection*{Step 3: Install opencode and Connect It to Ollama}
+
+\texttt{opencode}\cite{opencode2025} is a terminal-native agent harness
+modelled after Claude Code. It can speak to any OpenAI-compatible
+endpoint, which is exactly what \textsc{ollama} provides.
+
+\begin{fullwidth}
+\begin{verbatim}
+# Install opencode
+curl -fsSL https://opencode.ai/install | bash
+
+# Configure a local provider (~/.config/opencode/config.json)
+{
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": { "baseURL": "http://localhost:11434/v1" },
+      "models": { "qwen2.5-coder:7b": { "name": "Qwen 2.5 Coder 7B" } }
+    }
+  }
+}
+
+# Launch opencode in your project directory
+cd ~/projects/playground && opencode
+\end{verbatim}
+\end{fullwidth}
+
+\subsection*{Step 4: Smoke Test}
+
+Inside \texttt{opencode}, ask: ``create a Python script that prints
+the first ten Fibonacci numbers, then run it.'' If you see a diff in your
+\textsc{ide} and the output \texttt{0 1 1 2 3 5 8 13 21 34} in the
+terminal, the workbench is live.
+
+\vspace{1em}
+\dots
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Planning and Design Skills}
+\label{ch:planning}
+
+\section{Why Plan Before You Vibe}
+\label{sec:why-plan}
+
+\newthought{The single largest failure mode} of naive vibe coding is
+premature implementation: the model happily produces 400 lines of
+code for a problem the user has not yet specified. The planning skills in
+the Pocock catalogue exist to slow that reflex down.\index{planning}
+
+Addy Osmani has named this pattern the ``70-percent problem'':
+\textsc{ai}-assisted code feels 70\% done almost immediately, and the
+remaining 30\%, the part that requires actual
+specification, becomes disproportionately
+painful.\cite{osmani2024seventy}\index{70-percent problem}
+Eric Evans's older prescription points to the same root cause: agree on
+the ubiquitous language before you write
+code.\cite{evans2003ddd}\index{ubiquitous language}\index{DDD}
+
+\section{The Five Planning Skills}
+\label{sec:planning-skills}
+
+\begin{margintable}
+\caption{Planning skills in the Pocock catalogue.}
+\label{tab:planning-skills}
+\vspace{1em}
+\begin{tabular}{ll}
+\toprule
+\textbf{Skill} & \textbf{Output} \\
+\midrule
+\texttt{to-prd}              & GitHub issue (PRD) \\
+\texttt{grill-me}            & Resolved decision tree \\
+\texttt{design-an-interface} & N parallel designs \\
+\texttt{request-refactor-plan} & Tiny-commit plan \\
+\texttt{to-issues}           & Vertical-slice tickets \\
+\bottomrule
+\end{tabular}
+\end{margintable}
+
+\newthought{\texttt{to-prd}} converts an open-ended chat into a Product
+Requirements Document filed as a GitHub issue. The point is not the
+document but the forcing function: writing a PRD reveals what you
+do not yet know.\index{to-prd}
+
+\newthought{\texttt{grill-me}} interviews the user relentlessly about a
+plan, walking each branch of the decision tree until every fork is
+either closed or explicitly deferred. This is the conversational analog
+of Kent Beck's ``make the change easy, then make the easy
+change''\cite{beck2024tidy}.\index{grill-me}
+
+\newthought{\texttt{design-an-interface}} spawns parallel sub-agents that
+each propose a different shape for the same module, a deliberate
+exercise in designing it twice. The cost of generating three
+interfaces with an \textsc{llm} is minutes; the cost of choosing the
+wrong one in production is months.\index{design-an-interface}
+
+\newthought{\texttt{request-refactor-plan}} produces a sequence of atomic
+commits, each independently reviewable. This maps directly onto Beck's
+tidying-first discipline, onto Fowler's refactoring catalogue, small,
+behaviour-preserving transformations under green
+tests\cite{fowler2018refactoring}, and onto the trunk-based development
+literature.\index{refactor}\index{Fowler}
+
+\newthought{\texttt{to-issues}} encodes Hunt and Thomas's
+tracer-bullet doctrine\cite{hunt1999pragmatic}: rather than
+specifying the whole system up front, ship a thin end-to-end slice that
+exercises every layer, then iterate. Vertical slicing is what makes a
+PRD survive contact with reality, and it is the failure mode most
+commonly skipped by an over-eager agent.\index{tracer bullets}\index{vertical slicing}
+
+\section{Breakout 2: Plan a Feature Without Writing It}
+\label{sec:breakout-2}
+
+\newthought{The exercise.} Pick a small feature for a personal project, a
+\textsc{cli} that converts \textsc{json} to Markdown tables, say, and
+walk it through four skills back-to-back, in this order:
+
+\begin{enumerate}
+  \item \texttt{grill-me}: let the agent interview you until it has no
+        more questions.
+  \item \texttt{to-prd}: emit the resulting PRD as a GitHub issue
+        (or a local Markdown file if you are offline).
+  \item \texttt{design-an-interface}: generate three competing
+        \textsc{api} shapes; pick one and write a one-paragraph
+        rationale.
+  \item \texttt{to-issues}: decompose the chosen design into
+        vertical slices.
+\end{enumerate}
+
+\marginnote{Constraint: do not let the model write any implementation
+code during this breakout. The deliverable is a plan you trust,
+not a running program.}
+
+\vspace{1em}
+\dots
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Development Skills}
+\label{ch:development}
+
+\section{Tests as the Vibe-Coder's Compass}
+\label{sec:tdd-theory}
+
+\newthought{Test-Driven Development}, due to Kent Beck\cite{beck2002tdd},
+predates \textsc{llm}s by two decades but maps onto vibe coding with
+unusual precision. The red-green-refactor loop gives the agent an
+unambiguous target, a failing test, and an unambiguous stopping
+condition, a passing one.\index{TDD}\index{red-green-refactor}
+
+\[
+\underbrace{\text{red}}_{\text{spec}} \;\longrightarrow\;
+\underbrace{\text{green}}_{\text{minimum impl.}} \;\longrightarrow\;
+\underbrace{\text{refactor}}_{\text{shape}}
+\]
+
+\marginnote{This loop also serves as a hallucination filter: the
+test either passes or it does not. The agent cannot vibe its way past a
+red bar.}
+
+\section{Root-Cause over Symptom}
+\label{sec:triage-theory}
+
+\newthought{\texttt{triage-issue}} encodes the discipline of finding the
+true cause of a bug before patching its symptom. This is the same
+medicine that Toyota's five whys prescribes and that
+\textsc{sre} post-mortems formalise. Vibe coding without it produces
+what Crawshaw calls ``mole-whacking''\cite{crawshaw2024sketch}: each
+patch creates two new bugs.\index{triage}\index{root cause}
+
+\newthought{Michael Feathers} gives the operational recipe in
+Working Effectively with Legacy Code\cite{feathers2004legacy}:
+before changing behaviour, write a characterization test that
+pins down current behaviour, then locate a seam at which the
+change can be made safely. \texttt{triage-issue} pushes the agent down
+exactly this path, first reproduce, then isolate, then fix.\index{Feathers}\index{characterization tests}\index{seams}
+
+\section{Architecture Through Domain Language}
+\label{sec:architecture-theory}
+
+\newthought{\texttt{improve-codebase-architecture}} reads two artefacts
+specifically: a \texttt{CONTEXT.md} that names the domain concepts, and
+the \texttt{docs/adr/} folder that records past decisions. Together
+these are the project's ubiquitous language and its
+architectural memory, the two inputs Evans argues are
+prerequisite to any non-trivial refactor.\cite{evans2003ddd}
+
+\newthought{John Ousterhout's} A Philosophy of Software
+Design\cite{ousterhout2018philosophy} sharpens the criterion: prefer
+deep modules, narrow interfaces hiding substantial
+implementation, over wide, shallow ones. When \texttt{design-an-interface}
+emits three competing shapes, the question to ask is not ``which is
+prettiest'' but ``which hides the most complexity behind the smallest
+surface.''\index{Ousterhout}\index{deep modules}
+
+\begin{table*}[ht]
+\begin{tabular}{p{0.18\textwidth}p{0.36\textwidth}p{0.32\textwidth}}
+\toprule
+\textbf{Skill} & \textbf{When to reach for it} & \textbf{Anchor concept} \\
+\midrule
+\texttt{tdd}            & New behaviour, fixable bug & Beck, red-green-refactor \\
+\texttt{triage-issue}   & Reported defect            & Five whys, root cause \\
+\texttt{improve-...-architecture}  & Drift, friction & Evans, ubiquitous language \\
+\texttt{scaffold-exercises} & Teaching, demos & Worked example pedagogy \\
+\bottomrule
+\end{tabular}
+\vspace{1em}
+\caption{Development skills mapped to their classical anchors.}
+\label{tab:dev-skills}
+\end{table*}
+
+\section{Reading Diffs and Resolving Conflicts}
+\label{sec:diffs-merges}
+
+\newthought{Inspecting what the agent changed} is the line between vibe
+coding and engineering. The interface for that inspection is the
+\emph{unified diff}, the same format that \texttt{git diff} prints and that
+\texttt{opencode} renders before applying any edit. Reading diffs is a
+prerequisite skill, not an advanced one.\index{diff}\index{unified diff}
+
+\begin{fullwidth}
+\begin{verbatim}
+--- a/greet.py
++++ b/greet.py
+@@ -1,2 +1,2 @@
+-def greet(name):
+-    return "Hello, " + name + "!"
++def greet(name, lang="en"):
++    return f"Hello, {name}!"
+\end{verbatim}
+\end{fullwidth}
+
+\marginnote{The hunk header \texttt{@@ -1,2 +1,2 @@} reads as: ``the old
+file's hunk starts at line 1 and is 2 lines long; the new file's hunk
+starts at line 1 and is 2 lines long.'' Diffs are read in pairs of
+\texttt{-}/\texttt{+} blocks, not top-to-bottom.}
+
+\newthought{A merge conflict} happens when two streams of changes touch
+the same line and \textsc{git} cannot decide which to keep. It writes
+both versions into the file with markers and hands the decision back
+to the human:\index{merge conflict}
+
+\begin{fullwidth}
+\begin{verbatim}
+<<<<<<< HEAD
+return f"Hello, {name}!"
+=======
+greeting = {"en": "Hello", "de": "Hallo"}[lang]
+return greeting + ", " + name + "!"
+>>>>>>> feature/i18n
+\end{verbatim}
+\end{fullwidth}
+
+\noindent
+The markers delimit \emph{ours} (\texttt{HEAD}, the branch you are on)
+and \emph{theirs} (the branch being merged in). Three resolution
+strategies, in increasing order of judgement required:
+
+\begin{enumerate}
+  \item Take ours wholesale: \texttt{git checkout --ours FILE}.
+  \item Take theirs wholesale: \texttt{git checkout --theirs FILE}.
+  \item Hand-merge: open the file, delete the markers, and write the
+        union that captures both intents.
+\end{enumerate}
+
+\marginnote{Most real conflicts demand the third option. The first two
+are tempting precisely because they are fast, and wrong precisely because
+they silently discard work, the merge-time analogue of
+\texttt{rm -rf}.}
+
+\newthought{The three-way merge} is the conceptual model behind
+\texttt{git diff --base}. A clean resolution is a function of three
+inputs: \emph{ours}, \emph{theirs}, and the common ancestor (\emph{base}).
+Looking at \emph{ours} versus \emph{theirs} alone is solving the problem
+with one eye closed; the base tells you which side actually changed
+what.\index{three-way merge}
+
+\begin{fullwidth}
+\begin{verbatim}
+git diff --ours   FILE   # what you had before the merge
+git diff --theirs FILE   # what is being merged in
+git diff --base   FILE   # vs. the common ancestor
+git merge --abort        # escape hatch: throws the merge away
+\end{verbatim}
+\end{fullwidth}
+
+\newthought{Three vibe-coding-specific failure modes} around diffs:
+(i)~\emph{accepting a hunk without reading the header}, the agent removed
+a function call three lines above the visible \texttt{+} and you missed
+it; (ii)~\emph{letting the model resolve the conflict for itself},
+conflicts encode intent collisions that the model has no way to
+adjudicate; (iii)~\emph{committing with conflict markers still in the
+file}, which a pre-commit hook would have caught (cf.\ \S\ref{sec:guardrails}).
+
+\marginnote{The companion script \texttt{setup/diffs\_and\_merges.sh}
+builds a sandbox repository at \texttt{/tmp/vibe-merge-demo} with a
+deliberately engineered conflict between an \texttt{f}-string refactor
+and an \texttt{i18n} parameter addition. Both changes are correct in
+isolation; only the hand-merge is correct overall. The accompanying
+\texttt{diffs\_and\_merges.md} explains every step in prose.}
+
+\section{Breakout 3: Fix a Real Bug, TDD-Style}
+\label{sec:breakout-3}
+
+\newthought{The exercise.} Take an existing open-source repository
+(or one of your own) with a known issue. With \texttt{opencode}
+pointed at your local model:
+
+\begin{enumerate}
+  \item Invoke \texttt{triage-issue}: have the agent locate the
+        root cause and propose a TDD plan.
+  \item Invoke \texttt{tdd}: write the failing test first,
+        confirm red, then let the agent close it.
+  \item Inspect the diff before accepting. This is the moment
+        where vibe coding becomes engineering.
+\end{enumerate}
+
+\marginnote{Karpathy's framing reminds us to ``embrace exponentials''
+\cite{karpathy2025vibe}; Beck's framing reminds us that an exponential
+without a test is just a faster way to be wrong.}
+
+\vspace{1em}
+\dots
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Tooling, Guardrails, and Authoring Your Own Skill}
+\label{ch:tooling}
+
+\section{The Harness Is Part of the Program}
+\label{sec:harness}
+
+\newthought{A vibe-coding session} is not just a model and a prompt; it
+is a harness with hooks, permissions, and a working directory. Every
+file written, every command run, and every git operation passes through
+that harness. Configuring it deliberately is the difference between a
+toy and a tool.\index{harness}\index{hooks}
+
+\newthought{Tool access} flows through \textsc{mcp} servers attached to
+the harness. A minimal \texttt{opencode} configuration that wires in a
+filesystem server and a GitHub server looks as follows:
+
+\begin{fullwidth}
+\begin{verbatim}
+# ~/.config/opencode/config.json
+{
+  "mcp": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env":  { "GITHUB_TOKEN": "${env:GITHUB_TOKEN}" }
+    }
+  }
+}
+\end{verbatim}
+\end{fullwidth}
+
+\marginnote{Add only the \textsc{mcp} servers you actually need. Each
+server expands the agent's blast radius; an unused \texttt{shell-exec}
+\textsc{mcp} is a liability, not a capability.}
+
+\section{Pre-Commit Hooks and Git Guardrails}
+\label{sec:guardrails}
+
+\newthought{\texttt{setup-pre-commit}} installs Husky with lint-staged,
+type-checking, and tests. The agent now cannot land a commit that
+breaks the build, a hard constraint that prevents most ``70-percent''
+regressions before they enter \textsc{git} history.\index{pre-commit}
+
+\newthought{\texttt{git-guardrails-claude-code}} goes further and blocks
+genuinely destructive commands (\texttt{push --force},
+\texttt{reset --hard}, \texttt{branch -D}) at the harness layer.
+Willison's writing on prompt injection\cite{willison2024injection}
+is the conceptual backdrop: an agent that can be steered by untrusted
+input must not also have unrestricted access to your remote.\index{prompt injection}\index{guardrails}
+
+\section{Writing Your Own Skill}
+\label{sec:write-a-skill}
+
+\newthought{\texttt{write-a-skill}} is the meta-skill. It enforces
+progressive disclosure: the skill's top-level description must be
+short enough to fit in the agent's selection prompt, while the body and
+bundled resources are loaded only when the skill is actually invoked.
+This is the same design principle as Unix \texttt{man} pages, and
+the reason a catalogue of dozens of skills can coexist without flooding
+the context window.\index{progressive disclosure}\index{write-a-skill}
+
+\newthought{The granularity rule} for writing a good skill mirrors
+Robert C.\ Martin's rule for writing a good function in
+Clean Code\cite{martin2008clean}: it should do one thing,
+do it well, and be nameable in a verb-phrase. \texttt{tdd} passes;
+\texttt{do-stuff-with-tests} does not. McConnell's
+Code Complete\cite{mcconnell2004complete} adds the missing
+ingredient: a checklist. Pre-commit hooks and git guardrails are
+checklists rendered executable, the harness will not let the agent
+forget what you would otherwise forget under pressure.\index{Clean Code}\index{Code Complete}\index{checklists}
+
+\begin{fullwidth}
+\begin{verbatim}
+, 
+name: my-domain-glossary
+description: Extract a DDD-style ubiquitous-language glossary from
+             the current conversation and write it to CONTEXT.md.
+, 
+
+# Body
+1. Scan the current transcript for domain nouns and verbs.
+2. Group them by aggregate.
+3. Emit a Markdown table to CONTEXT.md.
+\end{verbatim}
+\end{fullwidth}
+
+\section{Breakout 4: Author and Use Your Own Skill}
+\label{sec:breakout-4}
+
+\newthought{The exercise.} Identify one task you have done by hand at
+least three times this term, tagging exam questions, summarising
+seminar notes, drafting issue triage comments, and convert it into a
+skill.
+
+\begin{enumerate}
+  \item Run \texttt{write-a-skill} and let the agent scaffold the
+        directory layout.
+  \item Edit the description until it would unambiguously match
+        your task and not someone else's.
+  \item Install it (\texttt{\textasciitilde/.config/opencode/skills/}
+        or the equivalent for your harness).
+  \item Invoke it on a fresh instance of the task. Iterate until the
+        output is acceptable without manual edits.
+  \item Configure \texttt{setup-pre-commit} and
+        \texttt{git-guardrails-claude-code} on the same project so the
+        skill cannot regress your repository.
+\end{enumerate}
+
+\marginnote{The deliverable is a \texttt{.zip} of your skill folder
+plus a one-page reflection: what was hard to specify, and why?}
+
+\vspace{1em}
+\dots
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{Closing Notes}
+\addcontentsline{toc}{chapter}{Closing Notes}
+
+\newthought{Vibe coding} is neither magic nor a substitute for
+engineering judgement. It is a new interface to the same craft,
+and like any interface it rewards practitioners who understand the
+layers underneath. The four blocks of this seminar trace those layers
+from the model on disk to the skill in your editor; the breakouts are
+where the understanding actually lands.
+
+\begin{quote}
+``\textsc{ai}-assisted programming will not replace the deliberate
+practice of software engineering. It will, however, make the
+practitioners who refuse to develop that practice obsolete much
+faster.'', paraphrasing Crawshaw\cite{crawshaw2024sketch}
+\end{quote}
+
+\makestandardbackmatter{vibecoding_references}
+
+\end{document}
