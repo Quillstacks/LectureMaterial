@@ -19,6 +19,9 @@ lecturenotes/*/draft.pdf
 lecturenotes/*/_ch_*.tex
 lecturenotes/*/_ch_*.pdf
 
+# GIF frame cache from the tuftedark \gif macro (regenerated from gifs/*.gif via gifsplit.sh)
+_gifcache/
+
 # LaTeX build artifacts
 *.aux
 *.bbl
@@ -41,6 +44,22 @@ lecturenotes/*/_ch_*.pdf
 *.toc
 *.vrb
 *.xdv
+
+# Per-unit slide build wrappers from tools/build_unit_pdfs.sh (transient,
+# header says "do not commit"). The unit PDFs land in slides/unit_pdfs/.
+lecturenotes/*/slides/_unit_*.tex
+lecturenotes/*/slides/_unit_*.pdf
+
+# Beamer slide-deck render-test scratch (theme probes, not part of any deck)
+lecturenotes/*/slides/rt*.tex
+lecturenotes/*/slides/rt*.pdf
+lecturenotes/*/slides/measure.tex
+lecturenotes/*/slides/measure.pdf
+lecturenotes/*/slides/reftest*.tex
+lecturenotes/*/slides/reftest*.pdf
+
+# LaTeX save-error artifacts (e.g. disciplined_vibe.bbl-SAVE-ERROR)
+*-SAVE-ERROR
 
 # OS files
 .DS_Store
