@@ -1,0 +1,285 @@
+%% Unit 1 -- An introduction to AI agents.
+%% Ported from the standalone "AI Agents" lecture (KIT sdqbeamer deck, L2):
+%% same layout and content, retyped against the tuftedark theme API.
+%% No preamble here; \input by the master (disciplined_vibe.tex).
+%%
+%% Scientific sources are cited on the slide they support via \slidesources
+%% (cite keys -> a numeric [n] marker up the right edge); the closing frame
+%% prints this unit's cited papers with \printbibliography. Biblatex and the
+%% per-unit refsection are set up in the master (disciplined_vibe.tex).
+
+\providecommand{\afull}{$\bullet$}
+\providecommand{\aemp}{\textcolor{tddim}{$\circ$}}
+
+\sectionsubtitle{History, Theory and Mechanics}
+% ======================================================================
+\section[Foundations]{Foundations}
+% ======================================================================
+
+% ------------------------------------------------ software 1.0 / 2.0 / 3.0
+\begin{frame}{The hottest new programming language is English}
+  
+  \vskip0.8em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \textbf{Software 1.0}\par\smallskip
+      {\small Humans write explicit instructions in code, and the machine
+      executes them.}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \textbf{Software 2.0}\par\smallskip
+      {\small Gradient descent writes the weights of neural networks from
+      data.}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \textbf{Software 3.0}\par\smallskip
+      {\small The program is a natural-language prompt, and the LLM
+      compiles it to behaviour.}
+    \end{column}
+  \end{columns}
+  \vskip1em
+  \begin{tdblock}
+    LLMs are a \alertbf{new computing substrate}, with prompts as programs and context windows as RAM.
+  \end{tdblock}
+\end{frame}
+
+
+% ------------------------------------------------------- vibe coding: floor/bar
+\begin{frame}{Raise the floor, keep the bar}
+  \vskip0.8em
+  {\small\textbf{Raise the floor.}\; Everyone can now build
+  software they could not build before. Fast.}
+  \begin{tdblock}
+    State your intent, accept the diffs, run the result, embrace the exponentials and iterate
+    without necessarily touching or reading every line. That working style is
+    \alertbf{vibe coding}.
+  \end{tdblock}
+  \vspace{1.5em}
+  {\small\textbf{Keep the bar.}\; AI engineering means you adjust your workbench to this abstraction layer.}
+  \begin{tdblock}
+    Most professional work requires rigor. As you will still own
+    the code, the quality, and are accountable for whatever you ship.
+    That working style is what we term \alertbf{discipline}.
+  \end{tdblock}
+\end{frame}
+
+
+
+
+% ------------------------------------------------------------- quest: tokens
+% \tok -- a single token chip, used to lay a word out as a sequence of tokens.
+\newcommand{\tok}[1]{\tikz[baseline]{\node[draw=black!25,rounded corners,
+  fill=white,inner sep=3pt,text=black,font=\ttfamily\small,anchor=base]{#1};}}
+\begin{frame}{Making the machine understand words.}
+  \slidesources{mikolov2013efficient,pennington2014glove,weizenbaum1966eliza,jurafsky2023slp}
+  \begin{withmargin}
+    \begin{tdmain}
+      {\small\color{tddim}Word-level vocabulary}\\[0.4em]
+      \tok{banana}\;$\rightarrow$\;\texttt{[24\,907]}\\[0.3em]
+      {\footnotesize One token, one entry, one id. A larger vocabulary yields longer
+      subwords, representing complex semantics and patterns directly.}
+      \vskip1.2em
+      {\small\color{tddim}Subword vocabulary}\\[0.4em]
+      \tok{ba}\tok{na}\tok{na}\;$\rightarrow$\;\texttt{[3021, 512, 512]}\\[0.3em]
+      {\footnotesize Three tokens from two entries, \texttt{ba} and \texttt{na}; the
+      repeated \texttt{na} reuses id \texttt{512}. Fewer merges keep the vocabulary
+      small and character-based, which improves generalization.}
+    \end{tdmain}
+    \begin{tdmargin}
+      In the beginning was the \textcolor{DHBWred}{token}: a unit of text, a word
+      or subword. It is the atomic unit a model reads and writes; a vocabulary is
+      the fixed set of tokens it knows. Tokenizing is how text is sliced into
+      entries of that set.
+      \begin{tdblock}
+        LLMs use vocabularies of 30{,}000+ tokens.
+      \end{tdblock}
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+
+% ----------------------------------------------------------------- LLM basics
+\begin{frame}{Making the machine understand language}
+  \sideimage[0.42]{ghibli_parrot}
+  \sidecaption{An LLM: the stochastic parrot that predicts the next token.}
+  \slidesources{radford2019gpt2,devlin2018bert,raffel2019t5,touvron2023llama}
+  \begin{sidebody}
+    {\small
+    \setlength{\abovedisplayskip}{4pt}\setlength{\belowdisplayskip}{4pt}%
+    LLMs learn the structure and semantics of
+    language by \alert{predicting the next token},
+
+    \[\begin{aligned}
+      \hat{y}_{t+1} &= \theta(x_{1:t}).\\
+    \end{aligned}\]
+
+
+    The free lunch, an implicit ground truth inside every
+    token sequence, enables unsuperised learning of $\theta$ on unlabeled data, 
+
+    \[\begin{aligned}
+      \mathcal{D} &= \{(x_t, \tilde{y}_t)\}_{t=1}^{N},\\
+      \textcolor{DHBWred}{x_{t+1}} &= \textcolor{DHBWred}{\tilde{y}_t}.
+    \end{aligned}\]}
+  \end{sidebody}
+\end{frame}
+
+
+
+% ------------------------------------------------------------------ attention
+\begin{frame}{Attention is all you need}
+  \slidesources{vaswani2017attention}
+  \begin{withmargin}
+    \begin{tdmain}
+      Attention compares token vectors: the closer a query and a key point in the
+      same direction, the more that token attends to the other, which reflects \alertbf{semantic similarity}.
+      \vskip1.0em
+      \centering
+      \begin{tikzpicture}[>=Latex,scale=1.15]
+        \coordinate (O) at (0,0);
+        \coordinate (K) at (2.13,1.49);
+        \coordinate (P) at (2.13,0);
+        \draw[very thick,tdfg,->] (O) -- (3.2,0) node[right] {$\mathbf{Q}$};
+        \draw[very thick,tdfg,->] (O) -- (K) node[above right] {$\mathbf{K}$};
+        \draw[tddim] (0.72,0) arc (0:35:0.72);
+        \draw[dashed,tddim] (K) -- (P);
+        \draw[line width=1.6pt,DHBWred] (O) -- (P);
+        \node[DHBWred,font=\footnotesize,below=2pt] at (1.06,0) {$\mathbf{Q}\mathbf{K}^\top$};
+      \end{tikzpicture}
+      \par\medskip
+      {\small\color{tddim}The red projection is the dot product $\mathbf{Q}\mathbf{K}^\top$.}
+    \end{tdmain}
+    \begin{tdmargin}
+      \textbf{Q}, query: what the token is looking for.
+      \par\smallskip
+      \textbf{K}, key: what a token offers to be matched against.
+      \par\smallskip
+      \textbf{V}, value: the information a token passes on once matched.
+      \par\medskip
+      Notice how these computations can be done in \alert{parallel}, 
+      and accelerated by GPUs.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+
+
+% ------------------------------------------------------------------ context
+\begin{frame}{Context is all you have}
+  \begin{withmargin}
+    \begin{tdmain}
+      Each token turns into a query and a key, and attention scores every one
+      against every other, a grid of $\mathbf{Q}\mathbf{K}^\top$ interactions.
+      This runs token by token over one flat sequence, the \alertbf{context}.
+      \vskip1.1em
+      \centering
+      \begin{tikzpicture}[>=Latex,
+          tokcell/.style={draw=tddim,rounded corners=2pt,minimum size=0.55cm,inner sep=0pt},
+          faded/.style={draw=tddim!45}]
+        \foreach \x in {0.62,1.24,1.86}{\node[tokcell,faded] at (\x,0){};}
+        \foreach \x in {2.48,3.10,3.72,4.34,4.96,5.58,6.20}{\node[tokcell] at (\x,0){};}
+        \draw[DHBWred,thick,rounded corners=3pt] (2.18,-0.35) rectangle (6.50,0.35);
+        \node[DHBWred,font=\scriptsize] at (4.34,0.66) {context window};
+        \node[tokcell,draw=DHBWred,fill=DHBWred,text=white,font=\scriptsize]
+          (yn) at (7.35,0){$\hat{y}$};
+        \draw[->,DHBWred,thick] (6.55,0) -- (yn.west);
+      \end{tikzpicture}
+      \par\medskip
+      {\small\color{tddim}Context is limited - think Goldfish. Its size is capped by GPU memory.}
+    \end{tdmain}
+    \begin{tdmargin}
+      Every token in the window competes for attention:
+      \begin{itemize}
+        \item your prompt,
+        \item system prompts,
+        \item the files you shared,
+        \item tool and search results,
+        \item the conversation so far,
+        \item and the model's own replies.
+      \end{itemize}
+      \par\smallskip
+      Irrelevant tokens still enter the $\mathbf{Q}\mathbf{K}^\top$ scores and
+      crowd out the signal; doubling the tokens quadruples the compute.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+
+
+% ------------------------------------------------------ prompting
+\begin{frame}{Still a parrot: prompting}
+  \slidesources{brown2020gpt3}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{block}{Prompt injection}
+        Steer the model by engineering the input prompt, \alertbf{injecting instructions} or
+        context that guide and nudge it toward a specific task without retraining.
+      \end{block}
+      \vskip0.6em
+      This is zero-shot, the task lives entirely in the tokens you place in the
+      context, so a good prompt is a good program.
+    \end{tdmain}
+    \begin{tdmargin}
+      \textit{``The product is awesome is a good review.}\\
+      \textit{The product breaks easily.''}\\
+      $\rightarrow$ \textit{[LLM generates the response]}
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% ------------------------------------------------------ instruction tuning
+\begin{frame}{Still a parrot: Instruction tuning}
+  \slidesources{wang2022selfinstruct,ouyang2022instructgpt,chung2022flan}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{block}{Instruction Behavior Training}
+        \alertbf{Fine-tune} the model to follow an instruction. At this point the
+        \textit{free lunch} is over. An \alert{instruct dataset} pairs each instruction with a label:
+        Self-Instruct, InstructGPT, FLAN.
+      \end{block}
+      \vskip0.6em
+      Prompting bends behaviour at inference; fine-tuning writes it into the weights.
+      Prompt-to-tune is a recurrent pattern in LLM development.
+    \end{tdmain}
+    \begin{tdmargin}
+      \textit{Instruction: ``Is this review positive?}\\
+      \textit{The product breaks easily.''}\\
+      $\rightarrow$ \textit{Response: ``No, it is negative.''}      
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+
+
+
+
+
+
+% ------------------------------------------------------------- quest: poem
+\begin{frame}{\alertbf{Vibe} a poem on bananas}
+  \sideimagecover[0.30]{banana_1}
+  \sidecaption{The muse for your four-line banana poem.}
+  \begin{sidebody}
+    If not done yet, \alertbf{set up} your local LLM: clone the repo and run its bootstrap script.\par\smallskip
+    {\small\href{https://github.com/Quillstacks/disciplinedvibe}{github.com/Quillstacks/disciplinedvibe}}
+    \vspace{0.5em}
+    \begin{itemize}
+      \item Get comfortable with Open Code
+      \item Write at least one poem, what works well, what does not?
+      \item Share your best poem in the chat.
+    \end{itemize}
+    
+    \vspace{1.5em}
+    Not very useful outside the classroom, but it hints at the \alertbf{semantic capability} of LLMs and their speed, and
+    at the applications they open up.   
+  \end{sidebody}
+  
+\end{frame}
+
+
+
+
+
+
+% References are collected in one shared package at the end of the deck
+% (see disciplined_vibe.tex), not per unit.

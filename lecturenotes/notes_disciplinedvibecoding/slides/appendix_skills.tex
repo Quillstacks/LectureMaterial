@@ -1,0 +1,193 @@
+%% Appendix -- the skills, verbatim, so students can copy them into skills/.
+%% One frame per skill, grouped Plan (Unit 3) then Build (Unit 4). Each frame
+%% reproduces skills/<name>.md line for line in a tdcodet box (the same dark
+%% mono box the GLOSSARY.md frame uses), so what is on the slide IS the file.
+%% Source of truth: setup/sandbox/skills/*.md. If a skill file changes, change
+%% the matching frame here. No preamble; \input by the master after unit4.
+
+% ======================================================================
+\section[Skills]{The Skills, to Copy}
+% ======================================================================
+
+% -------------------------------------------------- how to use this appendix
+\begin{frame}{Copy these into \texttt{skills/}}
+  \begin{withmargin}
+    \begin{tdmain}
+      Every skill is just a markdown file the agent reads when you name it.
+      Nothing here is magic. To get the whole toolkit, create one file per skill
+      under \texttt{skills/} and paste the text on the next slides into it,
+      keeping the \texttt{name:} and \texttt{description:} header as shown.
+      \vskip0.8em
+      \begin{tdblock}
+        {\ttfamily\small
+        skills/grill-me.md\\
+        skills/domain-modeling.md\\
+        skills/to-prd.md \;\ldots{} one file each}
+      \end{tdblock}
+    \end{tdmain}
+    \begin{tdmargin}
+      \alertbf{Plan} skills come first (Unit 3), then \alertbf{Build} skills
+      (Unit 4).
+      \par\medskip
+      The filename must match the \texttt{name:} line; that is the word you
+      invoke it by.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% ============================== PLAN SKILLS (Unit 3) ===================
+
+% -------------------------------------------------------------- grill-me
+% Longest skill: shrink to \tiny and let the box wrap each rule naturally so
+% every line survives above the footer.
+\begin{frame}{Plan skill: \texttt{grill-me}}
+  \begin{tdcodet}{skills/grill-me.md}
+    \tiny
+    name: grill-me\\
+    description: Interview the user relentlessly about a plan until you reach a shared understanding.\\[3pt]
+    Interview me relentlessly about every aspect of this plan until we reach a shared understanding. The goal is not a document, it is alignment: a design concept we both hold.\\[3pt]
+    Rules:\\[2pt]
+    1. First, explore the codebase enough to ask informed questions. If a question can be answered by reading the code, read it instead of asking.\\
+    2. Ask questions one at a time. Wait for my answer before the next one.\\
+    3. For every question, propose your own recommended answer and say why.\\
+    4. Walk down each branch of the decision tree, resolving dependencies one by one. Surface the awkward questions a non-expert would forget (edge cases, retroactive data, failure behaviour, out-of-scope boundaries).\\
+    5. Do not write a plan or any code yet. Keep going until you have no open questions, then say so.\\[3pt]
+    Stop when alignment is reached, not before.
+  \end{tdcodet}
+\end{frame}
+
+% -------------------------------------------------------- domain-modeling
+\begin{frame}{Plan skill: \texttt{domain-modeling}}
+  \begin{tdcodet}{skills/domain-modeling.md}
+    name: domain-modeling\\
+    description: Build the shared vocabulary for the game and record it in GLOSSARY.md.\\[3pt]
+    Pin down the words we use for the game so the code and tests all say the same thing.\\[3pt]
+    1. List. Collect the nouns and verbs from the chat and the code: obstacle, hitbox, duck, ramp, spawn rate, run length.\\
+    2. Define. Give each term one plain line: what it means and where it lives (createGame, nextState, collides).\\
+    3. Record. Write these lines into GLOSSARY.md, one term per line.\\
+    4. Fix. Find synonyms (two words, one thing) and clashes (one word, two things), then pick one winner and drop the rest.\\[3pt]
+    One word, one meaning, everywhere.
+  \end{tdcodet}
+\end{frame}
+
+% ---------------------------------------------------------------- to-prd
+\begin{frame}{Plan skill: \texttt{to-prd}}
+  \begin{tdcodet}{skills/to-prd.md}
+    name: to-prd\\
+    description: Turn an aligned conversation into a product requirements document.\\[3pt]
+    Summarise the design concept we reached into a Product Requirements Document. Write it to issues/PRD.md.\\[3pt]
+    Structure:\\[2pt]
+    - Problem --- the problem the user faces, in one short paragraph.\\
+    - Solution --- the approach, in one short paragraph.\\
+    - User stories --- a short list of "as a <role>, I want <goal>, so that <reason>".\\
+    - Implementation decisions --- the concrete choices we agreed on.\\
+    - Testing decisions --- how each story will be verified.\\
+    - Out of scope --- what we explicitly decided NOT to do, and why. This is the definition of done.\\[3pt]
+    Do not write implementation code. The PRD records the destination, not the route.
+  \end{tdcodet}
+\end{frame}
+
+% -------------------------------------------------------------- to-issues
+\begin{frame}{Plan skill: \texttt{to-issues}}
+  \begin{tdcodet}{skills/to-issues.md}
+    \tiny
+    name: to-issues\\
+    description: Slice a PRD into independently grabbable vertical-slice issues.\\[3pt]
+    Break the PRD in issues/PRD.md into independently grabbable issues, written as local markdown files in issues/ (one file per issue, e.g. issues/01-*.md).\\[3pt]
+    Rules:\\[2pt]
+    1. Slice vertically, not horizontally. A good slice cuts through every layer (data, service, dashboard) and produces something visible and testable. A bad slice is "all the schema" or "all the dashboard".\\
+    2. The first slice must be a tracer bullet: the thinnest end-to-end path that proves the whole flow works.\\
+    3. Record blocking relationships between issues (which must be done before which), so independent issues could be worked in parallel.\\
+    4. Each issue states: title, the user-facing outcome, and how it will be tested.\\[3pt]
+    If your first proposed slice is horizontal, reject it and re-slice before writing the files.
+  \end{tdcodet}
+\end{frame}
+
+% -------------------------------------------------------------- prototype
+\begin{frame}{Plan skill: \texttt{prototype}}
+  \begin{tdcodet}{skills/prototype.md}
+    name: prototype\\
+    description: Build a throwaway prototype to answer one design question, then delete it.\\[3pt]
+    Answer one design question with a throwaway prototype, then delete it.\\[3pt]
+    1. Ask. Write the one design question in a single sentence (e.g. tick-based core or event-based?). If you cannot fit it on one line, stop and narrow it.\\
+    2. Scratch. Build the smallest scratch script that answers only that question. Skip edge cases, node --test, and GLOSSARY.md vocabulary.\\
+    3. Record. Write the answer as one line in the matching issues/ file, or in GLOSSARY.md if it changes the shared model.\\
+    4. Delete. Remove the scratch files so no throwaway code survives.\\[3pt]
+    The answer is the deliverable, not the code.
+  \end{tdcodet}
+\end{frame}
+
+% ============================== BUILD SKILLS (Unit 4) ==================
+
+% ----------------------------------------------------------------- tdd
+\begin{frame}{Build skill: \texttt{tdd}}
+  \begin{tdcodet}{skills/tdd.md}
+    name: tdd\\
+    description: Implement a change with the red, green, refactor loop.\\[3pt]
+    Implement the task using test-driven development.\\[3pt]
+    1. Red. Write or locate a single failing test that specifies the next small\\
+    \phantom{1. }behaviour. Run node --test and confirm it fails for the right reason.\\
+    2. Green. Write the minimum code to make that test pass. Run node --test.\\
+    3. Refactor. With the bar green, tidy the code without changing behaviour.\\
+    \phantom{3. }Run node --test again.\\[3pt]
+    Make one small change at a time and run the tests after each. Do not edit the\\
+    test to fit broken code; fix the code. When done, show the diff for review.
+  \end{tdcodet}
+\end{frame}
+
+% -------------------------------------------------------- codebase-design
+\begin{frame}{Build skill: \texttt{codebase-design}}
+  \begin{tdcodet}{skills/codebase-design.md}
+    name: codebase-design\\
+    description: Design a deep module: a lot of behaviour behind a small, simple interface.\\[3pt]
+    Design a deep module: hide a lot of behaviour behind a small, simple interface.\\[3pt]
+    1. Name one job. Write one sentence for what this module does. One job only.\\
+    2. Check GLOSSARY.md. Reuse the shared names from GLOSSARY.md so the interface fits the domain.\\
+    3. Draft the small interface. Write only the signatures that hide the work, like createGame, nextState, collides. Nothing extra.\\
+    4. Prove it is testable. Confirm each signature runs under node --test with no canvas and no DOM. If not, shrink it.\\
+    5. Implement behind it. Now write the code inside those functions. Keep the interface fixed.\\[3pt]
+    A deep module hides a lot behind a little.
+  \end{tdcodet}
+\end{frame}
+
+% ------------------------------------------------------------- code-review
+\begin{frame}{Build skill: \texttt{code-review}}
+  \begin{tdcodet}{skills/code-review.md}
+    name: code-review\\
+    description: Review a diff twice, once for standards and once for spec, in a fresh context.\\[3pt]
+    Read the diff fresh and report what is wrong.\\[3pt]
+    1. Clear. Drop all prior context first, so you read the diff with no memory of writing it.\\
+    2. Standards. Check the diff against the rules in GLOSSARY.md and AGENTS.md. The core in game.js must stay free of canvas and DOM.\\
+    3. Spec. Check the diff does what the issue acceptance line or the PRD asked, no more and no less.\\
+    4. Report. List every problem you found in one message.\\[3pt]
+    Report the problems, do not rewrite the code.
+  \end{tdcodet}
+\end{frame}
+
+% --------------------------------------------------------- diagnosing-bugs
+\begin{frame}{Build skill: \texttt{diagnosing-bugs}}
+  \begin{tdcodet}{skills/diagnosing-bugs.md}
+    name: diagnosing-bugs\\
+    description: Find and fix the root cause of a bug, not the symptom.\\[3pt]
+    Trace a bug to its root cause in the pure core (createGame, nextState, collides) and fix that, not the surface symptom.\\[3pt]
+    1. Reproduce. Write a failing test that triggers the bug. Run node --test and watch it fail.\\
+    2. Minimise. Cut the test to the smallest input that still fails. Name what you see using GLOSSARY.md.\\
+    3. Find the cause. State the likely cause in one sentence. Add a log to confirm it before you change anything.\\
+    4. Fix. Change the cause, remove the log, and run node --test until green.\\[3pt]
+    A patch that hides the cause creates two new bugs.
+  \end{tdcodet}
+\end{frame}
+
+% ------------------------------------------- improve-codebase-architecture
+\begin{frame}{Build skill: \texttt{improve-codebase-architecture}}
+  \begin{tdcodet}{skills/improve-codebase-architecture.md}
+    name: improve-codebase-architecture\\
+    description: Find a tangled cluster and propose deepening it into one testable module.\\[3pt]
+    Find one tangled cluster and propose deepening it into a single testable module.\\[3pt]
+    1. Read. Open GLOSSARY.md for the shared vocabulary before you look at code.\\
+    2. Scan. Find mixed concerns, like physics tangled into the render loop in index.html.\\
+    3. Cut. Pick one clean boundary to pull into the pure core (createGame, nextState, collides).\\
+    4. Propose. Name what moves behind game.js and its interface. Write the proposal only, do not edit code.\\[3pt]
+    A boundary you can wrap a node --test around is the goal.
+  \end{tdcodet}
+\end{frame}

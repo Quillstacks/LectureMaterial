@@ -5,12 +5,16 @@
 # The slide-deck analogue of build_chapter_pdfs.sh. For each unit*.tex that
 # the master deck \input's (or only the named one), this script generates a
 # tiny wrapper .tex in the slides directory that reuses the master's preamble
-# verbatim, opens on the title slide, then inputs just that unit inside its
-# own refsection, and runs latexmk to produce a PDF in <slides_dir>/unit_pdfs/.
+# verbatim, opens on the title slide, then inputs just that unit, and runs
+# latexmk to produce a PDF in <slides_dir>/unit_pdfs/.
 #
-# Each unit is already a self-contained refsection ending in a References
-# frame (\printbibliography), so citation numbering restarts at [1] per unit
-# PDF, exactly as in the full deck.
+# The deck consolidates all citations into one shared References package at the
+# end of the full deck (no per-unit refsection, no per-unit References frame),
+# so a standalone unit PDF is content slides only. Its on-slide \slidesources
+# edge markers still print the deck's global citation numbers, but there is no
+# bibliography page in the unit PDF to resolve them (that lives in the full
+# deck). biber therefore reports the unit's cite keys as undefined for the
+# wrapper build; that is expected and harmless -- the numbers still typeset.
 set -euo pipefail
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
@@ -46,7 +50,7 @@ ACTIVE_UNITS=()
 while IFS= read -r unit; do
   [[ -n "$unit" ]] && ACTIVE_UNITS+=("$unit")
 done < <(
-  grep -E '^\s*\\begin\{refsection\}\\input\{unit[^}]+\}' "$MAIN_TEX" \
+  grep -E '^\s*\\input\{unit[^}]+\.tex\}' "$MAIN_TEX" \
     | sed -E 's|.*\\input\{(unit[^}]+)\.tex\}.*|\1|'
 )
 
@@ -71,7 +75,7 @@ build_one() {
     echo "$PREAMBLE"
     echo '\begin{document}'
     echo '\begin{frame}[plain]\titlepage\end{frame}'
-    echo "\\begin{refsection}\\input{${base}.tex}\\end{refsection}"
+    echo "\\input{${base}.tex}"
     echo '\end{document}'
   } > "$wrapper"
 

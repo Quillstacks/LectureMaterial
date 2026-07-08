@@ -1,0 +1,497 @@
+%% Unit 3 -- Plan before you build.  (Draws from Ch5 Planning and Alignment.)
+%% Restyled to the sparse, one-idea-per-slide house style of units 1-2:
+%% one thesis-shaped title, prose-first bodies, EXACTLY one red per rendered
+%% frame (the two cmdtable frames keep their \gcmd slash-commands as identity).
+%% Scientific claims are cited via \slidesources; the closing frame prints the
+%% unit's papers. No preamble here; \input by the master (disciplined_vibe.tex).
+%%
+%% ORDER follows the software-engineering process:
+%%   A. Motivation      -- why naive vibe coding breaks (four failure modes).
+%%   B. Tooling setup   -- model card; agents/subagents; models+agents cmds;
+%%                         plan vs build modes; the skill mechanism (AGENTS.md,
+%%                         a skill is a file).
+%%   C. Plan-arc map    -- the plan catalogue in four columns (align, model, scope + slice, spike).
+%%   D. Plan arc, in process order -- askuserquestion (align),
+%%                         domain-modeling (name), to-prd (scope),
+%%                         to-issues (slice), prototype (spike a design question),
+%%                         codebase-design (deep module).
+%%   E. Breakout        -- plan the banana, write no code.
+%% The build half (handoff + TDD, code-review, diagnosing-bugs,
+%% improve-codebase-architecture, write-a-skill) now lives in Unit 4.
+
+\sectionsubtitle{On Humansplaining and LLM Understanding}
+% ======================================================================
+\section[Alignment]{Plan}
+% ======================================================================
+
+
+% ======================================================================
+% A. MOTIVATION
+% ======================================================================
+
+% === Vibe coding is brittle: the four failure modes ===
+\begin{frame}{Pareto hits the vibe. Hard.}
+  \slidesources{osmani2024seventy}
+
+  % TODO (light Pocock spine): Pocock's catalogue exists to fix four failures:
+  % misalignment (you and the agent mean different things), verbosity (400 lines
+  % you never asked for), non-functional code, and architectural decay. Block 2
+  % fixes each with a discipline. Unit 3 takes the first two; Unit 4 the last two.
+  % Source: Pocock skills catalogue (pocock2025skills, four failure modes).
+  \vskip0.3em
+  {\small Naive vibe coding is brittle, then fails. Software engineering
+  discipline (and a better model) fixes each mode.}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}[equal height group=vibefail]
+        \small
+        \alertbf{Misalignment.}\; you and the agent mean different things by the
+        same word.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}[equal height group=vibefail]
+        \small
+        \alertbf{Verbosity.}\; you ask for one thing and get 400 lines, while
+        other functions silently break.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}[equal height group=vibefail]
+        \small
+        \alertbf{Non-functional.}\; the high-score save looks wired, but nothing
+        persists.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}[equal height group=vibefail]
+        \small
+        \alertbf{Decay and Debt.}\; each build-loop makes project and module
+        complexity harder to manage.
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \end{frame}
+
+
+% ======================================================================
+% B. TOOLING SETUP
+% ======================================================================
+
+  \begin{frame}{Reading a model card}
+    \begin{withmargin}
+      \begin{tdmain}
+        \centering
+        \resizebox{\linewidth}{!}{%
+        \begin{tikzpicture}[
+            node distance=2mm,
+            seg/.style={draw=tdfg, thick, rounded corners=2pt,
+              inner xsep=7pt, inner ysep=6pt, text=tdfg, font=\ttfamily\large},
+            seghi/.style={seg, draw=DHBWred, text=DHBWred},
+            sep/.style={text=tddim, font=\ttfamily\large},
+            lbl/.style={text=tddim, font=\scriptsize, align=center}]
+          \node[seg] (fam) {qwen2.5};
+          \node[sep, right=of fam] (c1) {-};
+          \node[seg, right=of c1] (dom) {coder};
+          \node[sep, right=of dom] (c2) {:};
+          \node[seghi, right=of c2] (sz) {7b};
+          \node[sep, right=of sz] (c3) {-};
+          \node[seg, right=of c3] (pt) {instruct};
+          \node[sep, right=of pt] (c4) {-};
+          \node[seg, right=of c4] (q) {q4\_K\_M};
+          \node[lbl, below=2.5mm of fam] {family\\+ version};
+          \node[lbl, below=2.5mm of dom] {domain};
+          \node[lbl, text=DHBWred, below=2.5mm of sz]  {parameters};
+          \node[lbl, below=2.5mm of pt]  {post-training};
+          \node[lbl, below=2.5mm of q] {quantization};
+        \end{tikzpicture}}
+        \vskip1.1em
+        \begin{tdblock}
+          {\small Two things the name never carries. The \textbf{context window}
+          (\texttt{num\_ctx}) is the token budget the model attends to at once,
+          paid for in \textbf{GPU memory}. And whether the model \textbf{reasons}
+          on a scratchpad before it answers.}
+        \end{tdblock}
+        \vskip0.5em
+        {\footnotesize\color{tddim}Feel free to switch to more capable models now.}
+      \end{tdmain}
+      \begin{tdmargin}
+        {\color{tdfg}\textbf{qwen2.5}}\; base model and release.\par\smallskip
+        {\color{tdfg}\textbf{coder}}\; fine-tuned for a domain, here code.\par\smallskip
+        {\color{DHBWred}\textbf{7b}}\; \alert{parameters}: seven billion weights
+        in memory (15GB) while the model runs.\par\smallskip
+        {\color{tdfg}\textbf{instruct}}\; follows instructions and chats; a
+        \texttt{base} model only continues text.\par\smallskip
+        {\color{tdfg}\textbf{q4\_K\_M}}\; quantization: about 4 bits per weight,
+        shrinking memory to 4.4\,GB.
+      \end{tdmargin}
+    \end{withmargin}
+  \end{frame}
+
+% === Agents and subagents (concept, pairs with the cmdtable below) ===
+\begin{frame}{An agent is a prompt, its tools, and a model}
+  \begin{withmargin}
+    \begin{tdmain}
+      \textbf{Plan} and \textbf{build} are the two built-in \textbf{agents}. Each
+      bundles a system prompt, a set of allowed tools, and a model. You define
+      your own the same way: one markdown file in \texttt{.opencode/agent/}.
+      \vskip0.8em
+      A \alertbf{subagent} is an agent a primary one spawns to handle a single
+      self-contained task in its \textbf{own fresh context window}, then hands
+      back a short summary. The side quest never clutters your main session.
+      \vskip0.9em
+      \begin{tdblock}
+        {\ttfamily\small
+        > @007 shake it, do not stirr.}
+      \end{tdblock}
+    \end{tdmain}
+    \begin{tdmargin}
+      Switch primary agents with \texttt{/agent} or \texttt{Tab}; call a subagent
+      by name with \texttt{@}.
+      \par\medskip
+      Delegation is a tool call. Enter agent orchestration.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% === Models and agents (cmdtable) ===
+\begin{frame}{Models and agents}
+  \begin{cmdtable}
+    \gcmd{/models}\gsep\gkey{ctrl+x m} &
+      Switches the model the agent runs on, from your configured providers.\\[4pt]
+    \gkey{f2} &
+      \textbf{Recent model:} toggles back to the model you used just before, for
+      a quick side-by-side on the same task.\\[4pt]
+    \gcmd{/agent}\gsep\gkey{ctrl+x a} &
+      Switches the active agent, build versus plan, each with its own tools and
+      system prompt.\\[4pt]
+    \gkey{tab} &
+      \textbf{Cycle agent:} steps to the next agent without opening the list.\\[4pt]
+    \gkey{right} &
+      \textbf{Cycle subagents:} moves between the subagents a session has spawned,
+      to read what each is doing.\\
+  \end{cmdtable}
+\end{frame}
+
+% -------------------------------------------- plan vs build (two modes)
+\begin{frame}{Plan and Build mode in opencode}
+  \vskip0.3em
+  {\small Plan mode reads and reasons; Build mode writes and runs. Like gating,
+  the split mitigates surprises. Toggle with \texttt{Tab}.}
+  \vskip0.8em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}
+        \small
+        \textbf{Plan}\par\smallskip
+        \alertbf{Read only}. opencode explores, explains, and proposes; it never
+        edits files or runs commands.
+        \vskip0.5em
+        Use it to scope the work and agree on the approach before any change lands.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}
+        \small
+        \textbf{Build}\par\smallskip
+        \alertbf{Full access}. opencode edits files and runs tools to carry out
+        a plan. Here small models default into action.
+        \vskip0.5em
+        Use it once the plan is clear to both parties. You can build across
+        several sessions.
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \vskip0.9em
+  \centering
+\end{frame}
+
+
+% === A skill is just a file the agent reads ===
+\begin{frame}{Agentspanning-Capabilities or Skills}
+  \begin{withmargin}
+    \begin{tdmain}
+      A \alertbf{skill} is a markdown file of instructions and context. Invoke it
+      by name; the agent opens that file and follows it, turn by turn. That is the
+      whole mechanism.
+      \vskip0.6em
+      Those instructions do more than steer the model. A skill can call an API,
+      run a script, or hand a slice of work to a subagent, so one named file
+      becomes the interface to agentic workflow automation.
+    \end{tdmain}
+    \begin{tdmargin}
+      Invoke with /skills, then pick one.
+      \par\medskip
+      Compact, token-frugal skills win: the whole file is read into context every
+      time the skill runs.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% === write-a-skill ===
+\begin{frame}{\texttt{write-a-skill}}
+  \begin{withmargin}
+    \begin{tdmain}
+      Every skill so far taught the agent one job. \texttt{write-a-skill} teaches
+      it to author the next one in the same shape, so the toolkit grows by its own
+      rules. Name one job, list \textbf{3 to 5 bold-lead steps}, close on a single
+      principle, all short enough to read in a breath. If the job needs an ``and'', split it,
+       and wrap it in another skill.
+      \alertbf{skillception}.
+      \vskip0.6em
+      \begin{tdblock}
+        {\ttfamily\small
+        > write-a-skill for "writing skills" \\
+        Or wait, I will just nano this myself.}
+      \end{tdblock}
+    \end{tdmain}
+    \begin{tdmargin}
+      Writing a skill, is a skill. Of course it is easy to forget, that we can also still do stuff ourselves - manually.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+
+% ======================================================================
+% C. PLAN-ARC MAP
+% ======================================================================
+
+% === the plan toolkit: the read-only catalogue this unit walks, one frame ===
+% Only the plan arc lives here. The build skills (tdd, code-review,
+% diagnosing-bugs, improve-codebase-architecture) and the greenfield on-ramp
+% belong to Unit 4; keep them off this frame so it maps only what Unit 3 covers.
+\begin{frame}{The plan toolkit, read only}
+  \vskip0.3em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}
+        \scriptsize
+        \alertbf{Align}\par\smallskip
+        \texttt{askuserquestion}
+        \par\medskip
+        Reach a design you both hold before a line is written.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}
+        \scriptsize
+        \alertbf{Model}\par\smallskip
+        \texttt{domain-modeling}
+        \par\medskip
+        Fix one word to one meaning, then name the pieces.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}
+        \scriptsize
+        \alertbf{Scope + slice}\par\smallskip
+        \texttt{to-prd}\par
+        \texttt{to-issues}
+        \par\medskip
+        Write the brief, then split it into small issues.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}
+        \scriptsize
+        \alertbf{Spike}\par\smallskip
+        \texttt{prototype}
+        \par\medskip
+        Throw one away to settle a single design question.
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+
+% ======================================================================
+% D. PLAN ARC, IN PROCESS ORDER
+%    align -> name -> scope -> slice -> spike -> design
+% ======================================================================
+
+% === askuserquestion: Align before you name ===
+\begin{frame}{\texttt{askuserquestion}}
+  \begin{withmargin}
+    \begin{tdmain}
+      The arc starts with \alertbf{askuserquestion}. It does not write a plan; it
+      reaches one. The skill interviews you one question at a time, proposes its
+      own answer to each and says why, and walks every branch of the decision tree, until it has
+      no questions left.
+      \vskip0.6em
+      \begin{tdblock}
+        {\ttfamily\small
+        > run askuserquestion on feature\_brief.md\\
+        Q: do power-ups stack? (I'd say no)\\
+        > no\\
+        Q: does score reset on death?\,\ldots\\
+        no open questions. aligned.}
+      \end{tdblock}
+    \end{tdmain}
+    \begin{tdmargin}
+      One question at a time, and it stops only when alignment is reached, not
+      before. In general following proposals is adviced, until it is not. 
+      \par\medskip
+      And just because a model has no questions left, does not mean everything is perfectly clarified.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% === domain-modeling: One word, one meaning, everywhere ===
+\begin{frame}{\texttt{domain-modeling}}
+  \slidesources{evans2003ddd}
+  \begin{withmargin}
+    \begin{tdmain}
+      \texttt{askuserquestion} settled the vocabulary. You have no
+      \texttt{GLOSSARY.md} yet; \texttt{domain-modeling} rereads the chat and code
+      and writes one line per term. Now code and tests speak the same words every
+      session. \textcolor{DHBWred}{Naming the thing is the alignment.}
+      \vskip0.6em
+      \begin{tdblock}
+        {\ttfamily\small
+        > domain-modeling}
+      \end{tdblock}
+    \end{tdmain}
+    \begin{tdmargin}
+      \begin{tdcodet}{GLOSSARY.md (after the run)}
+        obstacle: box to clear\\
+        hitbox: what collides()\\
+        duck: lowers the hitbox\\
+        ramp: speeds up w/ score
+      \end{tdcodet}
+      \par\smallskip
+      Remember how the substrate of these models is similarity within an embedded feature space.
+      So whenever possible go with their wording to increase performance and save context tokens.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% === to-prd: Write down what you're not building ===
+\begin{frame}{\texttt{to-prd}, the product requirements document}
+  \begin{withmargin}
+    \begin{tdmain}
+      Start with letting the agent write this document based on the survey, then step in and adjust, extend, and clean up.
+      \vskip0.8em
+      \begin{tdblock}
+        {\ttfamily\small
+        Acceptance lines\\
+        - the high score survives a page reload\\
+        - the score ticks up each step\\
+        Out of scope\\
+        - no multiplayer, no leaderboard\\
+        - no power-ups this pass}
+      \end{tdblock}
+    \end{tdmain}
+    \begin{tdmargin}
+      to-prd fixes verbosity: the aligned chat becomes a short PRD in
+      \texttt{issues/PRD.md}. Two parts carry the weight, the out-of-scope list and
+      one \textcolor{DHBWred}{acceptance line} per slice, a checkable sentence like
+      ``the high score survives a page reload''.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% === to-issues: Slices you can grab ===
+\begin{frame}{\texttt{to-issues}}
+  \begin{withmargin}
+    \begin{tdmain}
+      \texttt{to-issues} splits \texttt{issues/PRD.md} into independently
+      \alertbf{grabbable} slices, one markdown file each. Every issue carries its
+      acceptance line as its ``how tested''.
+      \vskip0.9em
+      \begin{tdblock}
+        {\ttfamily\small
+        issues/01-banana-on-screen.md\\
+        \phantom{ }tested: the banana runs across the screen\\[3pt]
+        issues/02-persist-high-score.md\\
+        \phantom{ }tested: the high score survives a reload\\
+        \phantom{ }blocked-by: 01}
+      \end{tdblock}
+    \end{tdmain}
+    \begin{tdmargin}
+      Reject a horizontal first slice and re-slice until the first one shows a
+      number. Check it actually writes the slice.mds into \texttt{issues/}.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% === prototype: Spike it, learn it, delete it ===
+\begin{frame}{Spike by \texttt{prototype}}
+  \begin{withmargin}
+    \begin{tdmain}
+      What if you can not answer a design question? \texttt{prototype} answers it with a
+      \alertbf{throwaway spike}. The answer is the deliverable; the scratch code is
+      deleted. 
+      \vskip0.9em
+      {\small Will this library do the job, is the API fast enough, does the real
+      data fit the schema? A 20-line script answers all three. Record ``library
+      works, 120\,ms median, dates are strings'', delete the script.}
+    \end{tdmain}
+    \begin{tdmargin}
+      The delete step is mandatory. A spike you keep and build on rots into decay:
+      it was never designed to last. It was a standalone accepted cost.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+
+\iffalse
+% === codebase-design ===
+\begin{frame}{\texttt{codebase-design}}
+  \begin{withmargin}
+    \begin{tdmain}
+      The outcome is a small set of function signatures,
+      names and arguments only, with the bodies left empty. Keep the logic
+      separate from anything it draws or displays. Name the one job the module
+      does, borrow the shared names from \texttt{GLOSSARY.md}, then write only the
+      functions that expose that job and hide the work behind them.
+      \vskip0.6em
+      \begin{tdblock}
+        {\ttfamily\small
+        > design the core interface\\
+        create(config)\\
+        step(state, input)\\
+        done(state)\\
+        node --test  ok, no display}
+      \end{tdblock}
+      \vskip0.5em
+      {\small A few pure functions carry the whole job. Each takes plain
+      arguments and returns plain values; the display layer lives outside and
+      calls in.}
+    \end{tdmain}
+    \begin{tdmargin}
+      The test of depth: \alertbf{if the core cannot run under \texttt{node
+      --test} with no display, the interface is too wide}. A wide draft leaks
+      rendering into the core, thin functions that each need a screen to run.
+      Catch it with the headless test, then shrink the interface until only the
+      pure functions remain.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+\fi
+
+% ======================================================================
+% E. BREAKOUT -- plan the banana, write no code.
+% ======================================================================
+
+% === Vibe an infinitely running banana ===
+\begin{frame}{\alertbf{Vibe} an infinitely running banana}
+  \sideimagecover[0.33]{banana_1}
+  \sidecaption{The banana runner, planned this time.}
+  \begin{sidebody}
+    Same endless runner, now under this discipline. Run the whole planning chain
+    on \texttt{feature\_brief.md}, back to back, and write no code.
+    \begin{itemize}
+      \item \texttt{askuserquestion} until it stops asking.
+      \item \texttt{domain-modeling} into \texttt{GLOSSARY.md}.
+      \item \texttt{to-prd}: Set up a product requirements document.
+      \item \texttt{to-issues}: A first vertical slice that serves as a silver bullet.
+    \end{itemize}
+    \vskip0.4em
+    The deliverable is a \alertbf{structured executable plan}. If the agent starts writing
+    code, stop it.
+  \end{sidebody}
+\end{frame}
+
+
+% References are collected in one shared package at the end of the deck
+% (see disciplined_vibe.tex), not per unit.

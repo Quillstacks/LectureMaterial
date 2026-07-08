@@ -16,7 +16,9 @@
 | :--: | :--- | :-: |
 | Full | Disciplined Vibe Coding · Lecture Slides | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/disciplined_vibe.pdf) |
 |  01  | Foundations | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit1_foundations.pdf) |
-|  02  | Driving opencode | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit2_opencode.pdf) |
+|  02  | Vibing| [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit2_opencode.pdf) |
+|  03  | Alignment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit3_planning.pdf) |
+|  04  | Building | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit4_verify.pdf) |
 
 </details>
 

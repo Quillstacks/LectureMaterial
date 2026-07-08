@@ -1,0 +1,330 @@
+%% Unit 2 -- Driving opencode: the commands and keys worth knowing.
+%% Commands are grouped by theme, several to a slide, as a two-column booktabs
+%% table: how to run it on the left, what it does on the right. Default keys are
+%% opencode's out-of-the-box bindings; the leader is ctrl+x.
+%% No preamble here; \input by the master (disciplined_vibe.tex).
+
+% The command-table helpers (\gcmd, \gkey, \gpal, \gsep and the cmdtable
+% environment) now live in the master preamble (disciplined_vibe.tex), since the
+% command tables are shared across units 2, 3, and 4.
+
+\sectionsubtitle{When Language becomes Action}
+% ======================================================================
+\section[Vibing]{Driving opencode}
+% ======================================================================
+
+
+
+\iffalse
+% -------------------------------------------------------- historical arc
+\begin{frame}{A short history of NLP}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.24\textwidth}
+      \textbf{Pre-2017}\par\smallskip
+      {\small N-gram and statistical models, and word embeddings
+      such as Word2Vec and GloVe. Early
+      chatbots existed, such as ELIZA.}
+    \end{column}
+    \begin{column}{0.24\textwidth}
+      \textbf{2017: the Transformer}\par\smallskip
+      {\small The \alert{Transformer} enables highly
+      efficient, scalable natural language processing (NLP).}
+    \end{column}
+    \begin{column}{0.24\textwidth}
+      \textbf{2018 to 2021: LLMs}\par\smallskip
+      {\small Billions of parameters. Fast progress on pre-training, few-shot
+      learning, and RLHF yields BERT, GPT-2, T5, LLaMA.}
+    \end{column}
+    \begin{column}{0.24\textwidth}
+      \textbf{2022, or 0 A.ChatGPT}\par\smallskip
+      {\small Mainstream conversational LLMs: GPT-3, and
+      from there into vision, language, action models such as GR00T
+      and SmolVLA.}
+    \end{column}
+  \end{columns}
+\end{frame}
+\fi
+
+% -------------------------------------------------------- tool injection
+\begin{frame}{Designing Interfaces by Injection}
+  \vskip0.4em
+  \begin{withmargin}
+    \begin{tdmain}
+      The model only reads and writes tokens. A tool still needs an
+      interface, so we make one the same way as before: by injecting its
+      description into the prompt, then reading the call back out of the reply.
+      \vskip0.8em
+      \begin{itemize}
+        \item The \alertbf{system prompt} specifies the tool, its arguments, and the
+          format for calling it.
+        \item The model writes that call as ordinary text; a \alertbf{parser} spots
+          it and runs the real tool.
+        \item The result comes back as tokens and get injected as observations, and the model continues.
+      \end{itemize}
+    \end{tdmain}
+    \begin{tdmargin}
+      \begin{tdcodet}{System prompt}
+        tool weather(city)\\
+        call <tool>...</tool>
+      \end{tdcodet}
+      \vskip6pt
+      \begin{tdcodet}{LLM Tool use}
+        <tool>\\
+        weather(Ravensburg)\\
+        </tool>
+      \end{tdcodet}
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+
+% ----------------------------------------------------- what MCP is
+\begin{frame}{MCP and plug in outside tools}
+  \begin{withmargin}
+    \begin{tdmain}
+      The \alertbf{Model Context Protocol} is a standard way to connect the agent
+      to outside tools and data: a database, a web service, a file store, a program, each
+      exposed through a small server.
+      \vskip1.0em
+      \begin{tdblock}
+        MCP is a
+        protocol. The agent host connects, discovers them at runtime, and calls
+        them. Write to the standard once, and any MCP client can use it.       
+      \end{tdblock}
+      \vskip0.5em
+      {\small }
+    \end{tdmain}
+    \begin{tdmargin}
+      This is the structured answer to agent-ready APIs. The engineering way with proper auth and 
+      hardened.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+
+
+% ----------------------------------------------------------------- action
+\begin{frame}{The one Acting}
+  \slidesources{nvidia2025gr00t,shukor2025smolvla}
+  \sideimagecover[0.33]{amznghand}
+  \begin{sidebody}
+    \begin{tdblock}\small
+      {\alert{\textbf{Agentic}}, from Latin \textit{agere}, ``to act,'' the
+      root of \textit{agent}, one who acts.}
+    \end{tdblock}
+    \vskip0.15em
+    {\footnotesize
+    \begin{itemize}\itemsep1pt
+      \item Emits its action in a fixed structured format using tags.
+      \item Stops at \texttt{</action> or </tool>} once emitted.
+      \item A parser then runs the action.
+    \end{itemize}}
+    \vskip0.15em
+    {\footnotesize An action can be many things. Communication and subagent orchestration.
+    Information gathering through search, queries,
+    and retrieval. It uses tools, from API calls to code execution. Or it acts on
+    the environment, driving digital or embodied interfaces.}
+  \end{sidebody}
+\end{frame}
+
+% ============== The harness that wraps the agent ======================
+% With thought, action, and observation on the table, opencode is the harness
+% around that agent; sandboxing is the boundary it runs in.
+
+% ----------------------------------------------------- what a harness is
+\begin{frame}{The Harness}
+  \slidesources{kumar2025harnesses}
+  \sideimagecover[0.33]{harness}
+  \begin{sidebody}
+    The machine got an interface, now it's time for the human to get one to take
+    control.
+    \vskip0.6em
+    \begin{tdblock}
+      The \alertbf{harness} is everything wrapped around the raw model to make it
+      reliable: the client, the system prompt, the skills, the tests, the
+      permission gates, the loop that runs them.
+    \end{tdblock}
+    \vskip0.6em
+    {\texttt{opencode} is your primary harness interface: type
+    \alertbf{\texttt{/}} to open the command menu and pick by name.}
+    \vskip0.5em
+    {\small It has a set of \alertbf{built-in tools} which can be
+    called directly: \texttt{bash}, \texttt{read}, \texttt{write},
+    \texttt{edit}, \texttt{glob}, \texttt{grep}, \texttt{webfetch}.}
+  \end{sidebody}
+\end{frame}
+
+
+% ====================== Getting oriented ==============================
+\begin{frame}{Getting started}
+  \begin{cmdtable}
+    \gcmd{/init} &
+      Scans the project and writes an \texttt{AGENTS.md} of your stack, scripts,
+      and conventions, so every later session starts oriented and in \alertbf{context}. Run once per repo.\\[4pt]
+    \gcmd{/help} &
+      Opens the in-app help: the command list, the current keybinds, and where
+      the docs live. Your first stop when a key surprises you.\\[4pt]
+    \gcmd{/exit}\gsep\gkey{ctrl+x q} &
+      Ends the session and drops you back to the shell. \gkey{ctrl+c} on an empty
+      prompt quits too.\\
+  \end{cmdtable}
+\end{frame}
+
+
+
+% ====================== Sessions ======================================
+\begin{frame}{Steer by Context}
+  \begin{cmdtable}
+    \gcmd{/compact}\gsep\gkey{ctrl+x c} &
+    Summarises the conversation into a short brief and continues from it,
+    reclaiming context-window space without losing the thread. Don't wait too long.\\[4pt]
+    \gcmd{/new}\gsep\gkey{ctrl+x n} &
+      Starts a fresh session with an empty context. Your project stays; the
+      conversation so far is dropped. Reach for it when the topic changes.\\[2pt]
+    \gcmd{/sessions}\gsep\gkey{ctrl+x l} &
+      Lists your earlier sessions and jumps to the one you pick.\\[2pt]
+    \gkey{ctrl+r} &
+      \textbf{Rename} the current session to a memorable title, so you find it
+      again in the list.\\[2pt]
+    \gkey{esc} &
+      \textbf{Interrupt} the agent mid-run the moment it heads the wrong way,
+      instead of waiting for it to finish.\\
+  \end{cmdtable}
+\end{frame}
+
+
+% -------------------------------------------- gate vs cage (two layers)
+\begin{frame}{Gating and sandboxing}
+  \vskip0.3em
+  {\small Gating keeps the human on the loop, the sanbox stops agent escapes. 
+  Latest when you auto, you want a sandbox.
+  }
+  \vskip0.8em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}
+        \small
+        \textbf{Gating}\par\smallskip
+        \alertbf{opencode asks} before it edits or runs: \texttt{allow},
+        \texttt{ask}, \texttt{deny}, set per tool in \texttt{opencode.json}.
+        Ships in the box.
+        \vskip0.5em
+        Stops surprises. It cannot stop a command you already approved.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}
+        \small
+        \textbf{Sandboxing}\par\smallskip
+        A container or VM. A project mounted, network restricted, \texttt{opencode}
+        running inside it. You build it yourself.
+        \vskip0.5em
+        \alertbf{Stops escapes}. If something goes wrong it wrecks the box,
+        not your machine.
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \vskip0.9em
+  \centering
+\end{frame}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% -------------------------------------------------------------- reasoning
+% Two ways to get an inner monologue: elicit it by prompting (CoT, and its
+% agentic extension ReAct) on the left, or train it in with RL (R1, o1) right.
+\begin{frame}{Reasoning or the Inner Monologue}
+  \slidesources{wei2022cot,yao2022react,deepseek2024r1}
+  \vskip0.4em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}\small
+      \textbf{Prompted at inference time}\par\smallskip
+      \textit{reasoning coaxed out by the prompt, no weights changed.}
+      \vskip0.5em
+      \alertbf{Chain-of-thought} prompting appends a cue like \textit{``Let's think
+      step by step,''} steering decoding toward a plan rather than a snap answer,
+      so the model breaks the task into sub-tasks.
+      \vskip0.5em
+      We can interleave those reasoning steps with
+      actions and observations so thinking and tool calls advance together, called ReAct.
+    \end{column}
+    \begin{column}{0.48\textwidth}\small
+      \textbf{Trained into the weights}\par\smallskip
+      \textit{reasoning trained not nudged.}
+      \vskip0.5em
+      Models like DeepSeek-R1 and OpenAI's o1 are trained with \alertbf{human feedback reinforcement
+      learning} to reason before they answer.
+      \vskip0.5em
+      \begin{tdblock}
+        R1 emits a thinking section between the tokens \texttt{<think>} and
+        \texttt{</think>} before its answer.
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+
+% ====================== Interface and input ===========================
+\begin{frame}{Interface and input}
+  \begin{cmdtable}
+    \gcmd{/editor}\gsep\gkey{ctrl+x e} &
+      Opens your \texttt{\$EDITOR} to compose a long message with full editing,
+      then sends it back to the prompt.\\[4pt]
+    \gkey{ctrl+v} &
+      \textbf{Paste} clipboard content into the prompt.\\[4pt]
+    \gkey{ctrl+c} &
+      \textbf{Clear} the prompt box in one stroke.\\[4pt]
+    \gcmd{/details} &
+      Toggles a tool call's full input and output, to inspect what
+      ran in detail.\\[4pt]
+    \gcmd{/thinking} &
+      Toggles the model's reasoning \texttt{<think>} blocks, if the model has this capability.\\
+  \end{cmdtable}
+\end{frame}
+
+% ====================== The surfaces you are driving ==================
+% Four awareness frames: what a skill, MCP, harness, and sandbox actually
+% are. We use only skills in this course; the other three are named so the
+% students know them, and so Unit 3 can treat skills as verbs it invokes.
+
+% (Skills frame moved to Unit 3, placed before the grill-me chain.)
+
+
+
+
+
+% ------------------------------------------------------------- quest: vibe it
+\begin{frame}{\alertbf{Vibe} an infinitely running banana}
+  \sideimagecover[0.33]{banana_1}
+  \sidecaption{Screenshot of a banana again.}
+  \begin{sidebody}
+    Now vibe an endless runner in a single \texttt{index.html}. 
+    Then ask the LLM to run it in your browser 
+    and play, then iterate.
+    \begin{itemize}
+      \item How easy is it to get one specific thing done?
+      \item Watch your context and pay attention to the impact of a saturated context.
+      \item Reflect on how productive this feels versus how productive you are.
+    \end{itemize}
+    \vspace{0.5em}
+    \begin{tdblock}
+      Feel the \alert{floor rising} already? Lines of code have never been cheaper.
+    \end{tdblock}
+  \end{sidebody}
+\end{frame}
+
+% References are collected in one shared package at the end of the deck
+% (see disciplined_vibe.tex), not per unit.

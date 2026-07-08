@@ -1,0 +1,224 @@
+%% Unit 4 -- Verify without reading every line.  (Ch6 Implementation, Tests, Review.)
+%% Restyled to the sparse, one-idea-per-slide house style of units 1-3: one
+%% thesis-shaped title, prose-first bodies, EXACTLY one red per rendered frame
+%% (the cmdtable frame keeps its \gcmd slash-commands as identity; a red
+%% transcript OUTCOME line counts as that frame's one red). Scientific claims are
+%% cited via \slidesources; the closing frame prints the unit's papers. Realized
+%% visual-lean: the risk graph and the deep-vs-shallow contrast carry their own
+%% frames. No preamble here; \input by the master (disciplined_vibe.tex).
+%%
+%% ORDER follows the build half of the software-engineering process:
+%%   A. Handoff      -- the day shift is done; queue the build.
+%%   B. Build skills -- TDD, code-review, diagnosing-bugs,
+%%                      improve-codebase-architecture, write-a-skill.
+%%   C. Breakout     -- vibe the banana again, now tested.
+
+\sectionsubtitle{aber mit höchster Disziplin.}
+% ======================================================================
+\section[Building]{Software Engineering Knows How already}
+% ======================================================================
+
+
+% ======================================================================
+% A. HANDOFF -- the day shift is done; queue the build.
+% ======================================================================
+
+% === Now let the agent build one ===
+% A transition slide: one idea, no margin column. The takeaway is a full-width
+% centred display (it \vfill-s itself), so we let it carry the frame rather than
+% cramming it into a tdmain beside an empty tdmargin.
+\begin{frame}{And so we build}
+  \vskip0.8em
+  That was the \alertbf{day shift}: plan, align, and slice by hand,
+  human-in-the-loop. You now hold a backlog of trustworthy slices molded into issues.\\
+  \vskip0.8em
+  You just finished a product owner workflow, ready to hand-off to the Devs.
+  Remember the silverbullet.
+\end{frame}
+
+
+\iffalse
+% ======================================================================
+% B. BUILD SKILLS
+% ======================================================================
+
+% === the build toolkit: the read-only catalogue this unit walks, one frame ===
+% Mirrors the plan toolkit map in Unit 3: same four-column read-only layout,
+% now for the build half. Only the build skills live here; the plan arc
+% (askuserquestion, domain-modeling, to-prd/to-issues, prototype) belongs to
+% Unit 3, so keep it off this frame so it maps only what Unit 4 covers.
+\begin{frame}{The build toolkit, read only}
+  \vskip0.3em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}
+        \scriptsize
+        \alertbf{Test}\par\smallskip
+        \texttt{test-driven-development}
+        \par\medskip
+        Turn each acceptance line into a failing test, then build to green.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}
+        \scriptsize
+        \alertbf{Review}\par\smallskip
+        \texttt{code-review}
+        \par\medskip
+        Read the diff as a stranger against standards and spec.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}
+        \scriptsize
+        \alertbf{Diagnose}\par\smallskip
+        \texttt{diagnosing-bugs}
+        \par\medskip
+        Trace the symptom into the pure core, fix the cause.
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \begin{tdblock}
+        \scriptsize
+        \alertbf{Deepen}\par\smallskip
+        \texttt{improve-codebase-architecture}
+        \par\medskip
+        Pull one clean boundary behind the core, proposal only.
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+\fi
+
+% === test-driven-development ===
+\begin{frame}{\texttt{test-driven-development}}
+  \slidesources{beck2002tdd}
+  \begin{withmargin}
+    \begin{tdmain}
+      Each acceptance line in \texttt{issues/} becomes a test that fails before it
+      passes. The skill drives the red, green, refactor loop one small change at a
+      time, running \texttt{node --test} after each. \alertbf{Write the failing test
+      before the code that satisfies it}, so each feature earns
+      a real acceptance.
+      \vskip0.5em
+      \begin{tdblock}
+        {\ttfamily\small
+        > test-driven-development on 01-banana-on-screen\\
+        RED: banana not shown, test fails\\
+        GREEN: banana renders and runs, test passes}
+      \end{tdblock}
+    \end{tdmain}
+    \begin{tdmargin}
+      Fix the code, (never) the test, and watch the runner execute. 
+      This concept can obviously be extended to integration and end-to-end tests as well.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\iffalse
+% === code-review ===
+\begin{frame}{\texttt{code-review}}
+  \slidesources{martin2008clean}
+  \begin{withmargin}
+    \begin{tdmain}
+      Read the diff as if a stranger wrote it: drop all prior context so the agent
+      cannot defend its own code, then make two passes.
+      \begin{itemize}\itemsep4pt
+        \item \textbf{Standards:} check the diff against \texttt{AGENTS.md} and
+          \texttt{GLOSSARY.md}.
+        \item \textbf{Spec:} check it against the issue acceptance line or the
+          \texttt{PRD}.
+        \item Keep the core in \texttt{game.js} free of canvas and DOM.
+        \item \alertbf{Report the problems, do not rewrite the code.}
+      \end{itemize}
+    \end{tdmain}
+    \begin{column}{0.30\textwidth}
+      \begin{tdblock}
+        {\ttfamily\small
+        > run code-review on the diff\\
+        STANDARDS: game.js imports canvas, violates AGENTS.md\\
+        SPEC: acceptance line met}
+      \end{tdblock}
+    \end{column}
+  \end{withmargin}
+\end{frame}
+\fi
+
+
+% === diagnosing-bugs ===
+\begin{frame}{\texttt{diagnosing-bugs}}
+  \slidesources{feathers2004legacy}
+  \begin{withmargin}
+    \begin{tdmain}
+      Bugs will show up. Fixing it is mandatory, but then 
+      hardening your codebase, by fortifying the fix with tests is best.
+      \begin{itemize}\itemsep4pt
+        \item Reproduce the bug with a test.
+        \item Fix and document the bug.
+        \item Confirm the fix by rerunning your test.
+        \item \alertbf{Add test to suite.}
+      \end{itemize}
+    \end{tdmain}
+    \begin{column}{0.30\textwidth}
+      \begin{tdblock}
+        {\ttfamily\small
+        > diagnosing-bugs on ``some error message''}
+      \end{tdblock}
+    \end{column}
+  \end{withmargin}
+\end{frame}
+
+\iffalse
+% === improve-codebase-architecture ===
+\begin{frame}{\texttt{improve-codebase-architecture}}
+  \slidesources{ousterhout2018philosophy,fowler2018refactoring}
+  \begin{withmargin}
+    \begin{tdmain}
+      Decay creeps in when concerns bleed together, like physics tangled into the
+      render loop in \texttt{index.html}. The skill reads \texttt{GLOSSARY.md} and
+      scans for mixed concerns.
+      \begin{itemize}\itemsep4pt
+        \item Pick \alertbf{one clean boundary} to pull into the pure core.
+        \item Name what moves behind \texttt{game.js}, proposal only.
+        \item Never a sweeping rewrite, never a direct edit.
+        \item Keep \texttt{createGame}, \texttt{nextState}, \texttt{collides} a deep
+          module you can test.
+      \end{itemize}
+    \end{tdmain}
+    \begin{column}{0.30\textwidth}
+      \begin{tdblock}
+        {\ttfamily\small
+        > run improve-codebase-architecture\\
+        physics tangled into render loop in index.html\\
+        proposal: move step() behind nextState in game.js}
+      \end{tdblock}
+    \end{column}
+  \end{withmargin}
+\end{frame}
+\fi
+
+
+% ======================================================================
+% C. BREAKOUT -- vibe the banana again, now tested.
+% ======================================================================
+
+% === Vibe an infinitely running banana ===
+\begin{frame}{\alertbf{Vibe} an infinitely running banana}
+  \sideimagecover[0.33]{banana_1}
+  \sidecaption{The banana runner, now building.}
+  \begin{sidebody}
+    Same banana, now under the discipline of tests. Take one acceptance line
+    from the plan and run the whole build chain on it, back to back.
+    \begin{itemize}
+      \item \texttt{test-driven-development}. Write a test, and a feature against it.
+      \item \texttt{diagnosing-bugs}: Encounter a bug, fix it, harden against it.
+    \end{itemize}
+    \vskip0.4em
+    The deliverable is a \alertbf{tested banana core} you trust without reading
+    every line. And what remains is taste.
+  \end{sidebody}
+\end{frame}
+
+
+% References are collected in one shared package at the end of the deck
+% (see disciplined_vibe.tex), not per unit.
