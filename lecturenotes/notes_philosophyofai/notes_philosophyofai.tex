@@ -2,9 +2,7 @@
 % How to Write a Scientific Thesis
 % Author: Dr.-Ing. Mark Schutera
 % Based on Tufte-style layout
-%\makeindex % disabled to avoid requiring makeindex/.ind during quick builds
-% \index{} entries are present throughout all chapters and are ready to use;
-% re-enable by uncommenting the line above and running makeindex.
+\makeindex % index entries are present throughout all chapters; latexmk runs makeindex automatically
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass{../sharedAssets/tufte}
@@ -109,8 +107,7 @@
 \input{chapters/ac_DebateProtocol.tex}   % → Appendix B
 
 
-\bibliographystyle{abbrvnat}
-\bibliography{philosophyofai_references}
+\makestandardbackmatter{philosophyofai_references}
 
 
 
