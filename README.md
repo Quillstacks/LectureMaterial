@@ -36,8 +36,8 @@
 | Full | Philosophy of AI · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf) |
 |  01  | Anthropomorphism | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/01_Anthropomorphism.pdf) |
 |  02  | Accountability | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/02_Accountability.pdf) |
-|  03  | Embodiment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/03_Embodiment.pdf) |
-|  04  | Agency | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/04_Agency.pdf) |
+|  03  | Agency | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/03_Agency.pdf) |
+|  04  | Embodiment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/04_Embodiment.pdf) |
 |   A  | Session Preparation Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/aa_PreparationGuidance.pdf) |
 |   B  | Debate Format & Moderator Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/ac_DebateProtocol.pdf) |
 

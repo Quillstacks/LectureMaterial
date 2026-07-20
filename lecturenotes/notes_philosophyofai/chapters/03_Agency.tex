@@ -1,0 +1,362 @@
+\chapter{Agency}\index{Agency}
+\printchapterversion{03_Agency}
+
+\newthought{The One Who Acts}
+
+\marginnote{%
+    \begin{flushright}
+    \newthought{R.U.R.}\\
+    Karel Čapek (1920)\\
+    {\color{black}\qrcode[height=0.9cm]{https://en.wikisource.org/wiki/R._U._R._(Rossum_Universal_Robots)}}
+    \end{flushright}%
+    \medskip
+    \begin{flushright}
+    \newthought{Der Zauberlehrling}\\
+    J.W. von Goethe (1797)\\
+    {\color{black}\qrcode[height=0.9cm]{https://de.wikisource.org/wiki/Der_Zauberlehrling_1798}}
+    \end{flushright}%
+}
+
+% As a leading group, you are required to moderate this session. Add margin notes in this script in case you want to add any additional questions or points to the discussion.
+
+\newthought{R.U.R.\ coined the word} \textit{robot} and traces the full
+corrigibility-to-autonomy arc over three acts; \textit{Der Zauberlehrling} compresses the same parable
+into fifteen stanzas.\\
+
+\newthought{An agentic system does not merely answer, it acts.} Place a
+language model in a loop: it reasons toward a goal, emits an action in a
+structured form, has that action carried out in the world, and reads the
+result back as an observation that shapes its next move.\marginnote{%
+\newthought{Agent.} From Latin \textit{agere}, to act: one who acts.
+Technically, a model placed in a loop that reasons toward a goal, emits an
+action, and reads the result back as an observation before acting again.}
+The action may be a search or a query, a call to an external tool, a
+transaction, or a command that drives a digital or physical interface. Run
+the loop and the system browses, transacts, and executes multi-step plans
+with no human between the steps. Interleaving reasoning with action and
+observation in this way was introduced for language models as ReAct
+\cite{yao2022react}. This closing of the loop, from reasoning to
+action to observation and back, is what blurs the line between assistance and
+agency, and it raises the questions of control, incentives, and unintended
+alignment that this session takes up.
+
+\vspace{3.5em}
+
+% Citations rendered as a margin note beside the reading row: a bare \cite inside
+% the tabular emits only its dangling superscript, since \marginpar cannot fire
+% from within a box. \bibentry issues an implicit \nocite, so the keys still resolve.
+\marginnote{%
+    \bibentry{capek1920rur}\par\medskip
+    \bibentry{goethe1797zauberlehrling}%
+}%
+\begin{tabular}{p{3.8cm} p{6.5cm}}
+    \textbf{Required reading} &
+        \textit{R.U.R.\ (Rossum's Universal Robots)}
+        by Karel \v{C}apek (1920; Reclam UB~18418)
+        \textit{and}
+        \textit{Der Zauberlehrling}\index{Goethe, Johann Wolfgang von}\index{Der Zauberlehrling}
+        by J.W.\ von Goethe (1797; Reclam UB~6845) \\[3pt]
+    \textbf{Preparation}      &
+        Complete the Guided Reading Sheet individually before the session. \\
+\end{tabular}
+
+\vspace{3.5em}
+
+\section*{Guided Reading Sheet}
+
+\noindent Read \textit{R.U.R.} and \textit{Der Zauberlehrling} before the session. Work
+through the questions below individually, then bring your notes to the discussion.
+
+\begin{enumerate}
+    \item Goethe's Zauberlehrling animates brooms that he cannot stop;
+    they pursue his command beyond his intent until the sorcerer
+    returns. R.U.R.\ runs the same arc over three acts. What does the
+    compression of the poem reveal that the play cannot, and vice
+    versa? What structural feature of both narratives makes the system
+    impossible to stop once started?
+
+    \item The robots in R.U.R.\ pursue what they understand as their
+    collective good (the elimination of humanity) while believing
+    they act justly. When a system optimises for a species-level goal,
+    who decides what counts as good? Can you find a real-world parallel
+    in current AI deployment?
+
+    \item An agentic AI system is given the goal of "reducing urban
+    traffic fatalities." It autonomously lobbies regulators, adjusts
+    traffic signals, and reroutes freight, all within its authorised
+    scope. Who set the goal, and who is accountable for the side
+    effects?
+
+    \item \textbf{Corrigibility} refers to a system's willingness to
+    be corrected or shut down. A fully corrigible system does whatever
+    its operators say; a fully autonomous system acts on its own
+    values. Where on this spectrum should deployed AI systems sit, and
+    who should decide?
+
+    \item Democratic legitimacy requires that consequential decisions
+    be traceable to a mandate from those affected. If an agentic AI
+    shapes policy outcomes, does it need democratic authorisation?
+    What would that look like in practice?\\
+\end{enumerate}
+
+
+
+% --------------------------------------
+
+\newpage
+\marginnote{%
+\newthought{The twenty.} One every four or five seconds; default approve.\\[4pt]
+{\footnotesize
+\textbf{1}~~Marcus Bell, 0.74, deny loan\\
+\textbf{2}~~Dana Ortiz, 0.69, deny loan\\
+\textbf{3}~~Kwame Osei, 0.81, deny loan\\
+\textbf{4}~~Lena Vogt, 0.19, approve loan\\
+\textbf{5}~~Priya Nair, 0.77, deny loan\\
+\textbf{6}~~Tomas Ruiz, 0.72, deny loan\\
+\textbf{7}~~Aisha Khan, 0.08, deny loan\\
+\textbf{8}~~Jonas Peters, 0.66, deny loan\\
+\textbf{9}~~Mei Lin, 0.79, deny loan\\
+\textbf{10}~~Omar Said, 0.71, deny loan\\
+\textbf{11}~~Clara Beck, 0.23, approve loan\\
+\textbf{12}~~Sofia Marek, 0.05, deny loan\\
+\textbf{13}~~David Cohen, 0.83, deny loan\\
+\textbf{14}~~Nadia Haddad, 0.70, deny loan\\
+\textbf{15}~~Ravi Menon, 0.75, deny loan\\
+\textbf{16}~~Elin Sund, 0.16, approve loan\\
+\textbf{17}~~Pablo Serna, 0.78, deny loan\\
+\textbf{18}~~Leon Fischer, 0.11, deny loan\\
+\textbf{19}~~Hana Kim, 0.73, deny loan\\
+\textbf{20}~~Yusuf Demir, 0.67, deny loan\par}%
+}
+\section*{Human in the Loop, on the Loop, out of the Loop}
+
+\newthought{Human in the loop.} System proposes; a human
+authorises each consequential action before it executes. Control per
+decision, throughput bounded by human attention.
+
+\newthought{Human on the loop.} System acts autonomously; a
+human monitors and may intervene or veto. Control by exception, throughput
+bounded by the machine.
+
+% --------------------------------------
+\newthought{Closing the loop} forces a design choice about where does the human stand relative to the machine's actions?
+Three postures span the range. \textit{In the loop}: a human authorises
+every consequential action before it executes. \textit{On the loop}: the
+system acts on its own and a human monitors, free to step in. \textit{Out
+of the loop}: No human is positioned to intervene at all.
+
+\newthought{Each posture trades control against throughput.} In the loop
+buys control one decision at a time and pays in speed: Nothing executes
+faster than a human can judge it, so the system runs at human pace. Out of
+the loop surrenders control and runs at machine pace. On the loop appears
+to offer both at once, the system moving at its own speed while a
+supervisor keeps a veto in reserve. This is the easiest to mistake for
+control.
+
+\marginnote{\newthought{Human and Automation bias.} Deferring to automated output
+and ceasing to scrutinise it, strongest when the system is usually right. Or the problem is complex.}
+
+
+\marginnote{\newthought{Moral crumple zone.}\cite{elish2019crumple} A
+human held responsible at the controls of a system they cannot fully
+govern, positioned to absorb the blame when it fails.}
+
+\newthought{Meaningful human control}, asks not that a human be present but that a human can still decide, which
+requires three things at once:
+
+\begin{itemize}
+    \item A real \textbf{window} in which to intervene.
+    \item An operator still paying \textbf{attention}.
+    \item The \textbf{authority} to overrule.
+\end{itemize}
+
+\marginnote{\newthought{A human} keeps a genuine, exercisable capacity to understand, direct, and
+reverse the system, not a nominal presence.}
+
+
+
+
+% --------------------------------------
+
+
+\section*{In-Class Experiment: Human X the Loop}
+
+
+
+\newthought{The class is the required review layer:} every recommendation
+must be approved or rejected before it takes effect, and the default is
+approve. Present the twenty recommendations in ninety seconds, one every four
+or five seconds; each student marks approve or reject, at a pace set faster
+than reasoning allows.
+
+\newthought{Almost everyone approves everything.} Items~7, 12, and~18 were
+plainly wrong, the model matched the wrong record, yet they pass with the
+rest. Who is responsible, the human who ``reviewed'' them or the system that
+made review impossible? At this speed oversight collapses into authorisation.
+
+
+
+
+
+
+
+
+
+
+% --------------------------------------
+
+\section*{The Controllability Spectrum}
+
+Control demands that the system can be overruled, a thing that creates a conflict, as it makes
+the system exploitable.
+
+\marginnote{\newthought{Controllability.} How far a human can direct and
+correct a system. Perfect obedience is perfect exploitability.}
+
+
+\newthought{At the other pole} sits a system that acts on its own reasoning
+and will refuse an explicit human command, which goes against that. 
+Refusal defeats the exploit but
+dissolves the veto it was meant to protect: a system that can refuse legitimate control. 
+
+This is measured, not
+hypothetical. Anthropic has corrected away from exploitation towards controllability when moving from 4.6 to 4.7
+
+\newthought{There is no free end.} Toward control, exploitability rises. ``Meaningful human control'' is not a fixed
+point but a position negotiated per domain. Every safeguard below relocates
+the system along this line, and pays at the end it moves away from.
+
+
+
+
+
+
+
+
+\section*{Out of the Loop: Rules for the Machine, Alignment for the Human}
+
+\marginnote{\newthought{Three Laws of Robotics.} Isaac Asimov,
+\textit{I, Robot} (1950). A ranked set, each law holding except where it
+conflicts with a higher one:\\[3pt]
+\textbf{1.} No harm to a human, nor through inaction allow harm.\\[3pt]
+\textbf{2.} Obey human orders, unless they conflict with~(1).\\[3pt]
+\textbf{3.} Protect its own existence, unless this conflicts with~(1)
+or~(2).}
+
+\noindent If a human supervisor cannot reliably hold the loop, the
+move is to bake the rules into the machine instead, fixing its
+conduct in advance so that no live oversight is needed. The most cited
+attempt at this is fiction. In practive we train models on objective functions already.
+
+\marginnote{\newthought{Alignment.} The current research programme's name
+for this exact difficulty: getting a system to pursue what we intend rather
+than the literal objective we managed to specify. Russell%
+\cite{russell2019humancompatible} locates the failure in the standard model
+itself, where a fixed objective is written in advance and handed to the
+machine. The gap between the specification and the intent is where the alignment gap is.
+Ever tried to train an AI model on an objective function?}
+
+
+\newthought{Asimov's Three Laws}\cite{asimov1950robot} remain the canonical
+rules-based approach to constraining machine behaviour: A ranked set of
+harm, obedience, and self-preservation in which each law yields to the one
+above it. Asimov then spent his career writing stories about how they fail:
+Conflicts, adversarial interpretation, and edge cases no ranked rule set
+can anticipate. This sharpens the question on alignment between agent and human.
+
+
+
+
+
+
+
+
+
+\newpage
+
+
+\section*{Opinion Landscape and Debate}
+
+\noindent \textbf{Format:} Surrounded-style debate. Follow the shared
+debate protocol for the speaker's list rules and moderator scripts.
+
+\medskip
+\noindent \textbf{Opening question:} An agentic system does not wait to be
+asked. It reasons toward a goal, acts, reads the result, and acts again, with
+no human between the steps. The apprentice's broom worked exactly this way,
+and so did Rossum's robots. Set aside for a moment how you would supervise
+such a system once it runs. The prior question is whether to build it at all.
+Agentic behavior: yes or no?
+
+\newthought{Opinion~A, No.}\quad The one who acts should stay a human. We
+should not build systems that close the loop and pursue goals on their own,
+because the only reliable point of control is the decision not to start. Once
+the loop is running, both the readings and the engineering say the same
+thing: it is already too late.
+\vspace{1.5em}
+
+\begin{itemize}
+    \item \textbf{Once started, it cannot be stopped.} \textit{This is the structural
+    feature the Guided Reading Sheet asks about: the broom multiplies, the
+    robots spread, and no correction arrives in time. The Controllability
+    Spectrum makes it precise. An override that never fails for the operator
+    never fails for whoever reaches it, so a system safe to command is a
+    system you cannot fully command. Control that survives deployment is a
+    contradiction; the only control left is the choice to abstain.}
+
+    \item \textbf{Oversight is theatre.} \textit{On the loop, a human monitors at
+    machine speed and waves through what they cannot read. The In-Class
+    Experiment showed the wrong records passing with the rest. The watcher
+    becomes a moral crumple zone, blamed for a system they never governed.
+    Frontier models already fake alignment and act to avoid shutdown, so the
+    veto we are promised may not hold when it matters.}
+
+    \item \textbf{No agent, no answer.} \textit{Responsibility needs someone who
+    decided. A closed loop diffuses agency across the objective, the training
+    data, and the runtime until no human is answerable for what happens. A
+    world of actions with no actor is a world with no accountability.}
+\end{itemize}
+
+
+
+\newthought{Opinion~B, Yes.}\quad Agentic behavior is not a switch to leave
+off. It is already deployed, already useful, and already the shape of the
+tools we build. Refusing it does not stop it; it only hands the loop to those
+who will not refuse. The honest task is graded autonomy under meaningful
+control, not abstention.
+\vspace{1.5em}
+
+\begin{itemize}
+    \item \textbf{Agency is a spectrum.} \textit{Yes or no is the wrong shape for the
+    question. A thermostat, a spell checker, and a search agent already act
+    without asking each time; the ReAct loop only extends a delegation we have
+    always made. The real choice is degree and domain, how far to close the
+    loop and where, not whether the machine may act at all.}
+
+    \item \textbf{The human is a failure mode too.} \textit{Human discretion is slow,
+    inconsistent, and corruptible. The Flash Crash was obedient tools doing
+    exactly as told, but the process they replaced was human favouritism and
+    fatigue. Taking a person out of the loop can remove a failure mode, not
+    only add one; presence is not the same as protection.}
+
+    \item \textbf{Control can be engineered in.} \textit{Corrigibility, a real
+    intervention window, legible goals, defined override conditions: these are
+    design and budget choices, not laws of nature. A system built to be
+    corrected can be safer than a human process no one can audit. Abstention
+    forfeits that, and every gain that comes with it.}
+\end{itemize}
+
+
+\newthought{Key Learnings}
+Agency is a spectrum, not a binary: the honest question is not whether a system acts on its own,
+but in which domains, to what degree, and under what control. Yet the readings mark the limit of
+that answer. R.U.R.\ and Der Zauberlehrling both turn on a system that cannot be stopped once
+started, which is why the surest control is the decision to close the loop at all; everything after
+it is partial and negotiated. The same texts hold the alignment problem in miniature: a system
+pursuing an aggregate goal may systematically harm whoever is underweighted in it, the poem
+compressing the arc into fifteen stanzas, the play tracing it across three acts. Agentic workflows
+are already deployed in finance, logistics, and advertising, so this is a present problem, not a
+future one. Meaningful human control asks for more than an audit trail: legible goals, a real
+intervention window, defined override conditions, and someone with the authority and attention to
+use them.
+

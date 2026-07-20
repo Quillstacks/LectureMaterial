@@ -1,14 +1,3 @@
-% TODO:
-%
-%
-% - Add the trolly problem as an introductory case.
-% - Discuss exploitability vs. oversight on a controllability spectrum. Maybe your own paper by now. 
-% - Maybe rather use autonomous driving as a case study, since it is more relatable and has more real-world examples of accountability gaps. The trolley problem is a bit too abstract and hypothetical, and the recruiting tool is a bit too niche and technical. Autonomous driving has both high stakes and real cases of accidents, recalls, and liability disputes.
-%
-
-
-
-
 \chapter{Accountability}\index{Accountability}
 \printchapterversion{02_Accountability}
 
@@ -37,7 +26,32 @@ sentence no living person can read or explain, and is invited to endorse the sys
 opacity and accountability gaps: audits, explainability requirements, and governance mechanisms
 all attempt to close the distance between automated decision and human answerability.
 
-\vspace{3.5em}
+\medskip
+\noindent\textbf{Cases: when no one is answerable.} Kafka's machine is a
+fable; the responsibility gap is not. Each system below caused real harm,
+and in each the question ``who is accountable?'' had no clean answer.
+\begin{itemize}
+    \item \textbf{Amazon's hiring engine (2018).}\cite{dastin2018amazon}
+    A model trained on a decade of engineering hires learned to downgrade
+    r\'esum\'es containing the word ``women's'' and to reward male-coded
+    phrasing. No one wrote the rule; the bias was inherited from the data.
+    Amazon quietly scrapped the tool. Who answers for discrimination
+    nobody authored?
+    \item \textbf{Google Photos (2015).}\cite{simonite2018google} An image
+    classifier labelled photographs of Black users as ``gorillas''. The
+    remedy was not a corrected model but a deleted label: ``gorilla''
+    was removed from the product. The error was hidden, not fixed.
+    \item \textbf{Tesla Autopilot (2016).}\cite{ntsb2017tesla} A driver was
+    killed when the system failed to distinguish a crossing trailer from
+    bright sky and did not brake. Liability fractured three ways: the driver
+    who trusted a feature named ``Autopilot'', the manufacturer that named
+    it so, and the regulator that permitted the deployment.
+    \item \textbf{The Flash Crash (2010).} Automated trading erased roughly
+    a trillion dollars in minutes; no human decided to sell at scale and no
+    human decided to stop. Years later a single trader was charged.
+\end{itemize}
+
+\vspace{2em}
 
 \begin{tabular}{p{3.8cm} p{6.5cm}}
     \textbf{Required reading} &
@@ -51,7 +65,7 @@ all attempt to close the distance between automated decision and human answerabi
 
 \section*{Guided Reading Sheet}
 
-\noindent Read \emph{In der Strafkolonie} before the session. Work through the
+\noindent Read \textit{In der Strafkolonie} before the session. Work through the
 questions below individually, then bring your notes to the discussion.
 
 \begin{enumerate}
@@ -66,7 +80,7 @@ questions below individually, then bring your notes to the discussion.
     responsibility shift across this triangle? Who, if anyone, is
     morally culpable for what happens?
 
-    \item The story illustrates the idea of the \emph{responsibility
+    \item The story illustrates the idea of the \textbf{responsibility
     gap}: when a complex system causes harm, no single human actor is
     clearly at fault. Can you name a contemporary case (in law,
     medicine, finance, or infrastructure) where this gap has appeared?
@@ -76,109 +90,186 @@ questions below individually, then bring your notes to the discussion.
     decisions are too fast, too complex, or too numerous for humans to
     review individually?
 
-    \item Compare \emph{causal responsibility} (who caused the harm)
-    with \emph{moral responsibility} (who is blameworthy) and
-    \emph{legal liability} (who must compensate). Do these three always
+    \item Compare \textbf{causal responsibility} (who caused the harm)
+    with \textbf{moral responsibility} (who is blameworthy) and
+    \textbf{legal liability} (who must compensate). Do these three always
     converge? Give an example where they do not.\\
 \end{enumerate}
 
 
 
+\section*{In-Class Experiment: The Responsibility Budget}
+
+\noindent A short allocation exercise to anchor the debate in shared
+experience. Run before the Opinion Landscape, using one concrete incident
+drawn from the cases above.
+
+\begin{itemize}
+    \item \textbf{Setup.} State one incident in three sentences, for
+    instance the hiring engine that filtered out a qualified applicant. On
+    the board, list the actors: builder, deployer, operator, the people
+    whose data trained the model, the regulator, the affected person, and
+    no one.
+    \item \textbf{Allocation.} Each student silently distributes one
+    hundred responsibility points across those actors and writes a single
+    sentence justifying their largest share. Collect the slips anonymously.
+    \item \textbf{Tally.} Add the points on the board. The distribution
+    will not converge: it spreads across five or six actors, and a visible
+    share falls on no one. That spread is the responsibility gap, drawn from
+    the room's own intuitions.
+    \item \textbf{Debrief.} The two largest shares are almost always the
+    provider (builder and deployer) and the user. Name them as the two
+    sides of the debate to come, and have each student defend the allocation
+    they made.
+\end{itemize}
+
+\section*{The EU AI Act's Risk Tiers}
+
+\marginnote{\newthought{Risk-based regulation.} Obligations scale with the
+stakes of the application, not the sophistication of the technology. A
+simple model deciding creditworthiness is regulated far more tightly than
+a complex one recommending films.}
+
+\noindent The EU AI Act\cite{euaiact2024} is the first comprehensive
+attempt to close the responsibility gap by statute. It sorts every system
+into one of four tiers by the harm it can do, and attaches obligations that
+grow with the tier. The pyramid is narrow at the top: most systems carry no
+obligations.
+
+\begin{itemize}
+    \item \textbf{Unacceptable risk, prohibited.} Social scoring by public
+    authorities, subliminal manipulation, untargeted scraping of faces to
+    build recognition databases, and most real-time biometric
+    identification in public space. These are banned outright; no amount of
+    documentation or oversight makes them lawful.
+    \item \textbf{High risk, permitted but heavily regulated.} Systems that
+    decide access to employment, credit, education, essential services, law
+    enforcement, or migration. Before deployment each requires a risk
+    management system, governed training data, technical documentation,
+    event logging, human oversight, and a conformity assessment audited
+    against the Act.
+    \item \textbf{Limited risk, transparency only.} Chatbots, emotion
+    recognition, and deepfakes. The single duty is disclosure: the user
+    must be told they are dealing with a machine or with synthetic content.
+    \item \textbf{Minimal risk, unregulated.} Spam filters, recommendation
+    engines, game AI. This is the overwhelming majority of deployed
+    systems, and the Act leaves them alone.
+\end{itemize}
+
+\marginnote{\newthought{General-purpose models.} Foundation models sit on a
+separate track: all owe transparency duties, and those trained above a
+compute threshold carry systemic-risk obligations whatever the downstream
+application.}
+
+\newthought{Every tier is a trade.} Moving a system up the pyramid trades
+speed for protection. A minimal-risk feature can be deployed at once; a
+high-risk one waits on documentation, an audit, and a human-oversight
+design: months of work before deployment. The Act judges that where a
+system decides who gets a job, a loan, or bail, the price is worth paying.
+Logging lets a named party be held to account; human oversight keeps a
+person, not a dataset, the owner of the decision; the conformity assessment
+proves rigor before harm rather than after. Developers object: the same
+rigor slows European deployment against faster
+jurisdictions, and mandated transparency exposes model internals that are
+also security and competitive assets. Speed, user rights, security, and
+development rigor cannot all be maximised at once. The tiers fix the
+exchange rate between them, and the debate below turns on whether the Act
+has set that rate correctly.
+
 \section*{Opinion Landscape and Debate}
 
-\noindent \textbf{Format:} Surrounded-style debate. See
-Appendix~A for the full protocol, speaker's list rules, and
-moderator scripts.
+\noindent \textbf{Format:} Surrounded-style debate. Follow the shared
+debate protocol for the speaker's list rules and moderator scripts.
 
 \medskip
-\noindent \textbf{Opening question:} If a system causes injustice at this
-scale, and every individual who used it acted within their authorised role,
-is anyone guilty of wrongdoing; and if not, what does that mean for the
-concept of accountability?
-\newthought{Opinion~A, Accountability.}\quad Named human accountability
-is achievable and required: when an autonomous system causes harm, the
-architecture of governance must ensure that specific individuals remain
-legally and morally answerable for its outputs.
+\noindent \textbf{Opening question:} When an AI system causes harm, who
+takes responsibility: the builder and deployer who put it into the world,
+or the user who chose to apply it to a purpose?
+
+\marginnote{\newthought{Instrument or agent?} The law treats the two
+differently: you answer for a tool you wield; a maker answers for what it
+sends into the world. An AI sits between the two, and the debate turns on
+which side it falls.}
+
+\newthought{Opinion~A, User Accountability.}\quad Responsibility rests
+with the user who put the system to use. Builder and deployer supply a
+capability; the user aims it at a purpose, and that choice carries the
+responsibility.
 \vspace{1.5em}
 
 
 \medskip
-\noindent\textbf{The Defence Lawyer} argues the tool violated the
-    defendant's right to a fair trial and demands a named responsible party.
+\noindent\textbf{The Builder} insists the system performs within documented
+    parameters and that responsibility follows its use.
     \begin{itemize}
-        \item \textit{My client cannot cross-examine a dataset. She cannot
-        see the features the model weighted. She cannot confront the humans
-        whose historical decisions trained it. That is not a fair trial;
-        it is a verdict delivered by an oracle.}
-        \item \textit{The right to a reasoned decision is foundational to
-        due process. The algorithm said so is not a reason. It is an
-        abdication.}
-        \item \textit{If a biased human expert testified in court, we could
-        challenge their credentials, their methods, their prior record. We
-        have no equivalent procedure for an algorithm. That asymmetry is a
-        constitutional problem.}
+        \item \textit{Our documentation states that human review is
+        mandatory before any recommendation is acted upon. The user relied
+        on the output without it. We cannot be held liable for how our tool
+        was used.}
+        \item \textit{A tool has no purpose until someone picks it up and
+        gives it one. Using a tool for a purpose is an action, and the
+        person who chose the purpose owns the outcome. We do not blame the
+        scalpel for the surgeon's cut.}
+        \item \textit{Extend our liability to every downstream use and no
+        one will build decision-support tools at all.}
     \end{itemize}
 
 \medskip
-\noindent\textbf{The Regulator} proposes a new accountability
-    framework and must defend it against both sides.
+\noindent\textbf{The Deployer} fielded the system and argues the final
+    call sat with the user.
     \begin{itemize}
-        \item \textit{The existing categories (product liability,
-        professional negligence, criminal intent) were designed for
-        individual actors and single causal chains. None of them fit
-        distributed, automated decision systems. We need a new category:
-        algorithmic liability.}
-        \item \textit{Auditability must be a pre-condition for deployment in
-        high-stakes domains, not a post-incident investigation. If you cannot
-        explain why your system made a decision before harm occurs, you
-        should not be permitted to deploy it.}
-        \item \textit{The question is not who is liable for this specific
-        incident. It is what governance regime prevents the next thousand
-        incidents at scale.}
+        \item \textit{We procured a system certified for exactly this task,
+        and it performed within specification. Our role is to make the
+        capability available, not to make each individual decision with it.}
+        \item \textit{The final decision sat with the user. They read the
+        output and chose to act on it. That choice, not our procurement, is
+        the proximate cause of the harm.}
+        \item \textit{The user is a trained professional exercising
+        discretion, and discretion carries responsibility. We cannot stand
+        behind every judgement each operator makes.}
     \end{itemize}
 
 
 
-\newthought{Opinion~B, Compliance.}\quad The existing system already
-provides accountable humans; the motion is either already met or
-unworkable: demanding named individual accountability for each algorithmic
-output ignores how distributed decision-making necessarily operates.
+\newthought{Opinion~B, Provider Accountability.}\quad Responsibility rests with those who
+built and fielded the system. An AI is not a neutral instrument the user
+fully controls; it is closer to something its makers raised, and the user
+cannot answer for a decision they were never in a position to understand.
 \vspace{1.5em}
 
 
 \medskip
-\noindent\textbf{The Judge} defends reliance on the tool as
-    consistent, evidence-based sentencing practice.
+\noindent\textbf{The User} refuses to answer for a black box they could
+    neither open nor overrule.
     \begin{itemize}
-        \item \textit{Documented bias in human sentencing (based on time
-        of day, defendant ethnicity, and courtroom demeanour) is
-        well-established in the research literature. The tool reduces that
-        variance. Less variance is more equal treatment.}
-        \item \textit{I did not delegate my judgement to the tool. I
-        consulted it as one input among many, as I would a psychiatric
-        assessment or a victim impact statement. The tool is not the
-        verdict.}
-        \item \textit{If we ban algorithmic tools from courtrooms, we return
-        to a system where the most important variable in a sentencing outcome
-        is which judge you happened to draw. Is that preferable?}
+        \item \textit{You handed me a black box and told me to trust it. I
+        cannot open it, cannot audit the weights, cannot see why it decided
+        what it decided. You cannot make a decision unauditable and then
+        blame me for it.}
+        \item \textit{You call it a tool I chose to use, but a hammer does
+        not learn. You trained this on data you chose and tuned it toward
+        behaviour you selected. That is closer to raising a child than
+        forging an instrument, and a parent answers for the child they
+        shaped.}
+        \item \textit{The knowledge and the control both sat with the people
+        who built and fielded it. Responsibility should sit where they do,
+        not with the last human in the chain.}
     \end{itemize}
 
 \medskip
-\noindent\textbf{The Software Vendor} insists the tool performs
-    within documented parameters and liability rests with the deployer.
+\noindent\textbf{The Regulator} argues that whoever profits from and
+    controls the design must carry the risk.
     \begin{itemize}
-        \item \textit{Our documentation states in the executive summary that
-        human review is mandatory before any recommendation is acted upon.
-        The court chose to rely on the output without applying that review.
-        We cannot be held liable for misuse.}
-        \item \textit{The training data was provided by the court system
-        itself. If the historical sentencing record reflects bias, that is a
-        problem with the justice system, not with a model that learned from
-        it.}
-        \item \textit{Product liability law requires that a product fails to
-        perform as documented. Ours did not. Extending vendor liability to
-        downstream misuse would make the development of any decision-support
-        tool legally untenable.}
+        \item \textit{Whoever captures the upside must internalise the
+        downside. A disclaimer buried in a manual cannot transfer a hazard
+        the user has no means to evaluate.}
+        \item \textit{Product-safety law already binds those who build and
+        field a product to its foreseeable real-world use, not to the
+        idealised use their documentation describes.}
+        \item \textit{Placing the whole burden on the last human to touch
+        the system builds a moral crumple zone\cite{elish2019crumple}: a
+        person positioned to absorb the blame while powerless to prevent the
+        harm. That is not accountability; it is its appearance.}
     \end{itemize}
 
 
@@ -188,7 +279,12 @@ actor in distributed sociotechnical systems, is not caused by
 negligence but by the architecture of those systems: standard
 categories of fault (criminal intent, professional negligence, product
 liability) apply only awkwardly when causation is diffuse. Closing it
-requires deliberate governance design, not post-hoc blame. Explainability, the
+requires deliberate governance design, not post-hoc blame. In practice the
+gap becomes a contest over allocation: builder and deployer point to
+documented limits and the user's discretion; the user points to an opaque
+product they could neither audit nor overrule. Beneath it lies one
+unsettled question: is an AI an instrument, whose user answers for its use,
+or a trained agent, whose makers answer for its formation? Explainability, the
 property of being able to account for outputs in terms a human
 decision-maker can evaluate, is a necessary but not sufficient
 condition for accountability; a system can be interpretable and still
@@ -201,9 +297,7 @@ with different institutional costs. The lessons of aviation safety culture, medi
 and financial auditing all offer partial models for algorithmic governance, but none transfers cleanly.
 
 \medskip
-\noindent\textit{Teaser: accountability assumes we can separate the
-system from its surroundings. But what happens when the AI is no
-longer a tool we hold, but a body that acts in the world alongside
-us?}
+\noindent\textit{Teaser: what happens to accountability when the system
+decides faster than anyone can follow or override?}
 
 \clearpage
