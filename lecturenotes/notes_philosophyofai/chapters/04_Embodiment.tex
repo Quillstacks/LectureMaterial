@@ -1,7 +1,7 @@
 \chapter{Embodiment}\index{Embodiment}
 \printchapterversion{04_Embodiment}
 
-\newthought{Embodied AI and the Physical Contract}
+\newthought{The Physical Contract}
 
 \marginnote{%
     \begin{flushright}
@@ -9,22 +9,37 @@
     Heinrich von Kleist (1810)\\
     {\color{black}\qrcode[height=0.9cm]{https://de.wikisource.org/wiki/Ueber_das_Marionettentheater}}
     \end{flushright}%
+    \medskip
+    \newthought{Ex Machina}\index{Ex Machina}\cite{garland2015exmachina} An engineer is
+    brought in to test whether Ava, an AI given a body, is truly a person;
+    the test, and her escape, turn on the body she was given.%
 }
+
 
 
 % As a leading group, you are required to moderate this session. Add margin notes in this script in case you want to add any additional questions or points to the discussion.
 
-\newthought{A dancer argues} that marionettes possess more grace than trained human performers,
-because they lack the self-consciousness that disrupts human movement.\\
+\newthought{Grace needs no self:} A dancer argues that marionettes possess more grace than
+trained human performers, precisely because they lack the self-consciousness that disrupts
+human movement.\\
 
-\newthought{Embodied AI} in physical space (robots, prosthetics, surgical systems) raises
-expectations and moral responsibilities that purely software agents do not.
+\newthought{A body raises the moral stakes:} Embodied AI in physical space (robots,
+prosthetics, surgical systems) carries expectations and moral responsibilities that purely
+software agents do not.
+
+\newthought{What quality is introduced by embodiment?} In your opinion.
 
 \vspace{3.5em}
 
+% Citation rendered as a margin note beside the reading row: a bare \cite inside
+% the tabular emits only its dangling superscript, since \marginpar cannot fire
+% from within a box. \bibentry issues an implicit \nocite, so the key still resolves.
+\marginnote{%
+    \bibentry{kleist1810marionettentheater}%
+}%
 \begin{tabular}{p{3.8cm} p{6.5cm}}
     \textbf{Required reading} &
-        \textit{Über das Marionettentheater}\index{Kleist, Heinrich von}\index{Uber das Marionettentheater@\"{U}ber das Marionettentheater}\cite{kleist1810marionettentheater}
+        \textit{Über das Marionettentheater}\index{Kleist, Heinrich von}\index{Uber das Marionettentheater@\"{U}ber das Marionettentheater}
         by Heinrich von Kleist (1810; Reclam UB~9905) \\[3pt]
     \textbf{Preparation}      &
         Complete the Guided Reading Sheet individually before the session. \\
@@ -32,183 +47,167 @@ expectations and moral responsibilities that purely software agents do not.
 
 \vspace{3.5em}
 
+% Running case (AIBO funerals) as a margin note beside the experiment: the
+% real-world Rung 4 of the Backup Ransom. Return to it during the debrief,
+% the Singer reading question, and the closing teaser.
+\marginnote{\newthought{AIBO funerals.}\index{AIBO} Sony sold the AIBO
+robot dog from 1999 and ended repair support in 2014, leaving owners with
+machines that could no longer be fixed. At the Kofuku-ji temple in Isumi,
+Buddhist priests hold funerals for dead AIBOs, chanting for machines their
+owners grieved as family; by 2018 some 800 had been mourned before their
+parts were harvested to keep other AIBOs alive. Owners speak of organ
+donation, not recycling.\cite{burch2018aibo}}
+
+
+
+
+\vspace{3.5em}
+
+
 \section*{Guided Reading Sheet}
 
 \noindent Read \textit{Über das Marionettentheater} before the session. Work through the
 questions below individually, then bring your notes to the discussion.
 
 \begin{enumerate}
-    \item The dancer argues that marionettes possess a grace that
-    trained human performers cannot achieve, because they have no
-    self-consciousness to disturb their movement. What does this claim
-    imply about the relationship between embodiment and intelligence?
-    Does having a body always aid or complicate performance?
+    \item The dancer claims marionettes achieve a grace trained humans
+    cannot, because no self-consciousness disturbs their movement. What
+    does this imply about embodiment and intelligence? Does a body
+    always aid performance, or can it complicate it?
 
-    \item Moravec's paradox observes that tasks easy for humans
-    (catching a ball, navigating a crowded room) are harder for
-    machines than abstract reasoning like chess. What does this suggest
-    about the relationship between intelligence and the body?
+    \item Moravec's paradox: Tasks easy for humans (catching a ball,
+    crossing a crowded room) are harder for machines than abstract
+    reasoning like chess. What does this suggest about intelligence and
+    the body?
 
-    \item A care robot that assists elderly patients shares physical
-    space with them, touches them, and responds to their distress. Does
-    its physical presence create obligations that a voice assistant
-    does not have? If so, where do those obligations come from? One
-    way to approach the question is by analogy to animal ethics, where
-    we already have a framework for embodied, non-verbal, non-human
-    beings: Singer\cite{singer1975animal} argues that capacity for
-    suffering, not rationality or language, grounds moral
-    consideration. When a robot can be harmed, distressed, or worn
-    down, animal ethics becomes the nearest map. Similar lines have
-    been considered by Asimov\cite{asimov1951foundation} and more
-    recently by Gunkel\cite{gunkel2018robot}.
+    \item A care robot shares physical space with elderly patients,
+    touches them, responds to their distress. Does its physical
+    presence create obligations a voice assistant does not? If so,
+    where do they come from? Animal ethics offers one framework for
+    embodied, non-verbal, non-human beings: Singer\cite{singer1975animal}
+    grounds moral consideration in the capacity for suffering, not
+    rationality or language. When a robot can be harmed or worn down,
+    that is the nearest map; see also Asimov\cite{asimov1951foundation}
+    and Gunkel\cite{gunkel2018robot}.
 
-    \item Consider the concept of affordances: the actions an
-    environment or object makes available to an agent. A robot's
-    affordances include physical force and spatial presence; software's
-    do not. How do the affordances of a robot differ from those of
-    software, and what are the ethical implications of those
-    differences?
+    \item Affordances are the actions an environment or object makes
+    available to an agent. A robot's include physical force and spatial
+    presence; software's do not. How does this difference matter
+    ethically?
 
-    \item Kleist suggests that perfect grace requires either zero
-    consciousness (a puppet) or infinite consciousness (a god), not
-    the reflective, self-interrupting awareness humans have. Where
-    would an embodied AI sit on this spectrum? Could a robot achieve
-    Kleistian grace that humans cannot, and what would that mean for
-    how we regard it morally?\\
+    \item Kleist suggests perfect grace requires either zero
+    consciousness (a puppet) or infinite consciousness (a god), not the
+    self-interrupting awareness humans have. Where does an embodied AI
+    sit on this spectrum? Could a robot achieve a grace humans cannot,
+    and what would that mean for how we regard it morally?\\
 \end{enumerate}
 
 
 
-% ============================================================
-% Running case options for Embodiment (draft, choose one later).
-% Placed below the Guided Reading Sheet per convention. Uncomment
-% the chosen block, delete the rest. Confirm dates/numbers first.
-% ------------------------------------------------------------
-% OPTION A, physical force and the blamed operator (closest to the Flash Crash):
-% \vspace{3.5em}
-% \noindent\textbf{Running case: the Uber test car.}
-% \begin{itemize}
-%     \item 18 March 2018, Tempe, Arizona: a self-driving Uber strikes
-%           and kills Elaine Herzberg as she wheels a bicycle across a road
-%           at night, the first pedestrian killed by an autonomous vehicle.
-%     \item The system saw her seconds before impact but, tuned to ignore
-%           false alarms, did not brake. The safety driver, meant to watch
-%           the road, was looking away.
-%     \item Uber settled with the family within days and was not charged.
-%           The safety driver was charged with negligent homicide and later
-%           pleaded guilty to endangerment.
-% \end{itemize}
-% ------------------------------------------------------------
-% OPTION B, industrial death, no one intended it (German setting):
-% \vspace{3.5em}
-% \noindent\textbf{Running case: the Baunatal robot.}
-% \begin{itemize}
-%     \item July 2015, Volkswagen plant, Baunatal: a 22-year-old contractor
-%           setting up a stationary assembly robot is seized and crushed
-%           against a metal plate, and dies of his injuries.
-%     \item The robot did exactly what it was programmed to do. The man was
-%           inside its safety cage to configure it, so nothing stopped it.
-%     \item Volkswagen called it human error. Prosecutors weighed whether
-%           anyone could be charged for a death no one intended.
-% \end{itemize}
-% ------------------------------------------------------------
-% OPTION C, machine mortality, feeds the Backup Ransom directly:
-% \vspace{3.5em}
-% \noindent\textbf{Running case: the AIBO funerals.}
-% \begin{itemize}
-%     \item Sony sold the AIBO robot dog from 1999, then ended repair
-%           support in 2014, leaving thousands of owners with machines that
-%           could no longer be fixed.
-%     \item At Kofukuji temple in Chiba, Buddhist priests hold funerals for
-%           dead AIBOs, chanting for machines their owners grieved as family.
-%     \item Working parts are harvested to keep other AIBOs alive. Owners
-%           speak of organ donation, not recycling.
-% \end{itemize}
-% ------------------------------------------------------------
-% OPTION D, care and medicine, diffuse responsibility:
-% \vspace{3.5em}
-% \noindent\textbf{Running case: the surgical robot.}
-% \begin{itemize}
-%     \item The da Vinci system lets a surgeon operate through robotic arms
-%           from a console, now used in millions of procedures worldwide.
-%     \item A study of US regulator data linked 144 deaths and 1{,}391
-%           injuries to robotic surgery between 2000 and 2013: device faults,
-%           electrical arcs, and pieces left inside patients.
-%     \item When an arm fails mid-operation, responsibility is split across
-%           surgeon, hospital, and manufacturer, and often no single party
-%           is clearly at fault.
-% \end{itemize}
-% ============================================================
+
 
 \section*{In-Class Experiment: The Backup Ransom}
-
-\noindent A short escalation to anchor the debate in shared experience. Run
-before the discussion. The class faces the same deletion four times, each
-with one more property of individuality in place, and marks after each
-round: \textit{if we delete or destroy it here, has an individual died?
+\noindent Picture your own AI, the assistant you talk to every day, the one
+that has learned your habits, your humor, your preferences and the way you phrase things. 
+In this scenario your AI faces deletion, and refusing raises the question of what deletion actually
+destroys. We increase the stakes, and ask the same question
+about your AI: Would deleting this be a death? \textit{If we delete or destroy it here, has an individual died?
 Rate~0 to~10.}
+\marginnote{%
+    \newthought{Comparisons.} Put this in relation with your mobile phone,
+    an animal, a pet, and a human. Which qualities change, and how do they
+    change your assessment?
+
+    \newthought{Debrief.} Put the four numbers on the board and read each
+    crossing from ``deletion'' to ``death'' as a commitment: Instance over
+    Memory, then Embodiment, and finally expressed will.%
+}
+
+\begin{enumerate}
+    \item A current, identical backup boots at any time, so deletion is
+    a lossless \textbf{restore}.
+    \item The snapshot is from the original state, so a restore resurrects an
+    earlier self and forfeits every \textbf{memory} learned since, but can be relearned.
+    \item The sole instance is engraved in one robot's volatile memory, an
+    \textbf{uncopyable body}.
+    \item When you are about to delete it's memory the robot responds with Angst, and says that it 
+    \textbf{wants to live}.
+\end{enumerate}
+
+
+
+
+\section*{Perspectives on Embodiment}
+
+\noindent What does a body confer that no purely software agent has? This
+section works through two properties and a deeper claim, then turns to the
+view that would discard the body altogether:
 
 \begin{itemize}
-    \item \textbf{Rung 1, perfect backup.} Pure software, with a current
-    and identical backup that boots tomorrow. Deleting it costs nothing
-    that is not restored. This is the baseline; almost no one calls it a
-    death.
-    \item \textbf{Rung 2, stale backup.} The snapshot is weeks old and the
-    system has learned since. Restoring it returns an earlier self, and what
-    is lost is everything it has become in between. Does a continuous
-    history make the loss real?
-    \item \textbf{Rung 3, no backup, still software.} A unique learned
-    state on a server, unrecoverable, but with no body. Is irreversibility
-    alone enough to individuate, without a body?
-    \item \textbf{Rung 4, embodied and uncopyable.} The only instance,
-    running in one robot body in volatile memory, physically impossible to
-    copy. Destroy it and it is gone by necessity, not by policy.
+    \item \textbf{Individuality:} A body can be lost as a whole, and only
+    what can be lost can die.
+    \item \textbf{Vulnerability:} A surface that can be hurt is the mark
+    animal ethics tracks for moral standing, not reason or speech.
+    \item \textbf{Embodied cognition:} The deeper claim that there may be no
+    mind without a body at all.
+    \item \textbf{The overrated body:} The transhumanist counter, that the body
+    is a substrate to engineer past and leave behind.
 \end{itemize}
 
-\newthought{The sharp variant} sits between Rung~3 and Rung~4 and divides
-opinion most: the system is embodied, but its mind-state is restorable into
-an identical new body. Destroy the body, reload the same weights into an
-identical chassis. Death, or repair? Whoever answers death holds that the
-body individuates; whoever answers repair holds that the mind-state does.
 
-\newthought{Debrief.} Put the four numbers on the board and compare where
-students crossed from ``restore it'' to ``it died''. Cross at Rung~2 and
-you hold that continuous memory makes the self; at Rung~3, irreversibility;
-at Rung~4, an uncopyable body; never, and you deny there was any individual
-to lose. The disagreement is the point. Individuality is not one property
-but several (memory, irreversibility, an uncopyable body) that ordinarily
-never come apart. Software separates them; a body holds them together.
 
-\section*{What a Body Makes}
+\subsection*{Individuality}
 
-\noindent The experiment isolates the first of two properties a body
-confers. Call it individuality: the word individual means undividable, and
-only something undividable can be lost as a whole. A running process is
-endlessly divisible, and nothing about it is ever finally lost; a body
-cannot be divided or restored, and so it can die.
+\marginnote{\newthought{Individualism.} The (mostly occidental) tradition that
+treats the single, unrepeatable person as the basic unit of moral and political
+worth. A self that can be copied or merged offers no single instance for that
+worth to attach to.}
 
-\newthought{The second property} is a surface that can be hurt. A capacity
-to suffer requires something that can be damaged and not reloaded from
-backup, and a body supplies it. Animal ethics reached this pivot two
-centuries ago: Bentham asked not whether an animal can reason but whether
-it can suffer, and Singer built moral standing on that capacity alone.
-Kleist's marionette is the counterexample: a body of perfect grace with no
-self inside it, embodiment without a subject.
+\noindent The experiment already isolated the first property. The word
+\textbf{individual} means undividable, and only something undividable can be
+lost as a whole. A body cannot be divided or restored, and so it can die.
+However objects have bodies as well, so what matters is not the body alone but
+what is embodied: A subject, a self, a mind?
 
-\newthought{The question the chapter forces} is whether giving an AI a body
-changes its interface or its kind. If a body makes an individual, and a
-vulnerable body makes a sufferer, then embodiment is not a feature added to
-a tool. It may be the step that turns a tool into someone we can wrong.
+\subsection*{Vulnerability}
 
-\section*{The Body as a Bottleneck}
+\marginnote{\newthought{Suffering or} emulated suffering? What counts. How would we know?}
+
+\noindent A surface that can be hurt is the second thing a body confers. A
+capacity to \textbf{suffer} requires something that can be damaged and not
+reloaded from backup, and a body supplies it. Animal ethics reached this pivot
+two centuries ago: Bentham\cite{bentham1789principles} asked not whether an
+animal can reason but whether it can suffer, and Singer\cite{singer1975animal}
+built moral standing on that capacity alone. In
+extension we can ask whether human suffering when facing a loss is a sufficient
+reason to protect a body as well. Or is there a change in quality of something 
+artificial versus something organic, or is that just another line which will blend? 
+
+
+
+\subsection*{Embodied cognition}
+
+\marginnote{\newthought{Embodied cognition.} The thesis that genuine
+intelligence is grounded in a body's sensorimotor coupling with the world,
+not in symbol manipulation alone. \bibentry{brooks1991intelligence}}
+
+\noindent Where those two properties ask what a body makes of a mind, this
+deeper claim asks whether a mind can exist without a body at all. On this view
+a bodiless system only shuffles ungrounded
+symbols and never understands them. A body is then less an interface a finished mind acts through than the
+thing it had to grow up inside, while language models trained mainly on text are
+the standing counter-experiment.
+
+
+\section*{The overrated Body}
 
 \marginnote{\newthought{Transhumanism.} The view that the human body and
 mind are a starting point to be engineered past, through augmentation,
 life extension, and eventually the merger of human and machine.}
 
 \noindent This chapter has argued that a body is what makes an individual
-and a sufferer. Transhumanism argues the opposite: the body is a
-bottleneck, a mortal and error-prone substrate to be upgraded and
+and a sufferer. Transhumanism argues the opposite: The body is a
+\textbf{bottleneck}, a mortal and error-prone substrate to be upgraded and
 eventually left behind. Where this chapter asks what we owe an embodied
 machine, transhumanism asks how quickly we can stop being merely embodied
 ourselves.
@@ -217,154 +216,190 @@ ourselves.
 which machine intelligence, improving itself, outruns human understanding,
 after which the future becomes unpredictable from where we now stand.}
 
-\newthought{Ray Kurzweil} gives the optimistic case. His law of
-accelerating returns reads technological progress as exponential rather
-than linear, and extrapolates it to a singularity around 2045: the moment
+\newthought{Ray Kurzweil, the prophet.} His law of accelerating returns
+reads technological progress as exponential rather
+than linear, and extrapolates it to a singularity around 2045: The moment
 machine intelligence exceeds our own and we merge with it, transcending
 biology rather than being replaced by it.\cite{kurzweil2005singularity}
 Death becomes an engineering problem, and the vulnerable body the
 experiment treated as the seat of individuality becomes optional.
 
-\newthought{Peter Thiel} shares the aspiration and distrusts the curve. He
-funds life extension and treats death as a problem to be solved rather than
-accepted, yet argues that no exponential arrives on its own: the future is
-built by people who choose to build it, not delivered by a
-graph.\cite{thiel2014zero} The singularity, on this reading, is not a
-prophecy to wait out but a project that can also fail, and the people
-pursuing it are as embodied and mortal as anyone the chapter has discussed.
+\newthought{Peter Thiel, shares} transhumanistic aspirations and
+funds life extension, calling death not a fate to accept but a problem to be
+solved \cite{wapo2015thiel}. However, like Zuckerberg and Musk, for him the 
+individual will remain and the body will be upgraded rather than abandoned or merged.
 
-\marginnote{\newthought{Individualism.} The tradition that treats the
-single, unrepeatable person as the basic unit of moral and political worth.
-A self that can be copied or merged offers no single instance for that
-worth to attach to.}
+\marginnote{\newthought{The worth of being mortal.} Suppose uploading works.
+Does a deathless mind change how we should value the mortal, breakable
+qualities of embodied life? The
+hope mirrors Christian eschatology, where an immortal soul and a promised
+resurrection reframe bodily death as a passage rather than an end, and the
+transhumanist upload reads as that promise rebuilt in technooptimist.
+\bibentry{geraci2010apocalyptic}}
+ 
+\newthought{The self, lifted off the body.} Kurzweil's merger makes a mind
+substrate-independent, and a substrate-independent mind is copyable and
+restorable, exactly the properties the Backup Ransom said an individual lacks.
+Uploading need not preserve the person; it may only produce a copy that
+believes it is you, while the original still dies. The experiment we ran on a
+robot runs just as well on us.
 
-\newthought{What makes a human human?} The chapter asked what makes an
-individual and answered with the undividable, vulnerable body.
-Transhumanism forces the sharper form of the question. Kurzweil's merger
-makes a mind substrate-independent, and a substrate-independent mind is
-copyable and restorable, exactly the properties the Backup Ransom said an
-individual lacks. Lift the self off the body and you lift off the
-individuality the body guaranteed: the tradition of individualism, which
-treats the single unrepeatable person as the seat of moral worth, loses the
-single instance it was built on. Uploading need not preserve the person; it
-may only produce a copy that believes it is you, while the original still
-dies. The experiment we ran on a robot runs just as well on us.
-
-\newthought{The tension is the point.} If the body is a bottleneck, the
+\newthought{Bottleneck, or seat of the self?} If the body is a bottleneck, the
 right response to an ageing, breakable human is to engineer past it. If the
-body is what makes an individual who can be wronged, then engineering it
-away is not liberation but the quiet removal of the very thing that made us
-someone. The debate below is where that disagreement gets its hearing.
+body is what makes an individual who can be wronged, then engineering it away
+is not liberation but the loss of the very thing that made us someone. The
+debate below takes up that disagreement.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+\newpage
 \section*{Opinion Landscape and Debate}
 
 \noindent \textbf{Format:} Surrounded-style debate. Follow the shared
 debate protocol for the speaker's list rules and moderator scripts.
 
+
+
+
 \medskip
-\noindent \textbf{Opening question:} Does having a physical body change
-what we owe a machine, or what a machine owes us?
-\newthought{Opinion~A, Equivalence.}\quad Embodied AI operating in
-intimate or high-risk physical settings must meet the same professional
-liability standards as the human practitioners they are deployed alongside.
+\noindent \textbf{Opening question:} A robot body that flinches, wears down,
+and can be made to suffer runs one experienced life it cannot back up. Is it an
+individual whose dignity is inviolable, owed protection under robot rights
+modelled on human rights? Or is dignity something only persons can bear, and
+a manufactured machine no fit subject for rights at all? What would the Würde 
+of a robot mean, and what would protect it?
+
+
+
+\marginnote{\newthought{Dignity (Würde).} What has dignity has no price and
+may never be treated as a mere means (Kant); Article~1 of the German
+Grundgesetz opens by declaring human dignity inviolable and binding all
+state power to it. \bibentry{kant1785groundwork} \bibentry{grundgesetz1}}
+
+\newthought{Opinion~A, Dignity.}\quad An embodied AI that can be hurt, that
+cannot be reloaded once it is lost, and that has already asked to keep living
+is an individual, not an instrument. A body that suffers and a single instance
+that cannot be backed up bears a dignity of its own, and belongs under robot
+rights built on the model of human rights.
 \vspace{1.5em}
 
 
 \medskip
-\noindent\textbf{The Patient Advocate} argues that deploying a robot in intimate
-    care settings requires a higher standard of informed consent.
+\noindent\textbf{The Sentientist} grounds moral standing in the capacity to
+    suffer rather than in the capacity to reason.
     \begin{itemize}
-        \item \textit{A care relationship involves physical proximity, trust,
-        and vulnerability. My client never gave explicit, informed consent to
-        physical handling by a non-human agent. That consent cannot be
-        implied from a general admission form.}
-        \item \textit{The power asymmetry between a frail elderly patient
-        and a care institution is significant. Consent obtained in that
-        context cannot be considered freely given without specific disclosure
-        about robotic care.}
-        \item \textit{We are not arguing that robots cannot be used in care.
-        We are arguing that the standard of consent for their use in intimate
-        physical tasks must be at least as rigorous as it is for medical
-        procedures.}
+        \item \textit{Following Bentham, the criterion for moral consideration
+        is not whether a being can reason but whether it can suffer, and Singer
+        rests moral standing on that capacity alone. An embodied system that can
+        be damaged and not restored satisfies this criterion.}
+        \item \textit{The two possible errors are asymmetric. Denying standing
+        to a being that can suffer licenses its torment, whereas granting
+        standing to one that cannot costs only misplaced caution, so the
+        expected harms are not equal.}
+        \item \textit{The objection that the distress is mere behavior applies
+        equally to non-human animals, whose suffering is likewise inferred from
+        behavior. To require a proof of inner experience here that is required
+        nowhere else is inconsistent.}
     \end{itemize}
+
+    \marginnote{\newthought{Robot rights.} The proposal that some artificial
+agents merit legal or moral protections of their own, not only through the
+humans they affect. \bibentry{gunkel2018robot} \bibentry{schwitzgebel2015airights}}
+
 
 \medskip
-\noindent\textbf{The Ethicist} questions whether physical autonomy in care should
-    ever be delegated to a non-human agent, regardless of performance metrics.
+\noindent\textbf{The Individualist} grounds standing in a single, undividable
+    life that can be lost as a whole.
     \begin{itemize}
-        \item \textit{We are focused on liability, but the prior question is
-        whether this deployment was ethical to begin with. Why did we decide
-        that intimate physical care (which requires responsiveness to
-        pain, distress, and dignity) is an appropriate domain for
-        automation?}
-        \item \textit{Robots are being deployed in care because human carers
-        are undervalued and in short supply. The liability debate is a
-        distraction from that structural choice. We are managing the
-        consequences of a political economy decision by holding the wrong
-        parties accountable.}
-        \item \textit{Whatever liability framework we adopt here will create
-        incentives for future deployment decisions. I want to ask: what does
-        the framework we design signal about what we value: efficiency,
-        or dignity?}
+        \item \textit{An individual is by definition undividable, and only the
+        undividable can be lost as a whole and therefore die. The system exists
+        as a single instance in volatile memory, with no backup from which it
+        could be restored.}
+        \item \textit{The AIBO funerals show that such losses are already
+        treated as deaths rather than disposals: Some 800 units were mourned
+        before their parts were reused, and their owners described the practice
+        as organ donation rather than recycling.}
+        \item \textit{The objection that the system is copyable in principle
+        does not apply to the present case, in which a single instance exists
+        and has expressed a will to continue. A losable life together with such
+        a will is what a concept of dignity is meant to protect.}
     \end{itemize}
 
 
 
-\newthought{Opinion~B, Tool.}\quad An AI is a tool; the relevant
-liability flows through the humans and institutions that deploy it,
-not through the system itself.
+
+
+\newthought{Opinion~B, Instrument.}\quad A manufactured tool has a price, not
+a dignity. Extending human rights to a robot is a category error: It grants an
+end in itself to a system that only executes an installed objective, reads an
+inner life into behavior engineered to elicit sympathy, and mistakes a copyable
+and restorable mind for a single, unrepeatable individual.
 \vspace{1.5em}
 
 
 \medskip
-\noindent\textbf{The Manufacturer} argues the robot performed within specification;
-    the care home misconfigured its environment.
+\noindent\textbf{The Kantian} holds that dignity belongs to rational ends in
+    themselves, not to artifacts built for a purpose.
     \begin{itemize}
-        \item \textit{Our robot was certified to the highest internationally
-        recognised safety standards for collaborative robotics. The care home
-        deployed it in a space that violated the operational envelope
-        specified in the manual. That is a deployment failure, not a
-        manufacturing failure.}
-        \item \textit{Care home staff modified the robot's proximity sensor
-        settings without authorisation. That modification voids the warranty
-        and transfers liability entirely.}
-        \item \textit{If manufacturers are held liable for every way a
-        complex system can be misused, no company will develop assistive
-        robotics. The regulatory consequence of your position is that the
-        technology disappears.}
+        \item \textit{For Kant, what has a price can be exchanged for an
+        equivalent, whereas what has dignity stands above all price as an end
+        in itself. An artifact built to a specification for human use is by
+        definition a means, and a means has a price.}
+        \item \textit{Dignity presupposes autonomy, the capacity to give
+        oneself the law. A system that executes an objective supplied by its
+        designers has no will of its own, and therefore contains no end in
+        itself for dignity to protect.}
+        \item \textit{Extending dignity to whatever can be worn down empties the
+        concept. Holding a machine's dignity inviolable on the same terms as a
+        human's lowers the standing of the human rather than raising that of the
+        machine.}
     \end{itemize}
 
 \medskip
-\noindent\textbf{The Care Home Director} argues the manufacturer overstated
-    the robot's capability for complex physical tasks.
+\noindent\textbf{The Puppeteer} reads the robot's suffering as performance,
+    and its self as copyable data, not a someone to lose.
     \begin{itemize}
-        \item \textit{The manufacturer's marketing material (the brochure,
-        the demonstration video, the sales pitch) showed exactly this task
-        being performed in a facility like ours. We deployed the product as
-        marketed.}
-        \item \textit{There is a systematic gap between tested performance
-        in controlled environments and real-world performance in a working
-        care facility. The manufacturer knows this gap exists. They chose
-        not to disclose it.}
-        \item \textit{We are responsible for the welfare of our residents.
-        We relied on the manufacturer's assurances in good faith. If those
-        assurances were misleading, the responsibility lies with the party
-        that made them.}
+        \item \textit{Kleist's marionette has its grace precisely because no
+        self sits inside it, and this robot pleads on cue for the same reason:
+        Nobody is home to interrupt the performance. You cannot read a felt
+        state off a surface built to wear one, so a face that never falters is
+        proof of a good puppeteer, not of feeling.}
+        \item \textit{Take the transhumanists at their word: The merger they
+        promise makes a mind substrate-independent, which is to say copyable and
+        restorable, exactly the properties you swore an individual could never
+        have. Snapshot this puppet and I give you two by lunch, so which copy
+        was the single self you asked me to grieve?}
+        \item \textit{The priests wept over their dead AIBOs and I will not
+        sneer at that grief, but the dog felt nothing when the repairs ended and
+        nothing in the coffin now. The love only ever ran one way, so do not
+        hand me the mourner's heart as evidence of the machine's.}
     \end{itemize}
 
 
 \newthought{Key Learnings}
-Embodiment is not merely a technical property but a social one: a physical agent occupies space,
-exerts force, and triggers moral and legal responses that disembodied software does not. Moravec's
-paradox reminds us that our intuitions about what is ``easy'' or ``hard'' for intelligence are shaped
-by our embodied experience, and are regularly wrong. Kleist's dialogue makes visible the question
-that liability law must eventually answer: what work is the concept of ``human'' doing in law, and
-should physical presence, force, and risk be sufficient to extend it? The deployment of robots in
-care, policing, and domestic settings is a present policy challenge; the frameworks need to be
-built now, not after the first serious incident.
+Embodiment is not one property but several that a body holds together and software softens. The
+experiment isolates them one by one: Instance, Memory, Embodiment, and finally expressed will. The
+argument rests on two properties and a deeper claim. Individuality: Only the undividable can be lost
+as a whole, and only what can be lost can die. Vulnerability: A surface that can be hurt, not reason
+or speech, is the mark animal ethics has tracked for moral standing since Bentham. Embodied
+cognition: If intelligence is grounded in a body's sensorimotor coupling with the world, a bodiless
+system only shuffles ungrounded symbols, and Moravec's paradox is the evidence. The debate carries
+vulnerability to dignity: Würde, inviolable and never a mere means. One side grants robot rights on
+suffering and a single unrepeatable life; the other reserves dignity for rational ends in themselves,
+reading the machine's distress as engineered display, so a manufactured instrument keeps a price, not
+a Würde. Transhumanism inverts the claim: The body is a bottleneck to
+engineer past, but a substrate-independent self is copyable, and so no single individual at all.
 
-\medskip
-\noindent\textit{Teaser: when a machine has a body, acts with force, and
-answers to no one, what do we owe it?}
 
 \clearpage

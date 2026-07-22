@@ -19,7 +19,7 @@
 
 % As a leading group, you are required to moderate this session. Add margin notes in this script in case you want to add any additional questions or points to the discussion.
 
-\newthought{R.U.R.\ coined the word} \textit{robot} and traces the full
+\newthought{R.U.R.\ coined the word} \textit{robot}\index{Robot} and traces the full
 corrigibility-to-autonomy arc over three acts; \textit{Der Zauberlehrling} compresses the same parable
 into fifteen stanzas.\\
 
@@ -27,14 +27,14 @@ into fifteen stanzas.\\
 language model in a loop: it reasons toward a goal, emits an action in a
 structured form, has that action carried out in the world, and reads the
 result back as an observation that shapes its next move.\marginnote{%
-\newthought{Agent.} From Latin \textit{agere}, to act: one who acts.
+\newthought{Agent.}\index{Agent} From Latin \textit{agere}, to act: one who acts.
 Technically, a model placed in a loop that reasons toward a goal, emits an
 action, and reads the result back as an observation before acting again.}
 The action may be a search or a query, a call to an external tool, a
 transaction, or a command that drives a digital or physical interface. Run
 the loop and the system browses, transacts, and executes multi-step plans
 with no human between the steps. Interleaving reasoning with action and
-observation in this way was introduced for language models as ReAct
+observation in this way was introduced for language models as ReAct\index{ReAct}
 \cite{yao2022react}. This closing of the loop, from reasoning to
 action to observation and back, is what blurs the line between assistance and
 agency, and it raises the questions of control, incentives, and unintended
@@ -51,7 +51,7 @@ alignment that this session takes up.
 }%
 \begin{tabular}{p{3.8cm} p{6.5cm}}
     \textbf{Required reading} &
-        \textit{R.U.R.\ (Rossum's Universal Robots)}
+        \textit{R.U.R.\ (Rossum's Universal Robots)}\index{R.U.R.}\index{Capek, Karel@\v{C}apek, Karel}
         by Karel \v{C}apek (1920; Reclam UB~18418)
         \textit{and}
         \textit{Der Zauberlehrling}\index{Goethe, Johann Wolfgang von}\index{Der Zauberlehrling}
@@ -87,7 +87,7 @@ through the questions below individually, then bring your notes to the discussio
     scope. Who set the goal, and who is accountable for the side
     effects?
 
-    \item \textbf{Corrigibility} refers to a system's willingness to
+    \item \textbf{Corrigibility}\index{Corrigibility} refers to a system's willingness to
     be corrected or shut down. A fully corrigible system does whatever
     its operators say; a fully autonomous system acts on its own
     values. Where on this spectrum should deployed AI systems sit, and
@@ -130,11 +130,11 @@ through the questions below individually, then bring your notes to the discussio
 }
 \section*{Human in the Loop, on the Loop, out of the Loop}
 
-\newthought{Human in the loop.} System proposes; a human
+\newthought{Human in the loop.}\index{Human in the loop} System proposes; a human
 authorises each consequential action before it executes. Control per
 decision, throughput bounded by human attention.
 
-\newthought{Human on the loop.} System acts autonomously; a
+\newthought{Human on the loop.}\index{Human on the loop} System acts autonomously; a
 human monitors and may intervene or veto. Control by exception, throughput
 bounded by the machine.
 
@@ -143,7 +143,7 @@ bounded by the machine.
 Three postures span the range. \textit{In the loop}: a human authorises
 every consequential action before it executes. \textit{On the loop}: the
 system acts on its own and a human monitors, free to step in. \textit{Out
-of the loop}: No human is positioned to intervene at all.
+of the loop}\index{Human out of the loop}: No human is positioned to intervene at all.
 
 \newthought{Each posture trades control against throughput.} In the loop
 buys control one decision at a time and pays in speed: Nothing executes
@@ -153,15 +153,15 @@ to offer both at once, the system moving at its own speed while a
 supervisor keeps a veto in reserve. This is the easiest to mistake for
 control.
 
-\marginnote{\newthought{Human and Automation bias.} Deferring to automated output
+\marginnote{\newthought{Human and Automation bias.}\index{Automation bias} Deferring to automated output
 and ceasing to scrutinise it, strongest when the system is usually right. Or the problem is complex.}
 
 
-\marginnote{\newthought{Moral crumple zone.}\cite{elish2019crumple} A
+\marginnote{\newthought{Moral crumple zone.}\index{Moral crumple zone}\cite{elish2019crumple} A
 human held responsible at the controls of a system they cannot fully
 govern, positioned to absorb the blame when it fails.}
 
-\newthought{Meaningful human control}, asks not that a human be present but that a human can still decide, which
+\newthought{Meaningful human control}\index{Meaningful human control}, asks not that a human be present but that a human can still decide, which
 requires three things at once:
 
 \begin{itemize}
@@ -210,7 +210,7 @@ made review impossible? At this speed oversight collapses into authorisation.
 Control demands that the system can be overruled, a thing that creates a conflict, as it makes
 the system exploitable.
 
-\marginnote{\newthought{Controllability.} How far a human can direct and
+\marginnote{\newthought{Controllability.}\index{Controllability} How far a human can direct and
 correct a system. Perfect obedience is perfect exploitability.}
 
 
@@ -235,7 +235,7 @@ the system along this line, and pays at the end it moves away from.
 
 \section*{Out of the Loop: Rules for the Machine, Alignment for the Human}
 
-\marginnote{\newthought{Three Laws of Robotics.} Isaac Asimov,
+\marginnote{\newthought{Three Laws of Robotics.}\index{Three Laws of Robotics}\index{Asimov, Isaac} Isaac Asimov,
 \textit{I, Robot} (1950). A ranked set, each law holding except where it
 conflicts with a higher one:\\[3pt]
 \textbf{1.} No harm to a human, nor through inaction allow harm.\\[3pt]
@@ -248,12 +248,12 @@ move is to bake the rules into the machine instead, fixing its
 conduct in advance so that no live oversight is needed. The most cited
 attempt at this is fiction. In practive we train models on objective functions already.
 
-\marginnote{\newthought{Alignment.} The current research programme's name
+\marginnote{\newthought{Alignment.}\index{Alignment} The current research programme's name
 for this exact difficulty: getting a system to pursue what we intend rather
 than the literal objective we managed to specify. Russell%
 \cite{russell2019humancompatible} locates the failure in the standard model
 itself, where a fixed objective is written in advance and handed to the
-machine. The gap between the specification and the intent is where the alignment gap is.
+machine.\index{Russell, Stuart} The gap between the specification and the intent is where the alignment gap is.
 Ever tried to train an AI model on an objective function?}
 
 
