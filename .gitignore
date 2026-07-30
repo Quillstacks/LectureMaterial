@@ -19,6 +19,11 @@ lecturenotes/*/draft.pdf
 lecturenotes/*/_ch_*.tex
 lecturenotes/*/_ch_*.pdf
 
+# Standalone builds of unpublished chapters from tools/build_local_pdf.sh.
+# These deliberately bypass chapter_pdfs/, which is the publishing surface
+# (README tables are generated from it), so their output must stay local.
+lecturenotes/*/local/
+
 # GIF frame cache from the tuftedark \gif macro (regenerated from gifs/*.gif via gifsplit.sh)
 _gifcache/
 

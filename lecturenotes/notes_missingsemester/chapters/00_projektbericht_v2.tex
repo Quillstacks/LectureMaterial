@@ -1,0 +1,56 @@
+% !TEX root = ../notes_missingsemester.tex
+% Projektbericht Nachpruefung 2026: water rocket simulation tool.
+%
+% UNPUBLISHED. This file is deliberately NOT \input{} by
+% notes_missingsemester.tex and its PDF is deliberately NOT written to
+% chapter_pdfs/ (tools/update_readme_chapters.py generates the README table
+% from that directory, and tools/build_chapter_pdfs.sh prunes anything there
+% that the main file does not input). Build it standalone with:
+%   tools/build_local_pdf.sh lecturenotes/notes_missingsemester 00_projektbericht_v2
+% Output lands in lecturenotes/notes_missingsemester/local/.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{Nachprüfung}\index{course work}
+\chapter{Projektbericht Nachprüfung 2026}
+\newthought{Real artists ship. - Steve Jobs}
+
+\newthought{Build a water rocket simulation tool.}\index{water rocket}\index{simulation}\index{project report}
+A user configures a rocket, bottle volume,
+water fill level, launch pressure, nozzle diameter, fin and nosecone dimensions and position, masses, and then flies it in
+simulation. The primary quantity is the apogee. Make sure to survey what already exists in the state of the art and build from there.
+
+\marginnote{\newthought{How to write the report.} A practical guide for writing reports and theses lives \href{https://pages.schutera.com/}{here}.
+
+\medskip
+\null\hfill\qrcode[height=1.0cm]{https://pages.schutera.com/}
+\medskip
+
+For deeper druidic knowledge on writing a thesis, consult \href{https://pages.schutera.com/HowToThesis/notes.pdf}{here}.
+
+\medskip
+\null\hfill\qrcode[height=1.0cm]{https://pages.schutera.com/HowToThesis/notes.pdf}
+\medskip}
+
+\newthought{The tool is a full stack application}\index{full stack}: database, backend and
+frontend as separate services, wired along the practices of the lecture blocks, and deployable
+on any machine in one step with what you learned in the lecture, a docker compose or an equivalent.
+The objective is a properly designed simulation tool, not the optimal rocket configuration, so results reports the evidence that yours behaves as
+specified: A validation against a reference tool or an analytical estimate, or your own measurements
+against predefined dimensions and KPIs.
+
+\newthought{At least one algorithm from Fortgeschrittene Programmierung}\index{algorithm}
+must be implemented in the tool and carry a functional part of it. Reference the script of the lecture block and the original paper, and explain how it is used in your tool. 
+
+\newthought{Submit a written report as PDF}\index{assessment} and a link to your GitHub
+repository. Seven pages in IMRD structure\index{IMRD}: five on the tool and the full stack,
+two on the algorithms taken from the other modules.
+
+\marginnote{\newthought{Seven pages, and how they split.}
+Five pages on the tool and the full stack: problem, state of the art, design, architecture, data model,
+deployment, results, and discussion including limitations and next steps.
+Two pages on the algorithms from Fortgeschrittene Programmierung, the algorithm may run across Introduction, Methods, Results and Discussion.}
+
+
+\newthought{Evaluation} weighs the scope of the State of the Art Research, accuracy of the simulated apogee, the realism and range of
+the rocket configuration, the quality of the data model, the ease of large scale experimentation,
+the depth of the algorithmic work, and the quality of the writing and structure.
