@@ -1,0 +1,13 @@
+{
+  "cutout": "../cutouts_hl/05_cooler_top_hl.png",
+  "masthead": "Sovereign AI",
+  "tagline": "The home AI server build",
+  "issue": "Chapter 1   The Rig   Step 3 of 8",
+  "headline": "Cooler",
+  "dek": "A pea of paste, the tower on top, its fan into CPU_FAN. An AM5 tower air cooler.",
+  "cta": [
+    "Follow @Mark Schutera for the rest of the build",
+    "Comment, or send this to whoever should run their own AI server",
+    "Save it for the day you build yours"
+  ]
+}

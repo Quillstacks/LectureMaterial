@@ -1,0 +1,237 @@
+%% sovereignai.bib -- sources for the Sovereign AI buildbook.
+%%
+%% NO url AND NO access-note FIELDS. A \cite reprints the whole entry in the
+%% margin, and a raw URL there is unreadable and unusable on paper. An entry
+%% carries author, title, what kind of document it is, and the year. That is
+%% enough to find it.
+%%
+%% FIRST-PARTY SOURCES ONLY. Manufacturer datasheets, official product
+%% documentation, and official repositories. No third-party blogs, build
+%% guides, review sites, or link aggregators: they get slot widths and part
+%% names wrong, and they go dead.
+
+% ----------------------------------------------------------------------
+% Sovereignty framing
+% ----------------------------------------------------------------------
+@misc{nvidiaSovereignAI2024,
+    author       = {{NVIDIA}},
+    title        = {What Is Sovereign {AI}?},
+    year         = {2024},
+    howpublished = {NVIDIA}
+}
+
+@misc{redhatSovereignAI,
+    author       = {{Red Hat}},
+    title        = {What is sovereign {AI}?},
+    year         = {2025},
+    howpublished = {Red Hat Topics}
+}
+
+@misc{ibmAISovereignty,
+    author       = {{IBM}},
+    title        = {What is {AI} Sovereignty?},
+    year         = {2025},
+    howpublished = {IBM Think}
+}
+
+@misc{bakkerEurope2031,
+    author       = {Juijn, Daan and others},
+    title        = {Europe 2031},
+    year         = {2026},
+    howpublished = {Arq Foundation}
+}
+
+@misc{bakkerDeltaplan2025,
+    author       = {Prins, Jelle and Bakker, Michiel A.},
+    title        = {Nederland: Nationaal {AI} Deltaplan},
+    year         = {2025},
+    howpublished = {Dutch Ministry of Economic Affairs}
+}
+
+@article{cambridgeSovereignAI2025,
+    title     = {Sovereign {AI} in 2025},
+    journal   = {Natural Language Processing},
+    publisher = {Cambridge University Press},
+    year      = {2025}
+}
+
+% ----------------------------------------------------------------------
+% Hardware: manufacturer datasheets for the bill of materials
+% ----------------------------------------------------------------------
+@misc{gigabyteB650EagleAX,
+    author       = {{GIGABYTE}},
+    title        = {{B650} {EAGLE} {AX} (rev.~1.2) Motherboard Specifications},
+    year         = {2026},
+    howpublished = {Product datasheet}
+}
+
+@misc{amdRyzen9600X,
+    author       = {{AMD}},
+    title        = {{AMD} {Ryzen}~5 9600{X} Processor Specifications},
+    year         = {2026},
+    howpublished = {Product datasheet}
+}
+
+@misc{gskillRipjawsS5,
+    author       = {{G.SKILL}},
+    title        = {{Ripjaws} {S5} {DDR5-6000} {CL36} 64{GB} (2x32{GB}), {F5-6000J3636F32GX2-RS5K}},
+    year         = {2026},
+    howpublished = {Product datasheet}
+}
+
+@misc{asrockPG1600G,
+    author       = {{ASRock}},
+    title        = {{Phantom} {Gaming} {PG-1600G} 1600~{W} {ATX}~3.1 Power Supply},
+    year         = {2026},
+    howpublished = {Product datasheet}
+}
+
+@misc{nvidiaRTX3090,
+    author       = {{NVIDIA}},
+    title        = {{GeForce} {RTX} 3090 Family Specifications},
+    year         = {2022},
+    howpublished = {Product datasheet}
+}
+
+@misc{raspberrypiPi5,
+    author       = {{Raspberry Pi Ltd}},
+    title        = {{Raspberry} {Pi}~5 Product Brief},
+    year         = {2023},
+    howpublished = {Product datasheet}
+}
+
+@misc{raspberrypiM2HAT,
+    author       = {{Raspberry Pi Ltd}},
+    title        = {{Raspberry} {Pi} {M.2} {HAT+} Product Brief},
+    year         = {2024},
+    howpublished = {Product datasheet}
+}
+
+@misc{nvidiaRTX3090Guide,
+    author       = {{NVIDIA}},
+    title        = {{GeForce} {RTX} 3090 User Guide, v02},
+    year         = {2020},
+    howpublished = {Product manual}
+}
+
+% ----------------------------------------------------------------------
+% OS layer: NVIDIA driver, CUDA, Docker
+% ----------------------------------------------------------------------
+@misc{nvidiaContainerToolkit,
+    author       = {{NVIDIA}},
+    title        = {Installing the {NVIDIA} Container Toolkit},
+    year         = {2025},
+    howpublished = {NVIDIA Container Toolkit Documentation}
+}
+
+% ----------------------------------------------------------------------
+% Engine: Ollama
+% ----------------------------------------------------------------------
+@misc{ollamaDocs,
+    author       = {{Ollama}},
+    title        = {Ollama Documentation: Linux Install and {OpenAI}-Compatible {API}},
+    year         = {2026},
+    howpublished = {Ollama Documentation}
+}
+
+@misc{ollamaVision,
+    author       = {{Ollama}},
+    title        = {Vision Models: Multimodal Image Understanding and {OCR}},
+    year         = {2026},
+    howpublished = {Ollama Model Library}
+}
+
+% ----------------------------------------------------------------------
+% Front end: Open WebUI
+% ----------------------------------------------------------------------
+@misc{openwebuiAPI,
+    author       = {{Open WebUI}},
+    title        = {{API} Endpoints},
+    year         = {2026},
+    howpublished = {Open WebUI Documentation}
+}
+
+@misc{openwebuiRAG,
+    author       = {{Open WebUI}},
+    title        = {Retrieval Augmented Generation: Documents and Knowledge},
+    year         = {2026},
+    howpublished = {Open WebUI Documentation}
+}
+
+@misc{openwebuiRepo,
+    author       = {{Open WebUI}},
+    title        = {Open {WebUI}: User-friendly {AI} Interface},
+    year         = {2025},
+    howpublished = {Project repository}
+}
+
+% ----------------------------------------------------------------------
+% Serving at scale: vLLM
+% ----------------------------------------------------------------------
+@misc{vllmParallelism,
+    author       = {{vLLM Project}},
+    title        = {Parallelism and Scaling},
+    year         = {2025},
+    howpublished = {vLLM Documentation}
+}
+
+@misc{vllmDistributed,
+    author       = {{vLLM Project}},
+    title        = {Distributed Inference and Serving},
+    year         = {2025},
+    howpublished = {vLLM Documentation}
+}
+
+% ----------------------------------------------------------------------
+% Remote access
+% ----------------------------------------------------------------------
+@misc{tailscaleSelfHostAI,
+    author       = {{Tailscale}},
+    title        = {Self-host a local {AI} stack and access it from anywhere},
+    year         = {2026},
+    howpublished = {Tailscale}
+}
+
+@misc{cloudflareTunnel,
+    author       = {{Cloudflare}},
+    title        = {Cloudflare Tunnel},
+    year         = {2025},
+    howpublished = {Cloudflare Zero Trust Documentation}
+}
+
+% ----------------------------------------------------------------------
+% Voice assistant
+% ----------------------------------------------------------------------
+@misc{haWyoming,
+    author       = {{Home Assistant}},
+    title        = {Wyoming Protocol},
+    year         = {2025},
+    howpublished = {Home Assistant Documentation}
+}
+
+@misc{haLocalVoice,
+    author       = {{Home Assistant}},
+    title        = {Set up a fully local voice assistant},
+    year         = {2025},
+    howpublished = {Home Assistant Documentation}
+}
+
+% ----------------------------------------------------------------------
+% Obsidian
+% ----------------------------------------------------------------------
+@misc{obsidianCopilot,
+    author       = {Logan Yang},
+    title        = {obsidian-copilot: Local Copilot for Obsidian},
+    year         = {2025},
+    howpublished = {Project repository}
+}
+
+% ----------------------------------------------------------------------
+% Image generation
+% ----------------------------------------------------------------------
+@misc{comfyuiRepo,
+    author       = {{comfyanonymous}},
+    title        = {{ComfyUI}: A Powerful and Modular Diffusion Model {GUI}},
+    year         = {2025},
+    howpublished = {Project repository}
+}

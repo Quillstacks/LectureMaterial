@@ -1,0 +1,13 @@
+{
+  "cutout": "../cutouts_hl/01_board_bare_flat_hl.png",
+  "masthead": "Sovereign AI",
+  "tagline": "The home AI server build",
+  "issue": "Chapter 1   The Rig   Step 1 of 8",
+  "headline": "Motherboard",
+  "dek": "This is where the build starts. A Gigabyte B650 Eagle AX.",
+  "cta": [
+    "Follow @Mark Schutera for the rest of the build",
+    "Comment, or send this to whoever should run their own AI server",
+    "Save it for the day you build yours"
+  ]
+}

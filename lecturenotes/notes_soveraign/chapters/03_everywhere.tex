@@ -1,0 +1,132 @@
+% !TEX root = ../notes_sovereignai.tex
+% Chapter 3: Everywhere. Tailscale / Cloudflare + Open WebUI API keys.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{Tailscale}\index{Cloudflare}\index{API key}\index{tailnet}
+\chapter{Everywhere}
+\printchapterversion{03_everywhere}
+\newthought{Reachable, Not Exposed.}
+\vspace{1.5em}
+
+% ==============================================================================================
+% THE WHY
+% ==============================================================================================
+
+\section{The Why}\index{remote access}\index{attack surface}
+
+\newthought{The engine answers on the home network} and trusts anyone who can reach it. That is
+fine for a browser in the kitchen and useless for the rest of life: the laptop on a
+train, the phone in another country, the coding agent in your terminal at work. This
+chapter makes the box reachable from anywhere without exposing it to everyone, and
+turns it into something your other tools can authenticate against.
+
+\marginnote{\newthought{Two different jobs.} Reaching the box yourself from your own
+devices is one problem; letting the family open a link without installing anything is
+another; letting a program log in with a key is a third. They want three different
+answers, not one.}
+
+\newthought{The danger to respect} is that Ollama has no password and was built to
+listen only to its own machine. The lazy fix, binding it to the network directly,
+hands your GPU to the internet\index{port forwarding}. So nothing is exposed raw. Instead a private network
+carries you to the box, a tunnel carries the family, and Open WebUI issues keys for
+programs.
+
+\newthought{By the end of this chapter} you will have:
+\begin{itemize}
+    \item reached Open WebUI from your phone and laptop anywhere, over a private mesh;
+    \item opened a browser link for the family that needs no VPN;
+    \item issued an API key and driven the engine from a terminal coding agent off-site.
+\end{itemize}
+
+% ==============================================================================================
+% REACH AND AUTH
+% ==============================================================================================
+
+\section{Reach and Auth}\index{mesh VPN}\index{tunnel}\index{authentication}
+
+\newthought{Tailscale} builds a private encrypted mesh between your own devices.
+Install it on the rig and on your laptop and phone, and they reach each other by a
+stable name as if on one LAN, through firewalls and carrier NAT\index{NAT traversal}, with no port
+forwarded and nothing published. The tailnet itself is the authentication: only
+your enrolled devices\index{tailnet} can connect, so the box is reachable everywhere by you and
+invisible to everyone else\cite{tailscaleSelfHostAI}.
+
+\marginnote{\newthought{Mesh versus tunnel.} A mesh joins devices you own into one
+private network. A tunnel publishes one service to the public web behind a login.
+The first is for you on the move; the second is for people who will not install a
+VPN. Most homelabs run both.}
+
+\newthought{Cloudflare Tunnel}\index{Cloudflare!Tunnel} solves the other case: a relative who just wants a
+link. A small daemon on the rig dials out to Cloudflare, which serves your chat at a
+real hostname with automatic TLS\index{TLS termination}, and Cloudflare Access\index{Cloudflare!Access} puts a login in
+front\cite{cloudflareTunnel}. The
+sovereignty cost is real: Cloudflare terminates the TLS and sees the metadata of
+who connects when, though not what runs on your hardware. Use it for the family
+front door, not for your private traffic.
+
+\newthought{Open WebUI is the key issuer.}\index{Open WebUI!API keys} Programs do not log in through a browser;
+they send a key. Open WebUI already holds the accounts, and it exposes an
+OpenAI-compatible endpoint\index{OpenAI-compatible API} at \texttt{/api} where each user can mint API keys. A
+terminal coding agent\index{coding agent} or an editor points at that endpoint with a bearer key\index{bearer token} and
+talks to the same models, authenticated and logged per user, never touching Ollama
+directly\cite{openwebuiAPI}.
+
+% ==============================================================================================
+% USE IT ANYWHERE
+% ==============================================================================================
+
+\section{Use It Anywhere}\index{tailscale serve}\index{Tailscale}
+
+\marginnote{\newthought{Install once per device.} Tailscale goes on the rig and on
+every device you want to reach it from. The phone and laptop apps are a login, not a
+config file.}
+
+\newthought{Join the rig to your mesh}, then reach it by name:
+
+\begin{verbatim}
+$ curl -fsSL https://tailscale.com/install.sh | sh
+$ sudo tailscale up                    # log in once in the browser
+$ tailscale serve --bg 3000            # Open WebUI over HTTPS on the tailnet
+\end{verbatim}
+
+\newthought{Open it from anywhere.} With Tailscale running on your phone, browse to
+the rig's tailnet name; Open WebUI loads from your own hardware over an encrypted
+link, on cellular, with nothing exposed to the public internet.
+
+\marginnote{\newthought{The family door}, optionally. A Cloudflare tunnel publishes
+the same chat at a public hostname with a login: \texttt{cloudflared tunnel create
+rig}, route a hostname to \texttt{localhost:3000}, \texttt{cloudflared tunnel run},
+then add a Cloudflare Access policy limiting it to your family's emails.}
+
+\newthought{Mint a key} in Open WebUI under Settings, Account, then drive the engine
+from a program. Any OpenAI-compatible client works; point it at the \texttt{/api}
+endpoint with the key:
+
+\begin{verbatim}
+$ export OPENAI_API_BASE=https://rig.your-tailnet.ts.net/api
+$ export OPENAI_API_KEY=sk-...         # from Open WebUI > Settings > Account
+$ curl $OPENAI_API_BASE/chat/completions \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d '{"model":"qwen3:14b","messages":[{"role":"user","content":"hi"}]}'
+\end{verbatim}
+
+\marginnote{\newthought{Coding agents.}\index{coding agent} Aider, OpenCode, and Cline all take an
+OpenAI base URL and key, so the two variables above are the whole setup. Even Claude
+Code can be pointed home with \texttt{ANTHROPIC\_BASE\_URL} set to the same
+\texttt{/api} and \texttt{ANTHROPIC\_AUTH\_TOKEN} set to your key.}
+
+\newthought{What you now own} travels with you. From a laptop on a foreign network,
+your terminal coding agent reads the two variables, sends a task to the rig at home,
+and edits your code on a model nobody meters.
+
+% ==============================================================================================
+% BRIDGE
+% ==============================================================================================
+
+\newthought{The engine is now everywhere you type}, reaching your devices, your
+family, and your tools. The one place it cannot reach is the air of the room, since
+using it still means opening a screen. The next chapter gives the house a voice, so
+the rig answers out loud and acts on what it hears without a word leaving the
+building.
+
+\marginnote{\newthought{feedback}}

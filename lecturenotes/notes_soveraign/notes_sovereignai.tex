@@ -1,0 +1,148 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Sovereign AI
+% Author: Prof. Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+\makeindex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% A hands-on buildbook. The running example is one real rig: a platform
+% designed for four GPUs, populated today with a single RTX 3090, expandable
+% by dropping cards in. Tone borrows the reflective framing of Philosophy of
+% AI but the body is weighted toward Missing Semester hands-on: bill of
+% materials, verbatim commands, config files, a verifiable artifact per block.
+%
+% Series spine (chapters 02-06 are currently commented out below):
+%   01 The Rig               hardware, design for four, one 3090, wired and unpowered
+%   02 The Engine            first boot, Ubuntu Server, driver, Docker, Ollama, Open WebUI
+%   03 Everywhere            Tailscale / Cloudflare exposure + Open WebUI API keys
+%   04 A Voice in the House  Home Assistant + Wyoming + Whisper + Piper + Ollama
+%   05 Second Brain          Obsidian on the local engine
+%   06 Next Steps            multimodal, OCR, retrieval, images, and beyond
+% See outline.md for the chapter plans.
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+% Long title on the title page, short form in the running header and metadata.
+% Title and subtitle are one \title argument, split by an explicit \\: the class
+% sets the whole thing letterspaced allcaps at 36pt, so the subtitle carries its
+% own \fontsize to drop it back to a readable second line. No space after \\ (it
+% would survive as an indent in the letterspaced line).
+\title[Sovereign AI]{Owning the Mind\\{\fontsize{16}{20}\selectfont Your guide to sovereign AI at home}}
+\author[\defaultauthor]{\defaultauthor}
+\publisher[\defaultpublisher]{\defaultpublisher}
+\renewcommand{\notesdir}{notes_sovereignai}
+
+% Load optional fonts
+\loadoptionalfonts
+
+% Build photos live in figures/; the class only puts graphics/ on the path.
+\graphicspath{{graphics/}{figures/}{figures/cutouts/}{figures/cutouts_gray/}{figures/cutouts_hl/}}
+
+% Schusterjungen and Hurenkinder. LaTeX defaults both penalties to 150, which is
+% advisory, so single lines do get stranded at a page break. 10000 forbids them.
+% \brokenpenalty stops a page breaking right after a hyphenated line.
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+\brokenpenalty=10000
+
+% Additional packages
+% Keeps a heading from being stranded with a line or two at a page foot, which
+% also drags that section's marginnotes into the bottom margin.
+\usepackage{needspace}
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{tikz}
+\usetikzlibrary{positioning,fit,shapes.geometric,shapes.symbols,arrows.meta,calc,backgrounds}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{qrcode}
+% Break long URLs anywhere so href'd citation links in the narrow Tufte
+% margins wrap instead of running off the side of the page.
+\usepackage{xurl}
+\Urlmuskip=0mu plus 1mu\relax
+
+\begin{document}
+
+\makestandardfrontmatter
+% Dedication
+\makededication{\openepigraph{``There ain't no such thing as a free
+lunch.''}{The Moon Is a Harsh Mistress, Robert A. Heinlein}}
+\tableofcontents
+
+% Introduction
+\makeintroduction{%
+  \newthought{Compute moved off your desk.}\index{cloud} For most of computing history a program ran
+  on hardware you owned. First the data moved into the cloud. Now the models run there
+  too, on a meter, and what you send is retained unless you have contracted otherwise. Both things that you should own, 
+  your data and your compute, are now liabilities, and you have to pay for the privilege
+  while relying on someone else's good faith.
+
+  \newthought{Sovereignty is not autarky.}\index{sovereignty}\index{sovereign AI} National AI plans\index{national AI plans} do not propose building
+  the whole stack on their home turf. They name dependencies and the levers held against
+  them\cite{bakkerEurope2031}. Europe holds the lithography that prints the world's
+  chips, the United States most of the compute and the leading, frontier model weights. 
+  Most European plans though fund domestic compute to keep a lever of their own\cite{bakkerDeltaplan2025}.
+
+  \newthought{A household is the same shape.} You depend on the grid, a line, a fab in
+  Taiwan, and weights someone else trained. What changes is which decisions are yours once you own the infrastructure the model runs on. This book is about building a household-scale private AI stack, from the metal up, which changes the dependencies to:
+  \begin{itemize}[topsep=0.25em, itemsep=0.15em, parsep=0em]
+    \item cost paid once, then metered in kilowatt hours, not tokens;
+    \item inference and data residency\index{data residency} on machines you own;
+    \item acquired technical knowledge and skills;
+    \item weights\index{model weights} on your own disk, and owning of the design space of your pipeline.
+  \end{itemize}
+
+  \marginnote{\newthought{This build is for inference.}\index{inference}\index{training}
+  AI inference loads model weights once and then streams tokens, so a single
+  PCIe~3.0 lane keeps up. Training, fine tuning\index{fine-tuning} and image or video
+  generation\index{image generation} move tensors across the bus for the whole run. 
+  When facing the latter use-case you should target a server platform auch as an AMD EPYC\index{AMD EPYC} board, which gives
+  six cards a full x16 link each.}
+
+  \newthought{Your own machine is the lever you can build today.} 
+  All you need are some parts, this manual, and some tinkering. 
+  From then on the model runs where you put it, on data that stays where you put
+  it. You pick the model, the quantisation\index{quantization}, the runtime, and the moment to change any
+  of them.
+  }
+
+%% Start the main matter
+\mainmatter
+\authorinrectoheader
+
+% ----------------------------------------------------------------------
+% SOVEREIGN AI, a household-scale private AI stack, built from the metal up
+% ----------------------------------------------------------------------
+
+% CHAPTER 1: the rig, hardware, design for four, one 3090, wired and unpowered
+\input{chapters/01_hardware.tex}
+
+% CHAPTER 2: the engine, first boot, OS, driver, Docker, Ollama, Open WebUI
+%\input{chapters/02_engine.tex}
+
+% CHAPTER 3: everywhere, Tailscale / Cloudflare exposure + Open WebUI API keys
+%\input{chapters/03_everywhere.tex}
+
+% CHAPTER 4: a voice in the house, Home Assistant + Wyoming + Whisper + Piper + Ollama
+%\input{chapters/04_voice.tex}
+
+% CHAPTER 5: second brain, Obsidian on the local engine
+%\input{chapters/05_secondbrain.tex}
+
+% CHAPTER 6: next steps, multimodal, OCR, retrieval, images, and beyond
+%\input{chapters/06_nextsteps.tex}
+
+\nocite{nvidiaSovereignAI2024}
+\makestandardbackmatter{sovereignai}
+
+\end{document}

@@ -1,0 +1,235 @@
+% !TEX root = ../notes_sovereignai.tex
+% Chapter 2: The Engine. First boot, OS, driver, Docker, Ollama, Open WebUI.
+%
+% This chapter owns everything from the first power-on onward. Firmware setup and
+% the enumeration probe live here, not in the hardware chapter: they are the first
+% thing software does to the rig, and they are what separates a hardware fault from
+% a software one before there is any software to blame.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{Ollama}\index{Open WebUI}\index{Docker}\index{CUDA}\index{Ubuntu Server}\index{NVIDIA driver}
+\chapter{The Engine}
+\label{ch:engine}
+\printchapterversion{02_engine}
+\newthought{Silicon, Meet Software.}
+\vspace{1.5em}
+
+% ==============================================================================================
+% THE WHY
+% ==============================================================================================
+
+\section{The Why}\index{inference}\index{container runtime}
+
+\newthought{The rig is assembled}, wired, and has never been switched on. A graphics card is
+only potential until software puts a model on it and hands you a way to ask
+questions. This chapter powers the machine for the first time, proves every part
+is really there, and turns the metal into a served model the whole family can talk
+to, with the least machinery that works: firmware, an operating system, a driver, a
+container runtime, and one program that loads models onto the GPU.
+
+\newthought{That program is Ollama.}\index{Ollama!install} It is the shortest path to local
+inference: one command installs it, it finds the GPU on its own, and it serves an
+API\index{OpenAI-compatible API} the rest of the world already speaks. In front of it we put
+Open WebUI, a private chat in the browser, so the family has something to use on
+day one and you have an account system to build on later.
+
+\marginnote{\newthought{Why not vLLM yet.}\index{vLLM} vLLM wins when many people hit the
+box at once, and it is also what answers a narrow slot: cards two to four sit on a
+single PCIe lane, where tensor parallelism\index{tensor parallelism} would push activations across the
+link on every token. vLLM need not split a model that way. A replica per card, or a
+split by layer with pipeline parallelism\index{pipeline parallelism}, sends almost nothing over the link,
+so lane width stops mattering and the answer stays in software rather than in a
+server board. On one card serving a household, Ollama's one command beats vLLM's
+tuning, and both speak the same OpenAI-compatible API, so the swap is later and cheap.}
+
+\newthought{By the end of this chapter} you will have:
+\begin{itemize}
+    \item set five firmware values and proved the hardware enumerates before an
+    operating system touched the drives;
+    \item put Ubuntu Server, the NVIDIA driver, and GPU-aware Docker on the rig;
+    \item run a model on the 3090 with Ollama and confirmed it answers on the API;
+    \item stood up Open WebUI and chatted with the model from a browser on your LAN.
+\end{itemize}
+
+% ==============================================================================================
+% FIRST BOOT
+% ==============================================================================================
+
+\section{First Boot}\index{firmware}
+
+\newthought{Power on.} Connect the monitor to the board's own display output, not to
+the graphics card, switch the supply on, and press the power button. The fans should
+spin up and hold; a half turn and a stop means the supply or the 24~pin is not
+seated. Enter setup when the splash appears.
+
+\marginnote{\newthought{Two of these are for later.} Above 4G Decoding and
+Resizable BAR only bite once a second card arrives, so set them now, while the
+rail is still empty and a later card cannot fail in a way that looks like dead
+hardware.}
+
+\newthought{Set five values}\index{Above 4G Decoding}\index{Resizable BAR}\index{IOMMU}\index{integrated graphics}\index{EXPO profile}\index{XMP profile}, then save and exit:
+
+\begin{verbatim}
+Above 4G Decoding ............ Enabled
+Re-Size BAR Support .......... Enabled
+IOMMU ........................ Enabled
+Initial Display Output ....... IGD
+EXPO / XMP profile ........... Profile 1
+\end{verbatim}
+
+\marginnote{\newthought{What they do.} Above 4G Decoding gives the cards address
+space beyond the 32~bit boundary, without which a second card fails to map at all.\index{VRAM}
+Resizable BAR lets the processor address a card's whole VRAM in one window, which
+speeds weight loading. IOMMU keeps device passthrough\index{device passthrough} available. Initial Display
+Output on the integrated graphics leaves all 24~GB of every card free for models.}
+
+\newthought{The last of the five is the memory.} A DDR5 kit does not run at the
+speed on its box until you say so: leave the EXPO profile off and the modules clock
+themselves to the conservative default published by JEDEC\index{JEDEC}, the memory standards
+body, rather than the rated 6000 they were bought for. This is the one firmware
+value that changes nothing about whether the machine works and everything about how
+fast it feeds the cards.
+
+\marginnote{\newthought{Menu names move.} These five sit under different headings
+in different firmware revisions of the same board. Use the setup search rather than
+trusting a path from a screenshot, and set all five in one visit: a value missed
+here surfaces later as a hardware fault that is not one.}
+
+\newthought{Probe before you install anything.}\index{lspci}\index{enumeration} Boot an Ubuntu Server image from a
+USB stick and choose to try it without installing. Nothing here writes to the
+drives:
+
+\begin{verbatim}
+$ lscpu | grep 'Model name'   # AMD Ryzen 5 9600X
+$ free -h                     # total ~ 62Gi
+$ lspci | grep -i nvidia      # NVIDIA GA102 [RTX 3090]
+$ lspci -vv | grep LnkSta:    # Width x16
+\end{verbatim}
+
+\marginnote{\newthought{Why this proves anything.} Enumeration is the firmware
+naming each device on the bus, and it happens with no driver loaded. A card that
+enumerates is seated, powered, and addressable, which separates a hardware fault
+from a software one before there is any software to blame.}
+
+\newthought{Four clean answers} clear the way for software: the right processor, the
+full memory, an NVIDIA device on the bus, and that device at x16. If the card is
+missing, reseat the riser and confirm both eight pin cables. If the width reads x1,
+the card is on the wrong slot or the wrong riser. If memory reads half, reseat the
+second module. Past this point every failure is a software failure.
+
+\marginnote{\newthought{Link speed, read honestly.}\index{PCIe!link width} \texttt{LnkSta} is the
+negotiated state, not the capability, and a card at idle may report a lower speed
+until it is put to work. Width is the number to trust here.}
+
+% ==============================================================================================
+% LOCAL SERVING
+% ==============================================================================================
+
+\section{Local Serving}\index{quantization}\index{model weights}
+
+\newthought{A served model is a stack} four layers deep. The operating system
+owns the hardware; the NVIDIA driver\index{NVIDIA driver} lets programs reach the card; the NVIDIA
+Container Toolkit\index{NVIDIA Container Toolkit} lets Docker containers reach it too, so every service in this
+book ships as a container without fighting over the GPU; and Ollama sits on top,
+loading model weights\index{model weights} into the 24~GB of video memory\index{VRAM} and answering requests.
+
+\marginnote{\newthought{Why containers.} Each later service, the chat, the voice
+pipeline, image generation, is a container that asks Docker for the GPU\index{Docker!GPU passthrough} and gets
+it. The toolkit passes the host driver through, so you install the driver once on
+the metal and never again inside a container.}
+
+\newthought{Models come quantized.} A model's weights are shrunk from sixteen bit
+floats to four or five bits with little loss\index{quantization}, which is what lets a capable model
+fit in 24~GB. Ollama pulls these as ready-to-run files and picks a sensible
+quantization for you; a fourteen billion parameter model leaves headroom for
+context, a thirty billion parameter mixture-of-experts\index{mixture of experts} model fills the card and is
+the ceiling for a single 3090.
+
+\marginnote{\newthought{Pick a tool-caller.}\index{tool calling} Choose from the Qwen3\index{Qwen3} family. Beyond
+chat quality, prefer a model that supports tool calling, since Chapter~4's voice
+assistant cannot flip a single switch without it. Filter the model library by
+\texttt{tools} and ignore the rest.}
+
+\newthought{The API is the point.}\index{Ollama!API} Ollama serves an OpenAI-compatible endpoint at
+\texttt{:11434/v1}, the same shape every client in this book speaks. Two cautions
+that Chapter~3 acts on: it binds to localhost and it has no authentication, so on
+its own it is reachable only from the machine itself, and opening it to the
+network without a gateway in front would leave it wide open\cite{ollamaDocs}.
+
+\section{Run a Model}\index{nvidia-smi}
+
+\marginnote{\newthought{Headless is the habit.}\index{SSH} Do all of this over SSH from your
+laptop; the rig needs no monitor of its own. Run the GPU steps first, because every
+later one assumes the card is visible to software.}
+
+\newthought{Lay the foundation.}\index{Ubuntu Server} Install Ubuntu Server~24.04 from the same USB
+stick you probed with, then the driver and a GPU-aware Docker:
+
+\begin{verbatim}
+$ sudo ubuntu-drivers install          # NVIDIA driver
+$ sudo reboot
+$ nvidia-smi                           # the 3090 appears, with its 24 GiB
+
+$ curl -fsSL https://get.docker.com | sh
+$ sudo nvidia-ctk runtime configure --runtime=docker
+$ sudo systemctl restart docker
+$ docker run --rm --gpus all ubuntu nvidia-smi   # the card, now inside a container
+\end{verbatim}
+
+\marginnote{\newthought{Split the drive here, not at the shop.}\index{partitioning}\index{Ollama!model directory} Manual partitioning
+in the installer gives the system its own partition and leaves the rest as a
+separate filesystem for weights, and the board keeps two free M.2 sockets if a
+second drive comes later. Either way \texttt{OLLAMA\_MODELS} points at the large
+volume, so reinstalling the operating system never touches a model library that
+took days to download.}
+
+\newthought{Install the engine and pull a model.}\index{Ollama!model pull}\index{model library} One command installs Ollama,
+which detects the card; one more pulls a model and opens a chat:
+
+\begin{verbatim}
+$ curl -fsSL https://ollama.com/install.sh | sh
+$ ollama pull qwen3:14b
+$ ollama run qwen3:14b      # type a question; watch nvidia-smi load the card
+\end{verbatim}
+
+\newthought{Confirm it answers on the API}, the interface every later chapter
+uses:
+
+\begin{verbatim}
+$ curl http://localhost:11434/v1/chat/completions -d '{
+    "model": "qwen3:14b",
+    "messages": [{"role": "user", "content": "say hello"}]
+  }'
+\end{verbatim}
+
+\newthought{Put a face on it.}\index{Docker!volume} Run Open WebUI as a container pointed at Ollama,
+with a named volume so accounts and history survive restarts:
+
+\begin{verbatim}
+$ docker run -d --name open-webui -p 3000:8080 \
+    --add-host=host.docker.internal:host-gateway \
+    -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+    -v open-webui:/app/backend/data \
+    ghcr.io/open-webui/open-webui:main
+\end{verbatim}
+
+\marginnote{\newthought{The first account is admin.}\index{Open WebUI!accounts} Open WebUI's first sign-up
+becomes the administrator; create it, then add an account for each member of the
+household under the admin panel. That account system is the gateway Chapter~3 hands
+keys from.}
+
+\newthought{What you now own} is a served model. From any browser on your home
+network, open \texttt{http://rig-address:3000}, sign in, and chat. A family member
+two rooms away is talking to a model running on your 3090, with no token metered
+and no prompt leaving the house.
+
+% ==============================================================================================
+% BRIDGE
+% ==============================================================================================
+
+\newthought{The engine runs, but only at home.} It answers on the local network and
+nowhere else, and it trusts anyone who can reach it. The next chapter carries it to
+your phone, your laptop, and your terminal wherever they are, without opening the
+box to everyone.
+
+\marginnote{\newthought{feedback}}

@@ -1,0 +1,80 @@
+% !TEX root = ../notes_sovereignai.tex
+% Chapter 6: Next Steps. A curated roadmap of where to take the rig next.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{roadmap}\index{multimodal}\index{OCR}\index{image generation}
+\chapter{Next Steps}
+\printchapterversion{06_nextsteps}
+\newthought{Where the Rig Goes Next.}
+\vspace{1.5em}
+
+% ==============================================================================================
+% THE WHY
+% ==============================================================================================
+
+\section{The Why}\index{extensibility}
+
+\newthought{The stack is complete enough to live on}: a model on hardware you own, reachable
+everywhere, answering by browser, terminal, voice, and from your own notes. This
+last chapter is a map rather than a build, a list of where to take the rig when you
+want more, each step a pointer with the tool and the reason. Every one of them is a
+new client of the same engine or a new tenant on the same GPU, so none requires
+starting over.
+
+% ==============================================================================================
+% THE ROADMAP
+% ==============================================================================================
+
+\section{The Roadmap}\index{vision}\index{fine-tuning}
+
+\newthought{The capabilities worth adding next}, roughly in order of payoff for a
+household:
+
+\begin{itemize}
+    \item Vision and OCR. A multimodal model such as Qwen3-VL\index{Qwen3}, pulled into Ollama
+    like any other, lets the engine read images, screenshots, diagrams, and scanned
+    or handwritten pages, turning a photo of a letter or a receipt into text and
+    answers\cite{ollamaVision}.
+
+    \item Documents and retrieval\index{knowledge base}. Beyond the Obsidian vault, point Open WebUI's
+    knowledge feature at your PDFs and folders; it embeds and searches them so the
+    family chat can answer from manuals, contracts, and records, all indexed on the
+    rig\cite{openwebuiRAG}.
+
+    \item Image generation\index{image generation}. ComfyUI\index{ComfyUI} on the same GPU adds text-to-image with SDXL\index{SDXL} or
+    Flux\index{Flux}, a node-based pipeline that is faster and lighter on memory than the
+    older web UIs and shares the card with the language engine\cite{comfyuiRepo}.
+
+    \item The editor\index{coding agent}. Continue or Cline in VS Code points at the same Open WebUI API
+    key from Chapter~3, so inline completion and chat in your editor run on the rig,
+    the same engine your terminal already uses.
+
+    \item Real concurrency. When the household load grows, move the serving layer to
+    vLLM\index{vLLM}, whose continuous batching\index{continuous batching} serves many people at once from one
+    card. Extra cards join as a replica each, or as a split by layer with pipeline
+    parallelism\index{pipeline parallelism}, both of which leave the single lane alone where tensor
+    parallelism\index{tensor parallelism} would not. It speaks the same API, so the clients above do not
+    change\cite{vllmParallelism}.
+
+    \item More ears. Add a Wyoming satellite\index{voice satellite} per room, custom wake words\index{wake word}, and
+    streaming text-to-speech so replies begin before the sentence is finished; the
+    Chapter~4 pipeline scales by adding microphones, not rebuilding.
+
+    \item Health and hygiene. Watch GPU temperature and memory\index{monitoring}, back up the Docker
+    volumes\index{backup} that hold accounts and history, keep models current with periodic pulls,
+    and hold the cards near their undervolt\index{undervolting} so the rig runs cool and quiet for years.
+
+    \item Your own domain. When a general model is not enough, fine-tune\index{fine-tuning} a small one
+    or train a LoRA adapter\index{LoRA} on the rig against your own data, the deepest form of a
+    model that is truly yours.
+\end{itemize}
+
+% ==============================================================================================
+% CLOSING
+% ==============================================================================================
+
+\newthought{What you now own} is a machine in a room and an engine you understand
+well enough to extend. Whatever you add from here runs on that hardware and keeps
+working when the network does not.
+
+\marginnote{\newthought{feedback}}

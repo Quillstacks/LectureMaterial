@@ -1,0 +1,13 @@
+{
+  "cutout": "../cutouts_hl/08_board_populated_hl.png",
+  "masthead": "Sovereign AI",
+  "tagline": "The home AI server build",
+  "issue": "Chapter 1   The Rig   Step 4 of 8",
+  "headline": "Memory",
+  "dek": "One module per channel, pressed until the clips snap up. G.SKILL Ripjaws S5, 64 GB.",
+  "cta": [
+    "Follow @Mark Schutera for the rest of the build",
+    "Comment, or send this to whoever should run their own AI server",
+    "Save it for the day you build yours"
+  ]
+}

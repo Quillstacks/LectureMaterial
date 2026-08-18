@@ -1,0 +1,532 @@
+% !TEX root = ../notes_sovereignai.tex
+% Chapter 1: The Rig, a build manual.
+% One microsection per part, in assembly order: name the part, say what its
+% datasheet numbers buy the rig, then fit it. Rationale, alternatives, and
+% background live in marginnotes. Every part cites its datasheet. No prices in the
+% part sections: the only figure is the day one total in the chapter opening, so
+% the chapter cannot go stale line by line.
+%
+% The parts that are populated onto the board while it lies flat, the processor
+% and cooler, the memory, and the drives, are SUBSECTIONS of The Motherboard,
+% because that is one bench job in the assembly order rather than four. Its "fit
+% it" paragraph, "Work on it flat", is the lead in to them. Parts that attach to
+% the finished board or hang off the frame stay top level sections.
+%
+% Scope stops at the wired machine. Firmware setup and the enumeration probe are
+% the first thing software does to the rig, so they live in the Engine chapter,
+% which owns everything from the first power-on onward. Nothing here switches
+% the machine on.
+%
+% The main column builds a ONE CARD machine, start to finish. Everything about
+% growing to four cards lives in the closing "Cards Two to Four" section, which is
+% the potential next extension, not part of today's build. Do not let expansion
+% mechanics back into the part sections.
+%
+% Two closing sections follow the build, both alternative paths rather than work
+% the reader does today: "Cards Two to Four" scales the rig up, "The Minimal Viable
+% Rig" scales it down to a Raspberry Pi for a reader who wants every step of this
+% book without the silicon. The Pi section keeps the same three newthought shape
+% and the same scope rule: it stops at the assembled, unpowered board.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{rig}\index{GPU}\index{graphics card|see{GPU}}\index{RTX 3090}\index{PCIe}%
+\index{power supply}\index{sovereign AI}\index{VRAM}\index{video memory|see{VRAM}}
+\chapter{The Rig}
+\printchapterversion{01_hardware}
+\newthought{Owning the Metal.}
+\vspace{1.5em}
+
+\newthought{This chapter builds one machine}: An open frame rig with a single
+RTX~3090 and its 24~GB, which is enough to serve a capable model for private usage.
+The rest of the setup is designed in a way so it is able to grow with your needs.
+Order the parts in Table~\ref{tab:bom}\index{bill of materials} and fit them in the order of the sections
+that follow, until the last cable is seated and the machine is ready to be switched
+on. Day one is roughly 2500~euro and a few hours plugging.
+
+\newthought{The parts list} is the Ryzen configuration of a proven quad~3090 local
+AI home server, priced at 3000~EUR when it was built by me in 2026.
+
+% Full width table*: the tabular spans the text block AND the margin column, but the
+% caption still sets in the margin, below the table. Nothing else may occupy the
+% margin at that height: a marginnote or a citation footnote landing there prints
+% straight through the caption with no LaTeX warning. That is why the cited
+% paragraph sits ABOVE the table, so its footnote clears the caption.
+% Column widths are fractions of \linewidth, which is the full measure in here.
+\vspace{2\baselineskip}
+\begin{table*}[!ht]
+\centering
+\begin{tabular}{p{0.24\linewidth}p{0.58\linewidth}p{0.10\linewidth}}
+    \toprule
+    \textbf{Component} & \textbf{Part} & \textbf{Pieces} \\
+    \midrule
+    Frame & open GPU rack frame & 1 \\
+    Motherboard & Gigabyte B650 Eagle AX & 1 \\
+    CPU & AMD Ryzen 5 9600X, AM5 & 1 \\
+    CPU cooler & AM5 tower air cooler & 1 \\
+    Memory & G.SKILL Ripjaws S5 64\,GB DDR5-6000 & 1 \\
+    Storage & NVMe Gen4 x4 2\,TB, M.2 2280 & 1 \\
+    GPU & RTX~3090 24\,GB, used & 1 (4) \\
+    Risers, x1 & PCIe 3.0 x1 riser, cards 2 to 4 & 0 (3) \\
+    Power supply & ASRock PG-1600G, 1600\,W & 1 \\
+    \bottomrule
+\end{tabular}
+\vspace{1.5em}
+\caption{The bill of materials, in the order the parts go together. A bracketed
+number is what this board, frame, and supply will carry later.} \label{tab:bom}
+\end{table*}
+
+% ==============================================================================================
+% THE MOTHERBOARD
+% ==============================================================================================
+
+\newpage
+\section{The Motherboard}\index{motherboard}\index{mainboard|see{motherboard}}\index{PCIe!lanes}
+
+\newthought{A Gigabyte B650 Eagle AX}\index{Gigabyte B650 Eagle AX}, a mainstream board that support our design
+decisions \cite{gigabyteB650EagleAX}:
+
+\marginnote{\newthought{A slow slot} therefore costs seconds per model swap, while
+this does not touch inference, we still care.}
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item To support the processor we will be choosing, the socket must be AM5\index{AM5 socket}.
+    \item For the GPU the top x16 slot\index{PCIe!x16 slot} is best when running the sixteen PCIe lanes,
+    short for peripheral component interconnect express, straight from the processor
+    rather than through the chipset\index{chipset}. A model's whole weight file crosses that link
+    every time it loads, so model swapping\index{model swapping} will benefit from this wiring.
+    \item Four slots have to be x16 sized, so we can grow the server in terms of GPU
+    later on. Total VRAM\index{VRAM}, the video memory on the cards themselves, is the ceiling
+    on model size, and we can extend that by up to 4 GPUs with this characteristics.
+    \item For storage we need one M.2 socket\index{M.2 socket} wired PCIe~4.0~x4 or better straight
+    from the processor, and this board has three, so a second drive later costs
+    nothing today. That one drive carries everything the server accumulates, model
+    weights, container volumes, embeddings, documents, and everything else data.
+\end{itemize}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.45\linewidth]{01_board_bare_flat_hl}
+\caption{Gigabyte B650 Eagle AX}\label{fig:board}
+\end{figure}
+
+\newthought{Work on it flat.} Lay the board on its own box, on the antistatic bag\index{antistatic bag} it
+shipped in, and populate it there: Processor, cooler, memory, and the drive all go
+in. This manual guides you step by step.
+
+\marginnote{\newthought{Read the manuals.} Every part ships one, and it holds the
+pin maps, socket order, and slot wiring that no build guide reproduces correctly.}
+
+% ==============================================================================================
+% THE PROCESSOR AND COOLER
+% ==============================================================================================
+
+\vspace{1.5em}
+\needspace{9\baselineskip}
+\subsection{The Processor and Cooler}
+
+\newthought{An AMD Ryzen 5 9600X}\index{Ryzen 5 9600X}\index{CPU}, paired with an AM5 tower air cooler\index{air cooler}, a modest chip
+that supports our design decisions\cite{amdRyzen9600X}.
+
+\marginnote{\newthought{Why a tower and not a low profile block.} An open frame has
+no lid, so the height a tower needs costs nothing here, and there is no case airflow
+for a flat block to borrow either. And towers are also more efficient 
+and quieter than flat blocks.}
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For inference we need very little compute on the CPU. Six Zen~5\index{Zen 5} cores, twelve threads, 3.9~GHz base and up to 5.4 boost, 32~MB
+    of L3, and a 65~watt default thermal design power\index{thermal design power}, is perfect for this.  The GPUs carry the real work while the processor only feeds them and runs the container
+    workloads layered on top.
+    \item For the top slot to run a real x16, PCIe has to come from the processor
+    itself rather than through the chipset.
+    \item For the display we want integrated graphics\index{integrated graphics} on the chip itself, so the
+    monitor never has to occupy a slot, and a 3090 stays free for the inference and AI model load.
+    \item For the cooler we need an AM5 tower air cooler. The fan on the front of the fin stack sits over
+    the first memory slot, so a fan with adjustable positioning is smart.
+\end{itemize}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.45\linewidth]{02_board_cpu_seated_hl}
+\caption{AMD Ryzen 5 9600X, AM5}\label{fig:cpu}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.45\linewidth]{05_cooler_top_hl}
+\caption{AM5 tower air cooler}\label{fig:cooler}
+\end{figure}
+
+
+\newthought{Seat it} by matching the small triangle on the chip's corner to the
+triangle on the socket, lower it flat without pressure, close the retention arm
+(Figure~\ref{fig:cpu}).
+
+
+
+
+\newthought{Thermal paste}\index{thermal paste} is often pre-applied to the cooler, but if it is not, apply a small pea sized drop to the
+    center of the chip, and let the cooler spread it when you mount it.
+    Too much paste behaves like a thermal insulator, not a conductor, so don't overdo it at this point.
+
+\newthought{Where the fan plugs in.} The cooler's fan goes on the four
+pin header marked \texttt{CPU\_FAN}, right beside the socket. It is the one header
+the firmware watches, and a fan anywhere else leaves it reading zero rpm on the
+processor, which most boards refuse to boot on.
+
+\marginnote{\newthought{The five fan headers.}\index{fan header} Each is four pin and good for
+24~watt.
+\begin{itemize}[leftmargin=*, topsep=0.25em, itemsep=0.1em, parsep=0em]
+    \item \texttt{CPU\_FAN}: the cooler's fan goes here.
+    \item \texttt{CPU\_OPT}: a second CPU fan or pump, right next to it, useful if
+    your tower cooler is a dual fan model.
+    \item \texttt{SYS\_FAN1}, \texttt{SYS\_FAN2}, \texttt{SYS\_FAN3\_PUMP}: the
+    three for the fans you zip tie to the frame rail later.
+\end{itemize}}
+
+
+
+
+
+% ==============================================================================================
+% MEMORY
+% ==============================================================================================
+
+% No \newpage here: the board section runs long enough that the processor
+% subsection breaks on its own, and memory flows onto the page that break opens.
+% Memory has to fit that page whole: if its last paragraph spills, storage's
+% \newpage below leaves the spill alone on a page of its own. That is why this
+% subsection carries no \vspace of its own, and why its prose is cut this tight.
+\needspace{9\baselineskip}
+\subsection{Memory or RAM}
+
+\newthought{A G.SKILL Ripjaws S5 kit, 64~GB in two 32~GB modules}\index{G.SKILL Ripjaws S5}\index{memory}\index{RAM|see{memory}}, part number
+F5-6000J3636F32GX2-RS5K\cite{gskillRipjawsS5}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item RAM kees a weight file warm between loads, plus room
+    for the containers layered on later.
+    \item For speed the kit runs DDR5-6000\index{memory!DDR5}, double data rate, at CL36-36-36-96\index{memory!CAS latency}
+    column address strobe latency and 1.35~volt. Its AMD EXPO profile\index{EXPO profile}, extended
+    profiles for overclocking, is where we will take this from in the configuration later on.
+    \item We stay at two modules as filling all four slots pushes the memory controller\index{memory!controller}
+    down a speed grade.
+\end{itemize}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.45\linewidth]{08_board_populated_hl}
+\caption{G.SKILL Ripjaws S5 64\,GB DDR5-6000}\label{fig:memory}
+\end{figure}
+
+
+% Offset pulls the note up beside the bullets. Anchored where it sits, it
+% collides with the figure caption that follows, which LaTeX does not warn about.
+\marginnote[-4\baselineskip]{\newthought{Why 64 and not 128.} We will be doing fine with 64GB. 
+The one real case for a large kit is
+offloading a model too big for total VRAM into system memory\index{memory!offloading}, but then again you could just add another 
+3090 and have 48GB of VRAM to play with.}
+
+\newthought{Install it} by seating one module in the second slot of each channel\index{memory!channel}, follow the marks on the motherboard or its manual, 
+until the clips snap up (Figure~\ref{fig:memory}).
+
+
+
+
+
+% ==============================================================================================
+% STORAGE
+% ==============================================================================================
+
+% No \newpage here: storage flows onto the page the memory subsection opened, and
+% it puts two items in that margin, its datasheet citation and the capacity note.
+% Those two set last on the page, so verify both still render after any edit above.
+\needspace{9\baselineskip}
+\subsection{Storage}
+
+\newthought{One NVMe drive}\index{NVMe}\index{SSD|see{NVMe}}, for non volatile memory express, 2~TB in the M.2~2280\index{M.2 2280}
+size and wired PCIe~4.0~x4, holding both the system and the model library
+\cite{gigabyteB650EagleAX}:
+
+
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For speed it belongs in the first M.2 socket, the only one wired straight
+    from the processor. A quantised model\index{quantization} is tens of gigabytes read start to finish
+    every time it loads, and that socket is what sets how long we wait on a model swap\index{model swapping}.
+    \item For width the socket is PCIe~5.0~x4 while our drive is Gen4~x4\index{PCIe!link width}, so it runs
+    at its own full width, around 7.4~GB/s, which is already fast but also leaves headroom left in the socket for a
+    faster drive later.
+    \item We go for single storage as the second socket runs only PCIe~4.0~x2 and would halve
+    this drive's lanes, and the third sits behind the chipset, sharing its uplink
+    with network and USB.
+\end{itemize}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.45\linewidth]{12_board_complete_hl}
+\caption{NVMe Gen4 x4 2\,TB, M.2 2280}\label{fig:nvme}
+\end{figure}
+
+
+% Offset pulls the note up beside the bullets: anchored after the itemize it sets
+% level with "Fit the drive" and leaves the whole upper margin empty.
+\marginnote[-6\baselineskip]{\newthought{The terabytes are a use-case call}. It leaves
+room for a few dozen quantised models\index{model library} beside the system, which is plenty for pure
+inference on a handful of models. If you need more models or upgrade regularly pruning will become a housekeeping
+chore early one, which is best practice anyway in my opinion.
+Datasets, fine tuning\index{fine-tuning} runs and their checkpoints on the other hand quickly will become an issue with 2TB, so size the
+drive to what you actually intend to do.}
+
+
+\newthought{Fit the drive} in the first socket, in at an angle, pressed flat, and
+held down with its single screw or latch (Figure~\ref{fig:nvme}).
+
+
+
+% ==============================================================================================
+% THE FRAME
+% ==============================================================================================
+
+\needspace{9\baselineskip}
+\section{The Frame}\index{open frame}
+
+\newthought{An open GPU rack frame}. Any aluminium skeleton will do, 
+a flat bed for the board and a rail above it
+that holds cards upright.
+
+\marginnote{\newthought{Cases are expensive.}\index{case} The downside is that 
+the rig is open to dust and to hands, so if you can not move it out of the way - reconsider a case.
+Make sure it holds your motherboard and parts in any case. Yep, pun intended.}
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For the card, an open bed means it hangs in room air\index{airflow} rather than behind a
+    panel, so it runs cooler than the same card in a mid tower.
+    \item For growth, the rail makes it easy to swap and add cards easily.
+    \item Of course this also gives us a server style look, which I appreciate in this project.
+\end{itemize}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.77\linewidth]{14_frame_board_mounted_hl}
+\caption{Open GPU rack frame}\label{fig:frame}
+\end{figure}
+
+
+\newthought{Mount it now.} Assemble the frame, screw the standoffs\index{standoffs} into the bed, and
+lower the populated board onto them. I directly screwed this whole thing into a wall,
+but you can also put it on a shelf - if you prefer to not go rogue in your flat. The frame's two pin switch is now 
+wired onto \texttt{PW} on \texttt{F\_PANEL}\index{front panel header}.
+
+
+
+
+% ==============================================================================================
+% THE GRAPHICS CARD
+% ==============================================================================================
+
+\needspace{9\baselineskip}
+\section{The Graphics Card}
+
+\marginnote{\newthought{Why the 3090} and not:\index{RTX A6000}
+\begin{itemize}[leftmargin=*, topsep=0.25em, itemsep=0.1em, parsep=0em]
+    \item A6000, 48~GB: Near ten thousand euro (in 2026).
+    \item 5090\index{RTX 5090}, 32~GB: More bandwidth, but no NVLink.
+    \item 4090\index{RTX 4090}, 24~GB: The same VRAM at twice the price.
+    \item Mac or DGX~Spark\index{DGX Spark}: Unified memory\index{unified memory} crawls on a dense 70~billion parameter
+    model.
+    \item 3090 Founders Edition\index{Founders Edition}: wants NVIDIA's twelve pin adapter\index{twelve pin adapter} rather than plain
+    eight pin cables.
+\end{itemize}}
+
+\newthought{A RTX~3090, 24~GB} seated straight in the board's top slot:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For capacity, 24~GB of GDDR6X\index{GDDR6X} VRAM on a 384~bit bus\index{memory!bus width}, which is the limiting factor for model size and
+    model context\index{context window}.
+    \item For token speed, the 936~GB/s of memory bandwidth\index{memory!bandwidth}\cite{nvidiaRTX3090}
+    matters more than the
+    10\,496 CUDA cores\index{CUDA cores} while picking a GPU.
+    \item For the link, the top slot is the one PCIe~4.0~x16 connection in this
+    machine, as long as you go with a single card.
+\end{itemize}
+
+
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.75\linewidth]{15_gpu_seated_hl}
+% tufte's caption takes [short][offset]; a positive offset lowers it. Sets the
+% caption beside the lower part of the card instead of level with its top edge.
+\caption[][12\baselineskip]{RTX~3090 24\,GB}\label{fig:gpu}
+\end{figure}
+
+\newthought{Fit the card} into the top slot, pressed down evenly until the retention clip snaps shut, fasten its bracket, and leave its power cables until the supply is
+mounted. The multi-card rig extensions this motherboard is able to hold will be detailed out in a later section. This in itself is a powerful 
+machine.
+
+\marginnote{\newthought{Buying used.}\index{thermal pads}\index{used market} Buy only from a seller who
+shows a test of the card under load, and budget a thermal pad replacement. For the used market, a three fan model with two eight pin connectors, an
+EVGA FTW3 Ultra, MSI Suprim or Gaming, Gigabyte Gaming~OC, or ASUS~TUF.}
+
+% Placed after the closing paragraph, not after "Fit the card": anchored there its
+% caption sets on top of the Buying used marginnote, which LaTeX does not warn about.
+
+
+
+
+
+% ==============================================================================================
+% THE POWER SUPPLY
+% ==============================================================================================
+
+\needspace{9\baselineskip}
+\section{The Power Supply}
+
+\newthought{An ASRock Phantom Gaming PG-1600G}, 1600~watt against the roughly
+500~watt this machine draws, bought for the headroom\index{ASRock PG-1600G}\index{PSU|see{power supply}}\index{power!budget}\cite{asrockPG1600G}:
+
+\marginnote{\newthought{Get solar power for your idle wattage.}\index{Balkonkraftwerk}\index{solar power}\index{power!idle draw}
+The floor runs day and night whether or not anyone prompts the machine, and most of it
+is the platform rather than the card. A steady draw is what a balcony solar setup
+covers best: panels and a capped inverter suit a constant load, not the spikes this
+supply was bought to survive. Put a meter\index{power meter} on the wall socket before sizing any of it.}
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For the graphics card, a 3090 averages 350~watt and spikes far above it,
+    which is what trips undersized supplies mid run\index{power!transient spikes}. ATX~3.1\index{ATX 3.1} rates this unit for
+    220 percent of that, and the 1600~watt rating is what we need for four potential cards.
+    \item For the board, one 24~pin main cable\index{ATX 24 pin} and one processor cable, 4+4~pin,
+    both modular\index{modular cables}, so only what we use leaves the unit.
+    \item Eight PCIe cables\index{PCIe!power cable} ship in the box. We wire two, and the rest is already
+    there for later cards.
+\end{itemize}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.81\linewidth]{19_psu_mounted_hl}
+\caption{ASRock PG-1600G, 1600\,W}\label{fig:psu}
+\end{figure}
+
+
+\marginnote{\newthought{What stays in the box.} The unit ships two processor cables
+and this board takes one, so there is no second socket to hunt for. The two 12V-2x6\index{12V-2x6}
+cables, 600~watt each, are for 40 and 50 series cards, while a 3090 takes plain eight
+pin. Twelve SATA\index{SATA power} and six Molex\index{Molex} wait for spinning storage or a powered riser.}
+
+\newthought{Wire it last.} Mount the supply on the frame, then run the cables in this
+order:
+
+\begin{enumerate}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item The 24~pin main cable (often it is labelled MB) into \texttt{ATX}, the widest socket on the board,
+    sitting on the long edge alongside the memory slots. Press until the latch clicks.
+    \item The 4+4~pin processor cable, from the socket marked \texttt{CPU} on the
+    supply into \texttt{ATX\_12V}\index{ATX 12V} on the board, on the short edge past the cooler,
+    beside the VRM\index{VRM} heatsink nearest the rear I/O panel.
+    \item The two PCIe cables to the card's own two eight pin connectors\index{eight pin connector}, along its
+    top edge, one cable each and never daisy chained\index{daisy chaining}.
+\end{enumerate}
+
+
+
+\newthought{Leave the mains lead unplugged.} The rig is now fully assembled, wired, and ready to be powered on for the first time.
+Skip to \hyperref[ch:engine]{the next chapter} for the firmware setup and the first
+probe of the rig.
+
+
+
+
+
+
+
+
+
+% ==============================================================================================
+% CARDS TWO TO FOUR
+% ==============================================================================================
+
+\newpage
+\section{Multi-Card Rig}\index{multi-card rig}
+
+\newthought{One to three more RTX~3090s} find a place on this rig
+design\cite{gigabyteB650EagleAX}. A second card
+buys memory for larger models, while the third and fourth cards buy additional throughput.
+
+\needspace{9\baselineskip}
+\subsection{Card Two}\index{NVLink}
+
+\marginnote{\newthought{What NVLink is.} A bridge that clips onto the top edge of
+two cards and carries 112.5~GB/s bidirectional traffic on
+the 3090.}
+
+\newthought{Stay on the 3090.} It is the only GeForce~30 card
+with NVLink, so a matched pair takes a bridge and pools\index{memory!pooling} to 48~GB for one model. 
+Mixed cards never pool.
+
+\newthought{The rest is mechanical.} Drop the card into the next x16 sized
+position, wired PCIe~3.0~x1, on a plain riser\index{riser}\index{mining}. 
+Riser spacing is yours to set, so match it to
+the bridge you buy, get it fixed on your frame, and run its own two cables from the supply.
+
+\needspace{9\baselineskip}
+\subsection{Cards Three and Four}
+
+\newthought{Add these with increased workload.} Two x16 sized positions remain, one
+from the processor and one from the chipset. Both are wired PCIe~3.0~x1\index{PCIe!x1 lane}: full length
+connector, a single lane\index{PCIe!lanes} behind it, about 1~GB/s only.
+Keep it at one model per (linked) card(s). A model split across cards
+parallelism\index{tensor parallelism} moves activations every token and starts to crawl. So the idea is to have the same model loaded
+    on each card, and let the engine\index{engine} round robin\index{round robin} between them for throughput.
+
+\marginnote{\newthought{On power.} Four cards at 350~watt plus the
+platform reach roughly 1550~watt, which becomes uncomfortable against our supply's 1600 limit.
+Undervolted\index{undervolting} near 0.875~volt each card draws about 280 and the whole rig lands near
+1270, which makes it comfortable again.}
+
+\newthought{4 Cards will definitely get you Fans.} Zip tie a bank of case
+fans\index{case fans} along the rail, undervolt before the fourth cars goes in.
+
+
+
+% ==============================================================================================
+% THE MINIMAL VIABLE RIG
+% ==============================================================================================
+
+% The second thread, for a reader who wants every step of this book without the
+% silicon. Same three newthought shape as a part section, same scope rule: it stops
+% at the assembled, unpowered board. Everything above the metal is identical, which
+% is the whole argument, and it lives in the margin rather than the main column.
+\newpage
+\section{The Minimal Viable Rig}\index{Raspberry Pi}\index{LPDDR4X}
+
+\newthought{A Raspberry Pi~5 with 8~GB}, (go 16 GB if you can) an active cooler\index{active cooler}, the official
+5~volt 5~amp USB-C supply\index{USB-C power} and a 64~GB microSD card\index{microSD}\cite{raspberrypiPi5}, 
+will enable you to learn just as much on a tighter budget.
+
+\marginnote{\newthought{The On-A-Budget-Thread.} Same operating system, same
+container runtime, same engine binary on the same port, same clients pointed at it.
+Only the model and performance shrinks.}
+
+\newthought{The 8~GB is shared}\index{unified memory}: processor and graphics core read the same
+LPDDR4X, so it is system and video memory at once. A four billion parameter model at
+four bit quantisation\index{quantization} takes near 2.5~GB and leaves five for the operating system and
+containers. What it costs mainly is speed as 
+LPDDR4X-4267 moves roughly 17~GB/s\index{memory!bandwidth} where a 3090 moves 936, and generation reads
+the whole model once per token, so answers arrive at single digit tokens per
+second\index{tokens per second} rather than dozens. But hey we don't care about speed for learning, 
+and buying hardware later on is the easy part.
+
+\newthought{Build it in five minutes.} Clip the active cooler onto the board and plug
+its fan into the header beside it, write the operating system image onto the microSD
+card and seat the card in the slot on the underside, and leave the USB-C supply out of
+the wall. A complete machine, wired and never switched on, in one hand.
+
+
+% ==============================================================================================
+% BRIDGE
+% ==============================================================================================
+\vfill
+\newthought{The metal is finished}, whichever of the two machines is on
+your bench. What it still lacks is a first power on and a handful of firmware values
+that make a card addressable, a probe that proves every part is really on the bus,
+and then an operating system, a driver, and weights loaded into memory together with some orchestration. 
+Let's get on it.

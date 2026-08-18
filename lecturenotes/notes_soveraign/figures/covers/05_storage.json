@@ -1,0 +1,13 @@
+{
+  "cutout": "../cutouts_hl/12_board_complete_hl.png",
+  "masthead": "Sovereign AI",
+  "tagline": "The home AI server build",
+  "issue": "Chapter 1   The Rig   Step 5 of 8",
+  "headline": "Storage",
+  "dek": "In at an angle, pressed flat, one screw. A 2 TB NVMe in the first M.2 socket.",
+  "cta": [
+    "Follow @Mark Schutera for the rest of the build",
+    "Comment, or send this to whoever should run their own AI server",
+    "Save it for the day you build yours"
+  ]
+}

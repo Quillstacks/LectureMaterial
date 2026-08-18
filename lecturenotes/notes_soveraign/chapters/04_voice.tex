@@ -1,0 +1,122 @@
+% !TEX root = ../notes_sovereignai.tex
+% Chapter 4: A Voice in the House. HA + Wyoming + Whisper + Piper + Ollama.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{Home Assistant}\index{Wyoming}\index{Whisper}\index{Piper}\index{voice assistant}
+\chapter{A Voice in the House}
+\printchapterversion{04_voice}
+\newthought{Speak, and It Answers.}
+\vspace{1.5em}
+
+% ==============================================================================================
+% THE WHY
+% ==============================================================================================
+
+\section{The Why}\index{smart home}\index{privacy}
+
+\newthought{The engine reaches every screen you own} and none of the air in the room. A voice
+assistant closes that gap, and it is the one piece of household AI most people
+already rent in its worst form: an always-listening microphone that ships every
+word to a company's servers. The sovereign version hears, thinks, and speaks
+entirely on your hardware, and it can act on the house rather than only answer
+trivia.
+
+\newthought{The orchestrator is Home Assistant.}\index{Home Assistant!container} It is the open hub the smart-home
+world already speaks, it runs as a container on the rig, and its voice pipeline is
+built from swappable parts joined by a small protocol. We give it a local ear, a
+local voice, and the local model as its brain.
+
+\newthought{By the end of this chapter} you will have:
+\begin{itemize}
+    \item run Home Assistant with local speech-to-text and text-to-speech;
+    \item made the Ollama model its conversation brain, able to act on devices;
+    \item spoken to a satellite and heard the rig answer, with nothing leaving the house.
+\end{itemize}
+
+% ==============================================================================================
+% SPEECH TO MODEL TO SPEECH
+% ==============================================================================================
+
+\section{Speech to Model to Speech}\index{speech to text}\index{text to speech}%
+\index{STT|see{speech to text}}\index{TTS|see{text to speech}}
+
+\newthought{A voice turn is three steps.} Speech-to-text turns the spoken request
+into words; the model decides what it means and what to do; text-to-speech turns
+the answer back into sound. The local stack is faster-whisper for the ear, the
+Chapter~2 model for the brain, and Piper for the voice, each a small service, each
+replaceable.
+
+\marginnote{\newthought{Wyoming}\index{Wyoming!protocol} is Home Assistant's protocol for voice parts: each
+service listens on a TCP port and speaks audio and events, and Home Assistant wires
+them into a pipeline. Whisper listens on \texttt{10300}, Piper on \texttt{10200}.}
+
+\newthought{Put the ear on the GPU.}\index{faster-whisper} Speech-to-text is the slow step, and the
+built-in add-on runs on the CPU; running faster-whisper as its own container with
+the GPU passed through brings a request under a second. The same 3090 that serves
+chat transcribes speech in the gaps, since the two rarely peak at once in a house.
+
+\marginnote{\newthought{The brain must hold tools.}\index{tool calling}\index{conversation agent} A conversation agent that only
+chats can answer the weather but cannot turn off a light. Home Assistant exposes its
+devices to the model as tools, so the model must be one that supports tool calling;
+the Qwen3 model from Chapter~2 was chosen for exactly this.}
+
+% ==============================================================================================
+% WIRE THE PIPELINE
+% ==============================================================================================
+
+\section{Wire the Pipeline}\index{voice pipeline}
+
+\newthought{Run the orchestrator and the voice parts} as containers on the rig:
+Home Assistant, the ear with the GPU passed through, and the voice.
+
+\begin{verbatim}
+$ docker run -d --name homeassistant --network host \
+    -v ha-config:/config ghcr.io/home-assistant/home-assistant:stable
+
+$ docker run -d --name whisper -p 10300:10300 --gpus all \
+    rhasspy/wyoming-whisper --model small-int8 --language en --device cuda
+
+$ docker run -d --name piper -p 10200:10200 \
+    rhasspy/wyoming-piper --voice en_US-lessac-medium
+\end{verbatim}
+
+\marginnote{\newthought{Add the parts in the UI.}\index{Home Assistant!Wyoming integration} In Home Assistant, Settings,
+Devices and Services, add the Wyoming Protocol integration twice, pointing it
+at the rig's address on ports \texttt{10300} and \texttt{10200} to register the ear
+and the voice.}
+
+\newthought{Make the model the brain.}\index{Home Assistant!Ollama integration} Add the Ollama integration and point it at
+the engine, then choose a tool-calling model:
+
+\begin{verbatim}
+Settings > Devices & Services > Add Integration > Ollama
+  URL ..... http://localhost:11434
+  Model ... qwen3:14b
+  [x] let the model control Home Assistant devices
+\end{verbatim}
+
+\newthought{Assemble the pipeline.}\index{Home Assistant!voice pipeline} Under Settings, Voice Assistants, build one
+assistant from the three local parts: faster-whisper for speech-to-text, the Ollama
+agent for conversation, and Piper for text-to-speech. Set it as the preferred
+assistant.
+
+\marginnote{\newthought{Give it ears in a room.}\index{voice satellite}\index{Wyoming!satellite} A Home Assistant Voice PE puck, or
+any Wyoming satellite, is the microphone and speaker on the shelf; it hands audio to
+the pipeline and plays the answer back. One per room you want to talk to.}
+
+\newthought{What you now own} answers out loud. You say ``turn off the kitchen light
+and tell me a joke.''
+The satellite streams it to the rig, faster-whisper transcribes it, the model turns
+off the light through Home Assistant and writes a reply, and Piper says it back, all
+on hardware you own, with the router unplugged if you like.
+
+% ==============================================================================================
+% BRIDGE
+% ==============================================================================================
+
+\newthought{The house can now listen and speak}, and chat, terminal, and voice all
+draw on the one engine. What the engine still lacks is your own life: it answers
+from what it was trained on, never from what you have written. The next chapter
+points your notes at it.
+
+\marginnote{\newthought{feedback}}

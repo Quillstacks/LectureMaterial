@@ -1,0 +1,13 @@
+{
+  "cutout": "../cutouts_hl/15_gpu_seated_hl.png",
+  "masthead": "Sovereign AI",
+  "tagline": "The home AI server build",
+  "issue": "Chapter 1   The Rig   Step 7 of 8",
+  "headline": "Graphics card",
+  "dek": "Straight into the top slot, the only true x16 on this board. An RTX 3090, 24 GB.",
+  "cta": [
+    "Follow @Mark Schutera for the rest of the build",
+    "Comment, or send this to whoever should run their own AI server",
+    "Save it for the day you build yours"
+  ]
+}

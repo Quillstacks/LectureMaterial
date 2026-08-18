@@ -1,0 +1,13 @@
+{
+  "cutout": "../cutouts_hl/02_board_cpu_seated_hl.png",
+  "masthead": "Sovereign AI",
+  "tagline": "The home AI server build",
+  "issue": "Chapter 1   The Rig   Step 2 of 8",
+  "headline": "Processor",
+  "dek": "Triangle onto triangle, lowered flat, no pressure. An AMD Ryzen 5 9600X.",
+  "cta": [
+    "Follow @Mark Schutera for the rest of the build",
+    "Comment, or send this to whoever should run their own AI server",
+    "Save it for the day you build yours"
+  ]
+}
