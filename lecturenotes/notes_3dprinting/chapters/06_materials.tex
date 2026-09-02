@@ -1,0 +1,74 @@
+% !TEX root = ../notes_3dprinting.tex
+% Chapter 6: Materials -- WRITTEN
+% Every number here was resolved from the local Bambu Studio profile tree,
+% not from a datasheet or the wiki. Re-resolve before editing any of them.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{PLA}\index{TPU}\index{ABS}\index{PETG-CF}
+\chapter{Materials}
+\printchapterversion{06_materials}
+\newthought{What the Profiles Say.}
+
+\newthought{The numbers below are not from a datasheet.} They are the resolved
+values Bambu Studio itself loads for a P1S with a \texttt{0.4} nozzle on a
+textured PEI plate, read out of the profile tree the application installs under
+\texttt{system/BBL/filament/}. Those files are JSON with an \texttt{inherits}
+chain, and resolving that chain gives the values a job actually runs with. When
+the printer and this table disagree, the printer is right and this table is
+stale.
+
+\begin{table*}[ht]
+\centering
+\begin{tabular}{p{0.16\textwidth}p{0.14\textwidth}p{0.08\textwidth}p{0.15\textwidth}p{0.12\textwidth}p{0.19\textwidth}}
+    \toprule
+    \textbf{Material} & \textbf{Nozzle temp} & \textbf{Plate} & \textbf{Max flow} & \textbf{Hardness} & \textbf{Feed path} \\
+    \midrule
+    PLA Basic     & 220\,\textcelsius{}              & 55\,\textcelsius{} & 21\,mm\textsuperscript{3}/s   & any        & AMS \\[3pt]
+    PETG-CF       & 255\,\textcelsius{}              & 70\,\textcelsius{} & 11.5\,mm\textsuperscript{3}/s & hardened   & AMS, dry it first \\[3pt]
+    ABS           & 260, then 270\,\textcelsius{}    & 90\,\textcelsius{} & 16\,mm\textsuperscript{3}/s   & any        & AMS, door shut \\[3pt]
+    TPU 95A HF    & 230\,\textcelsius{}              & 45\,\textcelsius{} & 12\,mm\textsuperscript{3}/s   & any        & external spool only \\[3pt]
+    TPU 90A       & 225\,\textcelsius{}              & 35\,\textcelsius{} & 2.8\,mm\textsuperscript{3}/s  & any        & external spool only \\[3pt]
+    TPU for AMS   & 230\,\textcelsius{}              & 35\,\textcelsius{} & 18\,mm\textsuperscript{3}/s   & any        & AMS \\
+    \bottomrule
+\end{tabular}
+\vspace{2em}
+\caption{Resolved P1S profile values, \texttt{0.4} nozzle, textured PEI plate.
+ABS runs its first layer cooler than the rest. \textit{Max flow} is
+\texttt{filament\_max\_volumetric\_speed}, the ceiling the slicer will not let
+any speed setting exceed.}
+\label{tab:materials}
+\end{table*}
+
+\newthought{Read the flow column, not the speed slider.} Volumetric flow is the
+real throughput limit, and it is the only honest predictor of print time. TPU
+90A at $2.8$\,mm\textsuperscript{3}/s moves roughly seven times less plastic per
+second than PLA at $21$. Asking for 300\,mm/s changes nothing; the slicer simply
+clamps the speed down to respect the ceiling.
+
+\marginnote{\newthought{Why 85A is missing.} Its P1 series profile lists only the
+$0.6$ and $0.8$ nozzles as compatible printers. With a $0.4$ installed, TPU 85A
+is not an option on this machine.}
+
+\newthought{TPU does not go in the AMS.} The AMS pushes filament down a long
+Bowden path into the extruder, and a rigid filament transmits that push. A
+flexible one compresses and coils inside the hub instead of advancing, and the
+jam has to be dismantled by hand. This is a property of the feed direction, not
+a firmware limit, so a second AMS unit does not change it. TPU goes on the
+external spool holder at the back of the printer, where the extruder pulls it
+over a short direct path.
+
+\marginnote{\newthought{The one exception} is a distinct product, \texttt{Bambu
+TPU for AMS}. It carries its own filament type, \texttt{TPU-AMS}, and is stiff
+enough to survive being pushed. If the spool does not say so on the label, it is
+standard TPU and belongs on the back.}
+
+\newthought{PETG-CF needs a hardened nozzle.} Its profile demands a nozzle of
+\texttt{HRC 40}; every other material listed here is happy with \texttt{HRC 3}.
+Carbon fibre is abrasive and will open a soft $0.4$ orifice within a few hundred
+grams of filament, after which every part prints over-extruded and nothing is
+repeatable again.
+
+\marginnote{\newthought{Filed under the wrong name.} PETG-CF has no profile
+named for the P1S. It lives under \texttt{Bambu PETG-CF @BBL X1C} and lists the
+P1S among its compatible printers. It is also hygroscopic enough that a spool
+left open prints visibly worse within days.}

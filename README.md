@@ -1,48 +1,19 @@
-
 <br>
 
-*Lectures Combobulated by Prof. Dr.-Ing. Mark Schutera*
+<p align="center"><i>Envisioned, combobulated and polished by Prof. Dr.-Ing. Mark Schutera</i></p>
 
-
-<br>
-
----
-### Disciplined Vibe Coding
-
-<details markdown="1">
-<summary>📑 <b>Lecture Slides</b></summary>
-
-|   #  | Unit | Download |
-| :--: | :--- | :-: |
-| Full | Disciplined Vibe Coding · Lecture Slides | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/disciplined_vibe.pdf) |
-|  01  | Foundations | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit1_foundations.pdf) |
-|  02  | Vibing| [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit2_opencode.pdf) |
-|  03  | Alignment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit3_planning.pdf) |
-|  04  | Building | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit4_verify.pdf) |
-
-</details>
+<p align="center">
+  <a href="#lecture-material">Lecture Material</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="#studium-generale">Studium Generale</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="#manuals">Manuals</a>
+</p>
 
 <br>
 
 ---
-### Philosophy of AI
+---
 
-<!-- BEGIN:lecture:notes_philosophyofai -->
-<details markdown="1">
-<summary>📑 <b>Lecture Notes</b></summary>
+<h1 align="center">Lecture Material</h1>
 
-|   #  | Chapter | Download |
-| :--: | :--- | :-: |
-| Full | Philosophy of AI · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf) |
-|  01  | Anthropomorphism | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/01_Anthropomorphism.pdf) |
-|  02  | Accountability | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/02_Accountability.pdf) |
-|  03  | Agency | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/03_Agency.pdf) |
-|  04  | Embodiment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/04_Embodiment.pdf) |
-|   A  | Session Preparation Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/aa_PreparationGuidance.pdf) |
-|   B  | Debate Format & Moderator Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/ac_DebateProtocol.pdf) |
-
-</details>
-<!-- END:lecture:notes_philosophyofai -->
+<p align="center"><i>Semester courses for all semesters.</i></p>
 
 <br>
 
@@ -139,6 +110,84 @@
 
 </details>
 <!-- END:lecture:notes_missingsemester -->
+
+<br>
+<br>
+
+---
+---
+
+<h1 align="center">Studium Generale</h1>
+
+<p align="center"><i>Open seminars across study programs.</i></p>
+
+<br>
+
+---
+### Disciplined Vibe Coding
+
+<details markdown="1">
+<summary>📑 <b>Lecture Slides</b></summary>
+
+|   #  | Unit | Download |
+| :--: | :--- | :-: |
+| Full | Disciplined Vibe Coding · Lecture Slides | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/disciplined_vibe.pdf) |
+|  01  | Foundations | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit1_foundations.pdf) |
+|  02  | Vibing| [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit2_opencode.pdf) |
+|  03  | Alignment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit3_planning.pdf) |
+|  04  | Building | [📄 PDF](https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/slides/unit_pdfs/unit4_verify.pdf) |
+
+</details>
+
+<br>
+
+---
+### Philosophy of AI
+
+<!-- BEGIN:lecture:notes_philosophyofai -->
+<details markdown="1">
+<summary>📑 <b>Lecture Notes</b></summary>
+
+|   #  | Chapter | Download |
+| :--: | :--- | :-: |
+| Full | Philosophy of AI · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/notes_philosophyofai.pdf) |
+|  01  | Anthropomorphism | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/01_Anthropomorphism.pdf) |
+|  02  | Accountability | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/02_Accountability.pdf) |
+|  03  | Agency | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/03_Agency.pdf) |
+|  04  | Embodiment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/04_Embodiment.pdf) |
+|   A  | Session Preparation Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/aa_PreparationGuidance.pdf) |
+|   B  | Debate Format & Moderator Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/ac_DebateProtocol.pdf) |
+
+</details>
+<!-- END:lecture:notes_philosophyofai -->
+
+<br>
+<br>
+
+---
+---
+
+<h1 align="center">Manuals</h1>
+
+<p align="center"><i>Field manuals for the lab equipment.</i></p>
+
+<br>
+
+---
+### 3D Printing
+
+<!-- BEGIN:lecture:notes_3dprinting -->
+<details markdown="1">
+<summary>📖 <b>Field Manual</b></summary>
+
+|   #  | Chapter | Download |
+| :--: | :--- | :-: |
+| Full | 3D Printing · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/notes_3dprinting.pdf) |
+|  01  | Quickstart | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/01_quickstart.pdf) |
+|  11  | TPU | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/11_tpu.pdf) |
+
+</details>
+<!-- END:lecture:notes_3dprinting -->
 
 <br>
 

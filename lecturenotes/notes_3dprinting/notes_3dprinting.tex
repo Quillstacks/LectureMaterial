@@ -1,0 +1,152 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3D Printing -- Bambu Lab P1S field manual
+% Author: Prof. Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+\makeindex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% A field manual for one specific machine: a Bambu Lab P1S with an AMS
+% and an AMS 2 Pro, running mostly PLA and TPU. Short chapters, one topic
+% each, so a chapter can be found by thumbing the printed copy that lives
+% next to the printer and can be handed out on its own as a chapter PDF.
+%
+% Scope boundary: the process theory (mesh, slicing, G-code, why layers
+% make a part anisotropic) is NOT repeated here. It lives in
+% notes_misc/chapters/01_3d_printing.tex and is referenced from the
+% introduction. This book starts where that chapter stops: at the
+% machine.
+%
+% Chapter spine. Chapters marked WRITTEN carry content; the rest are
+% one-line stubs with their planned sections commented out in place, ready
+% to be uncommented and filled.
+%   01 Quickstart                  -- WRITTEN, install to first part with the DHBW tag
+%   02 Access and House Rules      -- stub
+%   03 Anatomy of the Machine      -- stub
+%   04 Slicer Parameters           -- stub
+%   05 Designing for the Machine   -- stub
+%   06 Materials                   -- WRITTEN, resolved P1S profile values
+%   07 Sequenced Printing          -- WRITTEN, pause and insert a part mid print
+%   08 Getting Geometry            -- stub
+%   09 Maintenance                 -- stub
+%   10 Troubleshooting             -- stub, grows from real failures
+%   11 Printing TPU                -- WRITTEN, feed/unfeed on the external spool holder
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+\title{3D Printing}
+\author[\defaultauthor]{\defaultauthor}
+\publisher[\defaultpublisher]{\defaultpublisher}
+\renewcommand{\notesdir}{notes_3dprinting}
+
+% Load optional fonts
+\loadoptionalfonts
+
+% Additional packages
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{tikz}
+\usetikzlibrary{positioning,fit,shapes.geometric,arrows.meta,calc,backgrounds}
+
+% The four tab icons of the P1S screen, redrawn as inline glyphs so the
+% navigation notes can show what the student has to select. Sized to
+% ride on the text line like a capital letter.
+\newcommand{\screenicon}[1]{\tikz[x=1ex,y=1ex,baseline=0.15ex]{#1}}
+\newcommand{\iconhome}{\screenicon{%
+  \fill (0.05,0.72) -- (0.7,1.42) -- (1.35,0.72) -- (1.14,0.72)
+        -- (1.14,0) -- (0.26,0) -- (0.26,0.72) -- cycle;
+  \fill[white] (0.56,0) rectangle (0.84,0.4);}}
+\newcommand{\iconnozzle}{\screenicon{%
+  \fill (0.2,1.45) rectangle (1.2,0.92);
+  \fill (0.32,0.92) -- (1.08,0.92) -- (0.82,0.52) -- (0.58,0.52) -- cycle;
+  \fill (0.63,0.52) rectangle (0.77,0.26);
+  \fill (0.1,0.12) rectangle (1.3,0);}}
+\newcommand{\icongear}{\screenicon{%
+  \fill (0.7,0.72) circle (0.5);
+  \foreach \a in {0,45,...,315} {
+    \fill[rotate around={\a:(0.7,0.72)}] (0.6,1.02) rectangle (0.8,1.36);}
+  \fill[white] (0.7,0.72) circle (0.2);}}
+\newcommand{\iconfolder}{\screenicon{%
+  \fill (0.05,0) rectangle (1.35,0.9);
+  \fill (0.05,0.9) -- (0.05,1.2) -- (0.6,1.2) -- (0.78,0.9) -- cycle;}}
+\usepackage{float}
+\usepackage[maxfloats=256]{morefloats}
+% Break long URLs anywhere so href'd links in the narrow Tufte margins
+% wrap instead of running off the side of the page.
+\usepackage{xurl}
+\Urlmuskip=0mu plus 1mu\relax
+
+\extrafloats{100}
+
+% Let chapters open on any page instead of always on a recto. With ten short
+% chapters the default openright behaviour spends a blank verso before each
+% one, which in a five page manual is more blank paper than manual. The
+% shared class hardcodes \LoadClass[a5paper]{tufte-book} and forwards no
+% options, so the flag is set here rather than passed. Explicit
+% \cleardoublepage calls in the front matter are untouched, so the hidden
+% agent notice still gets its own clean page.
+\makeatletter
+\@openrightfalse
+\makeatother
+
+\begin{document}
+
+\makestandardfrontmatter
+\makededication{\openepigraph{``\ldots syntheses of automata can proceed
+in such a manner that each automaton will produce other automata which are
+more complex and of higher potentialities than itself.''}{John von Neumann,
+Theory of Self-Reproducing Automata}}
+\tableofcontents
+
+% Introduction
+\makeintroduction{%
+  \newthought{This is a manual.} This aims at getting you onboarded on our Bambu Lab P1S with an AMS.
+  \marginnote{\newthought{The official handbook.} Bambu Lab's wiki for the
+  P1 series carries the manuals, first print, firmware, and maintenance
+  pages.\par\medskip
+  \noindent\qrcode[height=1.0cm]{https://wiki.bambulab.com/en/p1}\par\medskip
+
+  A frozen copy in case the wiki moves. Accessed 2026-09-02,
+  Bambu Studio 02.08.02.61. in case this is older than a year, make it your task to update to the current version.\par\medskip
+  \par\medskip
+  \noindent\qrcode[height=1.0cm]{https://github.com/Quillstacks/LectureMaterial/raw/main/lecturenotes/notes_3dprinting/handbook_bambulab_p1s_combo.pdf}\par}
+  Everything in it is written to be acted on while standing in
+  front of the printer, so it is organised by what you might be trying to achieve.
+  Or in other words, everything in here is something a fellow student or I have tried and done, and written down for you.
+  Yes this should make you so grateful that you want to contribute to this document, in case 
+  you find that something is deprecated, you have a better way to do it, or you have tried something new or wandered into terra incognita.
+
+  }
+
+%% Start the main matter
+\mainmatter
+\authorinrectoheader
+
+% ----------------------------------------------------------------------
+% Short chapters, one topic each.
+% ----------------------------------------------------------------------
+\input{chapters/01_quickstart.tex}
+\input{chapters/11_tpu.tex}
+% \input{chapters/02_access.tex}
+% \input{chapters/03_anatomy.tex}
+% \input{chapters/04_slicer.tex}
+% \input{chapters/05_design.tex}
+% \input{chapters/06_materials.tex}
+% \input{chapters/07_sequenced.tex}
+% \input{chapters/08_geometry.tex}
+% \input{chapters/09_maintenance.tex}
+% \input{chapters/10_troubleshooting.tex}
+
+% Register the vendor documentation so the reference machinery has entries to
+% resolve even while most chapters are still stubs.
+\nocite{bambulab2026wiki,bambulab2026hotend,bambulab2026tpu}
+\makestandardbackmatter{printing}
+
+\end{document}

@@ -1,0 +1,72 @@
+% !TEX root = ../notes_3dprinting.tex
+% Chapter 7: Sequenced Printing -- WRITTEN
+% Pause mid print, drop a part into an open cavity, let the printer close
+% over it. Not to be confused with print-by-object sequential printing.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{pause}\index{inserts}\index{magnets}
+\chapter{Sequenced Printing}
+\printchapterversion{07_sequenced}
+\newthought{Stop, Insert, Continue.}
+
+\newthought{Some parts are best built in two sittings.} Print until a cavity is
+open and reachable, stop, drop something into it, and let the printer close over
+the top. The result is a captive part that could not be assembled afterwards:
+a nut trapped in a pocket, a magnet buried flush, a bearing, a PCB, a cable
+routed through a wall. Nothing about the machine is special here. The whole
+technique is one pause in the right place.
+
+\marginnote{\newthought{Not the same as sequential printing.} Bambu Studio also
+offers printing several objects one after another, complete part by complete
+part. That is a different feature with a different purpose. This chapter is
+about pausing inside a single object.}
+
+\newthought{The pause fires before its layer is printed.} That is the only
+timing rule, and getting it backwards is the usual mistake. Scrub the preview
+slider up until you find the first layer that closes over the cavity, the layer
+where the hole disappears, and put the pause there. Bambu Studio emits a single
+line of G-code at that point:
+
+\begin{verbatim}
+M400 U1     ; finish queued moves, then wait for me
+\end{verbatim}
+
+\newthought{Design the pocket loose, and deeper than the insert.} Give roughly
+$0.1$ to $0.2$\,mm of clearance in plan so the insert drops in without force,
+and the same again in depth so it sits below the surrounding surface. If the
+insert stands proud by even one layer height, the nozzle will strike it on the
+next pass. At best that knocks the insert out of place; at worst it shifts the
+whole part off the plate and takes the print with it.
+
+\newthought{The procedure, once the model is right:}
+
+\begin{enumerate}[itemsep=2pt]
+  \item Slice, then switch to the Preview tab.
+  \item Drag the vertical layer slider up to the first layer that spans the
+        cavity. Confirm on screen that the hole is gone at that layer and still
+        open one layer below.
+  \item Right-click the slider at that layer and choose \texttt{Add pause}.
+  \item Send the job. The pause travels with the file, so re-slicing after a
+        change means re-adding it.
+  \item When the printer stops, the toolhead parks and the bed stays hot. Leave
+        the plate exactly where it is. Do not lift it, do not rotate it.
+  \item Seat the insert and press it flush. Check with a straight edge that
+        nothing stands above the top surface.
+  \item Resume from the printer screen or from Bambu Studio.
+  \item Watch the first layer over the insert the same way you watch a first
+        layer on the plate.
+\end{enumerate}
+
+\marginnote{\newthought{Have the insert in your hand} before the pause arrives.
+The part cools while the printer waits. With PLA a minute costs nothing. With
+ABS a long pause invites the layer below to contract and the bond across the
+pause line to fail, which is exactly where the part will later break.}
+
+\newthought{Two failure modes are specific to magnets.} Check the polarity
+before it goes in, because it is not coming out again, and remember that a
+magnet will happily reach through a thin floor and grab the steel plate. Leave
+enough material underneath, or accept that removing the finished part becomes a
+fight.
+
+\marginnote{\newthought{Teaser.} If the pause fires before its layer is printed,
+which layer do you select to bury a magnet whose pocket is $3$\,mm deep?}
