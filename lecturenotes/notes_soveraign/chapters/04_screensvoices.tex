@@ -1,0 +1,315 @@
+% !TEX root = ../notes_sovereignai.tex
+% Chapter 4: Screens and Voices. The two faces of the served model.
+% Open WebUI (moved here from the stack chapter, where it was a layer it never
+% was) and the Cloudflare family door (moved here from the reach chapter, which
+% has no page worth publishing), then the voice pipeline: HA + Wyoming +
+% Whisper + Piper + Ollama.
+%
+% The ordering principle: every section in this chapter is a CLIENT of the one
+% Ollama. None of them holds weights, none of them touches the card, and any of
+% them can be removed without the model noticing.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{Open WebUI}\index{Cloudflare}\index{Home Assistant}\index{Wyoming}\index{Whisper}%
+\index{Piper}\index{voice assistant}\index{client}
+\chapter{Screens and Voices}
+\printchapterversion{04_screensvoices}
+\newthought{Type to It, Talk to It.}
+\vspace{1.5em}
+
+% ==============================================================================================
+% THE WHY
+% ==============================================================================================
+
+\section{The Why}\index{smart home}\index{privacy}
+
+\newthought{Ollama reaches every device you own} and nobody in the house can use
+it. Reaching it means a terminal, two environment variables, and a curl, which is a
+fine interface for a program and no interface at all for the person in the kitchen.
+This chapter gives it the two faces a household actually uses: a page anyone
+can open in a browser, and a voice that answers out loud in the room.
+
+\marginnote{\newthought{Everything here is a client.} No section in this chapter
+holds weights, touches the card, or changes what the model can do. Each one is a
+way in, and any of them can be deleted without the model noticing, which is why
+they were kept out of the build.}
+
+\newthought{The screen is Open WebUI}, a browser chat with accounts and history that
+points at Ollama and lists the models it already has. It is what turns one
+served API into something a family uses, and it is also what publishes to a relative
+who will never install a VPN.
+
+\newthought{The voice is the harder half}, and it is the one piece of household AI
+most people already rent in its worst form: an always-listening microphone that
+ships every word to a company's servers. The sovereign version hears, thinks, and
+speaks entirely on your hardware, and it can act on the house rather than only
+answer trivia.
+
+\newthought{The orchestrator is Home Assistant.}\index{Home Assistant!container} It is the open hub the smart-home
+world already speaks, it runs as a container on the rig, and its voice pipeline is
+built from swappable parts joined by a small protocol. We give it a local ear, a
+local voice, and the local model as its brain.
+
+\newthought{By the end of this chapter} you will have:
+\begin{itemize}
+    \item opened a browser chat on the rig and given each person in the house an account;
+    \item published that chat at a hostname a relative can open with a login and no VPN;
+    \item run Home Assistant with local speech-to-text and text-to-speech;
+    \item made the Ollama model its conversation brain, able to act on devices;
+    \item spoken to a satellite and heard the rig answer, with nothing leaving the house.
+\end{itemize}
+
+% ==============================================================================================
+% THE CHAT
+% ==============================================================================================
+
+\section{The Chat}\index{Open WebUI}
+
+\newthought{Open WebUI in a container}, a browser chat with accounts, history,
+and model selection, pointed at Ollama\cite{openwebuiRepo}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For the household, it holds one account per person, so history and
+    settings stay separate and nobody shares a session.
+    \item For persistence, a named Docker volume\index{Docker!volume} carries accounts and
+    conversations across restarts and image upgrades.
+    \item For the models, it takes one variable, the base URL, and lists what
+    Ollama already has. There is no second model library to maintain.
+\end{itemize}
+
+\marginnote{\newthought{The first account is admin.}\index{Open WebUI!accounts} The first sign
+up becomes the administrator, so create it before anyone else opens the page,
+then add an account per person from the admin panel. That same account list
+mints per-person API keys\index{Open WebUI!API keys}, which is how you hand one member of the household
+programmatic access without enrolling their machine on your mesh.}
+
+\newthought{Run it and sign in.} The container reaches Ollama on the host
+through \texttt{host.docker.internal}, which the added host maps to the gateway
+address:
+
+\begin{verbatim}
+$ docker run -d --name open-webui -p 3000:8080 \
+    --add-host=host.docker.internal:host-gateway \
+    -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+    -v open-webui:/app/backend/data \
+    ghcr.io/open-webui/open-webui:main
+\end{verbatim}
+
+\marginnote{\newthought{It is already everywhere.}\index{tailnet} A device on your mesh reaches
+any port on the rig, not only the one served over HTTPS, so \texttt{rig:3000}
+opens from a phone on cellular with nothing further to configure. The section
+below is for the people who are not on the mesh.}
+
+\newthought{What you now own} is a chat anyone in the house can open. From any
+browser on the home network, go to \texttt{http://rig-address:3000}, sign in, and
+ask it something. A family member two rooms away is talking to a model running on
+your 3090, with no token metered and no prompt leaving the house.
+
+% ==============================================================================================
+% THE FAMILY DOOR
+% ==============================================================================================
+
+\section{The Family Door}\index{Cloudflare!Tunnel}
+
+\newthought{A Cloudflare tunnel publishes the chat} to a relative who wants a link
+and will never install a VPN\cite{cloudflareTunnel}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For reach, a small daemon on the rig dials out to Cloudflare, so the
+    hostname works with no port forwarded and no inbound rule on your router.
+    \item For transport, Cloudflare issues and terminates the TLS\index{TLS termination}, so the link is
+    a real \texttt{https} address rather than a certificate warning.
+    \item For the door itself, Cloudflare Access\index{Cloudflare!Access} puts a login in front and takes
+    a list of email addresses, so the page is public and the chat is not.
+\end{itemize}
+
+\marginnote{\newthought{The sovereignty cost is real.} Cloudflare terminates the TLS
+and sees who connects and when, though never what runs on your hardware. That is
+the trade for a link a relative can open, and it is the only piece of this book
+that puts a company back in the path. Publish the chat and nothing else.}
+
+\newthought{Publish one hostname} and point it at the chat container, never at
+Ollama:
+
+\begin{verbatim}
+$ cloudflared tunnel login
+$ cloudflared tunnel create rig
+$ cloudflared tunnel route dns rig chat.example.com
+$ cloudflared tunnel run --url http://localhost:3000 rig
+\end{verbatim}
+
+\newthought{Add the policy before you share the link.} In the Cloudflare dashboard,
+under Zero Trust, Access, Applications, add the hostname and an allow policy
+limiting it to your family's email addresses. Until that policy exists the page is
+open to anyone who guesses the name.
+
+% ==============================================================================================
+% SPEECH TO MODEL TO SPEECH
+% ==============================================================================================
+
+\section{Speech to Model to Speech}\index{speech to text}\index{text to speech}%
+\index{STT|see{speech to text}}\index{TTS|see{text to speech}}
+
+\newthought{A voice turn is three steps.} Speech-to-text turns the spoken request
+into words; the model decides what it means and what to do; text-to-speech turns
+the answer back into sound. The local stack is faster-whisper for the ear, the
+model already served on the rig for the brain, and Piper for the voice, each a
+small service, each replaceable.
+
+\marginnote{\newthought{Wyoming}\index{Wyoming!protocol} is Home Assistant's protocol for voice parts: each
+service listens on a TCP port and speaks audio and events, and Home Assistant wires
+them into a pipeline. Whisper listens on \texttt{10300}, Piper on \texttt{10200}.}
+
+\newthought{Put the ear on the GPU.}\index{faster-whisper} Speech-to-text is the slow step, and the
+built-in add-on runs on the CPU; running faster-whisper as its own container with
+the GPU passed through brings a request under a second. The same 3090 that serves
+chat transcribes speech in the gaps, since the two rarely peak at once in a house.
+
+\marginnote{\newthought{The brain must hold tools.}\index{tool calling}\index{conversation agent} A conversation agent that only
+chats can answer the weather but cannot turn off a light. Home Assistant exposes its
+devices to the model as tools, so the model must be one that supports tool calling.
+The Qwen model on the rig was pulled for exactly this.}
+
+% ==============================================================================================
+% WIRE THE PIPELINE
+% ==============================================================================================
+
+\section{Wire the Pipeline}\index{voice pipeline}
+
+\newthought{Run the orchestrator and the voice parts} as containers on the rig:
+Home Assistant, the ear with the GPU passed through, and the voice.
+
+\begin{verbatim}
+$ docker run -d --name homeassistant --network host \
+    -v ha-config:/config ghcr.io/home-assistant/home-assistant:stable
+
+$ docker run -d --name whisper -p 10300:10300 --gpus all \
+    rhasspy/wyoming-whisper --model small-int8 --language en --device cuda
+
+$ docker run -d --name piper -p 10200:10200 \
+    rhasspy/wyoming-piper --voice en_US-lessac-medium
+\end{verbatim}
+
+\marginnote{\newthought{Add the parts in the UI.}\index{Home Assistant!Wyoming integration} In Home Assistant, Settings,
+Devices and Services, add the Wyoming Protocol integration twice, pointing it
+at the rig's address on ports \texttt{10300} and \texttt{10200} to register the ear
+and the voice.}
+
+\newthought{Make the model the brain.}\index{Home Assistant!Ollama integration} Add the Ollama integration and point it at
+the rig, then choose a tool-calling model:
+
+\begin{verbatim}
+Settings > Devices & Services > Add Integration > Ollama
+  URL ..... http://localhost:11434
+  Model ... qwen3.5:9b
+  [x] let the model control Home Assistant devices
+\end{verbatim}
+
+\newthought{Assemble the pipeline.}\index{Home Assistant!voice pipeline} Under Settings, Voice Assistants, build one
+assistant from the three local parts: faster-whisper for speech-to-text, the Ollama
+agent for conversation, and Piper for text-to-speech. Set it as the preferred
+assistant.
+
+\marginnote{\newthought{Give it ears in a room.}\index{voice satellite}\index{Wyoming!satellite} A Home Assistant Voice PE puck, or
+any Wyoming satellite, is the microphone and speaker on the shelf; it hands audio to
+the pipeline and plays the answer back. One per room you want to talk to.}
+
+\newthought{What you now own} answers out loud. You say ``turn off the kitchen light
+and tell me a joke.''
+The satellite streams it to the rig, faster-whisper transcribes it, the model turns
+off the light through Home Assistant and writes a reply, and Piper says it back, all
+on hardware you own, with the router unplugged if you like.
+
+% ==============================================================================================
+% A MODEL PER FACE
+% ==============================================================================================
+% The in-depth model selection sits HERE and not in the stack chapter. The stack
+% chapter gives the sizing law and a shortlist for one card, which is all a reader
+% needs to get a first answer. Choosing per task only becomes a real decision once
+% the tasks exist, and both faces exist by this point in the chapter.
+
+\section{A Model per Face}\index{model selection}\index{Ollama!concurrency}
+
+\newthought{The two faces want different models.} The browser chat is read at
+reading speed and rewards the largest model that fits, because nobody minds
+waiting two seconds for a better answer. The voice pipeline is judged on the gap
+between the end of your sentence and the start of the reply, and a model that
+answers better but starts later is the worse assistant in a kitchen.
+
+\marginnote{\newthought{Latency is the voice budget.} A spoken turn already spends
+time on transcription and on speech synthesis. Whatever the model adds lands on
+top of that, and past roughly two seconds the person in the room repeats
+themselves, which starts the turn over.}
+
+\newthought{Three roles, three shapes.}\index{embedding model} A chat model, a tool caller, and an
+embedding model are different jobs, and only the first is a matter of taste. A
+tool caller has to have been trained to emit structured calls, and an embedding
+model does not converse at all: it turns text into vectors and is measured on
+dimensions and on how fast it can chew through a folder.
+
+\vspace{0.5em}
+\noindent{\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{0.13\textwidth}p{0.35\textwidth}p{0.12\textwidth}p{0.27\textwidth}}
+    \toprule
+    \textbf{Face} & \textbf{Model} & \textbf{Size} & \textbf{Bound by} \\
+    \midrule
+    Chat & \texttt{qwen3.8:27b} & 18 GB & answer quality \\
+    Voice & \texttt{qwen3.5:9b} & 6.6 GB & latency \\
+    Vision & \texttt{qwen3-vl:8b} & 6.1 GB & image support \\
+    Notes & \texttt{qwen3-embedding:0.6b} & 639 MB & throughput \\
+    \bottomrule
+\end{tabular}}
+\vspace{0.5em}
+
+\newthought{They share one card, up to a point.}\index{VRAM} Ollama keeps several
+models resident at once as long as they fit, so the embedder sits beside a chat
+model without either being unloaded. What does not fit is two large ones:
+\texttt{qwen3.8:27b} and \texttt{qwen3.5:9b} together want 24.6~GB of a 24~GB card,
+so every switch between the browser and the satellite costs a reload, and that
+reload is the pause the person in the kitchen hears\cite{ollamaLibrary}.
+
+\marginnote{\newthought{The cheap way out} is one model for both faces.
+\texttt{qwen3.5:9b} answers the browser well enough and calls tools quickly
+enough, and at 6.6~GB it leaves room for the vision model and the embedder
+resident beside it. Split the faces only after a task has failed on the shared
+model.}
+
+\newthought{Set the three variables} that decide how the card is shared, then let
+Ollama place the models\cite{ollamaDocs}:
+
+\begin{verbatim}
+$ sudo systemctl edit ollama
+\end{verbatim}
+
+\begin{verbatim}
+[Service]
+Environment="OLLAMA_MAX_LOADED_MODELS=3"
+Environment="OLLAMA_NUM_PARALLEL=2"
+Environment="OLLAMA_KEEP_ALIVE=30m"
+\end{verbatim}
+
+\marginnote{\newthought{What each one costs.} Loaded models default to three per
+card and only load if they fit. Parallel requests default to one, and raising it
+multiplies the context memory by that number. Keep alive defaults to five
+minutes, which is short enough that the first spoken request of the evening waits
+through a load.}
+
+\newthought{Confirm what is resident} before blaming a model for being slow. If
+the tag you expect is missing, the pause you heard was a load and not the model
+thinking:
+
+\begin{verbatim}
+$ ollama ps
+$ ollama pull qwen3-embedding:0.6b
+\end{verbatim}
+
+% ==============================================================================================
+% BRIDGE
+% ==============================================================================================
+
+\newthought{The house can now listen and speak}, and browser, terminal, and voice
+all draw on the one Ollama. What it still lacks is your own life: it answers
+from what it was trained on, never from what you have written. The next chapter
+points your notes at it.
+
+\marginnote{\newthought{feedback}}

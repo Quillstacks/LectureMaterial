@@ -18,7 +18,7 @@
 everywhere, answering by browser, terminal, voice, and from your own notes. This
 last chapter is a map rather than a build, a list of where to take the rig when you
 want more, each step a pointer with the tool and the reason. Every one of them is a
-new client of the same engine or a new tenant on the same GPU, so none requires
+new client of the Ollama you already run or a new tenant on the same GPU, so none requires
 starting over.
 
 % ==============================================================================================
@@ -32,7 +32,7 @@ household:
 
 \begin{itemize}
     \item Vision and OCR. A multimodal model such as Qwen3-VL\index{Qwen3}, pulled into Ollama
-    like any other, lets the engine read images, screenshots, diagrams, and scanned
+    like any other, lets Ollama read images, screenshots, diagrams, and scanned
     or handwritten pages, turning a photo of a letter or a receipt into text and
     answers\cite{ollamaVision}.
 
@@ -43,11 +43,11 @@ household:
 
     \item Image generation\index{image generation}. ComfyUI\index{ComfyUI} on the same GPU adds text-to-image with SDXL\index{SDXL} or
     Flux\index{Flux}, a node-based pipeline that is faster and lighter on memory than the
-    older web UIs and shares the card with the language engine\cite{comfyuiRepo}.
+    older web UIs and shares the card with Ollama\cite{comfyuiRepo}.
 
     \item The editor\index{coding agent}. Continue or Cline in VS Code points at the same Open WebUI API
     key from Chapter~3, so inline completion and chat in your editor run on the rig,
-    the same engine your terminal already uses.
+    on the same Ollama your terminal already talks to.
 
     \item Real concurrency. When the household load grows, move the serving layer to
     vLLM\index{vLLM}, whose continuous batching\index{continuous batching} serves many people at once from one
@@ -73,7 +73,7 @@ household:
 % CLOSING
 % ==============================================================================================
 
-\newthought{What you now own} is a machine in a room and an engine you understand
+\newthought{What you now own} is a machine in a room and a stack you understand
 well enough to extend. Whatever you add from here runs on that hardware and keeps
 working when the network does not.
 

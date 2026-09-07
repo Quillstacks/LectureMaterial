@@ -1,0 +1,591 @@
+% !TEX root = ../notes_sovereignai.tex
+% Chapter 2: The Stack, a build manual for the software that runs on the rig.
+% Mirrors chapters/01_hardware.tex, which is the reference implementation for
+% this book. One microsection per layer, in install order: name it, say what it
+% buys the rig, then fit it. Rationale, alternatives, and failure modes live in
+% marginnotes. Every layer cites its first-party documentation.
+%
+% NO "The Why" section, no learning objectives, no "by the end of this chapter"
+% list, and no chapter numbers anywhere: this is a manual and the chapter stands
+% on its own, exactly as CLAUDE.md requires.
+%
+% THE FIRST PAGE IS SHAPED LIKE CHAPTER 1's: the allcaps line, one paragraph
+% saying what this chapter builds and how long it takes, one short paragraph
+% leading into the table, then the full width table. Nothing else goes there.
+%
+% SECTION TITLES ARE THE TECHNICAL NAMES and they match the Layer column of the
+% stack table one for one: The BIOS, The OS (with The GPU Driver and The Container
+% Runtime beneath it), The Inference Server, The Model Weights, Monitoring. Not
+% "Firmware", not "The Watch", not "The Ledger": a reader scanning the table of
+% contents has to see which layer a section installs, and the body prose names the
+% mechanism too (POST, BAR, IOMMU, APT, OCI runtime hook, systemd drop in
+% override, KV cache, continuous batching).
+%
+% NECESSARY STEPS ONLY. There is no live USB probe section: booting a throwaway
+% Ubuntu to run lscpu, free, lspci, and LnkSta before installing anything is a
+% detour, and the same two commands prove the same thing on the installed system,
+% where they cost nothing. If a card is missing there, it is still a hardware
+% fault, and that is where the reader looks. Do not reintroduce it as a section.
+%
+% HALF A PAGE PER LAYER is the standing constraint, which is two layers to a page.
+% That budget is: an opening line, three or four bullets of ONE line each, ONE
+% marginnote, one "fit it" paragraph of two lines, and one verbatim block. No
+% shell script past six lines.
+%
+% PAGINATION: this chapter FLOWS. Unlike the hardware chapter it carries no
+% figures, so a \newpage per pair only buys half empty pages; the one \newpage is
+% the chapter opening, and every layer after it is guarded by
+% \needspace{8\baselineskip} so a heading cannot strand at a page foot. A larger
+% needspace pushes whole layers to the next page and wastes a third of one, which
+% is what nine pages here rather than twelve came from.
+% Exactly ONE "What you now own" paragraph, at the very end of the chapter, not
+% one per section. Alerting and metering are what bloat first, so their systemd
+% units and their awk pass are described in a sentence rather than printed.
+% When a layer outgrows its half page, cut a bullet; never paginate around it.
+%
+% VOCABULARY, and it holds for the whole book, not just this chapter. "Engine" is
+% NOT a layer name: it is ambiguous across Docker Engine, the thing that serves
+% inference, and the kernels inside that thing. Ollama is the INFERENCE SERVER
+% (binds the port, decides which weights stay resident, speaks the API). GGML and
+% its CUDA kernels are the INFERENCE ENGINE. "Docker Engine" is a product name and
+% appears only as one. Everywhere else, name the thing: Ollama, the service, the
+% API, the driver, libcuda. Chapters 3 to 6 say "Ollama" where they once said
+% "the engine"; keep it that way.
+%
+% The GPU driver and the container runtime are SUBSECTIONS of The OS, because
+% they go onto the fresh install in the same sitting rather than being picked up
+% separately. Its "fit it" paragraph, "Work over SSH", is the lead in to them.
+% The BIOS, the server, the model, and monitoring stay top level, because each is
+% a job of its own.
+%
+% Scope starts at the first power on, where the hardware chapter stops, and ends
+% at a rig that reports on itself. Nothing here leaves the box: no browser front
+% end, no network exposure, and no credential that means anything. The browser
+% chat and the family door are a later chapter's job, because they are ways of
+% reaching the server rather than parts of it. The one thing that does leave is
+% the Discord webhook, which carries a status line out and nothing back.
+%
+% THE SERVER AND THE MODEL ARE SEPARATE SECTIONS. The server section installs a
+% server with an empty library and proves the port; the model section argues the
+% 24 GB budget, gives five tags that fit, and proves the API with a completion.
+% Keep model sizing out of the server section: it drifted there once already.
+% Choosing per task (chat versus voice versus embeddings) belongs to the Screens
+% and Voices chapter, where the tasks exist.
+%
+% MONITORING goes last because it watches everything above it. Netdata is on the
+% metal, not in Docker: its GPU collector shells out to nvidia-smi on the host.
+% The down alert is a MISSING HEARTBEAT, not an alarm, because an alarm hosted on
+% the rig cannot fire when the rig is the thing that died.
+%
+% The main column serves ONE CARD, start to finish. Everything about serving
+% across two to four cards lives in the closing "Multi-Card Serving" section, the
+% potential next extension rather than work the reader does today. Do not let
+% multi-card mechanics back into the layer sections.
+%
+% Two closing sections follow the build, mirroring chapter 1: "Multi-Card
+% Serving" scales the stack up, "The Minimal Viable Rig" scales it down to a
+% Raspberry Pi. The Pi section keeps the same scope rule and says only what
+% CHANGES, because everything above the metal is identical.
+%
+% NO FIGURES, deliberately. There are no build photos of a software stack, and
+% CLAUDE.md forbids decorative tikz to fill the space a \newpage leaves. This
+% chapter is carried by the stack table and by verbatim blocks.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\index{inference server}\index{Ollama}\index{Docker}\index{CUDA}%
+\index{Ubuntu Server}\index{NVIDIA driver}\index{inference}\index{container runtime}
+\chapter{The Stack}
+\label{ch:stack}
+\printchapterversion{02_stack}
+\newthought{Silicon, Meet Software.}
+\vspace{1.5em}
+
+\newthought{This chapter installs one stack}: Ubuntu Server on the rig you just
+wired, the NVIDIA driver under it, and Ollama on top, which is enough to answer
+an API call on weights held in your own video memory. Nothing above the metal
+changes when a second card arrives. Install the layers in
+Table~\ref{tab:stack}\index{software stack} in the order of the sections that follow, and run
+each layer's check before starting the next, until the rig answers on the port
+and reports on itself. Day one is one evening, most of it spent waiting on
+downloads.
+
+\newthought{The stack is eight layers} and each one is a single command with a
+single answer. Nothing in it is compiled from source, and only the last layer
+takes a configuration file.
+
+% Full width table*: the tabular spans the text block AND the margin column, but
+% the caption still sets in the margin, below the table. Nothing else may occupy
+% the margin at that height: a marginnote or a citation footnote landing there
+% prints straight through the caption with no LaTeX warning. That is why the two
+% paragraphs above carry no \cite. Column widths are fractions of \linewidth,
+% which is the full measure in here, and sum to 0.92.
+\vspace{2\baselineskip}
+\begin{table*}[!ht]
+\centering
+\begin{tabular}{p{0.21\linewidth}p{0.35\linewidth}p{0.36\linewidth}}
+    \toprule
+    \textbf{Layer} & \textbf{Piece} & \textbf{Proves it} \\
+    \midrule
+    BIOS & five values in setup & re-enter setup, all five hold \\
+    OS & Ubuntu Server 26.04 LTS & \texttt{lspci | grep -i nvidia} \\
+    GPU driver & NVIDIA proprietary driver & \texttt{nvidia-smi} \\
+    Containers & Docker Engine & \texttt{docker run hello-world} \\
+    Passthrough & NVIDIA Container Toolkit & \texttt{docker run -{}-gpus all} \\
+    Inference server & Ollama & \texttt{curl localhost:11434} \\
+    Model weights & Qwen3.8 27B at four bits & \texttt{ollama run qwen3.8:27b} \\
+    Monitoring & Netdata and a heartbeat & \texttt{curl -sI localhost:19999} \\
+    \bottomrule
+\end{tabular}
+\vspace{1.5em}
+\caption{The stack, in the order it goes on. The third column is the whole
+troubleshooting method: run it before starting the next layer, and a failure is
+located rather than guessed at.} \label{tab:stack}
+\end{table*}
+
+% ==============================================================================================
+% THE BIOS
+% ==============================================================================================
+
+\newpage
+\section{The BIOS}\index{BIOS}\index{UEFI}\index{firmware|see{BIOS}}
+
+\newthought{Five values in the BIOS setup utility}, three of which decide whether
+a graphics card is addressable at all\cite{gigabyteB650EagleAX}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For addressing, Above 4G Decoding\index{Above 4G Decoding} maps a card's base address
+    register\index{base address register} windows past the 32~bit boundary, without which a second
+    card never maps.
+    \item For loading, Resizable BAR\index{Resizable BAR} hands the processor a card's whole 24~GB in
+    one window instead of a 256~MB sliding one.
+    \item For passthrough, IOMMU\index{IOMMU}\index{device passthrough}, the input output memory management
+    unit, maps card memory into a container.
+    \item For VRAM\index{VRAM}, Initial Display Output on IGD keeps the monitor on the
+    integrated graphics\index{integrated graphics} and all 24~GB free for models.
+    \item For memory speed, the EXPO profile\index{EXPO profile}\index{XMP profile} clocks the kit at its rated
+    6000 rather than the conservative JEDEC\index{JEDEC} default a DDR5 kit boots at.
+\end{itemize}
+
+\marginnote{\newthought{Menu names move.} BIOS here is the UEFI firmware that
+Gigabyte still labels BIOS, and these five sit under different headings in
+different revisions of it, so use the setup search rather than a path from a
+screenshot. Set all five in one visit: a value missed here surfaces later as a
+hardware fault that is not one.}
+
+\newthought{Set them now.} Monitor on the board's own display output, not on the
+card. Switch the supply on and press the power button; fans that turn half a
+revolution and stop mean the 24~pin is not seated. Press \texttt{Del} during
+POST\index{POST}, the power on self test, then save and exit:
+
+\begin{verbatim}
+Above 4G Decoding ............ Enabled
+Re-Size BAR Support .......... Enabled
+IOMMU ........................ Enabled
+Initial Display Output ....... IGD
+EXPO / XMP profile ........... Profile 1
+\end{verbatim}
+
+% ==============================================================================================
+% THE OS
+% ==============================================================================================
+
+\needspace{8\baselineskip}
+\section{The OS}\index{Ubuntu Server}\index{operating system}
+
+\newthought{Ubuntu Server 26.04 LTS}, written to a USB stick with the same imager
+you would use for any machine, with no desktop environment on
+it\cite{ubuntuServerDocs}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For the driver, Canonical ships the proprietary NVIDIA driver in the
+    APT archive\index{APT}, so a supported card costs one command rather than a vendor
+    runfile and a blacklisted module.
+    \item For the card, a server install runs no display server\index{display server}, neither X nor
+    Wayland, so nothing on the box holds VRAM or wakes a screen.
+    \item For the library, manual partitioning\index{partitioning} in the installer leaves the rest of
+    the drive as a separate filesystem for weights.
+\end{itemize}
+
+\marginnote{\newthought{Where the weights live.}\index{Ollama!model directory} Point
+\texttt{OLLAMA\_MODELS} at that second filesystem once Ollama is installed, and
+reinstalling the operating system never touches a library that took days to
+download.}
+
+\newthought{Work over SSH.} Enable OpenSSH\index{OpenSSH} in the installer, then unplug the
+monitor and do everything that follows from your laptop. The first two commands
+on the fresh install name the system and the card, which is the last look at the
+machine before a driver can be blamed for anything:
+
+\begin{verbatim}
+$ lsb_release -a              # Ubuntu 26.04 LTS
+$ lspci | grep -i nvidia      # NVIDIA GA102 [RTX 3090]
+\end{verbatim}
+
+\marginnote{\newthought{No driver in that line.}\index{PCIe!enumeration} \texttt{lspci} reads
+what the BIOS put on the PCIe bus, so a card listed there is seated, powered, and
+addressable whatever happens above it. A card missing there is a hardware fault,
+and no amount of installing fixes it. The driver and the container runtime go
+onto this install in the same sitting.}
+
+\needspace{8\baselineskip}
+\subsection{The GPU Driver}\index{NVIDIA driver}\index{kernel module}
+
+\newthought{The proprietary NVIDIA driver} from the Ubuntu archive, a kernel
+module and the userspace libraries that make the card visible to every program
+above it\cite{ubuntuNvidiaDrivers}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For selection, \texttt{ubuntu-drivers} reads the card's PCI device id
+    and picks the branch that supports it, so there is no version to choose.
+    \item For CUDA\index{CUDA}, the package provides \texttt{libcuda.so}, the driver API and
+    the only CUDA library Ollama loads from the system, so there is no CUDA
+    Toolkit\index{CUDA Toolkit} to install for inference.
+    \item For proof, \texttt{nvidia-smi} prints the card, its 24~GiB, and the
+    driver version. Until it does, nothing above this layer can work.
+\end{itemize}
+
+\newthought{Install it and reboot}, because a running kernel keeps the module it
+already loaded:
+
+\begin{verbatim}
+$ sudo ubuntu-drivers install
+$ sudo reboot
+$ nvidia-smi              # the 3090, with its 24 GiB
+\end{verbatim}
+
+% ==============================================================================================
+% THE CONTAINER RUNTIME
+% ==============================================================================================
+
+\needspace{8\baselineskip}
+\subsection{The Container Runtime}\index{Docker}\index{NVIDIA Container Toolkit}
+
+\newthought{Docker Engine and the NVIDIA Container Toolkit}, one pair, because a
+container runtime on its own cannot reach a graphics
+card\cite{nvidiaContainerToolkit}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For the card, the toolkit installs an OCI runtime hook\index{OCI runtime hook} that mounts
+    the host driver into a container at start, so it is installed once on the
+    metal and never inside an image.
+    \item For upgrades, every service above this layer ships as an image, so an
+    upgrade is a pulled tag and a rollback is the previous one.
+    \item For proof, \texttt{-{}-gpus all} makes \texttt{nvidia-smi} print from
+    inside a container the same card it printed on the host.
+\end{itemize}
+
+\marginnote{\newthought{Why containers at all}\index{Docker!GPU passthrough}, when Ollama
+itself runs on the metal. Everything layered on later asks Docker for the GPU and
+gets it, and several such services share one card without any of them carrying a
+driver of its own.}
+
+\newthought{Wire them together.} \texttt{nvidia-ctk} writes the runtime into
+Docker's \texttt{daemon.json}, which takes a restart before it
+applies\cite{dockerEngineInstall}:
+
+\begin{verbatim}
+$ curl -fsSL https://get.docker.com | sh
+$ sudo nvidia-ctk runtime configure --runtime=docker
+$ sudo systemctl restart docker
+$ docker run --rm --gpus all ubuntu nvidia-smi
+\end{verbatim}
+
+% ==============================================================================================
+% THE INFERENCE SERVER
+% ==============================================================================================
+
+\needspace{8\baselineskip}
+\section{The Inference Server}\index{inference server}\index{Ollama!install}
+
+\newthought{Ollama is the inference server}, the process that loads weights into
+video memory, holds them there between requests, and answers over
+HTTP\cite{ollamaDocs}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For setup, the install script registers \texttt{ollama.service}\index{Ollama!service} under
+    systemd\index{systemd}, and a model that refuses to load says why in
+    \texttt{journalctl -u ollama}.
+    \item For clients, it serves an OpenAI-compatible API\index{OpenAI-compatible API} at
+    \texttt{:11434/v1}, the shape every chat front end, editor, and agent speaks.
+    \item For the library, weights land wherever \texttt{OLLAMA\_MODELS}\index{Ollama!model directory}
+    points, one directory of content addressed blobs shared across every tag.
+    \item For reach, it binds to localhost and reads no authorisation header, so
+    publishing that port without a gateway hands the card to whoever finds it.
+\end{itemize}
+
+\marginnote{\newthought{Server, not engine.}\index{GGML}\index{inference engine} The
+arithmetic runs in GGML and the CUDA kernels it ships, which is the inference
+engine. Ollama wraps it with the three things kernels have no opinion about:
+which weights stay resident, whose request runs next, and what the API looks
+like. Swapping the server replaces all three and leaves the card and the driver
+alone.}
+
+\newthought{Install it and point the library} at the second filesystem, in a
+systemd drop in override\index{systemd!drop in override} rather than in the shipped unit file:
+
+\begin{verbatim}
+$ curl -fsSL https://ollama.com/install.sh | sh
+$ sudo systemctl edit ollama
+    [Service]
+    Environment="OLLAMA_MODELS=/srv/models"
+$ sudo systemctl restart ollama
+$ curl localhost:11434        # Ollama is running
+\end{verbatim}
+
+% ==============================================================================================
+% THE MODEL WEIGHTS
+% ==============================================================================================
+
+\needspace{8\baselineskip}
+\section{The Model Weights}\index{model selection}\index{model weights}
+
+\newthought{The model is one file} of a few gigabytes that Ollama maps into video
+memory and reads once per token, so a change of mind is a download\cite{ollamaLibrary}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For the budget, 24~GB is all of it and quantization\index{quantization} decides what
+    fits: near two thirds of a gigabyte per billion parameters at the four bit
+    tags that ship by default, so twenty seven billion cost 18~GB.
+    \item For the context, the window\index{context window} is a KV cache\index{KV cache} allocated on top
+    of the weights, so a 20~GB model with a long window tips the card into system
+    memory and crawls.
+    \item For the work, tool calling\index{tool calling} is a filter and not a preference, since a
+    model that cannot call a tool cannot flip a switch or search a note.
+\end{itemize}
+
+\newthought{Five that fit} the card, with 18~GB the working default and roughly
+six left for the KV cache and a small embedding model.
+
+\vspace{0.5em}
+% \noindent matters: without it the paragraph indent eats 12pt of the measure
+% and the tabular runs into the margin with only a log warning to show for it.
+\noindent{\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{0.44\textwidth}p{0.12\textwidth}p{0.34\textwidth}}
+    \toprule
+    \textbf{Tag} & \textbf{Weights} & \textbf{Picked for} \\
+    \midrule
+    \texttt{qwen3.5:9b} & 6.6 GB & quick, 256K window \\
+    \texttt{gpt-oss:20b} & 14 GB & reasoning and agents \\
+    \texttt{mistral-small3.2:24b} & 15 GB & instruction following \\
+    \texttt{qwen3.8:27b} & 18 GB & the default here \\
+    \texttt{gemma4:31b} & 20 GB & the most that fits \\
+    \bottomrule
+\end{tabular}}
+\vspace{0.5em}
+
+\marginnote{\newthought{These tags will age.}\index{API key!placeholder} Qwen went from 3
+to 3.5 to 3.6 to 3.8 inside a year, while the budget does not move: take the tag
+that costs the same gigabytes as the one you run now. The same weights are 30~GB
+at eight bits and 56~GB at full precision, which is what puts them out of reach.
+The bearer string below is a placeholder, since Ollama reads no authorisation
+header, but OpenAI-compatible clients refuse to send a request without one.}
+
+\newthought{Pull one and prove it on the API}, the only interface that has to
+work:
+
+\begin{verbatim}
+$ ollama pull qwen3.8:27b
+$ curl localhost:11434/v1/chat/completions \
+   -H "Authorization: Bearer ollama" \
+   -d '{"model":"qwen3.8:27b","messages":
+        [{"role":"user","content":"say hello"}]}'
+\end{verbatim}
+
+% ==============================================================================================
+% MONITORING
+% ==============================================================================================
+
+\needspace{8\baselineskip}
+\section{Monitoring}\index{monitoring}\index{Netdata}
+
+\newthought{Netdata draws the rig}, every core, disk, container, and the card
+itself, at a sample a second, from one install script and with no dashboard to
+build\cite{netdataDocs}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For the card, one collector\index{Netdata!GPU collector} reads \texttt{nvidia-smi} and charts
+    temperature, power draw, framebuffer memory\index{VRAM}, and utilisation.
+    \item For history, per second samples roll into per minute and per hour
+    tiers, so a month of usage sits on disk with no database beside it.
+    \item For reach, the dashboard is a page on \texttt{:19999} with no account
+    and no cloud behind it, served by the machine it measures.
+\end{itemize}
+
+\marginnote{\newthought{Read three charts first.} A card past 83~degrees is
+protecting itself and losing clock, framebuffer memory pinned at 24~GB with an
+answer still crawling means the model spilled into system memory, and the
+filesystem holding the library filling up is the failure that arrives quietly and
+stops every pull at once.}
+
+\newthought{Install it and switch the card on.} The GPU collector ships disabled,
+and it is why monitoring goes on the metal rather than into Docker: it shells out
+to \texttt{nvidia-smi} on the host.
+
+\begin{verbatim}
+$ curl https://get.netdata.cloud/kickstart.sh \
+    > /tmp/kickstart.sh && sh /tmp/kickstart.sh
+\end{verbatim}
+
+\begin{verbatim}
+$ cd /etc/netdata
+$ sudo ./edit-config go.d/nvidia_smi.conf
+    jobs:
+      - name: nvidia_smi
+\end{verbatim}
+
+\begin{verbatim}
+$ sudo systemctl restart netdata
+$ curl -sI localhost:19999    # 200 OK
+\end{verbatim}
+
+% ==============================================================================================
+% ALERTING AND METERING
+% ==============================================================================================
+
+\subsection{Alerting and Metering}\index{Discord!webhook}\index{alerting}\index{heartbeat}
+
+\newthought{A Discord webhook} is a URL that turns an HTTP POST into a message in
+a channel, which makes it the cheapest alerting target a household can
+own\cite{discordWebhooks}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For the alarms, Netdata posts its own thresholds to it, so a hot card, a
+    full disk, or a stopped container reaches your phone with no rule to write.
+    \item For the silence, an alarm on the machine it watches reports every
+    failure except the one that matters, because a dead machine sends nothing. A
+    heartbeat inverts that: the message that fails to arrive is the alert.
+    \item For the secret, the webhook URL is the credential, so it lives in a
+    file that only root can read.
+\end{itemize}
+
+\newthought{Hand the webhook to Netdata}, created in the Discord channel settings
+under Integrations:
+
+\begin{verbatim}
+$ sudo ./edit-config health_alarm_notify.conf
+    SEND_DISCORD="YES"
+    DISCORD_WEBHOOK_URL="https://discord.com/api/..."
+    DEFAULT_RECIPIENT_DISCORD="alerts"
+\end{verbatim}
+
+\marginnote{\newthought{Daily, not hourly.} A channel that pings every hour stops
+being read inside a week, and an alert nobody reads is not an alert. One message
+a morning is enough for a household to notice a missing one by lunchtime. Let
+\texttt{jq}\index{jq} build the JSON body too: a model tag carrying a quote produces a
+request Discord rejects with no useful reason.}
+
+\newthought{Add the heartbeat}, which names the resident model once a morning. It
+runs from the standard systemd pair, a oneshot service and a timer with
+\texttt{OnCalendar=daily} and \texttt{Persistent=true}\index{systemd!timer}, so a reboot
+delays the message rather than swallowing it\cite{systemdTimer}:
+
+\begin{verbatim}
+# /usr/local/bin/rig-heartbeat
+s="rig up | $(curl -sf localhost:11434/api/ps \
+    | jq -r '.models[0].name // "idle"')"
+curl -s -H 'Content-Type: application/json' \
+  -d "$(jq -nc --arg c "$s" '{content:$c}')" \
+  "$(cat /etc/rig-webhook)"
+\end{verbatim}
+
+\newthought{Meter it with a second timer}\index{usage metrics}\index{electricity} at
+\texttt{OnCalendar=minutely}, appending the month, the resident model, and the
+card's watts to \texttt{/var/log/rig-usage}. One \texttt{awk} pass on the first
+of the month turns that file into hours per model and kilowatt hours, posted to
+the same webhook:
+
+\begin{verbatim}
+2026-07
+qwen3.8:27b 61.4 h
+qwen3.5:9b 8.9 h
+idle 673.7 h
+33.16 kWh
+\end{verbatim}
+
+\marginnote{\newthought{What the ledger measures} is resident minutes, not
+tokens. Ollama holds a model in video memory for five minutes past the last
+request, so a month of short sessions reads high. What it answers honestly is
+which model earned its place on the card and what the month drew from the wall:
+two thirds of those 33 kilowatt hours are idle at roughly 20 watts.}
+
+% ==============================================================================================
+% MULTI-CARD SERVING
+% ==============================================================================================
+
+\needspace{8\baselineskip}
+\section{Multi-Card Serving}\index{vLLM}
+
+\newthought{Ollama serves a household from one card} and keeps serving when the
+second, third, and fourth arrive. What changes is the shape of the load: several
+people prompting at once, or an agent firing dozens of requests a minute, is
+throughput rather than conversation, and throughput is a different inference
+server.
+
+\newthought{vLLM wins on concurrency.} It runs continuous batching\index{continuous batching} over a
+paged KV cache\index{KV cache} instead of queueing requests, so the card keeps working while
+one prompt waits on another\cite{vllmDistributed}. Both servers speak the same
+OpenAI-compatible API, so the swap is a different container on the same port and
+every client keeps working untouched.
+
+\marginnote{\newthought{Not yet, on one card.} Serving a household from a single
+3090, one install command beats a tuning session, and the queue never runs deep
+enough for batching to pay for itself. Swap when people start waiting on each
+other, not before.}
+
+\newthought{Keep one model per card.} Cards two to four sit on one PCIe lane,
+roughly 1~GB/s. Tensor parallelism\index{tensor parallelism}, which splits one model across cards,
+pushes activations over that link on every token and crawls, while pipeline
+parallelism\index{pipeline parallelism} and a plain replica per card send almost nothing over it. Let the
+scheduler round robin\index{round robin} between replicas: throughput rises with the card count, a
+single answer arrives no faster, and total video memory still sets the largest
+model that will run.
+
+% ==============================================================================================
+% THE MINIMAL VIABLE RIG
+% ==============================================================================================
+
+% The second thread, for a reader working through this book without the silicon.
+% It says only what CHANGES, because everything above the metal is identical, and
+% that identity is the whole argument.
+\needspace{8\baselineskip}
+\section{The Minimal Viable Rig}\index{Raspberry Pi}
+
+\newthought{A Raspberry Pi~5 runs this chapter} without the BIOS section and
+without the GPU driver, because there is no setup utility to visit and no card to
+make visible\cite{raspberrypiPi5}:
+
+\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
+    \item For the system, Ubuntu Server 26.04 for arm64 writes to the microSD
+    from the same imager and boots with OpenSSH the same way.
+    \item For the runtime, the Docker install script and the Ollama install
+    script both detect the architecture and need no flag for it.
+    \item For the model, four billion parameters at four bit quantisation take
+    near 3.4~GB of the shared 8~GB and leave four for the system and containers.
+\end{itemize}
+
+\marginnote{\newthought{Eight gigabytes is the floor.} The 16~GB board is the
+headroom upgrade and it buys a larger model rather than a faster one, since the
+memory bandwidth is the same either way. There is no \texttt{lspci} line to look
+for and no \texttt{nvidia-smi}: the 8~GB is system and video memory at once.}
+
+\newthought{Pull the smaller model.} Substitute \texttt{ollama pull qwen3.5:4b}
+for the twenty seven billion pull and every command downstream is unchanged, same
+port, same API, same clients. What it costs is speed: LPDDR4X-4267 moves roughly
+17~GB/s\index{memory!bandwidth} against the 3090's 936, and generation reads the whole model once
+per token, so answers arrive at single digit tokens per second\index{tokens per second} rather than
+dozens.
+
+% ==============================================================================================
+% BRIDGE
+% ==============================================================================================
+\vfill
+\newthought{What you now own} is a served rig: one request returns a completion
+in the shape every client speaks, on weights in your own video memory, with
+nothing metered and no prompt leaving the box, and a message every morning
+proving the machine is still up.
+
+\newthought{Ollama runs, but only on the box itself.} It listens on localhost,
+checks no password, and the key in that last request was a string it never read.
+The next chapter carries it to your phone, your laptop, and your terminal
+wherever they are, and gives it a credential that means something, without
+opening the card to everyone.

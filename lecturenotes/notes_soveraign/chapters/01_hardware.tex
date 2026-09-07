@@ -2,9 +2,9 @@
 % Chapter 1: The Rig, a build manual.
 % One microsection per part, in assembly order: name the part, say what its
 % datasheet numbers buy the rig, then fit it. Rationale, alternatives, and
-% background live in marginnotes. Every part cites its datasheet. No prices in the
-% part sections: the only figure is the day one total in the chapter opening, so
-% the chapter cannot go stale line by line.
+% background live in marginnotes. Every part cites its datasheet. No prices anywhere,
+% neither in the part sections nor in the chapter opening, so the chapter cannot go
+% stale line by line.
 %
 % The parts that are populated onto the board while it lies flat, the processor
 % and cooler, the memory, and the drives, are SUBSECTIONS of The Motherboard,
@@ -12,8 +12,8 @@
 % it" paragraph, "Work on it flat", is the lead in to them. Parts that attach to
 % the finished board or hang off the frame stay top level sections.
 %
-% Scope stops at the wired machine. Firmware setup and the enumeration probe are
-% the first thing software does to the rig, so they live in the Engine chapter,
+% Scope stops at the wired machine. BIOS setup is the first thing software does
+% to the rig, so it lives in the Stack chapter,
 % which owns everything from the first power-on onward. Nothing here switches
 % the machine on.
 %
@@ -41,10 +41,10 @@ RTX~3090 and its 24~GB, which is enough to serve a capable model for private usa
 The rest of the setup is designed in a way so it is able to grow with your needs.
 Order the parts in Table~\ref{tab:bom}\index{bill of materials} and fit them in the order of the sections
 that follow, until the last cable is seated and the machine is ready to be switched
-on. Day one is roughly 2500~euro and a few hours plugging.
+on. Day one is a few hours of plugging.
 
 \newthought{The parts list} is the Ryzen configuration of a proven quad~3090 local
-AI home server, priced at 3000~EUR when it was built by me in 2026.
+AI home server, built by me in 2026.
 
 % Full width table*: the tabular spans the text block AND the margin column, but the
 % caption still sets in the margin, below the table. Nothing else may occupy the
@@ -329,7 +329,7 @@ wired onto \texttt{PW} on \texttt{F\_PANEL}\index{front panel header}.
 
 \marginnote{\newthought{Why the 3090} and not:\index{RTX A6000}
 \begin{itemize}[leftmargin=*, topsep=0.25em, itemsep=0.1em, parsep=0em]
-    \item A6000, 48~GB: Near ten thousand euro (in 2026).
+    \item A6000, 48~GB: Twice the VRAM at ten times the price.
     \item 5090\index{RTX 5090}, 32~GB: More bandwidth, but no NVLink.
     \item 4090\index{RTX 4090}, 24~GB: The same VRAM at twice the price.
     \item Mac or DGX~Spark\index{DGX Spark}: Unified memory\index{unified memory} crawls on a dense 70~billion parameter
@@ -429,8 +429,8 @@ order:
 
 
 \newthought{Leave the mains lead unplugged.} The rig is now fully assembled, wired, and ready to be powered on for the first time.
-Skip to \hyperref[ch:engine]{the next chapter} for the firmware setup and the first
-probe of the rig.
+Skip to \hyperref[ch:stack]{the next chapter} for the BIOS setup and the first
+boot of the rig.
 
 
 
@@ -475,7 +475,7 @@ from the processor and one from the chipset. Both are wired PCIe~3.0~x1\index{PC
 connector, a single lane\index{PCIe!lanes} behind it, about 1~GB/s only.
 Keep it at one model per (linked) card(s). A model split across cards
 parallelism\index{tensor parallelism} moves activations every token and starts to crawl. So the idea is to have the same model loaded
-    on each card, and let the engine\index{engine} round robin\index{round robin} between them for throughput.
+    on each card, and let the scheduler round robin\index{round robin} between them for throughput.
 
 \marginnote{\newthought{On power.} Four cards at 350~watt plus the
 platform reach roughly 1550~watt, which becomes uncomfortable against our supply's 1600 limit.
@@ -503,7 +503,7 @@ fans\index{case fans} along the rail, undervolt before the fourth cars goes in.
 will enable you to learn just as much on a tighter budget.
 
 \marginnote{\newthought{The On-A-Budget-Thread.} Same operating system, same
-container runtime, same engine binary on the same port, same clients pointed at it.
+container runtime, same Ollama binary on the same port, same clients pointed at it.
 Only the model and performance shrinks.}
 
 \newthought{The 8~GB is shared}\index{unified memory}: processor and graphics core read the same
@@ -526,7 +526,6 @@ the wall. A complete machine, wired and never switched on, in one hand.
 % ==============================================================================================
 \vfill
 \newthought{The metal is finished}, whichever of the two machines is on
-your bench. What it still lacks is a first power on and a handful of firmware values
-that make a card addressable, a probe that proves every part is really on the bus,
-and then an operating system, a driver, and weights loaded into memory together with some orchestration. 
-Let's get on it.
+your bench. What it still lacks is a first power on and a handful of BIOS values
+that make a card addressable, and then an operating system, a driver, and weights
+loaded into memory together with some orchestration. Let's get on it.

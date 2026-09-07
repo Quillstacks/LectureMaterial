@@ -1,5 +1,5 @@
 % !TEX root = ../notes_sovereignai.tex
-% Chapter 5: Second Brain. Obsidian on the local engine.
+% Chapter 5: Second Brain. Obsidian on the local Ollama.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \index{Obsidian}\index{embeddings}\index{retrieval}\index{second brain}\index{markdown}
@@ -16,23 +16,23 @@
 
 \newthought{The model answers from what it was trained on}, not from what you have lived. It has
 never read your meeting notes, your reading highlights, the half-finished thoughts in
-your vault. Point your notes at the engine and it answers from your own record
+your vault. Point your notes at Ollama and it answers from your own record
 rather than from general knowledge, while the notes themselves never leave your
 machine.
 
 \marginnote{\newthought{Obsidian}\index{Obsidian!vault} keeps a vault as plain markdown files in a folder
 on your own disk, with no server and no account behind it, which is what makes a
-private path from the vault to the engine a matter of pointing a plugin at an
+private path from the vault to the rig a matter of pointing a plugin at an
 address.}
 
 \newthought{The tool is Obsidian} with two community plugins\index{Obsidian!plugins}: one to chat with the
-vault, one to find related notes by meaning. Both point at the Chapter~2 engine over
+vault, one to find related notes by meaning. Both point at the Chapter~2 Ollama over
 the private network from Chapter~3, so a question typed on your laptop is answered by
 the rig at home, grounded in your writing.
 
 \newthought{By the end of this chapter} you will have:
 \begin{itemize}
-    \item pulled an embedding model and exposed it through the engine;
+    \item pulled an embedding model and exposed it through Ollama;
     \item connected Obsidian's chat and semantic-search plugins to the rig;
     \item asked a question and received an answer drawn from your own notes.
 \end{itemize}
@@ -64,8 +64,8 @@ drop a PDF or a folder into its knowledge feature and it embeds and searches the
 same way. Obsidian is the version that lives inside your notes;
 the next chapter points at the broader cases.}
 
-\newthought{Where the work runs.}\index{tailnet} Obsidian runs on your laptop, the engine on the
-rig. The plugins reach the engine at its address on your tailnet, so indexing and
+\newthought{Where the work runs.}\index{tailnet} Obsidian runs on your laptop, Ollama on the
+rig. The plugins reach it at its address on your tailnet, so indexing and
 chat happen on the 3090 while the vault stays on the laptop, and nothing crosses the
 public internet.
 
@@ -75,11 +75,11 @@ public internet.
 
 \section{Wire Obsidian}\index{Copilot}\index{Smart Connections}
 
-\newthought{Pull the embedding model}\index{nomic-embed-text} on the rig, alongside the chat model:
+\newthought{Pull the embedding model}\index{qwen3-embedding} on the rig, alongside the chat model:
 
 \begin{verbatim}
-$ ollama pull nomic-embed-text        # small, fast, made for embeddings
-$ ollama list                         # qwen3:14b and nomic-embed-text present
+$ ollama pull qwen3-embedding:0.6b   # made for embeddings
+$ ollama list                        # both models present
 \end{verbatim}
 
 \marginnote{\newthought{Reach over the tailnet.} Use the rig's tailnet address, not
@@ -93,12 +93,12 @@ plugin's settings, choose Ollama as the provider and set the endpoint to the rig
 \begin{verbatim}
 Provider ......... Ollama (OpenAI-compatible)
 Base URL ......... http://rig.your-tailnet.ts.net:11434
-Chat model ....... qwen3:14b
-Embedding model .. nomic-embed-text
+Chat model ....... qwen3.8:27b
+Embedding model .. qwen3-embedding:0.6b
 \end{verbatim}
 
 \marginnote{\newthought{If the plugin cannot connect}\index{cross-origin requests}, set \texttt{OLLAMA\_ORIGINS}
-on the rig so the engine accepts requests from the Obsidian app, the one piece of
+on the rig so Ollama accepts requests from the Obsidian app, the one piece of
 cross-origin housekeeping these plugins need.}
 
 \newthought{Index the vault}\index{vector}\index{embeddings}, a one-time pass that embeds every note; on a normal
@@ -114,7 +114,7 @@ words, citing the note you wrote while building it, with the reasoning done on t
 % BRIDGE
 % ==============================================================================================
 
-\newthought{The engine now answers from your own record}, not only from its
+\newthought{Ollama now answers from your own record}, not only from its
 training, and chat, terminal, voice, and notes all run on the one box you own. The
 stack is complete enough to live on. The last chapter is a map rather than a build:
 where to take the rig when you want more from it.
