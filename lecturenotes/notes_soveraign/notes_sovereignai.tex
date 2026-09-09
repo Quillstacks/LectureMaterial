@@ -29,7 +29,8 @@
 % sets the whole thing letterspaced allcaps at 36pt, so the subtitle carries its
 % own \fontsize to drop it back to a readable second line. No space after \\ (it
 % would survive as an indent in the letterspaced line).
-\title[Sovereign AI]{Owning the Mind\\{\fontsize{16}{20}\selectfont Your guide to sovereign AI at home}}
+\title[A Hitchhiker's Guide to Sovereign AI at Home]{Why do I not own my neural network?\\
+{\fontsize{16}{20}\selectfont A Hitchhiker's Guide to Sovereign AI at Home}}
 \author[\defaultauthor]{\defaultauthor}
 \publisher[\defaultpublisher]{\defaultpublisher}
 \renewcommand{\notesdir}{notes_sovereignai}
@@ -71,6 +72,13 @@
 \usepackage{xurl}
 \Urlmuskip=0mu plus 1mu\relax
 
+% A \cite reprints the whole bib entry in the margin, so natbib's year-letter
+% disambiguation, 2026a and 2026b, adds nothing here. The .bbl wraps exactly
+% those letters in \natexlab. natbib resets \natexlab to identity from its own
+% \AtBeginDocument hook, registered at class load, so this later hook runs
+% after it and gobbles the letters: The years print plain.
+\AtBeginDocument{\def\natexlab#1{}}
+
 \begin{document}
 
 \makestandardfrontmatter
@@ -104,10 +112,11 @@ lunch.''}{The Moon Is a Harsh Mistress, Robert A. Heinlein}}
 
   \marginnote{\newthought{This build is for inference.}\index{inference}\index{training}
   AI inference loads model weights once and then streams tokens, so a single
-  PCIe~3.0 lane keeps up. Training, fine tuning\index{fine-tuning} and image or video
-  generation\index{image generation} move tensors across the bus for the whole run. 
-  When facing the latter use-case you should target a server platform auch as an AMD EPYC\index{AMD EPYC} board, which gives
-  six cards a full x16 link each.}
+  PCIe~3.0 lane can keep up. If you are like me and you train your own AI models, do 
+  fine tuning\index{fine-tuning} and image or video
+  generation\index{image generation} this setup is not for (you) that. Those things move tensors across 
+  the bus for the whole run. 
+  When facing the latter use-case you should target a server platform auch as an AMD EPYC\index{AMD EPYC} board, dedicated cards a full x16 link each.}
 
   \newthought{Your own machine is the lever you can build today.} 
   All you need are some parts, this manual, and some tinkering. 
@@ -125,7 +134,7 @@ lunch.''}{The Moon Is a Harsh Mistress, Robert A. Heinlein}}
 % ----------------------------------------------------------------------
 
 % CHAPTER 1: the rig, hardware, design for four, one 3090, wired and unpowered
-\input{chapters/01_hardware.tex}
+% \input{chapters/01_hardware.tex}
 
 % CHAPTER 2: the stack, first boot, OS, driver, Docker, Ollama on the API
 \input{chapters/02_stack.tex}

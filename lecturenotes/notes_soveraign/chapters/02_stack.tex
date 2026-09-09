@@ -14,12 +14,21 @@
 % leading into the table, then the full width table. Nothing else goes there.
 %
 % SECTION TITLES ARE THE TECHNICAL NAMES and they match the Layer column of the
-% stack table one for one: The BIOS, The OS (with The GPU Driver and The Container
+% stack table one for one: The OS (with The GPU Driver and The Container
 % Runtime beneath it), The Inference Server, The Model Weights, Monitoring. Not
 % "Firmware", not "The Watch", not "The Ledger": a reader scanning the table of
 % contents has to see which layer a section installs, and the body prose names the
 % mechanism too (POST, BAR, IOMMU, APT, OCI runtime hook, systemd drop in
 % override, KV cache, continuous batching).
+%
+% FIRMWARE JUST IN TIME: there is NO standalone BIOS section. Ubuntu goes on at
+% the board's defaults, and each firmware value is set where its need arises:
+% Initial Display Output on IGD rides the driver's reboot, the build's one
+% planned setup visit; EXPO waits in a Model Weights marginnote for the day a
+% model spills into system RAM; Above 4G Decoding, ReBAR, and IOMMU sit in
+% Multi-Card Serving with the second card. Do not gather them back into an
+% up-front checklist: the reader wants Ubuntu installed, and a setting taught
+% next to its symptom sticks.
 %
 % NECESSARY STEPS ONLY. There is no live USB probe section: booting a throwaway
 % Ubuntu to run lscpu, free, lspci, and LnkSta before installing anything is a
@@ -32,12 +41,11 @@
 % marginnote, one "fit it" paragraph of two lines, and one verbatim block. No
 % shell script past six lines.
 %
-% PAGINATION: this chapter FLOWS. Unlike the hardware chapter it carries no
-% figures, so a \newpage per pair only buys half empty pages; the one \newpage is
-% the chapter opening, and every layer after it is guarded by
-% \needspace{8\baselineskip} so a heading cannot strand at a page foot. A larger
-% needspace pushes whole layers to the next page and wastes a third of one, which
-% is what nine pages here rather than twelve came from.
+% PAGINATION: every \section starts on a fresh page via \clearpage, so a layer
+% is read as one spread and never straddles another. The half-page budget above
+% still bounds the CONTENT of a layer; the leftover white space on each page is
+% accepted, not filled. Subsections inside a layer stay in the flow, guarded by
+% \needspace{8\baselineskip} so a subheading cannot strand at a page foot.
 % Exactly ONE "What you now own" paragraph, at the very end of the chapter, not
 % one per section. Alerting and metering are what bloat first, so their systemd
 % units and their awk pass are described in a sentence rather than printed.
@@ -55,7 +63,7 @@
 % The GPU driver and the container runtime are SUBSECTIONS of The OS, because
 % they go onto the fresh install in the same sitting rather than being picked up
 % separately. Its "fit it" paragraph, "Work over SSH", is the lead in to them.
-% The BIOS, the server, the model, and monitoring stay top level, because each is
+% The server, the model, and monitoring stay top level, because each is
 % a job of its own.
 %
 % Scope starts at the first power on, where the hardware chapter stops, and ends
@@ -87,9 +95,12 @@
 % Raspberry Pi. The Pi section keeps the same scope rule and says only what
 % CHANGES, because everything above the metal is identical.
 %
-% NO FIGURES, deliberately. There are no build photos of a software stack, and
-% CLAUDE.md forbids decorative tikz to fill the space a \newpage leaves. This
-% chapter is carried by the stack table and by verbatim blocks.
+% NO FIGURES, with ONE exception. There are no build photos of a software
+% stack, and CLAUDE.md forbids decorative tikz to fill the space a \newpage
+% leaves. This chapter is carried by the stack table and by verbatim blocks.
+% The exception is Tux in The OS section, run through the same golden duotone
+% as the chapter 1 part cutouts (figures/cutouts_hl/22_tux_hl.png) and sourced
+% to Larry Ewing via \cite{ewingTux}. Do not add a second figure.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \index{inference server}\index{Ollama}\index{Docker}\index{CUDA}%
@@ -97,28 +108,20 @@
 \chapter{The Stack}
 \label{ch:stack}
 \printchapterversion{02_stack}
-\newthought{Silicon, Meet Software.}
+\newthought{Standing on the shoulders of giants}
 \vspace{1.5em}
 
-\newthought{This chapter installs one stack}: Ubuntu Server on the rig you just
-wired, the NVIDIA driver under it, and Ollama on top, which is enough to answer
-an API call on weights held in your own video memory. Nothing above the metal
-changes when a second card arrives. Install the layers in
-Table~\ref{tab:stack}\index{software stack} in the order of the sections that follow, and run
-each layer's check before starting the next, until the rig answers on the port
-and reports on itself. Day one is one evening, most of it spent waiting on
-downloads.
+\newthought{You will appreciate open source}. If this Chapter does nothing else to you.
+What it will do, is make you deeply appreciate open source, and the great contributions
+to software which is freely available to everyone. What's left for us, is to stack and plug it all (see Tab.~\ref{tab:stack}\index{software stack}) together.
+This Stack sees an Ubuntu Server, the NVIDIA driver, Docker, the NVIDIA Container 
+Toolkit, Ollama, and a model of your choice (I will pick one for demonstration). The most demanding part in this chapter 
+is waiting for downloads and installs, get a coffee or two. It will be way more fun.
 
-\newthought{The stack is eight layers} and each one is a single command with a
-single answer. Nothing in it is compiled from source, and only the last layer
-takes a configuration file.
+\newthought{After this Chapter an AI will have moved in with you.} It will run on your own machine, 
+on data that stays where you put it, accessible via the OpenAI-compatible API. 
 
-% Full width table*: the tabular spans the text block AND the margin column, but
-% the caption still sets in the margin, below the table. Nothing else may occupy
-% the margin at that height: a marginnote or a citation footnote landing there
-% prints straight through the caption with no LaTeX warning. That is why the two
-% paragraphs above carry no \cite. Column widths are fractions of \linewidth,
-% which is the full measure in here, and sum to 0.92.
+
 \vspace{2\baselineskip}
 \begin{table*}[!ht]
 \centering
@@ -126,7 +129,6 @@ takes a configuration file.
     \toprule
     \textbf{Layer} & \textbf{Piece} & \textbf{Proves it} \\
     \midrule
-    BIOS & five values in setup & re-enter setup, all five hold \\
     OS & Ubuntu Server 26.04 LTS & \texttt{lspci | grep -i nvidia} \\
     GPU driver & NVIDIA proprietary driver & \texttt{nvidia-smi} \\
     Containers & Docker Engine & \texttt{docker run hello-world} \\
@@ -137,95 +139,101 @@ takes a configuration file.
     \bottomrule
 \end{tabular}
 \vspace{1.5em}
-\caption{The stack, in the order it goes on. The third column is the whole
-troubleshooting method: run it before starting the next layer, and a failure is
-located rather than guessed at.} \label{tab:stack}
+\caption{Download. Coffee. Install. Coffee. Repeat.} \label{tab:stack}
 \end{table*}
-
-% ==============================================================================================
-% THE BIOS
-% ==============================================================================================
-
-\newpage
-\section{The BIOS}\index{BIOS}\index{UEFI}\index{firmware|see{BIOS}}
-
-\newthought{Five values in the BIOS setup utility}, three of which decide whether
-a graphics card is addressable at all\cite{gigabyteB650EagleAX}:
-
-\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
-    \item For addressing, Above 4G Decoding\index{Above 4G Decoding} maps a card's base address
-    register\index{base address register} windows past the 32~bit boundary, without which a second
-    card never maps.
-    \item For loading, Resizable BAR\index{Resizable BAR} hands the processor a card's whole 24~GB in
-    one window instead of a 256~MB sliding one.
-    \item For passthrough, IOMMU\index{IOMMU}\index{device passthrough}, the input output memory management
-    unit, maps card memory into a container.
-    \item For VRAM\index{VRAM}, Initial Display Output on IGD keeps the monitor on the
-    integrated graphics\index{integrated graphics} and all 24~GB free for models.
-    \item For memory speed, the EXPO profile\index{EXPO profile}\index{XMP profile} clocks the kit at its rated
-    6000 rather than the conservative JEDEC\index{JEDEC} default a DDR5 kit boots at.
-\end{itemize}
-
-\marginnote{\newthought{Menu names move.} BIOS here is the UEFI firmware that
-Gigabyte still labels BIOS, and these five sit under different headings in
-different revisions of it, so use the setup search rather than a path from a
-screenshot. Set all five in one visit: a value missed here surfaces later as a
-hardware fault that is not one.}
-
-\newthought{Set them now.} Monitor on the board's own display output, not on the
-card. Switch the supply on and press the power button; fans that turn half a
-revolution and stop mean the 24~pin is not seated. Press \texttt{Del} during
-POST\index{POST}, the power on self test, then save and exit:
-
-\begin{verbatim}
-Above 4G Decoding ............ Enabled
-Re-Size BAR Support .......... Enabled
-IOMMU ........................ Enabled
-Initial Display Output ....... IGD
-EXPO / XMP profile ........... Profile 1
-\end{verbatim}
 
 % ==============================================================================================
 % THE OS
 % ==============================================================================================
 
-\needspace{8\baselineskip}
-\section{The OS}\index{Ubuntu Server}\index{operating system}
+\clearpage
+\section{First, the OS}\index{Ubuntu Server}\index{operating system}
 
-\newthought{Ubuntu Server 26.04 LTS}, written to a USB stick with the same imager
-you would use for any machine, with no desktop environment on
-it\cite{ubuntuServerDocs}:
+\marginnote{\newthought{Why Linux.} Because everything we need, is tested against it and runs on it, such as the NVIDIA drivers.
+LTS stands for long term support. Ubuntu Server 26.04.01 LTS Server (Resolute Racoon) 
+is the one we will use in the following - an oh boy do I love that naming. We opt for the server version, 
+because it is leaner, without a display server and saves resources of the GPU. But with open-ssh installed, 
+so we can access the machine (and later our AI) from the same network.} 
 
-\begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
-    \item For the driver, Canonical ships the proprietary NVIDIA driver in the
-    APT archive\index{APT}, so a supported card costs one command rather than a vendor
-    runfile and a blacklisted module.
-    \item For the card, a server install runs no display server\index{display server}, neither X nor
-    Wayland, so nothing on the box holds VRAM or wakes a screen.
-    \item For the library, manual partitioning\index{partitioning} in the installer leaves the rest of
-    the drive as a separate filesystem for weights.
-\end{itemize}
 
-\marginnote{\newthought{Where the weights live.}\index{Ollama!model directory} Point
-\texttt{OLLAMA\_MODELS} at that second filesystem once Ollama is installed, and
-reinstalling the operating system never touches a library that took days to
-download.}
 
-\newthought{Work over SSH.} Enable OpenSSH\index{OpenSSH} in the installer, then unplug the
-monitor and do everything that follows from your laptop. The first two commands
-on the fresh install name the system and the card, which is the last look at the
-machine before a driver can be blamed for anything:
+\newthought{Download Ubuntu}\cite{ewingTux}\index{USB stick} You probably have done that bit a few times, in case you did set up 
+any computer really. In case you haven't, don't worry. Download a Server ISO from
+ubuntu.com \cite{ubuntuServerDocs} (Ubuntu Server 26.04.01 LTS Server here, but take the newest version available when you build.) and plug in an empty stick of 8~GB (at least for the version I am using) 
+or more (more is often the easy way out).
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.25\linewidth]{22_tux_hl}
+% tufte's caption takes [short][offset]; a positive offset lowers it. Drops the
+% caption beside the figure's lower half, clear of the section's opening
+% marginnote, which sets level with the figure's top edge.
+\caption[][7\baselineskip]{Tux, the Linux mascot, drawn by Larry Ewing with
+the GIMP image editor - and slightly golden touch-up, because that's how we introduce new stuff in this manual.}\label{fig:tux}
+\end{figure}
+
+
+\newthought{Get a bootable USB ready}. With Rufus, pick the stick under Device, the ISO under Boot selection,
+    press Start, and accept the recommended ISO image mode.
+
+
+\marginnote{\newthought{Where to get Rufus.} Free at \url{https://rufus.ie},
+and the portable build runs without an install (it is a Windows tool). On macOS
+or Linux, balenaEtcher or \texttt{dd} write the same ISO to your USB stick.}
+
+
+
+
+
+
+
+
+\newthought{First Boot} to install.  
+\begin{enumerate}
+    \item Plug a display directly into the GPU, a keyboard and the bootable stick into USB, and a cable from the router into the Ethernet socket, or Wi-Fi on the installer's network screen.
+    \item Power button it up.
+    \item Tap \texttt{F12} there for the boot menu, select the stick, and the installer is on screen.
+    \item There is no shame in having to power up multiple times to make it into the BIOS. We have all been there.
+    \item Take the defaults, except on storage: Partition the NVMe in two under custom layout, 200~GB ext4 at \texttt{/} and the rest ext4 at \texttt{/srv/models}\index{partitioning}.
+    \item The profile screen's username and password are what you type on every SSH line from here on, and the next screen ticks Install OpenSSH server.
+\end{enumerate}
+
+\marginnote{\newthought{Why Partition?}\index{Ollama!model directory} This way a
+reinstall of the operating system wipes \texttt{/} and leaves your models on \texttt{/srv/models} intact. 
+}
+
+\newthought{Set up SSH.} If you skipped that checkbox,
+\texttt{sudo apt install openssh-server} on the rig. The password is the one from
+the profile screen, and the \texttt{yes} accepts the rig's host key.
+
+\marginnote{\newthought{Keep mark as a username} if by chance your name is also mark. 
+You like the sound of mark. You want to follow the naming convention of Ironman's Exoscelletons. 
+If you want to make a point of following the manual exactly, or 
+you just went too fast and you don't care enough to change it at this point.
+Otherwise pick your own, and use it in the SSH command below. And yes, this is my kind of humor.}
 
 \begin{verbatim}
-$ lsb_release -a              # Ubuntu 26.04 LTS
-$ lspci | grep -i nvidia      # NVIDIA GA102 [RTX 3090]
+$ hostname -I            # on the rig: 192.168.1.42
+$ ssh mark@192.168.1.42  # on the laptop: yes, then
+                         # your password
 \end{verbatim}
 
-\marginnote{\newthought{No driver in that line.}\index{PCIe!enumeration} \texttt{lspci} reads
-what the BIOS put on the PCIe bus, so a card listed there is seated, powered, and
-addressable whatever happens above it. A card missing there is a hardware fault,
-and no amount of installing fixes it. The driver and the container runtime go
-onto this install in the same sitting.}
+\marginnote{\newthought{Smoke test} via system and GPU information.\\
+\texttt{\$ lsb\_release -a} prints Ubuntu 26.04 LTS,\\
+\texttt{\$ lspci | grep -i nvidia} the RTX 3090.}
+
+
+
+
+
+
+
+
+
+
+
+
+\clearpage
 
 \needspace{8\baselineskip}
 \subsection{The GPU Driver}\index{NVIDIA driver}\index{kernel module}
@@ -250,6 +258,29 @@ already loaded:
 \begin{verbatim}
 $ sudo ubuntu-drivers install
 $ sudo reboot
+\end{verbatim}
+
+\newthought{Ride that reboot into the firmware.} This is the build's one planned
+errand in the BIOS setup utility\index{BIOS}\index{UEFI}\index{firmware|see{BIOS}},
+so plug the monitor and keyboard back in for it\cite{gigabyteB650EagleAX}: At the
+board's defaults the firmware treats the card as the primary display and parks
+the console framebuffer in its video memory. Tap \texttt{Del} during POST, set
+one value, save and exit, and the console lives on the integrated
+graphics\index{integrated graphics} from here on, leaving all 24~GB to the
+models:
+
+\begin{verbatim}
+Initial Display Output ....... IGD
+\end{verbatim}
+
+\marginnote{\newthought{Menu names move.} BIOS here is the UEFI firmware that
+Gigabyte still labels BIOS, and this value sits under different headings in
+different revisions of it, so use the setup search rather than a path from a
+screenshot.}
+
+\newthought{Back over SSH, prove the layer:}
+
+\begin{verbatim}
 $ nvidia-smi              # the 3090, with its 24 GiB
 \end{verbatim}
 
@@ -294,7 +325,7 @@ $ docker run --rm --gpus all ubuntu nvidia-smi
 % THE INFERENCE SERVER
 % ==============================================================================================
 
-\needspace{8\baselineskip}
+\clearpage
 \section{The Inference Server}\index{inference server}\index{Ollama!install}
 
 \newthought{Ollama is the inference server}, the process that loads weights into
@@ -336,7 +367,7 @@ $ curl localhost:11434        # Ollama is running
 % THE MODEL WEIGHTS
 % ==============================================================================================
 
-\needspace{8\baselineskip}
+\clearpage
 \section{The Model Weights}\index{model selection}\index{model weights}
 
 \newthought{The model is one file} of a few gigabytes that Ollama maps into video
@@ -352,6 +383,12 @@ memory and reads once per token, so a change of mind is a download\cite{ollamaLi
     \item For the work, tool calling\index{tool calling} is a filter and not a preference, since a
     model that cannot call a tool cannot flip a switch or search a note.
 \end{itemize}
+
+\marginnote{\newthought{The day it spills}, tokens come at the speed of system
+RAM, and that is the day the EXPO profile\index{EXPO profile}\index{XMP profile} earns a trip
+into the firmware: Enabled in setup, the kit runs at its rated 6000 rather than
+the JEDEC\index{JEDEC} default it boots at. The reboot after saving retrains
+memory: A long black screen, once, and not a fault.}
 
 \newthought{Five that fit} the card, with 18~GB the working default and roughly
 six left for the KV cache and a small embedding model.
@@ -395,7 +432,7 @@ $ curl localhost:11434/v1/chat/completions \
 % MONITORING
 % ==============================================================================================
 
-\needspace{8\baselineskip}
+\clearpage
 \section{Monitoring}\index{monitoring}\index{Netdata}
 
 \newthought{Netdata draws the rig}, every core, disk, container, and the card
@@ -512,7 +549,7 @@ two thirds of those 33 kilowatt hours are idle at roughly 20 watts.}
 % MULTI-CARD SERVING
 % ==============================================================================================
 
-\needspace{8\baselineskip}
+\clearpage
 \section{Multi-Card Serving}\index{vLLM}
 
 \newthought{Ollama serves a household from one card} and keeps serving when the
@@ -532,6 +569,21 @@ every client keeps working untouched.
 enough for batching to pay for itself. Swap when people start waiting on each
 other, not before.}
 
+\newthought{The second card starts in the firmware.} One card maps fine at the
+board's defaults; a second never does, because its base address
+register\index{base address register} windows must map past the 32~bit boundary, which is
+Above 4G Decoding\index{Above 4G Decoding}\cite{gigabyteB650EagleAX}. While in setup, enable
+Resizable BAR\index{Resizable BAR}, which widens the processor's window into card memory and
+costs nothing, and IOMMU\index{IOMMU}, the input output memory management unit, which
+nothing in this book uses but a someday virtual machine
+passthrough\index{device passthrough} will:
+
+\begin{verbatim}
+Above 4G Decoding ............ Enabled
+Re-Size BAR Support .......... Enabled
+IOMMU ........................ Enabled
+\end{verbatim}
+
 \newthought{Keep one model per card.} Cards two to four sit on one PCIe lane,
 roughly 1~GB/s. Tensor parallelism\index{tensor parallelism}, which splits one model across cards,
 pushes activations over that link on every token and crawls, while pipeline
@@ -547,16 +599,16 @@ model that will run.
 % The second thread, for a reader working through this book without the silicon.
 % It says only what CHANGES, because everything above the metal is identical, and
 % that identity is the whole argument.
-\needspace{8\baselineskip}
+\clearpage
 \section{The Minimal Viable Rig}\index{Raspberry Pi}
 
-\newthought{A Raspberry Pi~5 runs this chapter} without the BIOS section and
+\newthought{A Raspberry Pi~5 runs this chapter} without the firmware errands and
 without the GPU driver, because there is no setup utility to visit and no card to
 make visible\cite{raspberrypiPi5}:
 
 \begin{itemize}[topsep=0.25em, itemsep=0.4em, parsep=0em]
     \item For the system, Ubuntu Server 26.04 for arm64 writes to the microSD
-    from the same imager and boots with OpenSSH the same way.
+    with the same Rufus steps and boots with OpenSSH the same way.
     \item For the runtime, the Docker install script and the Ollama install
     script both detect the architecture and need no flag for it.
     \item For the model, four billion parameters at four bit quantisation take

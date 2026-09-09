@@ -1,9 +1,14 @@
 %% sovereignai.bib -- sources for the Sovereign AI buildbook.
 %%
-%% NO url AND NO access-note FIELDS. A \cite reprints the whole entry in the
-%% margin, and a raw URL there is unreadable and unusable on paper. An entry
-%% carries author, title, what kind of document it is, and the year. That is
-%% enough to find it.
+%% NO RAW url AND NO access-note FIELDS. A \cite reprints the whole entry in
+%% the margin, and a printed URL there is unreadable and unusable on paper.
+%% To link out, wrap the howpublished text in \href: The PDF gets a clickable
+%% link and the page stays clean.
+%%
+%% NO YEAR-LETTER LABELS. Two entries by the same publisher in the same year
+%% would render as 2026a and 2026b, labels that mean nothing when the margin
+%% already carries the full source: The main file gobbles \natexlab, so both
+%% print as plain years.
 %%
 %% FIRST-PARTY SOURCES ONLY. Manufacturer datasheets, official product
 %% documentation, and official repositories. No third-party blogs, build
@@ -117,18 +122,25 @@
 % ----------------------------------------------------------------------
 % OS layer: NVIDIA driver, CUDA, Docker
 % ----------------------------------------------------------------------
+@misc{ewingTux,
+    author       = {Larry Ewing},
+    title        = {Tux, the {Linux} Kernel Mascot},
+    year         = {1996},
+    howpublished = {Drawn with the GIMP. Wikimedia Commons, \url{https://commons.wikimedia.org/wiki/File:Tux.svg}}
+}
+
 @misc{ubuntuServerDocs,
     author       = {{Canonical}},
     title        = {{Ubuntu} Server Documentation: Basic Installation},
     year         = {2026},
-    howpublished = {Ubuntu Server Documentation}
+    howpublished = {\href{https://ubuntu.com/server/docs/tutorial/basic-installation/}{Ubuntu Server Documentation}}
 }
 
 @misc{ubuntuNvidiaDrivers,
     author       = {{Canonical}},
     title        = {{NVIDIA} Drivers Installation},
     year         = {2026},
-    howpublished = {Ubuntu Server Documentation}
+    howpublished = {\href{https://ubuntu.com/server/docs/how-to/graphics/install-nvidia-drivers/}{Ubuntu Server Documentation}}
 }
 
 @misc{dockerEngineInstall,
