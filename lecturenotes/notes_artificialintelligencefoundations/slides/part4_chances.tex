@@ -1,100 +1,126 @@
 %% Part IV -- Chances (comic pages 28 to 36).
-%% Eight arguments for the technology, and the book makes them properly: the
-%% scale argument, the accuracy argument, the bias argument turned around,
-%% and then the quiet one on page 36 that a chance also costs something.
+%% Eight arguments for the technology, made properly: the scale argument, the
+%% accuracy argument, the bias argument turned around, and then the quiet one
+%% on page 36 that a chance also costs something.
+%%
+%% ONE COMIC PAGE, ONE FRAME, SIX CAPTIONS. The comic sets every topic page
+%% as six panels in a 2x3 grid with one caption under each. All six are the
+%% page's argument, so \panels carries all six in the comic's own reading
+%% order: row 1 left, row 1 right, row 2 left, row 2 right, row 3 left,
+%% row 3 right. Captions are verbatim, checked against a render of each page.
 %% Fragment only: no preamble, \input by ai_for_all.tex.
 
 \sectionsubtitle{pages 28 to 36}
 \section{Chances}
 
-% Page 29. The bottleneck is not storage, it is us. Everything after this
-% page in the section follows from that sentence.
+% The bottleneck is not storage, it is us. Everything after this page in
+% the section follows from panel 3.
 \begin{frame}{Dealing with Big Data}
-  \panel{page 29, hundreds of analysts}
-  \begin{comicquote}{29}
-    Even with hundreds of us analyzing patterns in big data, the sheer
-    volume simply overwhelms our capacities.
-  \end{comicquote}
+  \panel{page 29, hundreds of us against the volume}
+  \panels{29}%
+    {Our power to analyze the tons of data we are now able to store and to collect can be a bottleneck.}%
+    {AI helps us deal with large and complex datasets in ways we have never seen before.}%
+    {Even with hundreds of us analyzing patterns in big data, the sheer volume simply overwhelms our capacities.}%
+    {Even if we could analyze data, but it proves to be exhausting and tedious, we can use rule-based AI systems -- expert systems -- that do the job for us.}%
+    {Traditional algorithms are bound to follow the same logic over and over, without flexibility or learning new paths with new data.}%
+    {Now enter AI. Because AI systems get smarter as more data is given to them, they are well suited for patterns and anomalies over the time.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 30, the lawyer experiment: 20 experienced lawyers, 5 contracts, 30
-% issues, 4 hours. The four numbers are the frame; quoting the summary keeps
-% all four on the slide.
+% The lawyer experiment: 20 lawyers, 5 contracts, 30 issues, 4 hours.
+% Panel 5 holds all four numbers.
 \begin{frame}{Efficiency}
   \panel{page 30, twenty lawyers against one AI}
-  \begin{comicquote}{30}
-    Humans achieved, on average, an 85\% accuracy rate, the AI 95\%. Humans
-    took 92 minutes to complete the task, the AI\ldots{} 26 seconds.
-  \end{comicquote}
+  \panels{30}%
+    {In many situations, AI is simply faster and more accurate than we are. Let's look at an example*.}%
+    {A legal platform carried out a competition between 20 experienced lawyers against a trained AI.}%
+    {Competitors had to review 5 legal contracts in 4 hours and identify 30 legal issues.}%
+    {They were rated according to how accurately they identified each issue. Who won?}%
+    {Humans achieved, on average, an 85\% accuracy rate, the AI 95\%. Humans took 92 minutes to complete the task, the AI\ldots{} 26 seconds.}%
+    {The human lawyers who competed against the AI in the experiment said, the tasks were very similar to what lawyers do every day.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 31 is the sharpest reasoning in the book. A bias is not an error bar:
-% shared distortions do not average out, they compound. That is the argument
-% for a second opinion that is not another human.
+% The sharpest reasoning in the book. Panel 5 is the point: a shared
+% distortion does not average out, it compounds.
 \begin{frame}{Cognitive Biases}
-  \panel{page 31, heuristics and gut feeling}
-  \begin{comicquote}{31}
-    And this is what makes our distortions have large-scale consequences.
-    Were they random, they would cancel out.
-  \end{comicquote}
+  \panel{page 31, gender-bias guiding you through the world}
+  \panels{31}%
+    {Our brain, as a result of evolution, was not optimized for rational decision-making or perfect diagnoses.}%
+    {Instead, we strive for a competitive degree of `fitness' in our specific environments; quite fast and often satisfying.}%
+    {Our brain power is biologically limited; therefore, we work with heuristics, trust our gut feeling or store \& retrieve wrong evidence.}%
+    {We call this cognitive bias. There are many of them and we share them to some degree.}%
+    {And this is what makes our distortions have large-scale consequences. Were they random, they would cancel out.}%
+    {Used wisely, AI could indeed help us improve our diagnoses and decisions.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 32 gives the machine the generation and keeps the judgement. The last
-% clause is the whole position, and it has not aged.
+% Gives the machine the generation and keeps the judgement. The last clause
+% of panel 4 is the position, and it has not aged.
 \begin{frame}{Creativity}
   \panel{page 32, just a generic style transfer}
-  \begin{comicquote}{32}
-    We can also get creative directly with the AI, compiling data and coding
-    it, in a narrow area. But the AI has no judgement.
-  \end{comicquote}
+  \panels{32}%
+    {AI can save time otherwise wasted on stupid, tedious work for creativity. But it can do even more.}%
+    {When an AI sorts our photos, it is easier to make a photo-calendar with our children (in 28 positions) for our parents as a present.}%
+    {When an AI puts together a playlist of up-and-coming producers of house music, it may inspire our next DJ-set.}%
+    {We can also get creative directly with the AI, compiling data and coding it, in a narrow area. But the AI has no judgement.}%
+    {Judging is an ability we possess. And we love doing it. This is where AI together with us can achieve great things, with a human tweak.}%
+    {The smaller the role of humans in the process of art-creation becomes, the more AI questions traditional concepts of art.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 33, doctors. The chance here is not diagnosis, it is the time the
-% diagnosis frees up, and the passage is unusually blunt about what that time
-% is currently spent on.
+% The chance here is not the diagnosis, it is the time the diagnosis frees
+% up. Panel 2 is unusually blunt about what that time currently goes on.
 \begin{frame}{Connection}
-  \panel{page 33, the overpaid bookkeeper}
-  \begin{comicquote}{33}
-    Today, they often act like overpaid bookkeepers: taking in and spitting
-    back data, prescribing drugs, adjusting doses, ordering tests.
-  \end{comicquote}
+  \panel{page 33, the doctor as overpaid bookkeeper}
+  \panels{33}%
+    {Most doctors became doctors because they wanted to connect with people in order to heal them.}%
+    {Today, they often act like overpaid bookkeepers: taking in and spitting back data, prescribing drugs, adjusting doses, ordering tests.}%
+    {And it's still only retrospective, error-prone knowledge.}%
+    {But we cannot connect to doctors who struggle to keep up with messy data from disparate connections. And they cannot connect to us.}%
+    {AI can support proactive, individualized strategies.}%
+    {Our doctors could get to know us better, having the time to learn how a disease uniquely affects us and educate us in the right way.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 34, robotics without reprogramming. Demonstration replaces the rule
-% set, which is the same move as page 15 applied to a body.
+% Robotics without reprogramming: demonstration replaces the rule set,
+% which is page 15's move applied to a body.
 \begin{frame}{New Opportunities}
   \panel{page 34, the sensor jacket and glove}
-  \begin{comicquote}{34}
-    AI now enables us to teach robots how to move, either together with the
-    robot, or, with jackets and gloves containing sensors.
-  \end{comicquote}
+  \panels{34}%
+    {AI allows for fascinating new opportunities. Teaching robots without a single line of coding, for example.}%
+    {Robots solve complex tasks today -- but these tasks are deterministic. At any point of time, you know in advance where your robot needs to be.}%
+    {Every time a task or location changes, the robot's software must be re-programmed. This is time-consuming, expensive and difficult.}%
+    {Even for experienced programmers, it is hard to come up with a set of verbal rules of how to move when movements and settings are tricky or unpredictable.}%
+    {AI now enables us to teach robots how to move, either together with the robot, or, with jackets and gloves containing sensors.}%
+    {From the recorded example-movements, automation scripts can be created and optimized -- without us having to write complex code. Fantastic!}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 35. Accessibility is the least contested case in the book, and the
-% page lists reading, hearing, typing, the home, the classroom and the ward.
+% The least contested case in the book. Reading, hearing, typing, the home,
+% the classroom and the ward, one per panel.
 \begin{frame}{Inclusion}
   \panel{page 35, a wall missing several bricks}
-  \begin{comicquote}{35}
-    AI reads to us, it narrates the world around us and help us `see'.
-    Speech-to-text AI helps us `hear', too.
-  \end{comicquote}
+  \panels{35}%
+    {AI is also about helping us, about improving inclusion and our well-being, by removing barriers.}%
+    {AI reads to us, it narrates the world around us and help us `see'. Speech-to-text AI helps us `hear', too.}%
+    {AI helps us type (with words) or talks to us. Users of all ages are adopting virtual assistants because it is so simple to learn how to handle them.}%
+    {Smart home devices help us do things easily around the house and live independently.}%
+    {In the classroom, AI can identify individual challenges and offer more personalized approaches.}%
+    {AI virtual nurses or therapists offer 24-hour-support, or someone to talk to in case we are shy.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 36 closes the section by undercutting it. The chance is convenience;
-% the bill is the analogue institution where people met by accident. Note
-% that this is filed under Chances, not Risks, on purpose.
+% Closes the section by undercutting it. The chance is convenience and the
+% bill is the analogue institution. Filed under Chances, not Risks, on purpose.
 \begin{frame}{Comfort}
   \panel{page 36, mall\_blueprint.pdf}
-  \begin{comicquote}{36}
-    It is precisely these institutions that are social places where we can
-    come together and exchange ideas. Where we can decelerate. `Waste' time.
-  \end{comicquote}
+  \panels{36}%
+    {AI satisfies and reinforces our desire for comfort.}%
+    {Almost all answers to our consumer, communication or information needs are just a mouse click or an app away. And most of the time, AI is involved.}%
+    {It is tempting not to have to leave our couch at all, no matter what we want to do: eat, work, chat, watch a movie, listen to music\ldots{}}%
+    {'Pre-AI'-institutions such as shops, local transport, restaurants, libraries, or doctors must react to our new convenience.}%
+    {All institutions with predominantly analogue offerings are undergoing a tremendous process of change. But it might be worth it.}%
+    {It is precisely these institutions that are social places where we can come together and exchange ideas. Where we can decelerate. `Waste' time.}
   \slidesources{Schneider2019}
 \end{frame}

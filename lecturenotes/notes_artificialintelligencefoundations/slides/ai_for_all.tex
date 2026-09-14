@@ -16,12 +16,23 @@
 %%   Part 6  Outlook          pages 44-49
 %%   Part 7  Social Utopias   pages 50-53
 %%
-%% ONE PAGE, ONE FRAME, ONE QUOTE. A comic page becomes a frame. The frame
-%% title is that page's own heading, the body is ONE passage lifted verbatim
-%% from the page, and the right third is the page's artwork. Nothing is
-%% paraphrased: the essay argues in its own voice or not at all. The one
-%% exception is page 48 (ART), which carries two frames because the acronym
-%% and the demand it makes are two separate claims.
+%% ONE PAGE, ONE FRAME, SIX CAPTIONS. The comic sets every topic page as six
+%% panels in a 2x3 grid with one caption under each, and those six captions
+%% are the page's whole argument. A comic page becomes a frame, the frame
+%% title is that page's own heading, the body is all six captions in the
+%% comic's own reading order, and the right third is the page's artwork.
+%% Nothing is paraphrased: the essay argues in its own voice or not at all.
+%%
+%% Pages 6 and 51 to 53 are the exceptions and keep the single-passage
+%% \comicquote treatment, because the comic does not set them as panels:
+%% page 6 is one line across an empty spread, and Social Utopias is four
+%% pages of running prose.
+%%
+%% The captions were pulled off the PDF by line height (the caption font sets
+%% at ~13.6pt leading, which nothing else on a page does), then every page was
+%% transcribed and adversarially re-checked against a render of that page,
+%% because the filter also catches speech bubbles, chart axis labels and
+%% diagram labels that happen to share the font.
 %%
 %% ARTWORK IS NOT DRAWN YET. Every frame carries the grey placeholder strip
 %% instead. The \sidecaption on each is the art brief: which panel of which
@@ -61,6 +72,7 @@
 % the deck the only machine-readable pointer back to its sources.
 \AtEveryBibitem{\clearfield{url}\clearfield{doi}\clearfield{urldate}\clearfield{note}}
 \usepackage{multicol}% two-column References frame
+\usepackage{array}% >{\raggedright} column prefixes in the panel grid
 
 \setbeamercolor{bibliography entry author}{fg=tddim}
 \setbeamercolor{bibliography entry title}{fg=tdfg}
@@ -148,6 +160,55 @@
     {\color{tddim}\footnotesize We Need to Talk, AI\enspace\textbar\enspace page~#1\par}%
   \end{sidebody}%
 }{}
+
+% \panels{13}{cap1}{cap2}{cap3}{cap4}{cap5}{cap6}
+% A comic page's SIX panel captions, in the comic's own 2x3 reading order:
+% row 1 left, row 1 right, row 2 left, row 2 right, row 3 left, row 3 right.
+% The six captions are the page's whole argument, so the frame carries all
+% six; the artwork on the strip carries the rest.
+%
+% Six mandatory arguments rather than a \panelcap list on purpose. A macro
+% cannot hand an alignment tab to a tabular (TeX's alignment scanner wants the
+% & token itself, not one that arrives by expansion), so a list form would
+% have to drop the grid; and six fixed slots make a missing caption a compile
+% error rather than a silently short page.
+%
+% No standalone quotation mark here, unlike \comicquote. Six numbered cells
+% under a "We Need to Talk, AI, page NN" line already read as a reproduction
+% of a page rather than as my own writing, and the oversized mark cost some
+% 30pt of column height that the densest pages (42, 19, 45, 47) need: page 42
+% carries 851 characters across its six panels and overflows the frame
+% without them. \linespread is set for the same reason, and the columns are
+% near-touching so a caption wraps as few times as possible.
+\newcommand{\panels}[7]{%
+  \begin{sidebody}%
+    % Negative, on purpose. Beamer leaves some 32pt between the theme's title
+    % rule and the first line of a \sidebody, which is comfortable for a
+    % single quoted passage and is exactly what the dense pages cannot spare.
+    % Pulling the grid up reclaims it without touching the title band.
+    \vspace*{-0.055\paperheight}%
+    \scriptsize\linespread{0.93}\selectfont
+    \setlength{\tabcolsep}{0pt}%
+    \renewcommand{\arraystretch}{1.0}%
+    % Ragged right, not justified: at 45mm a justified column hyphenates
+    % roughly every other line ("abil-ity", "counterfac-tuals"), which on a
+    % projected slide reads as damage.
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.475\linewidth}@{\hspace{0.05\linewidth}}>{\raggedright\arraybackslash}p{0.475\linewidth}@{}}
+      \tdpanel{1}{#2} & \tdpanel{2}{#3}\\[0.35em]
+      \tdpanel{3}{#4} & \tdpanel{4}{#5}\\[0.35em]
+      \tdpanel{5}{#6} & \tdpanel{6}{#7}
+    \end{tabular}%
+    \par\vskip0.45em
+    {\color{tddim}\scriptsize We Need to Talk, AI\enspace\textbar\enspace page~#1\par}%
+  \end{sidebody}%
+}
+
+% One cell of the grid: the panel's number in red, small, hanging at the start
+% of the caption so the six read as a numbered sequence and a lecturer can
+% point at "panel four" without counting.
+\newcommand{\tdpanel}[2]{%
+  {\color{DHBWred}\bfseries\tiny #1}\enspace{#2}%
+}
 
 % \gterm{...} -- one term inside a frame raised to the accent colour. Used on
 % the framing slides only; a quoted passage is never recoloured, because a
@@ -260,10 +321,11 @@
   \panel{page 5, the authors at the table}
   \begin{sidebody}
     \vspace*{0.05\paperheight}
-    One comic page, one slide, \gterm{one quoted passage}. Nothing on the
-    following slides is my wording. The frame title is the page's own
-    heading, the passage is lifted verbatim, and the page number under it
-    tells you where to read the rest.
+    One comic page, one slide, \gterm{all six panel captions}. Nothing on
+    the following slides is my wording. The frame title is the page's own
+    heading, the six captions are lifted verbatim and numbered in the
+    comic's own reading order, and the page number under them tells you
+    where to read the rest.
     \vskip1.0em
     {\color{tddim}The comic is a free read at weneedtotalk.ai under
     CC BY-NC-SA 4.0. It is an essay, not a textbook: it argues. Argue back.}

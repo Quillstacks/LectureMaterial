@@ -2,67 +2,84 @@
 %% Five risks, and none of them is the take-over the Intro opened with. They
 %% are surveillance, a fragmented public sphere, the labour market, data
 %% security, and the energy bill. Each is already running.
+%%
+%% ONE COMIC PAGE, ONE FRAME, SIX CAPTIONS. The comic sets every topic page
+%% as six panels in a 2x3 grid with one caption under each. All six are the
+%% page's argument, so \panels carries all six in the comic's own reading
+%% order: row 1 left, row 1 right, row 2 left, row 2 right, row 3 left,
+%% row 3 right. Captions are verbatim, checked against a render of each page.
 %% Fragment only: no preamble, \input by ai_for_all.tex.
 
 \sectionsubtitle{pages 37 to 43}
 \section{Risks}
 
-% Page 39, the through-wall radio work. The page walks from words and faces
-% to gait to radio reflections, and the step that matters is the last one:
-% identity without line of sight.
+% From words and faces to gait to radio reflections. The step that matters
+% is the last one: identity without line of sight.
 \begin{frame}{Surveillance}
   \panel{page 39, the stick figures behind the wall}
-  \begin{comicquote}{39}
-    That means the AI does not only know where we are. The AI can also
-    distinguish what we are doing, whether we are standing, or eating.
-  \end{comicquote}
+  \panels{39}%
+    {AI makes monitoring people much easier. Not only via our words or facial expressions, via our consumer behavior or interests.}%
+    {But also, via our movement patterns. Each one of us moves differently. Our movement patterns are unique.}%
+    {Weak radio waves can penetrate walls, but our bodies reflect them. Using this data, an AI can be trained to identify our movements.}%
+    {The AI can translate our movement patterns to little stick figures. Once registered, the AI can even identify us behind a wall.}%
+    {That means the AI does not only know where we are. The AI can also distinguish what we are doing, whether we are standing, or eating.}%
+    {It really comes close to magic. Hello, Harry Potter! And hello, surveillance state.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 40. The risk named is structural, not a bad actor: the public sphere
-% has broken into pieces, and the pieces are privately owned.
+% The risk named is structural rather than a bad actor. Panel 6 is the
+% authors' counter-question, credited on the page to Weizenbaum.
 \begin{frame}{Opinion-Forming and Media}
   \panel{page 40, the fragmented public sphere}
-  \begin{comicquote}{40}
-    AI influences public opinion-forming and the media. Our public sphere
-    has become fragmented.
-  \end{comicquote}
+  \panels{40}%
+    {AI influences public opinion-forming and the media. Our public sphere has become fragmented.}%
+    {Borders between private and public communication are blurry. User-generated content is rich but polarized and often privatized on closed platforms.}%
+    {New players and sources make special-interest-content popular and visible and, thus, important for mass media.}%
+    {Right-wing activists, for example, use AI bots, too, to spread hate and fake news in social media and, ultimately, mass media.}%
+    {Social media-users receive AI-personalized content of political organizations, based on users' personality profiles.}%
+    {Could we, in turn, use AI to enable a better opinion-forming -- and identify those who benefit from current AI tools?*}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 41 is the labour page, and it refuses the usual blue-collar framing:
-% lawyers, medics and brokers are on the list next to drivers. The quote
-% taken is the other half, what stays with us and why.
+% Refuses the usual blue-collar framing: lawyers, medics and brokers are on
+% the list next to drivers. Panels 5 and 6 are what stays with us, and why.
 \begin{frame}{Future Work}
   \panel{page 41, the job ladder}
-  \begin{comicquote}{41}
-    We are better in understanding non-trivial, new situations, building
-    relationships, creating context and meaning. Custom-fit solutions.
-  \end{comicquote}
+  \panels{41}%
+    {The share of jobs at high risk of replacement by computers or robots has increased significantly.*}%
+    {This involves all kinds of jobs on the social ladder. White-collar jobs like lawyers, medics, or brokers\ldots{}}%
+    {\ldots{} as well as creative jobs like artists, chefs or journalists, or blue-collar jobs such as construction workers or drivers.}%
+    {AI can outperform us in doing repetitive tasks. Cheap, strong, fast, easy.}%
+    {We are better in understanding non-trivial, new situations, building relationships, creating context and meaning. Custom-fit solutions.}%
+    {We are also needed as partners of AI: developing algorithms that work, supervising, repairing. Combining us with AI.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 42 is the CCC programme: the data letter, penalties for outflows,
-% declared update frequency, permanent state investment in secure open
-% source, and education. The opening sentence is the one that earns them.
+% The Chaos Computer Club programme, one measure per panel. Panel 1 is the
+% sentence that earns them.
 \begin{frame}{Data Security and Safety}
   \panel{page 42, the data letter inbox}
-  \begin{comicquote}{42}
-    Our blind trust in AI providers is misplaced. We all know that the
-    amount of data that we are implicitly or explicitly forced to leave
-    behind is too great.
-  \end{comicquote}
+  \panels{42}%
+    {Our blind trust in AI providers is misplaced. We all know that the amount of data that we are implicitly or explicitly forced to leave behind is too great.}%
+    {Since AI needs tons of data, we need to improve our data security and safety. A broad campaign, starting with, e.g.:}%
+    {The `data letter', an obligation for all companies and authorities to tell us what data they store about us and how to view, correct and delete it;**}%
+    {Penalties for data outflows for system operators, and an obligation for connected devices to declare the frequency of the security updates (incentives);}%
+    {Permanent government investment in secure IT, e.g., open source components written and updated in secure programming languages;}%
+    {And: a widely available education in safe programming, along with educational, advisory and complaint services for the safe use of our digital systems.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 43. The comparison is with a brain, not with a previous data centre,
-% and the numbers on the page (33 zettabyte in 2018, 175 by 2025, 8\% of
-% global energy by 2030) are the ones to read out next to the quote.
+% The comparison is with a brain, not with a previous data centre. The
+% numbers to read out are 33 zettabyte in 2018, 175 by 2025, 8\% of global
+% energy by 2030.
 \begin{frame}{Energy Use}
   \panel{page 43, save energy, save the planet}
-  \begin{comicquote}{43}
-    But conventional hardware was not designed for AI, hence it needs much
-    more computing power, much more energy, than our brains do.
-  \end{comicquote}
+  \panels{43}%
+    {In fact, AI has huge potential to optimize energy use, by analyzing complex data, making forecasts, optimizing processes via brain-like algorithms.}%
+    {But conventional hardware was not designed for AI, hence it needs much more computing power, much more energy, than our brains do.}%
+    {An AI supported translation service, e.g., DeepL, can handle 5,1 quadrillion operations per seconds. But that means masses of computing power and data.}%
+    {Today, data centers use more energy than some countries, e.g., Iran.* In 2018, we had 33 Zettabyte digital data per year. By 2025, we'll have 175.}%
+    {One of the most worrying forecasts says data centers will use 8\% of global energy in 2030. The big internet firms bet on renewable energies.}%
+    {In short, our brains are far more energy efficient than our best computers -- and we still do not really understand how.}
   \slidesources{Schneider2019}
 \end{frame}

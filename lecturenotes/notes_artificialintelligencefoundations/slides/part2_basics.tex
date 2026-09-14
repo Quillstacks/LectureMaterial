@@ -2,89 +2,113 @@
 %% The three ingredients the book names for the current wave: computer power,
 %% better algorithms, data. Then the reminder that what came out of them is
 %% narrow, and what a second AI Winter would cost.
+%%
+%% ONE COMIC PAGE, ONE FRAME, SIX CAPTIONS. The comic sets every topic page
+%% as six panels in a 2x3 grid with one caption under each. All six are the
+%% page's argument, so \panels carries all six in the comic's own reading
+%% order: row 1 left, row 1 right, row 2 left, row 2 right, row 3 left,
+%% row 3 right. Captions are verbatim, checked against a render of each page.
 %% Fragment only: no preamble, \input by ai_for_all.tex.
 
 \sectionsubtitle{pages 11 to 19}
 \section{Basics}
 
-% Page 13. The book refuses the word "intelligence" for what is shipping, and
-% names what it would take to earn it. The footnote on the same page concedes
-% it will keep saying AI anyway, which is worth reading aloud.
+% The book refuses the word intelligence for what is shipping and names what
+% it would take to earn it. Panel 6 carries a footnote conceding it will keep
+% saying AI anyway, which is worth reading out.
 \begin{frame}{What is Artificial Intelligence?}
   \panel{page 13, the essence of a new situation}
-  \begin{comicquote}{13}
-    Up to now, it's more adequate to speak of `artificially augmented
-    intelligence'.
-  \end{comicquote}
+  \panels{13}%
+    {Actually, the methods are not new. Just the techniques and the data.}%
+    {At the moment, AI is mainly concerned with performing complicated but repetitive tasks.}%
+    {If you define intelligence as the ability to capture the essence of a new situation\ldots{}}%
+    {\ldots{} real AI needs to think more like us. With intentionality, with emotions, with conscience; capturing counterfactuals.}%
+    {This being said, AI is still in its early stages (although it reads differently on the news).}%
+    {Up to now, it's more adequate to speak of `artificially augmented intelligence'.*}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 14, first of the three key indicators. The number is the point: not
-% Moore's 18 months, but 3,5, and the page prints both so the gap shows.
+% First of the three key indicators. The number that matters is 3,5 months
+% against Moore's 18, and the page prints both so the gap shows.
 \begin{frame}{Computer Power}
-  \panel{page 14, the cost and power curve}
-  \begin{comicquote}{14}
-    The amount of computer power used for training AI has gone up to 3,5
-    month-doubling time.
-  \end{comicquote}
+  \panel{page 14, the cost and computer-power curve}
+  \panels{14}%
+    {What kind of techniques helped establish AI? One key indicator is computer power.}%
+    {Moore's law is the observation that the power of computers will double every 18 months.}%
+    {The amount of computer power used for training AI has gone up to 3,5 month-doubling time.}%
+    {The growth has largely been driven by computer hardware, optimized to train and run AI-models.}%
+    {This explains why AI has been growing faster and faster\ldots{}}%
+    {\ldots{} together with advances in data availability and algorithms (=the recipes) behind AI.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 15, second indicator. One sentence for the whole shift from rule
-% writing to learning, and it is the sentence the room already half knows.
+% Second indicator. Panel 1 is the whole shift from writing rules to
+% learning them, in one sentence the room already half knows.
 \begin{frame}{Algorithms 1}
   \panel{page 15, a cat? a cat? a dog..?}
-  \begin{comicquote}{15}
-    A second key indicator are better algorithms. Now we can teach machines
-    instead of programming them.
-  \end{comicquote}
+  \panels{15}%
+    {A second key indicator are better algorithms. Now we can teach machines instead of programming them.}%
+    {Before, when intending to automate a task using AI, we had 1) to understand it completely and 2) to program it.}%
+    {The more complicated the task, the harder it was to automate.}%
+    {The breakthrough was in understanding how we learn to perform tasks.}%
+    {Nowadays, AI learns through trial and error, based on data we feed it. The more data, the more accurate it becomes.}%
+    {Modern AI applications achieve breathtaking results that we could hardly imagine a few years ago.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 16 is the buzzword page: ML, DL, NN, and the AI bookshelf that holds
-% more than the three. The quote is the one that separates DL from ML, which
-% is the distinction the room most often gets wrong.
+% The buzzword page: ML, DL, NN, and the bookshelf that holds more than the
+% three. Panels 5 and 6 carry the distinction the room most often gets wrong.
 \begin{frame}{Algorithms 2}
   \panel{page 16, the AI bookshelf}
-  \begin{comicquote}{16}
-    DL uses artificial Neural Networks (NN) that learn patterns directly
-    from the data they are fed.
-  \end{comicquote}
+  \panels{16}%
+    {What do these buzzwords even mean? Machine Learning; Deep Learning; Neural Networks (NN)\ldots{}?}%
+    {Machine Learning (ML) helps recognizing patterns based on existing data and algorithms: an important branch of AI.}%
+    {(Note: The AI bookshelf includes other topics, as well.)}%
+    {Before Deep Learning (DL), we had to know a lot about the data we were programming. Otherwise, ML would break down.}%
+    {DL uses artificial Neural Networks (NN) that learn patterns directly from the data they are fed.}%
+    {Like our brain, NNs compare new information with objects they know. However, they have not yet been able to think of new objects.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 17, third indicator, and the widest definition of data in the book.
-% The page itself is a word cloud of everything that counts as a feature.
+% Third indicator, and the widest definition of data in the book. Panel 6
+% is where the page turns from description to economics.
 \begin{frame}{Data 1}
   \panel{page 17, the data word cloud}
-  \begin{comicquote}{17}
-    Any form of raw fact or figure is data. Whether on paper or in
-    electronic form.
-  \end{comicquote}
+  \panels{17}%
+    {Data is the third element that makes AI so powerful. But what exactly is data?}%
+    {Any form of raw fact or figure is data. Whether on paper or in electronic form.}%
+    {Data describes what we know and we can draw conclusions from it. Data can take the form of text, numbers, images, or sounds.}%
+    {The internet and mobile devices like smartphones, drones or simple sensors have made data abundant and far more valuable.}%
+    {The more data an algorithm is trained on, the better its results: conclusions, predictions, timing, actions.}%
+    {Better results = higher usability = more users = more power. Therefore `data is the new oil'.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 18 adapts Maslow into a data pyramid: collect, store, transform,
-% explore, AI. Four of the five steps are data work, which is the whole
-% argument of the page and the reason it is quoted rather than summarised.
+% Maslow adapted into a data pyramid. Four of the five steps are data work,
+% which is the argument of the page.
 \begin{frame}{Data 2}
-  \panel{page 18, the data pyramid}
-  \begin{comicquote}{18}
-    AI is a journey that begins with data: collecting, storing, transforming
-    and exploring it.
-  \end{comicquote}
+  \panel{page 18, the data pyramid, four steps of five}
+  \panels{18}%
+    {Okay, all AI applications need training data to get good results.}%
+    {Only with the invention of the internet, we were able to collect and store enough data to make AI work.}%
+    {Too much data for us to process. Just the right amount for AI.}%
+    {There is an adaption of Maslow's Pyramid of Needs. Aimed at achieving AI solutions.}%
+    {Four out of five necessary steps have to do with data.}%
+    {AI is a journey that begins with data: collecting, storing, transforming and exploring it.}
   \slidesources{Schneider2019}
 \end{frame}
 
-% Page 19 runs the two AI Winters and lands on what today's systems actually
-% are. This is the page to hold the room on: everything in Chances and Risks
-% is about narrow AI, not the thing the news means.
+% The two AI Winters, and what today's systems actually are. Hold the room
+% here: everything in Chances and Risks is about narrow AI, not the thing the
+% news means.
 \begin{frame}{General AI}
   \panel{page 19, the two AI Winters}
-  \begin{comicquote}{19}
-    Despite their impressive progress and success, today's AI is narrow. Its
-    tasks are often classification and need a lot of data and a lot of
-    energy.
-  \end{comicquote}
+  \panels{19}%
+    {In the 1960s, AI pioneers hoped that machines could soon learn to think without human intervention.}%
+    {But from 1973 onwards, disappointment and criticism in the community, followed by pessimism in the press, led to the 1st `AI Winter'. A 2nd one followed.}%
+    {Until the 2000s, AI was a dirty word that `simply didn't work'. But when data, hardware and infrastructure were ready in 2010, a wide range of AI applications followed.}%
+    {Despite their impressive progress and success, today's AI is narrow. Its tasks are often classification and need a lot of data and a lot of energy.}%
+    {No AI can represent causal relationships or integrate abstract knowledge, e.g., what objects are, what they are for, and how they are typically used.}%
+    {We really need to adjust our expectations and stop over-hyping AI. If we don't, we may find ourselves in another AI Winter.}
   \slidesources{Schneider2019}
 \end{frame}
