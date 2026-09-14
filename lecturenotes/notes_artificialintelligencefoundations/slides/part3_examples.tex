@@ -3,11 +3,13 @@
 %% to the one strapped to a body (exoskeletons). Deliberately mundane: the
 %% argument is that the deployment already happened.
 %%
-%% ONE COMIC PAGE, ONE FRAME, SIX CAPTIONS. The comic sets every topic page
-%% as six panels in a 2x3 grid with one caption under each. All six are the
-%% page's argument, so \panels carries all six in the comic's own reading
-%% order: row 1 left, row 1 right, row 2 left, row 2 right, row 3 left,
-%% row 3 right. Captions are verbatim, checked against a render of each page.
+%% ONE PANEL CAPTION, ONE SLIDE. The comic sets every topic page as six
+%% panels in a 2x3 grid with one caption under each. Each caption takes a
+%% slide of its own so the room reads one claim at a time; the six-dot row
+%% under it marks which panel is on screen, and six consecutive slides
+%% sharing a frame title are one comic page, read in the comic's own order.
+%% Captions are verbatim, checked against a render of each page.
+%% \setpagethesis opens each run with that page's one line, mine, not theirs.
 %% Fragment only: no preamble, \input by ai_for_all.tex.
 
 \sectionsubtitle{pages 20 to 27}
@@ -15,91 +17,196 @@
 
 % The first example is the one the room used this morning. Panels 1, 2 and 3
 % are one sentence split across three panels by the authors' own ellipses.
+\setpagethesis{You supplied the training data this morning, on the way in.}
 \begin{frame}{Maps}
   \panel{page 21, two phones, the delta and the route}
-  \panels{21}%
-    {Using location data from smartphones\ldots{}}%
-    {\ldots{} the AI-application Maps can analyze how fast traffic is moving\ldots{}}%
-    {\ldots{} in real-time.}%
-    {Additionally, maps incorporate user-reported traffic incidents.}%
-    {The proprietary algorithms of Maps have access to vast amounts of data.}%
-    {This means, Maps can suggest the best and fastest routes for us.}
+  \panelslide{21}{1}{Using location data from smartphones\ldots{}}
+\end{frame}
+\begin{frame}{Maps}
+  \panel{page 21, two phones, the delta and the route}
+  \panelslide{21}{2}{\ldots{} the AI-application Maps can analyze how fast traffic is moving\ldots{}}
+\end{frame}
+\begin{frame}{Maps}
+  \panel{page 21, two phones, the delta and the route}
+  \panelslide{21}{3}{\ldots{} in real-time.}
+\end{frame}
+\begin{frame}{Maps}
+  \panel{page 21, two phones, the delta and the route}
+  \panelslide{21}{4}{Additionally, maps incorporate user-reported traffic incidents.}
+\end{frame}
+\begin{frame}{Maps}
+  \panel{page 21, two phones, the delta and the route}
+  \panelslide{21}{5}{The proprietary algorithms of Maps have access to vast amounts of data.}
+\end{frame}
+\begin{frame}{Maps}
+  \panel{page 21, two phones, the delta and the route}
+  \panelslide{21}{6}{This means, Maps can suggest the best and fastest routes for us.}
 \end{frame}
 
 % From recommending a product to generating one. Panels 5 and 6 are one
 % sentence, and the second half is the part worth arguing about.
+\setpagethesis{When the platform generates the product too, what is left to choose?}
 \begin{frame}{Recommendation}
   \panel{page 22, the component tag cloud}
-  \panels{22}%
-    {All major internet companies -- or `platforms' -- refine their products and processes using AI.}%
-    {If we're looking for books or shoes, internet shops use AI so that our purchase decision gets easier.}%
-    {Likewise, streaming providers use AI to analyze our consumer habits down to the last detail.}%
-    {We benefit from improved suggestions and rediscoveries of old pearls which we have missed so far.}%
-    {Also, the platforms use the knowledge of our habits to create and offer new products similar to previous successes\ldots{}}%
-    {\ldots{}or to let AI autonomously stir those components together that have worked great elsewhere.}
+  \panelslide{22}{1}{All major internet companies -- or `platforms' -- refine their products and processes using AI.}
+\end{frame}
+\begin{frame}{Recommendation}
+  \panel{page 22, the component tag cloud}
+  \panelslide{22}{2}{If we're looking for books or shoes, internet shops use AI so that our purchase decision gets easier.}
+\end{frame}
+\begin{frame}{Recommendation}
+  \panel{page 22, the component tag cloud}
+  \panelslide{22}{3}{Likewise, streaming providers use AI to analyze our consumer habits down to the last detail.}
+\end{frame}
+\begin{frame}{Recommendation}
+  \panel{page 22, the component tag cloud}
+  \panelslide{22}{4}{We benefit from improved suggestions and rediscoveries of old pearls which we have missed so far.}
+\end{frame}
+\begin{frame}{Recommendation}
+  \panel{page 22, the component tag cloud}
+  \panelslide{22}{5}{Also, the platforms use the knowledge of our habits to create and offer new products similar to previous successes\ldots{}}
+\end{frame}
+\begin{frame}{Recommendation}
+  \panel{page 22, the component tag cloud}
+  \panelslide{22}{6}{\ldots{}or to let AI autonomously stir those components together that have worked great elsewhere.}
 \end{frame}
 
 % Ends on WeChat and the supervision of groups of twelve or more. Panel 1
 % is the precondition for everything the rest of the page describes.
+\setpagethesis{Invisible by design, which is the precondition for everything else here.}
 \begin{frame}{Social Networks}
   \panel{page 23, what a wonderful match}
-  \panels{23}%
-    {Those of us who use social networks use AI frequently, without necessarily knowing it.}%
-    {Social networks use AI to recommend friends, news, photos, tags, advertisements.}%
-    {They even `curate' the posts of your friends according to general or personal interests -- with the help of AI.}%
-    {Now imagine a network that knows even more than our habits, relations, thoughts, interests, likes and dislikes, our hobbies and whereabouts.}%
-    {Our state of health or bank account for example.}%
-    {In China, this already exists in the form of `WeChat'. Just recently, the Chinese government officially announced to supervise each group with 12+ members.}
+  \panelslide{23}{1}{Those of us who use social networks use AI frequently, without necessarily knowing it.}
+\end{frame}
+\begin{frame}{Social Networks}
+  \panel{page 23, what a wonderful match}
+  \panelslide{23}{2}{Social networks use AI to recommend friends, news, photos, tags, advertisements.}
+\end{frame}
+\begin{frame}{Social Networks}
+  \panel{page 23, what a wonderful match}
+  \panelslide{23}{3}{They even `curate' the posts of your friends according to general or personal interests -- with the help of AI.}
+\end{frame}
+\begin{frame}{Social Networks}
+  \panel{page 23, what a wonderful match}
+  \panelslide{23}{4}{Now imagine a network that knows even more than our habits, relations, thoughts, interests, likes and dislikes, our hobbies and whereabouts.}
+\end{frame}
+\begin{frame}{Social Networks}
+  \panel{page 23, what a wonderful match}
+  \panelslide{23}{5}{Our state of health or bank account for example.}
+\end{frame}
+\begin{frame}{Social Networks}
+  \panel{page 23, what a wonderful match}
+  \panelslide{23}{6}{In China, this already exists in the form of `WeChat'. Just recently, the Chinese government officially announced to supervise each group with 12+ members.}
 \end{frame}
 
 % Refuses the word autonomous for what ships today, then names the real
 % blocker in panel 6: not control, explanation.
+\setpagethesis{The blocker is not control. It is explanation.}
 \begin{frame}{Self-driving Cars}
   \panel{page 24, the unforeseen circumstance}
-  \panels{24}%
-    {Today, we can already activate the autopilot function which automatically and comfortably drives our car or flies our plane.}%
-    {But ultimately, we are responsible. The systems are not autonomous -- or self-driving.}%
-    {Within a few years, this might change.}%
-    {We would have plenty of room to sleep, work, read or play, sober or drunk after a party.}%
-    {Or maybe not. Nearly every car accident involves some sort of unforeseen circumstances, the AI must confront for the first time.}%
-    {Moreover, user tests show that we need autonomous systems to explain their decision to feel safe. Not easy.}
+  \panelslide{24}{1}{Today, we can already activate the autopilot function which automatically and comfortably drives our car or flies our plane.}
+\end{frame}
+\begin{frame}{Self-driving Cars}
+  \panel{page 24, the unforeseen circumstance}
+  \panelslide{24}{2}{But ultimately, we are responsible. The systems are not autonomous -- or self-driving.}
+\end{frame}
+\begin{frame}{Self-driving Cars}
+  \panel{page 24, the unforeseen circumstance}
+  \panelslide{24}{3}{Within a few years, this might change.}
+\end{frame}
+\begin{frame}{Self-driving Cars}
+  \panel{page 24, the unforeseen circumstance}
+  \panelslide{24}{4}{We would have plenty of room to sleep, work, read or play, sober or drunk after a party.}
+\end{frame}
+\begin{frame}{Self-driving Cars}
+  \panel{page 24, the unforeseen circumstance}
+  \panelslide{24}{5}{Or maybe not. Nearly every car accident involves some sort of unforeseen circumstances, the AI must confront for the first time.}
+\end{frame}
+\begin{frame}{Self-driving Cars}
+  \panel{page 24, the unforeseen circumstance}
+  \panelslide{24}{6}{Moreover, user tests show that we need autonomous systems to explain their decision to feel safe. Not easy.}
 \end{frame}
 
 % From the 2015 crossover to cancer detection to the military, then to
 % adversarial examples. The Picasso panel next to the rifle is the one to show.
+\setpagethesis{If one system reads a tumour and a target, who aims it?}
 \begin{frame}{Identifying Images}
   \panel{page 25, rifle 2017 next to Picasso 1910}
-  \panels{25}%
-    {A lot of AI work deals with identifying patterns. At an enormous scale.}%
-    {In 2015, computers made fewer mistakes than we do sorting images into predefined categories.}%
-    {Since 2018, everybody can use a free tool helping AI beginners detect images.}%
-    {While early image identification could be lifesaving\ldots{}}%
-    {\ldots{}sometimes it is life-threatening. The military is a huge fan of it, too.}%
-    {Unfortunately, AI is susceptible to hallucinations: caused by biased data or by hackers who, for example, make AI mistake guns for apes.}
+  \panelslide{25}{1}{A lot of AI work deals with identifying patterns. At an enormous scale.}
+\end{frame}
+\begin{frame}{Identifying Images}
+  \panel{page 25, rifle 2017 next to Picasso 1910}
+  \panelslide{25}{2}{In 2015, computers made fewer mistakes than we do sorting images into predefined categories.}
+\end{frame}
+\begin{frame}{Identifying Images}
+  \panel{page 25, rifle 2017 next to Picasso 1910}
+  \panelslide{25}{3}{Since 2018, everybody can use a free tool helping AI beginners detect images.}
+\end{frame}
+\begin{frame}{Identifying Images}
+  \panel{page 25, rifle 2017 next to Picasso 1910}
+  \panelslide{25}{4}{While early image identification could be lifesaving\ldots{}}
+\end{frame}
+\begin{frame}{Identifying Images}
+  \panel{page 25, rifle 2017 next to Picasso 1910}
+  \panelslide{25}{5}{\ldots{}sometimes it is life-threatening. The military is a huge fan of it, too.}
+\end{frame}
+\begin{frame}{Identifying Images}
+  \panel{page 25, rifle 2017 next to Picasso 1910}
+  \panelslide{25}{6}{Unfortunately, AI is susceptible to hallucinations: caused by biased data or by hackers who, for example, make AI mistake guns for apes.}
 \end{frame}
 
 % Panel 1 carries the number that makes the case: if words are a tenth of
 % the message, a text-only interface reads a tenth of it.
+\setpagethesis{Words are a tenth of the message, so a text interface reads a tenth of you.}
 \begin{frame}{Emotional AI}
   \panel{page 26, ten per cent of the message}
-  \panels{26}%
-    {Only $\sim$ 10\% of the emotional meaning of a message is conveyed through words.}%
-    {To really understand us, you need our facial expressions, our tone of voice, our gestures plus our words.}%
-    {As our relationship with AI is becoming more and more intimate\ldots{}}%
-    {\ldots{} we need our AI devices (like assistant systems, cars, or robots) to sense and adapt to what we mean and not only to our words.}%
-    {Indeed, Emotional AI could help us with some highly valuable tasks. Help autistic children, for example, to learn emotions.}%
-    {Nonetheless, our freedom of thought might be at stake in hostile scenarios.}
+  \panelslide{26}{1}{Only $\sim$ 10\% of the emotional meaning of a message is conveyed through words.}
+\end{frame}
+\begin{frame}{Emotional AI}
+  \panel{page 26, ten per cent of the message}
+  \panelslide{26}{2}{To really understand us, you need our facial expressions, our tone of voice, our gestures plus our words.}
+\end{frame}
+\begin{frame}{Emotional AI}
+  \panel{page 26, ten per cent of the message}
+  \panelslide{26}{3}{As our relationship with AI is becoming more and more intimate\ldots{}}
+\end{frame}
+\begin{frame}{Emotional AI}
+  \panel{page 26, ten per cent of the message}
+  \panelslide{26}{4}{\ldots{} we need our AI devices (like assistant systems, cars, or robots) to sense and adapt to what we mean and not only to our words.}
+\end{frame}
+\begin{frame}{Emotional AI}
+  \panel{page 26, ten per cent of the message}
+  \panelslide{26}{5}{Indeed, Emotional AI could help us with some highly valuable tasks. Help autistic children, for example, to learn emotions.}
+\end{frame}
+\begin{frame}{Emotional AI}
+  \panel{page 26, ten per cent of the message}
+  \panelslide{26}{6}{Nonetheless, our freedom of thought might be at stake in hostile scenarios.}
 \end{frame}
 
 % The one example in the section whose argument is fit rather than scale.
 % A body is a moving target, so the controller has to learn.
+\setpagethesis{A body is a moving target, so the controller has to keep learning.}
 \begin{frame}{Exoskeletons}
   \panel{page 27, elderly man or firefighter}
-  \panels{27}%
-    {Exoskeletons are an external framework we can wear to augment our natural physical ability and reduce strain and weaknesses.}%
-    {But every one of us is different.}%
-    {We need assistance that is specifically fit for us. We need to tailor our devices at an individual level.}%
-    {AI can use real-time measurements of our body signals, our breathing rate or hip extension for example.}%
-    {This way, the AI can get our individual profile right. AI can make our exoskeletons fit our needs -- elderly man or firefighter.}%
-    {Our bodies are different and constantly changing. Nowadays, the only feasible way of translating this to robotics is through the help of AI.}
+  \panelslide{27}{1}{Exoskeletons are an external framework we can wear to augment our natural physical ability and reduce strain and weaknesses.}
+\end{frame}
+\begin{frame}{Exoskeletons}
+  \panel{page 27, elderly man or firefighter}
+  \panelslide{27}{2}{But every one of us is different.}
+\end{frame}
+\begin{frame}{Exoskeletons}
+  \panel{page 27, elderly man or firefighter}
+  \panelslide{27}{3}{We need assistance that is specifically fit for us. We need to tailor our devices at an individual level.}
+\end{frame}
+\begin{frame}{Exoskeletons}
+  \panel{page 27, elderly man or firefighter}
+  \panelslide{27}{4}{AI can use real-time measurements of our body signals, our breathing rate or hip extension for example.}
+\end{frame}
+\begin{frame}{Exoskeletons}
+  \panel{page 27, elderly man or firefighter}
+  \panelslide{27}{5}{This way, the AI can get our individual profile right. AI can make our exoskeletons fit our needs -- elderly man or firefighter.}
+\end{frame}
+\begin{frame}{Exoskeletons}
+  \panel{page 27, elderly man or firefighter}
+  \panelslide{27}{6}{Our bodies are different and constantly changing. Nowadays, the only feasible way of translating this to robotics is through the help of AI.}
 \end{frame}
