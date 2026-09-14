@@ -1,0 +1,339 @@
+%% AI for All -- the full deck (one PDF).
+%% Master file: preamble + title + framing, then \input the seven part
+%% fragments, one per section of the source.
+%% Build:  latexmk ai_for_all.tex   (lualatex, two passes; see .latexmkrc)
+%%
+%% SOURCE. The whole deck is Julia Schneider and Lena Kadriye Ziyal,
+%% "We Need to Talk, AI -- A Comic Essay on Artificial Intelligence" (2019),
+%% free read at weneedtotalk.ai under CC BY-NC-SA 4.0. The comic is 60 pages
+%% and seven named sections, and the deck is seven parts, one per section:
+%%
+%%   Part 1  Intro            pages  6-10
+%%   Part 2  Basics           pages 11-19
+%%   Part 3  Examples         pages 20-27
+%%   Part 4  Chances          pages 28-36
+%%   Part 5  Risks            pages 37-43
+%%   Part 6  Outlook          pages 44-49
+%%   Part 7  Social Utopias   pages 50-53
+%%
+%% ONE PAGE, ONE FRAME, ONE QUOTE. A comic page becomes a frame. The frame
+%% title is that page's own heading, the body is ONE passage lifted verbatim
+%% from the page, and the right third is the page's artwork. Nothing is
+%% paraphrased: the essay argues in its own voice or not at all. The one
+%% exception is page 48 (ART), which carries two frames because the acronym
+%% and the demand it makes are two separate claims.
+%%
+%% ARTWORK IS NOT DRAWN YET. Every frame carries the grey placeholder strip
+%% instead. The \sidecaption on each is the art brief: which panel of which
+%% page goes there. Swap placeholder_gray for the real asset and the caption
+%% stays as it is. The comic is CC BY-NC-SA 4.0, so panels may be reproduced
+%% in teaching material as long as the credit stays on the slide, which is
+%% what the \slidesources marker on every frame is for.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{tuftedark}
+\usetikzlibrary{calc,fit,shapes.geometric,positioning,arrows.meta}
+
+% Drop slide images in images/; include by bare name, e.g.
+%   \sideimagecover[0.33]{p17_datacloud}
+\graphicspath{{images/}}
+
+\title[AI for All]{AI for All}
+\subtitle{We Need to Talk, AI: a comic essay, carried into the lecture}
+\author[Schutera]{Prof.\ Dr.-Ing.\ Mark Schutera}
+\institute{\textcolor{DHBWred}{DHBW}\ Ravensburg}
+\date{\today}
+\setbookversion{\today}{7 parts}
+
+% Right-edge vertical watermark: the sentence the whole essay turns on, and
+% the instruction it leaves the reader with.
+\renewcommand{\tdwatermark}{Let your voice be heard}
+
+% ---------------------------------------------------------------- citations
+% One global numbering for the deck, one shared References frame at the end.
+% sorting=none keeps the numbers in citation order, so the sources on one slide
+% compress to a tidy range, e.g. [1-3].
+\usepackage[style=numeric-comp,sortcites,sorting=none,backend=biber]{biblatex}
+\addbibresource{../artificialintelligencefoundations.bib}
+\renewcommand*{\bibfont}{\footnotesize}
+\setlength{\bibitemsep}{0.35em plus 0.15em}
+% url and doi go; howpublished stays, which is where the Google course track
+% and the comic's own free-read address live. Stripping those too would cost
+% the deck the only machine-readable pointer back to its sources.
+\AtEveryBibitem{\clearfield{url}\clearfield{doi}\clearfield{urldate}\clearfield{note}}
+\usepackage{multicol}% two-column References frame
+
+\setbeamercolor{bibliography entry author}{fg=tddim}
+\setbeamercolor{bibliography entry title}{fg=tdfg}
+\setbeamercolor{bibliography entry location}{fg=tddim}
+\setbeamercolor{bibliography entry note}{fg=tddim}
+\setbeamercolor{bibliography item}{fg=tddim}
+\DeclareFieldFormat{labelnumberwidth}{\textcolor{tddim}{#1}}
+
+% The side-edge source marker takes cite keys and prints their numeric labels
+% ([1-3]) in the same vertical spot, in place of hand-typed author-years.
+% The marker sits 3mm off the right page edge, which the side-image strip
+% covers, so grey stops reading there; on those frames it goes red.
+\makeatletter
+\renewcommand{\slidesources}[1]{%
+  \iftd@sideimage\def\td@srccol{DHBWred}\else\def\td@srccol{tddim}\fi
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[rotate=90,anchor=west,inner sep=0pt,text=\td@srccol,font=\scriptsize]
+      at ([xshift=-3mm,yshift=13mm]current page.south east)
+      {\cite{#1}};
+  \end{tikzpicture}%
+}
+
+% \sidecaption shadowed for this deck, as in the Intelligence Engineering
+% deck. The theme sets the caption horizontal, white and italic INSIDE the
+% strip, which a comic panel swallows; here it reads up the strip's outer
+% edge in typewriter grey, mirroring \slidesources on the opposite page edge.
+% It carries the art brief while the strip is still a placeholder, and the
+% panel reference once it is not. 13mm clears the footer band.
+\renewcommand{\sidecaption}[1]{%
+  \setlength{\td@stripw}{\td@sidefrac\paperwidth}%
+  \def\td@westtest{west}%
+  \begin{tikzpicture}[remember picture,overlay]
+    \ifx\td@sideside\td@westtest
+      \node[rotate=90,anchor=west,inner sep=0pt,text=tddim,
+            font=\ttfamily\scriptsize]
+        at ([xshift=\dimexpr\td@stripw+2mm\relax,yshift=13mm]current page.south west){#1};
+    \else
+      \node[rotate=90,anchor=west,inner sep=0pt,text=tddim,
+            font=\ttfamily\scriptsize]
+        at ([xshift=\dimexpr-\td@stripw-2mm\relax,yshift=13mm]current page.south east){#1};
+    \fi
+  \end{tikzpicture}%
+}
+\makeatother
+
+% ------------------------------------------------------------- deck helpers
+
+% \panel{art brief} -- the standard side strip for this deck: a 0.33 cover
+% cropped image on the right edge, captioned up its outer edge. One call
+% instead of two, so every frame reserves exactly the same third and a later
+% sweep that swaps placeholders for panels touches one macro, not 45 frames.
+% Takes the real asset as an optional first argument once it exists:
+%   \panel{p17, the data word cloud}              placeholder
+%   \panel[p17_datacloud]{p17, the data word cloud}   the panel itself
+\newcommand{\panel}[2][placeholder_gray]{%
+  \sideimagecover[0.33]{#1}%
+  \sidecaption{#2}%
+}
+
+% \begin{comicquote}{17} ...passage... \end{comicquote}
+% One passage lifted verbatim from the comic, and the whole body of the
+% frame. A red opening quotation mark, the passage a step above body size in
+% the page colour, and the page it came from in grey underneath. The
+% quotation mark is oversized and hangs into the left margin: it is the only
+% thing on the slide that says the words are not mine.
+%
+% It opens the \sidebody itself rather than asking each frame to wrap it. A
+% quoted passage on this deck ALWAYS sits in the column beside the panel, so
+% the two belong in one macro; leaving it to the frame means a forgotten
+% wrapper sets the passage across the full page width and it runs silently
+% under the image strip. The body is grabbed (+b) so the passage can be
+% written as ordinary prose across several lines without \par bookkeeping.
+%
+% The lead-in space is what stands in for vertical centring: \sidebody is a
+% top-aligned minipage of unset height, so a \vfill inside it has nothing to
+% distribute and the passage would sit hard under the title.
+\NewDocumentEnvironment{comicquote}{m +b}{%
+  \begin{sidebody}%
+    \vspace*{0.10\paperheight}%
+    \noindent\hspace*{-0.14em}%
+    {\color{DHBWred}\fontsize{34}{34}\selectfont\bfseries\textquotedblleft}%
+    \par\vskip-0.45em
+    {\large #2\par}%
+    \vskip1.0em
+    {\color{tddim}\footnotesize We Need to Talk, AI\enspace\textbar\enspace page~#1\par}%
+  \end{sidebody}%
+}{}
+
+% \gterm{...} -- one term inside a frame raised to the accent colour. Used on
+% the framing slides only; a quoted passage is never recoloured, because a
+% highlight inside a quotation is an edit.
+\newcommand{\gterm}[1]{\textcolor{DHBWred}{#1}}
+
+% Live QR code: \slideqr{caption}{url}, as in the Intelligence Engineering
+% deck. The modules are white and sit straight on the dark page with no tile
+% under them, which makes the page itself the quiet zone.
+\usepackage{qrcode}
+\newcommand{\slideqr}[2]{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north east, inner sep=0pt]
+      (slideqr) at ([xshift=-9mm,yshift=-5mm]current page.north east)
+      {\color{white}\qrcode[height=9mm,level=M]{#2}};
+    \node[anchor=east, inner sep=0pt, text=tddim, align=right,
+      font=\ttfamily\scriptsize]
+      at ([xshift=-3mm]slideqr.west){#1};
+  \end{tikzpicture}%
+}
+
+% ------------------------------------------------------------- footer nav
+% The theme's footer is beamer's mini-frame navigation: one hollow dot per
+% frame, grouped under its section name. It is sized for a deck of about eight
+% sections; this deck runs seven, but at some fifty frames the dots still
+% crowd the band, and the part you are in matters more here than the frame.
+% So the nav is replaced, at deck level, with the same information compressed:
+% the part you are in on the left, a progress track in the middle, the counter
+% on the right. The theme is untouched and the other decks keep their dots.
+% Drawn with \rule rather than tikz on purpose: a tikz coordinate resolves a
+% bare length register through pgfmath, which hands back a unitless number that
+% tikz then reads as centimetres, and the bar blows past the maximum dimension.
+\newlength{\aiprogwd}
+\newlength{\aiprogfill}
+\setlength{\aiprogwd}{0.30\paperwidth}
+% The fraction goes through pgfmath, which works in floating point. Doing it in
+% TeX dimen arithmetic does not survive the first pass: before the aux file is
+% written \inserttotalframenumber is stale, the \divide leaves \aiprogwd whole,
+% and \aiprogwd times a frame number past about 120 exceeds the maximum TeX
+% dimension. The clamp covers the same stale-aux case, where the current frame
+% number can exceed the recorded total and the fill would run past its track.
+\newcommand{\aiprogressbar}{%
+  \ifnum\inserttotalframenumber>0\relax
+    \ifnum\insertframenumber<\inserttotalframenumber\relax
+      % The ratio is parenthesised so it is evaluated first. pgfmath keeps its
+      % intermediates in a dimen register, so multiplying the track width by the
+      % frame number before dividing overflows once past frame 120.
+      \pgfmathsetlength{\aiprogfill}{\aiprogwd*(\insertframenumber/\inserttotalframenumber)}%
+    \else
+      \setlength{\aiprogfill}{\aiprogwd}%
+    \fi
+  \else
+    \setlength{\aiprogfill}{0pt}%
+  \fi
+  \raisebox{0.6ex}{\makebox[\aiprogwd][l]{%
+    \rlap{\textcolor{tdrule}{\rule{\aiprogwd}{1.1pt}}}%
+    \textcolor{tdfg}{\rule{\aiprogfill}{1.1pt}}}}%
+}
+\setbeamertemplate{footline}{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=6mm,dp=5mm,leftskip=6mm,rightskip=6mm]{section in head/foot}%
+    {\usebeamerfont{section in head/foot}\color{tddim}\insertsectionhead}%
+    \hfill
+    \aiprogressbar
+    \hfill
+    {\usebeamerfont{section in head/foot}\color{tddim}%
+      \insertframenumber\,/\,\inserttotalframenumber}%
+  \end{beamercolorbox}%
+}
+
+% One divider per part, the theme's own section page. \sectionsubtitle is set
+% in the part file just before its \section and carries the comic's own page
+% range, so the divider says where in the book the part sits.
+\AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% ---------------------------------------------------------------- agenda
+% The lecture in one slide: the comic's own seven sections, in its own order,
+% under its own page numbers, each labelled with the question it answers.
+% Side strip like every other frame, so the deck's shape is set from frame two.
+\begin{frame}{Seven parts, one comic}
+  \panel{cover, the section spiral}
+  \begin{sidebody}
+    \footnotesize
+    \renewcommand{\arraystretch}{1.25}%
+    \begin{tabular}{@{}llp{0.46\linewidth}@{}}
+      \toprule
+      Part & \alert{Section} & \multicolumn{1}{@{}l@{}}{\alert{The question it answers}}\\
+      \midrule
+      \alertbf{I}   & Intro          & why talk about AI at all\\
+      \alertbf{II}  & Basics         & what AI is, and what made it work\\
+      \alertbf{III} & Examples       & where it already runs\\
+      \alertbf{IV}  & Chances        & what it is good for\\
+      \alertbf{V}   & Risks          & what it costs us\\
+      \alertbf{VI}  & Outlook        & who gets to shape it\\
+      \alertbf{VII} & Social Utopias & what we would want it for\\
+      \bottomrule
+    \end{tabular}
+  \end{sidebody}
+  \slidesources{Schneider2019}
+\end{frame}
+
+% The contract for the deck: every body slide is one quoted passage. Said once,
+% here, so no later frame has to explain itself.
+\begin{frame}{How to read this deck}
+  \panel{page 5, the authors at the table}
+  \begin{sidebody}
+    \vspace*{0.05\paperheight}
+    One comic page, one slide, \gterm{one quoted passage}. Nothing on the
+    following slides is my wording. The frame title is the page's own
+    heading, the passage is lifted verbatim, and the page number under it
+    tells you where to read the rest.
+    \vskip1.0em
+    {\color{tddim}The comic is a free read at weneedtotalk.ai under
+    CC BY-NC-SA 4.0. It is an essay, not a textbook: it argues. Argue back.}
+  \end{sidebody}
+  \slideqr{weneedtotalk.ai}{https://weneedtotalk.ai}
+  \slidesources{Schneider2019}
+\end{frame}
+
+\input{part1_intro.tex}
+\input{part2_basics.tex}
+\input{part3_examples.tex}
+\input{part4_chances.tex}
+\input{part5_risks.tex}
+\input{part6_outlook.tex}
+\input{part7_utopias.tex}
+
+% -------------------------------------------------- the technical track
+% The comic answers "what is AI for us"; it does not teach anyone to build
+% one. Google's foundational-courses track is where that half lives, and it
+% is what the previous version of this deck was carried over from. Keeping
+% the four courses on a frame of their own, with the hub address spelled out
+% and a QR code next to it, is what stops that link from going missing when a
+% deck is rewritten. \nocite puts all five entries in the References frame, so
+% the addresses survive in the bibliography too.
+\nocite{GoogleFoundational2025,GoogleIntroML2025,GoogleMLCC2025,
+        GoogleProblemFraming2025,GoogleManagingML2025}
+% Starred, so it relabels the footer for the closing frames without numbering
+% itself into the seven parts or firing \AtBeginSection and adding a divider.
+\section*{Sources}
+\begin{frame}{If you want to build one}
+  \panel{a laptop on the same table}
+  \begin{sidebody}
+    \vspace*{0.03\paperheight}
+    This deck is about what AI does to us. For how it is built, work
+    Google's \gterm{foundational courses} track, four courses in order:
+    \vskip0.7em
+    \footnotesize
+    \renewcommand{\arraystretch}{1.25}%
+    \begin{tabular}{@{}llp{0.30\linewidth}@{}}
+      \toprule
+      \alert{Course} & \alert{Length} & \multicolumn{1}{@{}l@{}}{\alert{Answers}}\\
+      \midrule
+      Introduction to Machine Learning & 20 min   & what ML is\\
+      Machine Learning Crash Course    & 12 modules & how to build one\\
+      Problem Framing                  & 45 min   & whether to at all\\
+      Managing ML Projects             & 90 min   & how to keep it alive\\
+      \bottomrule
+    \end{tabular}
+    \vskip0.9em
+    {\color{tddim}\scriptsize
+     developers.google.com/machine-learning/foundational-courses}
+  \end{sidebody}
+  \slideqr{the track}{https://developers.google.com/machine-learning/foundational-courses}
+  \slidesources{GoogleFoundational2025}
+\end{frame}
+
+% -------------------------------------------------------- shared references
+\begin{frame}{References}
+  \begin{multicols}{2}
+    \printbibliography[heading=none]
+  \end{multicols}
+\end{frame}
+
+\begin{frame}[plain]
+  \vfill
+  \centering
+  {\LARGE\bfseries Let your voice be \alertbf{heard}}\par\vskip0.4em
+  {\LARGE\bfseries and your point of view be \alertbf{seen}}\par\vskip1.2em
+  {\small Prof.\ Dr.-Ing.\ Mark Schutera \;\textbar\; DHBW Ravensburg}
+  \vfill
+\end{frame}
+
+\end{document}
