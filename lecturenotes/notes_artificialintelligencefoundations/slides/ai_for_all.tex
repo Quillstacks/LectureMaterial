@@ -38,8 +38,17 @@
 %% instead. The \sidecaption on each is the art brief: which panel of which
 %% page goes there. Swap placeholder_gray for the real asset and the caption
 %% stays as it is. The comic is CC BY-NC-SA 4.0, so panels may be reproduced
-%% in teaching material as long as the credit stays on the slide, which is
-%% what the \slidesources marker on every frame is for.
+%% in teaching material as long as the credit stays on the slide. The credit
+%% is the grey "We Need to Talk, AI, page NN" line that \panels and
+%% \comicquote print under every body of quoted text; it names the work and
+%% the page, which is what the licence asks for.
+%%
+%% ATTRIBUTED ONCE PER SLIDE, NOT TWICE. Those frames deliberately carry NO
+%% \slidesources marker. Every one of them is the comic, the attribution line
+%% already says so, and a second rotated [1] up the page edge on all 43 of
+%% them was the same claim twice on the same slide. \slidesources stays where
+%% there is no attribution line to carry it: the agenda, the frame that
+%% explains how to read the deck, and the book's own reading list.
 \documentclass[aspectratio=169]{beamer}
 \usetheme{tuftedark}
 \usetikzlibrary{calc,fit,shapes.geometric,positioning,arrows.meta}
