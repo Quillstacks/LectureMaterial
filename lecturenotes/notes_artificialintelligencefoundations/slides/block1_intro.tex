@@ -1,0 +1,390 @@
+%% BLOCK 1 -- Introduction to Machine Learning.
+%% Fragment of ai_foundations.tex; not a standalone document.
+%% Source: developers.google.com/machine-learning/intro-to-ml, all three pages
+%% (What is Machine Learning?, Supervised Learning, Test Your Understanding).
+
+\actpage{1}{Introduction to Machine Learning}{What the four kinds of ML system are, and what the five parts of a supervised one do.}
+
+% ======================================================================
+\sectionsubtitle{Four categories, by how the system learns.}
+\section[Types of ML]{Types of ML Systems}
+
+\begin{frame}{Types of ML systems}
+  \begin{withmargin}
+    \begin{tdmain}
+      ML systems fall into one or more of the following categories based on how
+      they learn to make predictions or generate content.
+      \vskip0.6em
+      \begin{itemize}
+        \item Supervised learning
+        \item Unsupervised learning
+        \item Reinforcement learning
+        \item Generative AI
+      \end{itemize}
+      \vskip0.6em
+      \footnotesize
+      The categories are not exclusive. Generative models are initially trained
+      using an \gterm{unsupervised} approach, then sometimes trained further
+      using supervised or reinforcement learning.
+    \end{tdmain}
+    \begin{tdmargin}
+      {\color{tdfg}\textbf{Course length: 20 minutes.}}
+      \par\medskip
+      This course introduces ML concepts. It does not cover how to implement ML
+      or work with data.
+      \par\medskip
+      Objectives: the different types of machine learning, the key concepts of
+      supervised ML, and how solving problems with ML differs from traditional
+      approaches.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{GoogleIntroML2025}
+\end{frame}
+
+\begin{frame}{Supervised learning}
+  \begin{withmargin}
+    \begin{tdmain}
+      Supervised learning models can make predictions after seeing lots of data
+      with the correct answers and then discovering the connections between the
+      elements in the data that produce the correct answers.
+      \vskip0.9em
+      These ML systems are \alertbf{supervised} in the sense that a human gives
+      the ML system data with the known correct results. Two of the most common
+      use cases are regression and classification.
+    \end{tdmain}
+    \begin{tdmargin}
+      {\color{tdfg}\textbf{The old-exams analogy.}}
+      \par\medskip
+      This is like a student learning new material by studying old exams that
+      contain both questions and answers. Once the student has trained on enough
+      old exams, the student is well prepared to take a new exam.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{Regression predicts a number}
+  \begin{withmargin}
+    \begin{tdmain}
+      A regression model predicts a \gterm{numeric value}. A weather model that
+      predicts the amount of rain, in inches or millimeters, is a regression
+      model.
+      \vskip0.7em
+      \scriptsize
+      \begin{tabular}{@{}p{0.20\linewidth}p{0.44\linewidth}p{0.28\linewidth}@{}}
+        \toprule
+        \textbf{Scenario} & \textbf{Possible input data} & \textbf{Numeric prediction}\\
+        \midrule
+        Future house price & Square footage, zip code, number of bedrooms and
+          bathrooms, lot size, mortgage interest rate, property tax rate,
+          construction costs, number of homes for sale in the area
+          & The price of the home\\[0.4em]
+        Future ride time & Historical traffic conditions, distance from
+          destination, weather conditions
+          & The time to arrive at a destination\\
+        \bottomrule
+      \end{tabular}
+    \end{tdmain}
+    \begin{tdmargin}
+      Historical traffic conditions are gathered from smartphones, traffic
+      sensors, ride-hailing and other navigation applications.
+      \par\medskip
+      Energy usage is measured in kilowatt-hours, which is a number, so a model
+      predicting energy usage for commercial buildings is a regression model.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{Classification predicts a category}
+  \begin{withmargin}
+    \begin{tdmain}
+      Classification models predict the likelihood that something belongs to a
+      category. Unlike regression models, whose output is a number,
+      classification models output a value that states whether or not something
+      belongs to a particular category. Classification models are used to
+      predict if an email is spam or if a photo contains a cat.
+      \vskip0.9em
+      \textbf{Binary} classification models output a value from a class that
+      contains only two values, for example \texttt{rain} or \texttt{no rain}.
+      \textbf{Multiclass} classification models output a value from a class that
+      contains more than two values, for example \gterm{\texttt{rain}},
+      \gterm{\texttt{hail}}, \gterm{\texttt{snow}}, or \gterm{\texttt{sleet}}.
+    \end{tdmain}
+    \begin{tdmargin}
+      {\color{tdfg}\textbf{Turning a number into classes.}}
+      \par\medskip
+      To classify an airplane ticket cost as high, average, or low: find the
+      average cost from departure to destination airport, determine the
+      thresholds that constitute high, average, and low, then compare the
+      predicted cost to the thresholds and output the category the value falls
+      within.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{Unsupervised learning}
+  \begin{withmargin}
+    \begin{tdmain}
+      An unsupervised learning model aims to identify meaningful patterns in a
+      dataset. Many unsupervised learning models rely on a technique called
+      \gterm{clustering} to organize similar data into groups.
+      \vskip0.9em
+      Clustering differs from classification because the categories aren't
+      defined by you. An unsupervised model might cluster a weather dataset
+      based on temperature, revealing segmentations that define the seasons. You
+      might then attempt to name those clusters based on your understanding of
+      the dataset.
+    \end{tdmain}
+    \begin{tdmargin}
+      {\color{tdfg}\textbf{The distinguishing question.}}
+      \par\medskip
+      A supervised approach is given data that contains the correct answer. Its
+      job is to find connections in the data that produce the correct answer.
+      \par\smallskip
+      An unsupervised approach is given data without the correct answer. Its job
+      is to find groupings in the data. It does not know what the clusters mean.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{Reinforcement learning}
+  \begin{withmargin}
+    \begin{tdmain}
+      Reinforcement learning models make predictions by getting \gterm{rewards}
+      or penalties based on actions performed within an environment. A
+      reinforcement learning system generates a policy that defines the best
+      strategy for getting the most rewards.
+    \end{tdmain}
+    \begin{tdmargin}
+      Reinforcement learning is used to train robots to perform tasks, like
+      walking around a room, and software programs like AlphaGo to play the game
+      of Go.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{Generative AI}
+  \begin{withmargin}
+    \begin{tdmain}
+      Generative AI is a class of models that creates content from user input.
+      It can create unique images, music compositions, and jokes; it can
+      summarize articles, explain how to perform a task, or edit a photo.
+      \vskip0.7em
+      We discuss generative models by their inputs and outputs, typically
+      written as \gterm{input type} to \gterm{output type}:
+      \vskip0.4em
+      \footnotesize
+      \begin{itemize}
+        \item Text-to-text, text-to-image, text-to-video
+        \item Text-to-code, text-to-speech
+        \item Image and text-to-image
+      \end{itemize}
+    \end{tdmain}
+    \begin{tdmargin}
+      A model can take an image as input and create an image and text as output,
+      or take an image and text as input and create a video as output.
+      \par\medskip
+      Generative models help businesses refine ecommerce product images, by
+      removing distracting backgrounds or raising the quality of low-resolution
+      images.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{How generative AI works}
+  \begin{withmargin}
+    \begin{tdmain}
+      At a high level, generative models learn patterns in data with the goal to
+      produce new but similar data. Generative models are like:
+      \vskip0.5em
+      \begin{itemize}
+        \item Comedians who learn to imitate others by observing people's
+          behaviors and style of speaking
+        \item Artists who learn to paint in a particular style by studying lots
+          of paintings in that style
+        \item Cover bands that learn to sound like a specific music group by
+          listening to lots of music by that group
+      \end{itemize}
+    \end{tdmain}
+    \begin{tdmargin}
+      To produce unique and creative outputs, generative models are initially
+      trained using an unsupervised approach, where the model learns to
+      \gterm{mimic} the data it's trained on.
+      \par\medskip
+      The model is sometimes trained further using supervised or reinforcement
+      learning on data for tasks it might be asked to perform, for example
+      summarize an article or edit a photo.
+    \end{tdmargin}
+  \end{withmargin}
+  \keyterms{classification model; clustering; model; policy; prediction;
+    regression model; reinforcement learning; reward; supervised learning;
+    training; unsupervised learning}
+\end{frame}
+
+% ======================================================================
+\sectionsubtitle{Data, model, training, evaluating, inference.}
+\section[Supervised concepts]{Foundational Supervised Learning Concepts}
+
+\begin{frame}{Data is the driving force of ML}
+  \begin{withmargin}
+    \begin{tdmain}
+      Data comes in the form of words and numbers stored in tables, or as the
+      values of pixels and waveforms captured in images and audio files. We
+      store related data in \gterm{datasets}.
+      \vskip0.9em
+      Datasets are made up of individual \textbf{examples} that contain
+      \textbf{features} and a \textbf{label}. You could think of an example as
+      analogous to a single row in a spreadsheet. Features are the values that a
+      supervised model uses to predict the label. The label is the answer, or
+      the value we want the model to predict.
+    \end{tdmain}
+    \begin{tdmargin}
+      {\color{tdfg}\textbf{A weather model.}}
+      \par\medskip
+      Features: latitude, longitude, temperature, humidity, cloud coverage, wind
+      direction, atmospheric pressure. Label: rainfall amount.
+      \par\medskip
+      Examples that contain both features and a label are called
+      \textbf{labeled examples}. \textbf{Unlabeled examples} contain features
+      but no label; after you create a model, the model predicts the label from
+      the features.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{Size and diversity}
+  \begin{withmargin}
+    \begin{tdmain}
+      A dataset is characterized by its size and diversity. \textbf{Size}
+      indicates the number of examples. \textbf{Diversity} indicates the range
+      those examples cover. Good datasets are \alertbf{both large and highly
+      diverse}.
+      \vskip0.9em
+      A large dataset doesn't guarantee sufficient diversity, and a dataset that
+      is highly diverse doesn't guarantee sufficient examples.
+    \end{tdmain}
+    \begin{tdmargin}
+      A dataset might contain 100 years worth of data, but only for the month of
+      July. Using it to predict rainfall in January would produce poor
+      predictions.
+      \par\smallskip
+      Conversely, a dataset might cover only a few years but contain every
+      month. It might produce poor predictions because it doesn't contain enough
+      years to account for variability.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{More features is not automatically better}
+  \begin{withmargin}
+    \begin{tdmain}
+      A dataset can also be characterized by the number of its features. Some
+      weather datasets might contain hundreds of features, ranging from
+      satellite imagery to cloud coverage values. Others might contain only
+      three or four, like humidity, atmospheric pressure, and temperature.
+      \vskip0.9em
+      Datasets with more features can help a model discover additional patterns
+      and make better predictions. However, datasets with more features don't
+      always produce models that make better predictions, because some features
+      might have \alertbf{no causal relationship} to the label.
+    \end{tdmain}
+    \begin{tdmargin}
+      {\color{tdfg}\textbf{Predictive power.}}
+      \par\medskip
+      In a used-car dataset with price as the label, make/model, year, and miles
+      are likely among the strongest predictors. Color, height, tire size, and
+      wheel base are not.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{Model}
+  \vfill
+  \begin{takeaway}
+    A model is the complex collection of numbers\\
+    that define the mathematical relationship\\
+    from input feature patterns to output label values.
+  \end{takeaway}
+  \vfill
+  {\small The model discovers these patterns through training.}
+\end{frame}
+
+\begin{frame}{Training}
+  \begin{withmargin}
+    \begin{tdmain}
+      To train a model, we give the model a dataset with labeled examples. The
+      model's goal is to work out the best solution for predicting the labels
+      from the features. The model finds the best solution by comparing its
+      predicted value to the label's actual value. Based on the difference
+      between the predicted and actual values, defined as the \gterm{loss}, the
+      model gradually updates its solution.
+      \vskip0.6em
+      \footnotesize
+      \begin{itemize}
+        \item The model takes in a single labeled example and provides a prediction.
+        \item It compares its predicted value with the actual value and updates
+          its solution.
+        \item It repeats this for each labeled example in the dataset.
+      \end{itemize}
+    \end{tdmain}
+    \begin{tdmargin}
+      If the model predicted \texttt{1.15 inches} of rain, but the actual value
+      was \texttt{.75 inches}, the model modifies its solution so its prediction
+      is closer to \texttt{.75 inches}.
+      \par\medskip
+      After the model has looked at each example in the dataset, in some cases
+      multiple times, it arrives at a solution that makes the best predictions,
+      on average, for each of the examples.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{Why large and diverse datasets produce a better model}
+  \begin{withmargin}
+    \begin{tdmain}
+      The model gradually learns the correct relationship between the features
+      and the label. This \alertbf{gradual} understanding is also why large and
+      diverse datasets produce a better model: the model has seen more data with
+      a wider range of values and has refined its understanding of the
+      relationship between the features and the label.
+      \vskip0.9em
+      During training, ML practitioners can make subtle adjustments to the
+      configurations and features the model uses. Certain features have more
+      predictive power than others, so practitioners can select which features
+      the model uses during training.
+    \end{tdmain}
+    \begin{tdmargin}
+      Suppose a weather dataset contains \texttt{time\_of\_day} as a feature. An
+      ML practitioner can add or remove \texttt{time\_of\_day} during training
+      to see whether the model makes better predictions with or without it.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{Evaluating, then inference}
+  \begin{withmargin}
+    \begin{tdmain}
+      We evaluate a trained model to determine how well it learned. When we
+      evaluate a model, we use a labeled dataset, but we only give the model the
+      dataset's \textbf{features}. We then compare the model's predictions to
+      the label's true values. Depending on the results, we might do more
+      training and evaluating before deploying.
+      \vskip0.7em
+      Once we're satisfied, we can use the model to make predictions, called
+      \gterm{inferences}, on unlabeled examples. In the weather app, we give the
+      model the current conditions, like temperature, atmospheric pressure, and
+      relative humidity, and it predicts the amount of rainfall.
+    \end{tdmain}
+    \begin{tdmargin}
+      {\color{tdfg}\textbf{If the predictions are far off.}}
+      \par\medskip
+      Retrain using only the features you believe have the strongest predictive
+      power for the label.
+      \par\smallskip
+      Retrain using a larger and more diverse dataset.
+      \par\medskip
+      Most models require multiple rounds of training.
+    \end{tdmargin}
+  \end{withmargin}
+  \keyterms{example; feature; inference; labeled example; label; loss;
+    prediction; training}
+\end{frame}
