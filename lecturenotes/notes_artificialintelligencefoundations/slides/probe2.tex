@@ -187,8 +187,7 @@
 % frame. A red opening quotation mark, the passage a step above body size in
 % the page colour, and the page it came from in grey underneath. The
 % quotation mark is oversized and hangs into the left margin: it is the only
-% thing on the slide that says the words are not mine. The page argument is
-% kept but not printed, as in \panelslide.
+% thing on the slide that says the words are not mine.
 %
 % It opens the \sidebody itself rather than asking each frame to wrap it. A
 % quoted passage on this deck ALWAYS sits in the column beside the panel, so
@@ -208,6 +207,7 @@
     \par\vskip-0.45em
     {\large #2\par}%
     \vskip1.0em
+    {\color{tddim}\footnotesize page~#1\par}%
   \end{sidebody}%
 }{}
 
@@ -237,11 +237,7 @@
   \tdpaneldot{1}{#1}\,\tdpaneldot{2}{#1}\,\tdpaneldot{3}{#1}\,%
   \tdpaneldot{4}{#1}\,\tdpaneldot{5}{#1}\,\tdpaneldot{6}{#1}}
 
-% \panelslide{42}{3}{the caption} -- comic page, which panel, the caption.
-% The page number is NOT printed. It stays in the call so the source records
-% where every quotation came from, which is what makes the verbatim check
-% possible, but on screen a printed page number made the deck read as a comic
-% book rather than as a lecture. The dots carry the run on their own.
+% \panelslide{42}{3}{the caption} -- page number, which panel, the caption.
 \newcommand{\panelslide}[3]{%
   \begin{sidebody}%
     \vspace*{0.055\paperheight}%
@@ -250,7 +246,7 @@
     \par\vskip-0.40em
     {\large\raggedright #3\par}%
     \vskip1.1em
-    {\paneldots{#2}\par}%
+    {\paneldots{#2}\enspace\color{tddim}\scriptsize page~#1\par}%
     \vskip0.45em
     {\color{tddim}\footnotesize\itshape\pagethesis\par}%
   \end{sidebody}%
@@ -330,117 +326,21 @@
 \AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
 
 \begin{document}
-
-\begin{frame}[plain]
-  \titlepage
+\section{Risks}
+\setpagethesis{The list is not blue-collar. Lawyers, medics and brokers are on it.}
+\begin{frame}{Future Work}
+  \panelart{zauberlehrling_mock}{page 41, the apprentice and the broom}
+  \panelslide{41}{4}{AI can outperform us in doing repetitive tasks. Cheap, strong, fast, easy.}
 \end{frame}
-
-% ---------------------------------------------------------------- agenda
-% The lecture in one slide: the comic's own seven sections, in its own order,
-% under its own page numbers, each labelled with the question it answers.
-% Side strip like every other frame, so the deck's shape is set from frame two.
-\begin{frame}{Seven parts, one comic}
-  \panel{cover, the section spiral}
-  \begin{sidebody}
-    \footnotesize
-    \renewcommand{\arraystretch}{1.25}%
-    \begin{tabular}{@{}llp{0.46\linewidth}@{}}
-      \toprule
-      Part & \alert{Section} & \multicolumn{1}{@{}l@{}}{\alert{The question it answers}}\\
-      \midrule
-      \alertbf{I}   & Intro          & why talk about AI at all\\
-      \alertbf{II}  & Basics         & what AI is, and what made it work\\
-      \alertbf{III} & Examples       & where it already runs\\
-      \alertbf{IV}  & Chances        & what it is good for\\
-      \alertbf{V}   & Risks          & what it costs us\\
-      \alertbf{VI}  & Outlook        & who gets to shape it\\
-      \alertbf{VII} & Social Utopias & what we would want it for\\
-      \bottomrule
-    \end{tabular}
-  \end{sidebody}
-  \slidesources{Schneider2019}
+\setsubjectfrac{0.78}
+\begin{frame}{Future Work}
+  \panelart{zauberlehrling_mock}{subject at 0.78, too little veil}
+  \panelslide{41}{4}{AI can outperform us in doing repetitive tasks. Cheap, strong, fast, easy.}
 \end{frame}
-
-% The contract for the deck: every body slide is one quoted passage. Said once,
-% here, so no later frame has to explain itself.
-\begin{frame}{How to read this deck}
-  \panel{page 5, the authors at the table}
-  \begin{sidebody}
-    \vspace*{0.05\paperheight}
-    One panel caption, \gterm{one slide}. Six slides in a row share a
-    heading and a picture: that is one page of the comic, and the six dots
-    under the quote say which panel you are on. Every quote is lifted
-    verbatim. The one italic line under the dots is mine, not theirs.
-    \vskip1.0em
-    {\color{tddim}The comic is a free read at weneedtotalk.ai under
-    CC BY-NC-SA 4.0. It is an essay, not a textbook: it argues. Argue back.}
-  \end{sidebody}
-  \slideqr{weneedtotalk.ai}{https://weneedtotalk.ai}
-  \slidesources{Schneider2019}
-\end{frame}
-
-\input{part1_intro.tex}
-\input{part2_basics.tex}
-\input{part3_examples.tex}
-\input{part4_chances.tex}
-\input{part5_risks.tex}
-\input{part6_outlook.tex}
-\input{part7_utopias.tex}
-
-% -------------------------------------------------- the technical track
-% The comic answers "what is AI for us"; it does not teach anyone to build
-% one. Google's foundational-courses track is where that half lives, and it
-% is what the previous version of this deck was carried over from. Keeping
-% the four courses on a frame of their own, with the hub address spelled out
-% and a QR code next to it, is what stops that link from going missing when a
-% deck is rewritten. \nocite puts all five entries in the References frame, so
-% the addresses survive in the bibliography too.
-\nocite{GoogleFoundational2025,GoogleIntroML2025,GoogleMLCC2025,
-        GoogleProblemFraming2025,GoogleManagingML2025}
-% Starred, so it relabels the footer for the closing frames without numbering
-% itself into the seven parts or firing \AtBeginSection and adding a divider.
-\section*{Sources}
-\begin{frame}{If you want to build one}
-  \panel{a laptop on the same table}
-  \begin{sidebody}
-    \vspace*{0.03\paperheight}
-    This deck is about what AI does to us. For how it is built, work
-    Google's \gterm{foundational courses} track, four courses in order:
-    \vskip0.7em
-    \footnotesize
-    \renewcommand{\arraystretch}{1.25}%
-    \begin{tabular}{@{}llp{0.30\linewidth}@{}}
-      \toprule
-      \alert{Course} & \alert{Length} & \multicolumn{1}{@{}l@{}}{\alert{Answers}}\\
-      \midrule
-      Introduction to Machine Learning & 20 min   & what ML is\\
-      Machine Learning Crash Course    & 12 modules & how to build one\\
-      Problem Framing                  & 45 min   & whether to at all\\
-      Managing ML Projects             & 90 min   & how to keep it alive\\
-      \bottomrule
-    \end{tabular}
-    \vskip0.9em
-    {\color{tddim}\scriptsize
-     developers.google.com/machine-learning/foundational-courses}
-  \end{sidebody}
-  \slideqr{the track}{https://developers.google.com/machine-learning/foundational-courses}
-  \slidesources{GoogleFoundational2025}
-\end{frame}
-
-% -------------------------------------------------------- shared references
-\begin{frame}{References}
-  \begin{multicols}{2}
-    \printbibliography[heading=none]
-  \end{multicols}
-\end{frame}
-
-\begin{frame}[plain]
-  \vfill
-  \centering
-  {\LARGE\bfseries Let your voice be \alertbf{heard}}\par\vskip0.4em
-  {\LARGE\bfseries and your point of view be \alertbf{seen}}\par\vskip1.2em
-  {\small Prof.\ Dr.-Ing.\ Mark Schutera \;\textbar\; DHBW Ravensburg}
-  \vfill
+\setsubjectfrac{0.44}
+\begin{frame}{Future Work}
+  \panelart{zauberlehrling_mock}{subject at 0.44, more veil}
+  \panelslide{41}{4}{AI can outperform us in doing repetitive tasks. Cheap, strong, fast, easy.}
 \end{frame}
 
 \end{document}
