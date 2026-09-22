@@ -1,0 +1,340 @@
+%% ch11_human_side.tex -- Intelligence Engineering, chapter 11 "The Human Side
+%% of Machine Learning".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 11. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{XI}{The Human Side of Machine Learning}{}
+\section[Human Side]{The Human Side of Machine Learning}
+
+% ----------------------------------------------------------------------
+\subsection{User Experience}
+
+% TEMPLATE: withmargin, the chapter's workhorse and the right opener for a
+% requirement: one claim plus the aside that makes it concrete. Main column
+% takes what consistency means to a user and the tension the book sets it
+% against. Margin holds the book's worked case, the travel site whose model
+% overrode the filters a user had set, and the verdict its designers reached.
+\begin{frame}{Ensuring User Experience Consistency}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero, the first of this chapter's two. The book makes
+% this heading concrete with a figure of several predictions offered at once,
+% so the strip takes that figure and the sidebody takes why a mostly correct
+% prediction is worthless to a user who cannot check it, and what showing many
+% predictions buys instead. The gray placeholder stays until the asset exists.
+\begin{frame}{Combatting ``Mostly Correct'' Predictions}
+  \phimgside[0.33]{combatting_mostly_correct_predictions.png}{Mostly correct predictions}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef plus a takeaway, and deliberately not a third layout of the
+% same kind in a row. The heading is the book's own term for a backup route,
+% so the term box is the slide: it takes the definition and the rule that
+% decides when the fallback fires. The takeaway keeps the speed against
+% accuracy tradeoff the book closes the heading with.
+\begin{frame}{Smooth Failing}
+  \begin{tddef}{Smooth failing}
+  \end{tddef}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Team Structure}
+
+% TEMPLATE: withmargin. The heading is about who has to be in the room, so the
+% main column takes the subject matter experts the book names and the stages it
+% says they must reach beyond labeling. Margin holds the friction the book
+% reports once those experts are asked to work inside engineers' tooling.
+\begin{frame}{Cross-functional Teams Collaboration}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast, levelled by the equal height group. This frame
+% opens the two deep headings under it, so it stays a comparison and not a
+% detail layout. The headers are the two approaches the children name; each box
+% takes that approach in a line, and the children carry the workflow itself.
+\begin{frame}{End-to-End Data Scientists}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=e2e]{Approach 1}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=e2e]{Approach 2}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero, the second and last of this chapter's two. The
+% book draws this approach as a handoff, the data scientists on one side and
+% the team that owns production on the other, so the strip takes that diagram
+% and the sidebody takes the communication overhead the book charges it with.
+\begin{frame}{Approach 1: Have a separate team to manage production}
+  \phimgside[0.33]{approach_1_have_a_separate_team_to_manage_production.png}{A separate team to manage production}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The heading is one claim about ownership, so the main
+% column takes what owning the entire process means step by step and the
+% infrastructure it presupposes. Margin holds the named practice the book cites
+% as its case and the objection it quotes from the data scientists themselves.
+\begin{frame}{Approach 2: Data scientists own the entire process}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Responsible AI}
+
+% TEMPLATE: booktabs comparison table, and the opener for the two case studies
+% under it. One column per case study named in the children, so the slide reads
+% as a pair rather than as two sentences. Row labels are left empty on purpose:
+% they are the dimensions the next pass fills, what the system did and who
+% carried the cost.
+\begin{frame}{Irresponsible AI: Case Studies}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.22\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}@{}}
+    \toprule
+     & \textbf{Case study I} & \textbf{Case study II}\\
+    \midrule
+     & & \\
+     & & \\
+     & & \\
+     & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The case is an argument from numbers, so the main
+% column runs what the grader was asked to do and what it graded on instead.
+% Margin takes the book's figures on where the downgrades landed, which is the
+% evidence the whole case rests on.
+\begin{frame}{Case study I: Automated grader's biases}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: one plain box plus a takeaway, and not a second withmargin in a
+% row. The heading already carries the claim, so the box needs no header over
+% it: it takes the released dataset, the fields left inside it and the
+% reidentification that followed. The takeaway is the book's verdict on what
+% the word anonymized actually buys.
+\begin{frame}{Case study II: The danger of ``anonymized'' data}
+  \begin{tdblock}
+  \end{tdblock}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, opener for the seven deep headings under it. Seven
+% peers do not grid, so this frame stays one claim about why a framework is
+% needed at all and the children carry one recommendation each. Margin holds
+% the book's own caveat, that this is a starting point and not a standard.
+\begin{frame}{A Framework for Responsible AI}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: five block grid, three across then two, levelled by two equal
+% height groups. The book answers this heading with peer sources of bias spread
+% along the pipeline, none subordinate to another, so one box each rather than
+% a bullet list. Boxes stay untitled: the heading names no source, the names
+% arrive with the text. Trim or add a box to the count the book gives.
+\begin{frame}{Discover sources for model biases}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=bias1]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=bias1]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=bias1]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \vskip0.4em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=bias2]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=bias2]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The heading names a limitation and not a set of peers,
+% so the main column takes what the data on its own cannot settle and what the
+% book asks for in its place. Margin holds the case it argues from and the
+% people it says the data never reached.
+\begin{frame}{Understand the limitations of the data-driven approach}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: booktabs table, both column headers taken from the heading's own
+% words. A tradeoff is a pair, so one row per desideratum against what it
+% costs reads as a table and not as prose. Rows stay empty for the pairs the
+% book names and the argument it makes for each.
+\begin{frame}{Understand the trade-offs between different desiderata}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.45\textwidth}%
+    >{\raggedright\arraybackslash}p{0.45\textwidth}@{}}
+    \toprule
+    \textbf{Desideratum} & \textbf{Trade-off}\\
+    \midrule
+     & \\
+     & \\
+     & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: one titled box plus a takeaway. The heading is a short imperative,
+% so it becomes the box header itself and the box takes the reason behind it,
+% what a bias costs once everything else is already built on top of it. The
+% takeaway carries the book's line on the cheapest moment to act.
+\begin{frame}{Act early}
+  \begin{tdblockt}{Act early}
+  \end{tdblockt}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: captioned code panel. A model card is a document with fixed
+% fields, so the honest slot is a panel showing those fields rather than a
+% sentence about them. The caption is the artifact the heading names; the panel
+% takes the book's field list and the question each field is there to answer.
+\begin{frame}{Create model cards}
+  \begin{tdcodet}{Model card}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The heading asks for a process and not a list of peers,
+% so the main column takes what that process has to cover and the failure mode
+% the book names, fixes bolted on after the fact. Margin holds the tooling and
+% the audits the book points at.
+\begin{frame}{Establish processes for mitigating biases}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three block row, levelled by the equal height group, and a break
+% from the column layout before it. The book answers this heading with named
+% places to follow the field, so one box per kind of source rather than a run
+% of names inside a sentence. Boxes stay untitled until those names are in.
+\begin{frame}{Stay up-to-date on responsible AI}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=rai]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=rai]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=rai]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: statement, kept bare. A summary is a closing line and not a slide
+% of bullets, so it takes the loud centred form and nothing else. The main line
+% is the book's own summing up of the human side; the substatement is the
+% consequence it carries out of the chapter.
+\begin{frame}{Summary}
+  \begin{statement}
+    \substatement{}
+  \end{statement}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

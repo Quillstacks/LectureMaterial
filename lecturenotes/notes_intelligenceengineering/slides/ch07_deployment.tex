@@ -1,0 +1,259 @@
+%% ch07_deployment.tex -- Intelligence Engineering, chapter 07 "Model
+%% Deployment and Prediction Service".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 7. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{VII}{Model Deployment and Prediction Service}{}
+\section[Deployment]{Model Deployment and Prediction Service}
+
+% ----------------------------------------------------------------------
+\subsection{Machine Learning Deployment Myths}
+
+% TEMPLATE: withmargin, the chapter's workhorse and the right opener for a
+% myth: one claim the book contradicts plus one aside that does the
+% contradicting. Main column states the myth and then the correction in the
+% book's words. Margin takes the counts, the models behind a single ride
+% sharing app and the company totals the book quotes.
+\begin{frame}{Myth 1: You Only Deploy One or Two ML Models at a Time}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: one plain box plus a takeaway, and deliberately not a second
+% withmargin in a row. The heading already is the myth as a full sentence, so
+% the box needs no header over it: it holds the myth and the reasons a
+% deployed model decays. The takeaway carries the book's verdict on software
+% rot, which only lands as a line of its own.
+\begin{frame}{Myth 2: If We Don't Do Anything, Model Performance Remains the
+    Same}
+  \begin{tdblock}
+  \end{tdblock}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The heading is a claim about frequency, so the main
+% column takes what forces an update and how often the book says it happens.
+% Margin holds the named deployment cadences the book cites company by
+% company, which are the evidence and read better stacked than in prose.
+\begin{frame}{Myth 3: You Won't Need to Update Your Models as Much}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef, kept bare. This myth turns on one word the heading names,
+% scale, and the book settles it by saying what scale means before arguing
+% who has to worry about it. The term box is the slide's only slot: it takes
+% the book's own measure of scale and the share of engineers it covers.
+\begin{frame}{Myth 4: Most ML Engineers Don't Need to Worry About Scale}
+  \begin{tddef}{Scale}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Batch Prediction Versus Online Prediction}
+
+% TEMPLATE: booktabs comparison table. The subchapter heading is the versus
+% and the book already carries this contrast as a table, so it stays a table
+% here rather than two boxes. The two column headers are the two regimes the
+% heading names; the row labels are the book's own comparison dimensions and
+% get filled together with the cells in the next pass.
+\begin{frame}{From Batch Prediction to Online Prediction}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.22\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}@{}}
+    \toprule
+     & \textbf{Batch prediction} & \textbf{Online prediction}\\
+    \midrule
+     & & \\
+     & & \\
+     & & \\
+     & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero, the first of this chapter's two. The heading asks
+% an architecture question and the book answers it with a drawing of the two
+% pipelines, so the strip takes that figure and the sidebody takes the steps
+% in the book's order. The caption names the figure; the gray placeholder
+% stays until the asset is drawn.
+\begin{frame}{Unifying Batch Pipeline and Streaming Pipeline}
+  \phimgside[0.33]{unifying_batch_pipeline_and_streaming_pipeline.png}{Batch pipeline and streaming pipeline}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Model Compression}
+
+% TEMPLATE: withmargin. The heading names one technique, so the main column
+% takes what it replaces and the parameter arithmetic that makes it a
+% compression method at all. Margin holds the architectures the book names as
+% the worked cases, with their counts.
+\begin{frame}{Low-Rank Factorization}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef. The heading is a named method the book introduces by
+% definition, so the term box is the whole slide rather than a claim with an
+% aside. The box takes the book's definition and the tradeoff it states
+% immediately after it.
+\begin{frame}{Knowledge Distillation}
+  \begin{tddef}{Knowledge distillation}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two untitled boxes, levelled by the equal height group. The book
+% gives pruning two distinct meanings, so each takes a box of its own instead
+% of two bullets in one. No box headers here on purpose: the heading names
+% only pruning, and the two senses arrive with the text in the next pass.
+\begin{frame}{Pruning}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=prune]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=prune]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: code panel plus a takeaway. Quantization is a statement about how
+% a number is represented, so the panel is the honest slot: it takes the bit
+% widths and the ranges the book lists, which only make their point written
+% out. The takeaway keeps the book's caveat about rounding and overflow.
+\begin{frame}{Quantization}
+  \begin{tdcode}
+  \end{tdcode}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{ML on the Cloud and on the Edge}
+
+% TEMPLATE: two block contrast, levelled by the equal height group. This frame
+% opens the two deep headings under it, so it stays an overview and not a
+% detail layout. The heading names two operations and each takes one box,
+% compiling a model for a target and optimizing it for that target; the boxes
+% carry the book's account of each step and the children carry the detail.
+\begin{frame}{Compiling and Optimizing Models for Edge Devices}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=edge]{Compiling}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=edge]{Optimizing}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero, the second and last of this chapter's two. The
+% book makes this heading concrete with a drawing of what an optimization
+% does to a computation graph, so the strip takes that figure and the sidebody
+% takes the named techniques under it. Caption repeats the heading as the
+% figure's name; placeholder stays until the asset exists.
+\begin{frame}{Model optimization}
+  \phimgside[0.33]{model_optimization.png}{Model optimization}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The heading is a turn of the argument rather than a
+% set of peers, so the main column runs it as one claim: the search space, and
+% what a learned model does inside it. Margin takes the named system the book
+% uses as its case and the cost the book attaches to the search.
+\begin{frame}{Using ML to optimize ML models}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin with a captioned code panel in the main column. The
+% book's browser material is named runtimes and libraries, so the panel is
+% what the slide should show rather than a sentence about them. Margin takes
+% the promise the book attaches to running in a browser and the limit it
+% names in the same breath.
+\begin{frame}{ML in Browsers}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tdcodet}{Browser}
+      \end{tdcodet}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: statement, kept bare. A summary is a closing line, not a slide of
+% bullets, so it takes the loud centred form and nothing else. The main line
+% is the book's own summary of what deployment costs; the substatement is the
+% consequence it carries into the next chapter.
+\begin{frame}{Summary}
+  \begin{statement}
+    \substatement{}
+  \end{statement}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

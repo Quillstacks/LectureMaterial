@@ -1,0 +1,435 @@
+%% Intelligence Engineering -- the full course deck (one PDF).
+%% Master file: preamble + title + framing, then \input the eleven chapter
+%% fragments, ch01 to ch11.
+%%
+%% Build the full deck:  latexmk intelligence_engineering.tex
+%%   (lualatex, two passes; see .latexmkrc)
+%% Build one PDF per chapter:
+%%   tools/build_slide_chapter_pdfs.sh <this dir>  ->  chapter_pdfs/chNN_*.pdf
+%%
+%% ALIGNED TO THE BOOK. The chapters are Huyen, Designing Machine Learning
+%% Systems, one deck chapter per book chapter, in the book's order and under
+%% the book's titles. The PDF sits in ../references/. The frame titles inside
+%% a chapter are that chapter's own section and subsection headings.
+%%
+%% SPINE ONLY, WITH ONE EXCEPTION. Every frame in ch01 to ch11 is empty: the
+%% structure is settled, the content is not written, and a frame carries its
+%% title and nothing else. ch00_orientation.tex is the exception and is fully
+%% written, because the opening lecture has to say what the course is before
+%% anyone can decide to sit through it.
+%%
+%% ONE CHAPTER, ONE LECTURE, ONE FILE. There is no four-act grouping any
+%% more; a chapter is a lecture. Each opens with its own \lecturepage divider,
+%% which lives in the chapter file, and the theme's automatic section page is
+%% switched off so a lecture gets one divider rather than two. Every chapter
+%% also carries one spare \lecturepage mid-file as a segment-divider template.
+%% A fragment carries no preamble of its own, which is what lets it build
+%% alone as chapter_pdfs/chNN_*.pdf.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{tuftedark}
+% The backbone architecture diagram offsets arrow endpoints with calc syntax
+% ($(node)+(dx,dy)$); the theme loads arrows.meta and positioning but not calc.
+\usetikzlibrary{calc,fit,shapes.geometric}
+
+% Drop slide images in images/; include by bare name, e.g.
+%   \includegraphics[width=\linewidth]{backbone}
+\graphicspath{{images/}}
+
+% Placeholder image: \phimg[width-fraction]{label}. Draws a labeled box in place
+% of an image not yet made; swap for \includegraphics once the asset exists.
+\newcommand{\phimg}[2][0.5]{%
+  \tikz\node[draw=tddim, thick, rounded corners, fill=tddim!12,
+    minimum width={#1*\linewidth}, minimum height={0.62*#1*\linewidth},
+    inner sep=4pt, align=center, text=tddim,
+    font=\ttfamily\scriptsize]{\detokenize{#2}};%
+}
+
+% Placeholder side image: \phimgside[frac]{label}{caption}. The
+% \sideimagecover hero at placeholder stage: a blank gray strip on the
+% right, inset from the page edges so it clears the rotated watermark and
+% the \slidesources marker (9mm right) and the footer band (16mm bottom).
+% The label is NOT drawn; it stays in the call as the record of the
+% filename to drop into images/. The caption runs up the strip's bottom
+% left edge in the placeholder's own typewriter style, mirroring
+% \slidesources on the right page edge. It sets the theme's strip
+% bookkeeping, so a following sidebody gets the right width. Swap for
+% \sideimagecover[frac]{img} + \sidecaption{caption} once the asset exists.
+\makeatletter
+\newcommand{\phimgside}[3][0.33]{%
+  \renewcommand{\td@sidefrac}{#1}\renewcommand{\td@sideside}{east}%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north east, draw=tddim, thick, fill=tddim!12, inner sep=0pt,
+      minimum width={#1*\paperwidth},
+      minimum height={\dimexpr\paperheight-20mm\relax}]
+      (phstrip) at ([xshift=-9mm,yshift=-4mm]current page.north east){};
+    \node[rotate=90, anchor=west, inner sep=0pt, text=tddim,
+      font=\ttfamily\scriptsize]
+      at ([xshift=-2mm]phstrip.south west){#3};
+  \end{tikzpicture}%
+}
+\makeatother
+
+% Placeholder QR code: \phqr{caption}. A small square placeholder box
+% pinned to the page's upper right corner, inset like \phimgside so it
+% clears the rotated watermark, with a typewriter caption run in on its
+% left. Swap for \slideqr{caption}{url} once the target url is settled;
+% the caption stays as it is.
+\newcommand{\phqr}[1]{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north east, draw=tddim, thick, rounded corners,
+      fill=tddim!12, minimum width=9mm, minimum height=9mm,
+      inner sep=0pt, text=tddim, font=\ttfamily\tiny]
+      (phqr) at ([xshift=-9mm,yshift=-5mm]current page.north east){qr};
+    \node[anchor=east, inner sep=0pt, text=tddim, align=right,
+      font=\ttfamily\scriptsize]
+      at ([xshift=-3mm]phqr.west){#1};
+  \end{tikzpicture}%
+}
+
+% Live QR code: \slideqr{caption}{url}. The compiled twin of \phqr: the
+% qrcode package draws the code from the url at build time. The modules
+% are white and sit straight on the dark page with no tile under them,
+% which makes the page itself the quiet zone; keep the surroundings clear
+% for a few module widths. An inverted code is outside ISO 18004: the iOS
+% camera re-inverts and reads it, most current Android scanners do too,
+% older ones do not, so a print handout wants a black on white variant.
+% level=M rather than the sparser L because a 57 character url lands on
+% version 4 either way: same 33x33 grid, more error correction for free.
+% Longer urls can cost a version, and a version is module size, which at
+% 9mm is what scanning depends on.
+\usepackage{qrcode}
+\newcommand{\slideqr}[2]{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north east, inner sep=0pt]
+      (slideqr) at ([xshift=-9mm,yshift=-5mm]current page.north east)
+      {\color{white}\qrcode[height=9mm,level=M]{#2}};
+    \node[anchor=east, inner sep=0pt, text=tddim, align=right,
+      font=\ttfamily\scriptsize]
+      at ([xshift=-3mm]slideqr.west){#1};
+  \end{tikzpicture}%
+}
+
+\title[Intelligence Engineering]{Intelligence Engineering}
+\subtitle{Solving Real World Problems At Scale}
+\author[Schutera]{Prof.\ Dr.-Ing.\ Mark Schutera}
+\institute{\textcolor{DHBWred}{DHBW}\ Ravensburg}
+\date{\today}
+\setbookversion{\today}{drifting stream}
+
+% Right-edge vertical watermark: the conditional that quietly moves under the
+% system while nobody touches the code. Ch11 is where that lands.
+\renewcommand{\tdwatermark}{$P(y \mid x)$}
+
+% ---------------------------------------------------------------- citations
+% Sources are cited with biblatex, numbered PER CHAPTER. Each chapter file
+% wraps its frames in a \begin{refsection}, so its \cite/\slidesources markers
+% run [1..N] within that chapter and its own closing References frame resolves
+% them. There is no deck-level bibliography; a chapter PDF pulled out of the
+% set is therefore self-contained. Reuses the notes' bib. sorting=none keeps
+% the numbers in citation order, so the sources on one slide compress to a
+% tidy range, e.g. [1-3].
+\usepackage[style=numeric-comp,sortcites,sorting=none,backend=biber]{biblatex}
+\addbibresource{../intelligenceengineering.bib}
+\renewcommand*{\bibfont}{\footnotesize}
+\setlength{\bibitemsep}{0.35em plus 0.15em}
+\AtEveryBibitem{\clearfield{url}\clearfield{doi}\clearfield{urldate}\clearfield{note}}
+\usepackage{multicol}% two-column References frame (ch00 uses it)
+
+\setbeamercolor{bibliography entry author}{fg=tddim}
+\setbeamercolor{bibliography entry title}{fg=tdfg}
+\setbeamercolor{bibliography entry location}{fg=tddim}
+\setbeamercolor{bibliography entry note}{fg=tddim}
+\setbeamercolor{bibliography item}{fg=tddim}
+\DeclareFieldFormat{labelnumberwidth}{\textcolor{tddim}{#1}}
+
+% The side-edge source marker takes cite keys and prints their numeric labels
+% ([1-3]) in the same vertical spot, in place of hand-typed author-years.
+% The marker sits 3mm off the right page edge, which a \sideimage or
+% \sideimagecover strip covers, so grey stops reading there; on those frames it
+% goes red. \phimgside is deliberately NOT covered by this: its strip is inset
+% to clear the marker, so the placeholder keeps the grey.
+\makeatletter
+\renewcommand{\slidesources}[1]{%
+  \iftd@sideimage\def\td@srccol{DHBWred}\else\def\td@srccol{tddim}\fi
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[rotate=90,anchor=west,inner sep=0pt,text=\td@srccol,font=\scriptsize]
+      at ([xshift=-3mm,yshift=13mm]current page.south east)
+      {\cite{#1}};
+  \end{tikzpicture}%
+}
+
+% \sidecaption shadowed for this deck. The theme sets the caption horizontal,
+% white and italic INSIDE the strip, which a photo swallows; here it reads up
+% the strip's outer edge in the placeholder's own typewriter grey, mirroring
+% \slidesources on the opposite page edge, so a real image and its
+% \phimgside placeholder caption the same way. 13mm clears the footer band.
+\renewcommand{\sidecaption}[1]{%
+  \setlength{\td@stripw}{\td@sidefrac\paperwidth}%
+  \def\td@westtest{west}%
+  \begin{tikzpicture}[remember picture,overlay]
+    \ifx\td@sideside\td@westtest
+      \node[rotate=90,anchor=west,inner sep=0pt,text=tddim,
+            font=\ttfamily\scriptsize]
+        at ([xshift=\dimexpr\td@stripw+2mm\relax,yshift=13mm]current page.south west){#1};
+    \else
+      \node[rotate=90,anchor=west,inner sep=0pt,text=tddim,
+            font=\ttfamily\scriptsize]
+        at ([xshift=\dimexpr-\td@stripw-2mm\relax,yshift=13mm]current page.south east){#1};
+    \fi
+  \end{tikzpicture}%
+}
+\makeatother
+
+% ------------------------------------------------------------- deck helpers
+
+% ------------------------------------------------------------- statement
+% The punchline slide, overridden deck level. The theme's own statement is
+% letterspaced uppercase with a red uppercase second line; both lines shout and
+% the red one competes with the first instead of supporting it.
+%
+% This is the Disciplined Vibe closing card's idea, editorial rather than
+% centred: a short red rule, the claim flush left in large bold MIXED case with
+% the red carried inline by \alertbf, then the consequence one step down in
+% grey. The rule is the same motif as the subchapter divider, so dividers and
+% punchlines read as one family, and flush left means a wrapping claim breaks
+% cleanly instead of stranding an orphan word in the middle of the slide.
+%
+%   \begin{statement}
+%     The algorithm is the \alertbf{small box in the middle}
+%     \substatement{Everything else is this course.}
+%   \end{statement}
+%
+% The theme's versions are deliberately shadowed, not patched: other decks share
+% that file. \RenewDocumentEnvironment/Command so this fails loudly if the theme
+% ever stops providing them.
+\RenewDocumentEnvironment{statement}{+b}{%
+  \par\vfill
+  {\color{DHBWred}\rule{0.10\paperwidth}{2.5pt}}\par\vskip1.1em
+  {\fontsize{28}{33}\selectfont\bfseries\raggedright #1\par}%
+  \vfill\par}{}
+% \substatement stays \protected so the surrounding grab cannot expand it.
+\RenewDocumentCommand{\substatement}{m}{%
+  \par\vskip0.9em{\large\color{tddim}\raggedright #1\par}}
+
+% ---------------------------------------------------------- frame subtitle
+% The theme's frametitle template prints the title and the hairline rule and
+% drops \insertframesubtitle on the floor, so \framesubtitle{...} renders
+% nothing. It is reinstated here, deck level, with the theme's own template
+% copied verbatim and one branch added: grey, small, above the rule.
+% Used for the source's own one line under a heading, e.g. the condition that
+% names each of the five keyphrases in chapter 1.
+\setbeamerfont{framesubtitle}{size=\small}
+\setbeamercolor{framesubtitle}{fg=tddim}
+\makeatletter
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip%
+  \vskip2.4ex%
+  {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\strut\insertframetitle\par}%
+  \ifx\insertframesubtitle\@empty\else
+    \vskip0.35ex%
+    {\usebeamerfont{framesubtitle}\usebeamercolor[fg]{framesubtitle}%
+      \insertframesubtitle\par}%
+  \fi
+  \vskip0.2ex%
+  {\color{tdrule}\rule{\textwidth}{0.4pt}}%
+  \vskip0.4ex%
+}
+\makeatother
+
+% ------------------------------------------------------- subchapter divider
+% A lecture is one chapter and gets exactly ONE \lecturepage. Inside it, the
+% book's own sections are subchapters, and each opens on this divider: the same
+% mini title page the theme draws for a section, but driven by \subsection.
+% Two reasons for \subsection rather than \section: the number restarts inside
+% every lecture, and the footer keeps naming the lecture instead of switching to
+% the subchapter.
+% Set \subchaptergloss{...} just before \subsection{...} for the grey line under
+% the title; it clears itself, so the next divider has none unless set again.
+\newcommand{\subchapterglosstext}{}
+\newcommand{\subchaptergloss}[1]{\gdef\subchapterglosstext{#1}}
+\setbeamertemplate{subsection page}{%
+  \vfill
+  {\color{DHBWred}\rule{0.13\paperwidth}{2pt}}\par\vskip0.7em%
+  {\usebeamercolor[fg]{section number}\large\bfseries
+    \insertsubsectionnumber}\par\vskip0.25em%
+  {\usebeamerfont{section title}\usebeamercolor[fg]{section title}%
+    \insertsubsectionhead\par}%
+  \ifdefempty{\subchapterglosstext}{}{%
+    \vskip0.35em
+    {\usebeamerfont{section title}\color{tddim}\subchapterglosstext\par}}%
+  \gdef\subchapterglosstext{}%
+  \vfill
+}
+\AtBeginSubsection[]{\begin{frame}\subsectionpage\end{frame}}
+
+% \lecturepage{IV}{Training Data}{one line on what the lecture is for}
+% One chapter is one lecture, and this plain frame is what a lecture opens on:
+% numeral, title, red rule, then the grey gloss. Exactly one per chapter, at
+% the top of the chapter file. Inside a lecture the divider is \subsection,
+% which draws the subchapter page above; do not use \lecturepage for that.
+% Argument 3 may be left empty; the gloss line then simply does not appear.
+\newcommand{\lecturepage}[3]{%
+  \begin{frame}[plain]
+    \vfill
+    \centering
+    {\color{tddim}\footnotesize LECTURE\ \ #1}\par\vskip0.4em
+    {\LARGE\bfseries #2}\par\vskip0.7em
+    \textcolor{DHBWred}{\rule{0.18\textwidth}{1.2pt}}\par\vskip0.7em
+    {\color{tddim}\small #3}
+    \vfill
+  \end{frame}}
+
+% \increment{...} -- the one sentence of backbone work a block produces, lifted
+% verbatim from the chapter header's "Increment:" line. Every block has exactly
+% one. Renders as a bordered card so it reads as the deliverable, not as prose.
+\newcommand{\increment}[1]{%
+  \begin{tdblock}
+    \alertbf{Increment.}\; #1
+  \end{tdblock}}
+
+% \tofill{<the author's gloss>} -- scaffold marker. The notes carry a one-line
+% gloss under every heading and no prose yet; the gloss goes here so the frame
+% says something true, and the short red rule above it says the frame is
+% unfinished. Deleting the marker is what "this frame is written" means, and it
+% also hands the slide's one red element back to whatever replaces it, so an
+% unfilled frame is the only kind whose red is the marker.
+\newcommand{\tofill}[1]{%
+  \par\vskip0.3em
+  {\color{DHBWred}\rule{2.2em}{0.6pt}}\par\vskip0.4em
+  {\color{tddim}\itshape #1}}
+
+% Add-on group frame: one booktabs table, "add-on" beside "the core unit it
+% attaches to". The notes' default is to weave an add-on into its core unit
+% rather than give it a heading, so the whole add-on set of a chapter lands on
+% one frame instead of one frame each.
+% Sized at \footnotesize with a tight arraystretch on purpose: every row is two
+% lines (the add-on, then its source in \scriptsize), and the chapters that run
+% to seven add-ons overflow the frame at \small.
+\newenvironment{addontable}{%
+  \vskip0.2em\footnotesize
+  \renewcommand{\arraystretch}{0.95}%
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.40\textwidth}%
+                    @{\hspace{5mm}}%
+                    >{\raggedright\arraybackslash}p{0.50\textwidth}@{}}%
+    \toprule
+    \textbf{Add-on} & \textbf{Attaches to}\\
+    \midrule}{%
+    \bottomrule
+  \end{tabular}}
+
+% ------------------------------------------------------------- footer nav
+% The theme's footer is beamer's mini-frame navigation: one hollow dot per
+% frame, grouped under its section name. It is sized for a deck the shape of
+% Disciplined Vibe, eight sections over fifty frames. This deck mirrors a
+% seventeen block course: sixteen sections over about a hundred and eighty
+% frames, which overruns the footer band by some 340pt on every single page.
+% Neither knob fixes it, the dots alone are already three times the paper
+% width. So the nav is replaced here, at deck level, with the same information
+% compressed: the section you are in on the left, a progress track in the
+% middle, the counter on the right. The theme is untouched and the other decks
+% keep their dots. The track is drawn in tdfg on a tdrule ground rather than in
+% red, so the footer never spends the slide's one red element.
+% Drawn with \rule rather than tikz on purpose: a tikz coordinate resolves a
+% bare length register through pgfmath, which hands back a unitless number that
+% tikz then reads as centimetres, and the bar blows past the maximum dimension.
+\newlength{\ieprogwd}
+\newlength{\ieprogfill}
+\setlength{\ieprogwd}{0.30\paperwidth}
+% The fraction goes through pgfmath, which works in floating point. Doing it in
+% TeX dimen arithmetic does not survive the first pass: before the aux file is
+% written \inserttotalframenumber is stale, the \divide leaves \ieprogwd whole,
+% and \ieprogwd times a frame number past about 120 exceeds the maximum TeX
+% dimension. The clamp covers the same stale-aux case, where the current frame
+% number can exceed the recorded total and the fill would run past its track.
+\newcommand{\ieprogressbar}{%
+  \ifnum\inserttotalframenumber>0\relax
+    \ifnum\insertframenumber<\inserttotalframenumber\relax
+      % The ratio is parenthesised so it is evaluated first. pgfmath keeps its
+      % intermediates in a dimen register, so multiplying the track width by the
+      % frame number before dividing overflows once past frame 120.
+      \pgfmathsetlength{\ieprogfill}{\ieprogwd*(\insertframenumber/\inserttotalframenumber)}%
+    \else
+      \setlength{\ieprogfill}{\ieprogwd}%
+    \fi
+  \else
+    \setlength{\ieprogfill}{0pt}%
+  \fi
+  \raisebox{0.6ex}{\makebox[\ieprogwd][l]{%
+    \rlap{\textcolor{tdrule}{\rule{\ieprogwd}{1.1pt}}}%
+    \textcolor{tdfg}{\rule{\ieprogfill}{1.1pt}}}}%
+}
+\setbeamertemplate{footline}{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=6mm,dp=5mm,leftskip=6mm,rightskip=6mm]{section in head/foot}%
+    {\usebeamerfont{section in head/foot}\color{tddim}\insertsectionhead}%
+    \hfill
+    \ieprogressbar
+    \hfill
+    {\usebeamerfont{section in head/foot}\color{tddim}%
+      \insertframenumber\,/\,\inserttotalframenumber}%
+  \end{beamercolorbox}%
+}
+
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% ------------------------------------------------------------- front matter
+% The framing frames that used to sit here, commented out behind \iffalse,
+% are gone. Their job is now done by ch00_orientation.tex, which is written
+% from the book's preface and the opening of its chapter 1 rather than from
+% the earlier hand-written framing.
+
+% ------------------------------------------------------------------ chapters
+% One \input per book chapter, in the book's order. Each fragment carries its
+% own \lecturepage divider and its \section. ch00 has no book chapter: it is
+% the orientation lecture, built from the preface and the run-up to chapter 1's
+% first heading, and it opens on a blank numeral (LECTURE _) for that reason.
+\input{ch00_orientation.tex}
+\input{ch01_overview.tex}
+%\input{ch02_systems_design.tex}
+%\input{ch03_data_engineering.tex}
+%\input{ch04_training_data.tex}
+%\input{ch05_feature_engineering.tex}
+%\input{ch06_model_development.tex}
+%\input{ch07_deployment.tex}
+%\input{ch08_distribution_shifts.tex}
+%\input{ch09_continual_learning.tex}
+%\input{ch10_infrastructure.tex}
+%\input{ch11_human_side.tex}
+
+% ---------------------------------------------------------- bibliography
+% There is none at deck level, on purpose. Every chapter wraps itself in a
+% \begin{refsection} and closes on its own References frame, which is what
+% lets a standalone chapter PDF resolve its own [n] markers. A closing frame
+% here would reprint the same bib once more, after twelve chapters have each
+% already printed the part of it they use. If you ever want one anyway, it
+% needs \nocite{*}: refsection 0, the material outside every chapter, cites
+% nothing, so a bare \printbibliography typesets an empty frame.
+
+% ===================================================================== close
+
+%\begin{frame}{What you learned}
+%\end{frame}
+
+% The closing statement slot.
+\begin{frame}[plain]
+  This is the last slide.\\
+  Look how far you've come.
+
+\end{frame}
+
+\end{document}
+
+
+
+
+\iffalse
+
+
+
+
+
+\fi

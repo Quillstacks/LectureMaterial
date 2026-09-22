@@ -1,0 +1,342 @@
+%% ch05_feature_engineering.tex -- Intelligence Engineering, chapter 05
+%% "Feature Engineering".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 5. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{V}{Feature Engineering}{}
+\section[Feature Engineering]{Feature Engineering}
+
+% ----------------------------------------------------------------------
+\subsection{Learned Features Versus Engineered Features}
+
+% TEMPLATE: two block contrast. The heading is a versus, so each side takes
+% one box rather than a bullet list, levelled by the equal height group. Left
+% box takes what the model learns by itself in the book's words, right box the
+% work that stays manual. The line under them is for the consequence the book
+% draws, that feature engineering remains the bulk of the effort.
+\begin{frame}{Learned Features Versus Engineered Features}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=lfef]{Learned features}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=lfef]{Engineered features}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Common Feature Engineering Operations}
+
+% TEMPLATE: booktabs overview table, the opener for Deletion and Imputation.
+% The book introduces missing values with a sample dataset whose holes are the
+% whole point, so the opener is that table and the blank cells stay blank on
+% purpose. Five columns for the book's own fields, header row and row labels
+% filled from the book. The two children below carry the two remedies.
+\begin{frame}{Handling Missing Values}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}lllll@{}}
+    \toprule
+     & & & & \\
+    \midrule
+     & & & & \\
+     & & & & \\
+     & & & & \\
+     & & & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef. The heading is a named technique, so it takes the titled
+% definition box and nothing else competes with it on the frame. The box takes
+% the book's own wording for what gets dropped and when dropping is safe; the
+% two kinds of deletion the book distinguishes go in as the box's body.
+\begin{frame}{Deletion}
+  \begin{tddef}{Deletion}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tdcodet. Imputation is an operation the book shows as a fill
+% applied to a column, so the dark mono panel carries it as the snippet the
+% author would type in class rather than as prose. Caption is the heading. The
+% panel takes the fill values the book names and the column it fills.
+\begin{frame}{Imputation}
+  \begin{tdcodet}{Imputation}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. Breaks the code run on purpose: the scaling point is
+% one claim with one caveat, not a snippet. Main column takes the book's
+% transformations and the range each maps into; margin takes the warning that
+% the statistics come from the training split only, which the Data Leakage
+% subchapter later turns into its own frame.
+\begin{frame}{Scaling}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tdcodet. Discretization is bucketing, and the book makes it
+% concrete with the bucket boundaries, which read as a listing and not as a
+% sentence. Caption is the heading. The panel takes the book's own brackets;
+% the arbitrariness of the boundaries belongs in the line under the panel.
+\begin{frame}{Discretization}
+  \begin{tdcodet}{Discretization}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, alternating with the code panels around it so the
+% operations subchapter reads as claim, snippet, claim rather than six
+% identical frames. Main column takes the book's problem, that the set of
+% categories is not static in production; margin takes the hashing trick and
+% the collision it trades for.
+\begin{frame}{Encoding Categorical Features}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tdcodet. Crossing is a constructed column, so the panel shows the
+% two source features and the combined one the book builds from them. Caption
+% is the heading. The combinatorial blowup the book warns about is a number and
+% goes in the line under the panel, not into the panel.
+\begin{frame}{Feature Crossing}
+  \begin{tdcodet}{Feature crossing}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast. The heading names both sides, so each takes one
+% box levelled by the equal height group rather than a single slide of prose.
+% Left box takes the lookup table the book describes, right box the function
+% the book substitutes for it. The line under them is for what the two share.
+\begin{frame}{Discrete and Continuous Positional Embeddings}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=pos]{Discrete}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=pos]{Continuous}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Leakage}
+
+% TEMPLATE: three plus three block grid, the opener for the six causes below.
+% The book names exactly six peers, none subordinate to another, so one box
+% each sized to the count; the headers are this chapter's own six subheadings,
+% shortened to fit the grid, and each box takes one line naming the mistake.
+% Every box then gets its own frame, in the same order, underneath.
+\begin{frame}{Common Causes for Data Leakage}
+  \footnotesize
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause1]{Time-correlated splits}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause1]{Scaling before splitting}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause1]{Test split statistics}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \vskip0.5em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause2]{Data duplication}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause2]{Group leakage}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause2]{Data generation process}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: phimgside hero. The book argues this cause with a figure, the same
+% data cut at random against cut by time, and the two cuts only make their
+% point side by side, so the strip holds that figure and the caption names it.
+% First of this chapter's two image frames. The body takes the book's claim and
+% its stock price example, the reason tomorrow must not train today's model.
+\begin{frame}{Splitting time-correlated data randomly instead of by time}
+  \phimgside[0.33]{splitting_time_correlated_data_randomly_instead_of_by_time.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tdcodet. This cause is an ordering mistake in code, and the book
+% shows it as one: the panel takes the wrong order and the right order as two
+% short blocks so the difference is a line of code and not an argument.
+% Caption is the heading. The global statistics that leak go in the panel.
+\begin{frame}{Scaling before splitting}
+  \begin{tdcodet}{Scaling before splitting}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. One mistake with one consequence, which is the layout
+% this chapter uses when a claim needs a single aside. Main column takes the
+% book's statistics that must never be computed across the split; margin takes
+% the rule the book states to avoid it, split first and then impute.
+\begin{frame}{Filling in missing data with statistics from the test split}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef. The heading names duplication as the thing to be understood,
+% so the titled definition box carries it and the frame stays on one term. The
+% box takes the book's sources of duplicates, the collection and processing
+% step and the oversampling step, and what a duplicate does across the split.
+\begin{frame}{Poor handling of data duplication before splitting}
+  \begin{tddef}{Data duplication}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The book makes this one land with a single example, so
+% the main column takes the claim about examples that are strongly correlated
+% and split apart anyway, and the margin takes that example, the repeated scans
+% of the same patient, which is the proof and not a decoration.
+\begin{frame}{Group leakage}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: phimgside hero, the second and last image frame of the chapter.
+% The heading is about a process, how the data came to exist, so the strip
+% takes the provenance diagram from collection through the instrument to the
+% label. The body takes the book's example of a label that rides along on the
+% machine that produced the sample, and the advice to track data lineage.
+\begin{frame}{Leakage from data generation process}
+  \phimgside[0.33]{leakage_from_data_generation_process.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The book answers this heading with measurements to run
+% rather than with a list of peers, so the main column takes those measurements
+% in the book's order and the margin takes the discipline around them, when in
+% the lifecycle to run them and who on the team owns the test split.
+\begin{frame}{Detecting Data Leakage}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Engineering Good Features}
+
+% TEMPLATE: booktabs table. The heading names both columns, feature and
+% importance, and the book's point here is an ordering of numbers, which only
+% reads as a ranking in a table. Rows take the book's own measured features,
+% most important first. No vertical rules, booktabs only. The methods that
+% produce the numbers belong in the line under the table.
+\begin{frame}{Feature Importance}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Feature} & \textbf{Importance}\\
+    \midrule
+     & \\
+     & \\
+     & \\
+     & \\
+     & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The book measures generalization along two axes, and
+% neither is a peer box because the second qualifies the first, so the main
+% column runs both in the book's order. Margin takes the worked counterexample,
+% the feature that scores well and still does not transfer to unseen data.
+\begin{frame}{Feature Generalization}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: bare takeaway. The chapter's closing heading gets one centred line
+% and nothing around it, so the sentence the lecture should leave behind is the
+% only thing on the frame. Keep it to the book's own summary claim about
+% features and model performance; no bullets, no recap of the subchapters.
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

@@ -1,0 +1,227 @@
+%% ch10_infrastructure.tex -- Intelligence Engineering, chapter 10
+%% "Infrastructure and Tooling for MLOps".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 10. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{X}{Infrastructure and Tooling for MLOps}{}
+\section[Infrastructure]{Infrastructure and Tooling for MLOps}
+
+% ----------------------------------------------------------------------
+\subsection{Storage and Compute}
+
+% TEMPLATE: two block contrast, levelled by the equal height group. The heading
+% is a versus, so each side takes one box rather than a bullet list and the box
+% headers are read straight off the two sides the heading names. Public cloud
+% box takes elasticity and the start without capital outlay; private box takes
+% what owning the machines buys back, with the book's cloud bill numbers, the
+% revenue share and the repatriation saving, kept as numbers.
+\begin{frame}{Public Cloud Versus Private Data Centers}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=cloud]{Public cloud}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=cloud]{Private data centers}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Development Environment}
+
+% TEMPLATE: captioned code panel, kept bare. The book's dev environment is a
+% list of tools and the configuration that pins them, the IDE, versioning and
+% CI/CD, so the honest slot is a panel and not prose about tooling. Caption is
+% the heading's own subject; the panel takes the named tools and the versioning
+% setup in the book's order.
+\begin{frame}{Dev Environment Setup}
+  \begin{tdcodet}{Dev environment}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, the chapter's workhorse and the right shape here: one
+% claim plus one aside. Main column takes the book's recommendation, standardize
+% the environment company wide and move development to the cloud, and what that
+% move costs. Margin takes the resistance the book records and the remote IDE it
+% names as the way around it.
+\begin{frame}{Standardizing Dev Environments}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin with a captioned code panel in the main column. The
+% heading is about containers, which are configuration before they are an idea,
+% so the panel takes the Dockerfile, the image against container distinction and
+% the orchestration tools in the book's words. Margin takes why the same
+% environment has to travel from dev to prod at all.
+\begin{frame}{From Dev to Prod: Containers}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tdcodet}{Containers}
+      \end{tdcodet}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Resource Management}
+
+% TEMPLATE: three block row, headers taken from the three peers the heading
+% names, levelled by the equal height group. The book's point is that these
+% three are not the same thing, which a row of boxes shows and a bullet list
+% hides. Each box takes what that tool schedules and what it cannot do, with
+% the book's division of labour, jobs against resources, landing in the last.
+\begin{frame}{Cron, Schedulers, and Orchestrators}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=rm]{Cron}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=rm]{Schedulers}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=rm]{Orchestrators}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero, the chapter's one and only figure. A workflow is a
+% graph of steps and the book draws it as one, so the strip takes that figure
+% and the sidebody takes the book's comparison of the named workflow managers,
+% what each of them defines a step in and what it does about containers. The
+% caption names the figure; the gray placeholder stays until the asset is drawn.
+\begin{frame}{Data Science Workflow Management}
+  \phimgside[0.33]{data_science_workflow_management.png}{Data science workflow}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{ML Platform}
+
+% TEMPLATE: withmargin. The heading is one platform component and not a set of
+% peers, so the main column runs it as a single claim: what the deployment
+% component owes the rest of the platform once a model is pushed, online and
+% batch prediction behind one service. Margin takes the named deployment tools
+% the book lists and the caveat it attaches to buying them.
+\begin{frame}{Model Deployment}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef, kept bare. Model store is a term the book has to define
+% before it can show that most teams implement only a fraction of it, so the
+% term box is the whole slide rather than a claim with an aside. The box takes
+% the definition and then the artifacts the book says belong in a model store,
+% which is the part the tools skip.
+\begin{frame}{Model Store}
+  \begin{tddef}{Model store}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three block row, untitled on purpose. The book settles this heading
+% by naming three problems a feature store solves, so three levelled boxes
+% rather than three bullets in one; the headers stay off because the heading
+% names only the store itself and the three names arrive with the text in the
+% next pass. Each box takes one problem and the tools the book credits with it.
+\begin{frame}{Feature Store}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=fs]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=fs]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=fs]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Build Versus Buy}
+
+% TEMPLATE: booktabs comparison table. This is the chapter's second versus and
+% the two box contrast is already spent on the cloud frame, so the decision goes
+% into a table: two columns headed by the two sides the heading names, the book's
+% deciding questions as the rows. Row labels and cells are filled together in
+% the next pass, which is why both are empty here.
+\begin{frame}{Build Versus Buy}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.22\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}@{}}
+    \toprule
+     & \textbf{Build} & \textbf{Buy}\\
+    \midrule
+     & & \\
+     & & \\
+     & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: takeaway, kept bare. A summary is a closing line and not a slide of
+% bullets, so it takes the big centred form and nothing else; the chapter has no
+% other takeaway, so this one lands. The line is the book's own closing claim,
+% that what a team needs from infrastructure is set by the number and the scale
+% of its use cases.
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

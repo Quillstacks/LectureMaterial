@@ -1,0 +1,475 @@
+%% ch04_training_data.tex -- Intelligence Engineering, chapter 04 "Training
+%% Data".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 4. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{IV}{Training Data}{}
+\section[Training Data]{Training Data}
+
+% ----------------------------------------------------------------------
+\subsection{Sampling}
+
+% TEMPLATE: withmargin carrying a definition box. The heading is the term the
+% first half of this subchapter turns on, so it takes the slide's one titled
+% box and the book's kinds of nonprobability sampling are listed inside it.
+% Margin takes the aside the book uses to justify opening here, the convenience
+% of these samples against how unrepresentative they are.
+\begin{frame}{Nonprobability Sampling}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tddef}{Nonprobability sampling}
+      \end{tddef}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two levelled boxes, untitled on purpose. The book gives this method
+% one selection rule and one failure mode, which read as two equal halves
+% rather than as a claim with an aside. The left box takes the rule and the
+% probability it assigns each sample, the right box what it does to a rare
+% class; the later pass opens each box with its own bold label.
+\begin{frame}{Simple Random Sampling}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=srs]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=srs]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. One mechanism plus one caveat, which is exactly the
+% shape this layout is for. Main column takes how the population is divided
+% into groups and sampled inside each of them, with the book's own class
+% proportions. Margin takes the limit the book immediately raises, that the
+% groups cannot always be drawn.
+\begin{frame}{Stratified Sampling}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: code panel captioned with the heading. The book makes this method
+% concrete with a weights vector and a single call rather than with prose, and
+% a weights vector only reads as itself in mono, so the panel is the whole
+% slide. It takes that snippet, the weights it passes and the distribution they
+% encode.
+\begin{frame}{Weighted Sampling}
+  \begin{tdcodet}{Weighted sampling}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three levelled boxes. The book states this one as an algorithm of
+% three moves over a stream, and the moves only make sense in sequence, so one
+% box each rather than a paragraph. The equal height group keeps the row level;
+% the boxes stay untitled until the later pass numbers them and adds the
+% probability that makes the reservoir uniform.
+\begin{frame}{Reservoir Sampling}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=resv]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=resv]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=resv]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The book's case rests on one ratio between two
+% distributions, so the main column carries that expression and the condition
+% on the proposal distribution. Margin takes the use the book reaches for,
+% where the samples are expensive and the distribution you want is not the one
+% you can draw from.
+\begin{frame}{Importance Sampling}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Labeling}
+
+% TEMPLATE: three levelled boxes, and the opener for the two frames under this
+% heading. The book's case against hand labels is three costs of the same kind,
+% peers of one another, so one box each rather than a bullet list. The two
+% named problems below get their own frames and are deliberately not repeated
+% here; the boxes stay untitled until the later pass names each cost.
+\begin{frame}{Hand Labels}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=hand]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=hand]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=hand]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The book argues this one from a single annotated
+% sentence and the disagreement it produces, so the main column takes that
+% example and the differing counts it yields. Margin takes the book's remedy,
+% the problem definition and the instructions that have to exist before the
+% annotators start.
+\begin{frame}{Label multiplicity}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: definition box alone, full width. The heading is the book's own
+% term and there is nothing here to contrast it against, so the definition
+% takes the whole frame instead of sharing it. The box takes what has to be
+% tracked per sample and the failure the book reports when it is not, a model
+% that got worse after new data arrived.
+\begin{frame}{Data lineage}
+  \begin{tddef}{Data lineage}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: booktabs table, pushed there on purpose rather than left as a
+% withmargin. The book names its canonical cases in prose, but every one of
+% them is the same two fields, the task and the label the system gets for free,
+% so a table is the tighter transfer and makes the pattern visible. One row per
+% case, column headers taken from the heading.
+\begin{frame}{Natural Labels}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.38\textwidth}>{\raggedright\arraybackslash}p{0.50\textwidth}@{}}
+    \toprule
+    \textbf{Task} & \textbf{Natural label}\\
+    \midrule
+     & \\
+     & \\
+     & \\
+     & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two levelled boxes. The heading is about a length, and a length
+% only means something as a short end read against a long end, so each end
+% takes one box headed by it. Each box takes the book's own examples and the
+% window the label closes in, which is the number the deployment decision
+% later hangs on.
+\begin{frame}{Feedback loop length}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=fbl]{Short feedback loops}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=fbl]{Long feedback loops}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two by two block grid, and the opener for the four frames under
+% this heading. The heading introduces exactly four peer methods, none
+% subordinate to another, so each takes one box headed with its own name rather
+% than one long list. Each box carries only the one line the book's comparison
+% uses to tell that method apart, how it gets its labels and whether it needs
+% ground truths; the detail waits for the frames below.
+\begin{frame}{Handling the Lack of Labels}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=lack]{Weak supervision}
+      \end{tdblockt}
+      \vskip0.5em
+      \begin{tdblockt}[equal height group=lack2]{Transfer learning}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=lack]{Semi-supervision}
+      \end{tdblockt}
+      \vskip0.5em
+      \begin{tdblockt}[equal height group=lack2]{Active learning}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image cover, the first of this chapter's two image slots. The
+% book's own content here is a pipeline, heuristics written as functions that
+% vote and are combined into labels, and a pipeline is a figure before it is a
+% sentence, so the strip holds it. The body holds the definition of a labeling
+% function and the kinds of heuristic the book lists.
+\begin{frame}{Weak supervision}
+  \phimgside[0.33]{weak_supervision.png}{Weak supervision}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three levelled boxes. The book names three ways to grow labels from
+% a small seed set, peers of one another, so one box each rather than a bullet
+% list, levelled by the equal height group. The boxes stay untitled until the
+% later pass opens each with its method name and the assumption it rests on.
+\begin{frame}{Semi-supervision}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=semi]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=semi]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=semi]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. One mechanism plus one aside. Main column takes the
+% book's order, the base task and its data, then the fine tuning step, then the
+% zero shot case where no fine tuning happens at all. Margin takes what the
+% book says this did to the cost of entry for tasks with little data.
+\begin{frame}{Transfer learning}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two levelled boxes. The book's heuristics for choosing which sample
+% to label next fall into two families, so they read side by side rather than
+% as one list. Each box takes one family, the quantity it ranks candidates by
+% and the book's query strategy for it; the later pass heads each box with the
+% family name.
+\begin{frame}{Active learning}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=actv]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=actv]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Class Imbalance}
+
+% TEMPLATE: withmargin plus a takeaway. The book argues from one ratio and then
+% from three consequences of it, so the main column runs them in that order and
+% the margin carries the worked case it uses, the scan set and its counts. The
+% takeaway keeps the book's punch in front of the claim, the model that scores
+% well and never predicts the rare class.
+\begin{frame}{Challenges of Class Imbalance}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three levelled boxes, and the opener for the three frames under
+% this heading. The heading introduces three peer families of fix and the book
+% keeps them strictly apart, so one box each headed with its own name. Each box
+% holds only the one line that tells that family from the other two, the level
+% it acts on; the detail waits for the frames below.
+\begin{frame}{Handling Class Imbalance}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=hci]{Evaluation metrics}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=hci]{Data-level methods}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=hci]{Algorithm-level methods}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: booktabs table with the header row left open. The book makes this
+% point with a model by metric grid in which the same two models swap ranks the
+% moment the metric changes, so the grid is the argument and a paragraph would
+% lose it. The header row takes the book's metric names, the rows its two
+% models, and the cells the numbers that reverse.
+\begin{frame}{Using the right evaluation metrics}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+     & & & \\
+    \midrule
+     & & & \\
+     & & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two levelled boxes. Resampling runs in two directions and the
+% book's named methods split cleanly along them, so one box each rather than
+% one list that hides the split. Each box takes its direction, the methods the
+% book names for it and what that direction risks, losing data on one side and
+% overfitting on the other.
+\begin{frame}{Data-level methods: Resampling}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=rsmp]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=rsmp]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The book's three modifications are all the same move on
+% the loss function, so the main column carries them together with their
+% expressions rather than splitting them into boxes that would hide how alike
+% they are. Margin carries the shared idea, that a mistake on the rare class
+% has to cost more than a mistake on the common one.
+\begin{frame}{Algorithm-level methods}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Augmentation}
+
+% TEMPLATE: two levelled boxes. The book gives this one twice, once for images
+% and once for text, the same move in two modalities, so the two modalities sit
+% side by side rather than in one list. Each box takes that modality's
+% transformations in the book's words and the reason the label survives them.
+\begin{frame}{Simple Label-Preserving Transformations}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=slpt]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=slpt]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image cover, this chapter's second and last image slot. The
+% book makes this point with a picture, a sample a human still reads one way
+% while the model reads it another after a change too small to see, and that
+% only lands as an image. The strip holds it; the body holds the definition and
+% the defensive use the book draws from it.
+\begin{frame}{Perturbation}
+  \phimgside[0.33]{perturbation.png}{Perturbation}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin carrying a code panel. The book's example here is a
+% template with slots that get filled to generate samples, and a template only
+% reads as itself in mono, so the panel takes it in the main column. Margin
+% takes the boundary the book draws, what synthesis can stand in for and what
+% it cannot.
+\begin{frame}{Data Synthesis}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tdcode}
+      \end{tdcode}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: bare takeaway. A summary slide that repeats the chapter as bullets
+% is dead weight, and the book's own summary is one claim rather than a recap,
+% so this frame carries a single centred line and nothing else, the book's
+% closing statement on training data and the work it still demands.
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

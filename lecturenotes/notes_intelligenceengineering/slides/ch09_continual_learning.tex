@@ -1,0 +1,370 @@
+%% ch09_continual_learning.tex -- Intelligence Engineering, chapter 09
+%% "Continual Learning and Test in Production".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 9. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{IX}{Continual Learning and Test in Production}{}
+\section[Continual Learning]{Continual Learning and Test in Production}
+
+% ----------------------------------------------------------------------
+\subsection{Continual Learning}
+
+% TEMPLATE: two block contrast, levelled by the equal height group. The
+% heading is a versus and the two regimes are defined against one another, so
+% each takes one box rather than a shared bullet list. Each box holds how that
+% regime initialises a training run and what it does with the previous model,
+% in the book's words.
+\begin{frame}{Stateless Retraining Versus Stateful Training}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=state]{Stateless retraining}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=state]{Stateful training}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, the workhorse, and right for a heading that is a
+% question the book answers with one argument. Main column takes the failure
+% the question is really about, a model going stale against a shifting
+% distribution. Margin takes the book's named cases, the ones where the
+% distribution moves faster than any retraining schedule.
+\begin{frame}{Why Continual Learning?}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three block row, 0.31 each, levelled by the equal height group.
+% This frame opens the three deep headings under it, so it stays an overview:
+% the three boxes are named by those children and each holds the challenge in
+% one line. The detail stays on the three frames that follow.
+\begin{frame}{Continual Learning Challenges}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=chal]{Fresh data access}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=chal]{Evaluation}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=chal]{Algorithm}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero, the first of this chapter's two. The book answers
+% this heading with a drawing of where fresh data comes from, the warehouse
+% route against the real time transport route, so the strip takes that figure
+% and the sidebody takes the stations along it in the book's order. Caption
+% names the figure; the gray placeholder stays until the asset is drawn.
+\begin{frame}{Fresh data access challenge}
+  \phimgside[0.33]{fresh_data_access_challenge.png}{Fresh data access}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: one plain box plus a takeaway, and on purpose not a withmargin
+% after the image frame. The heading names one challenge and the book argues
+% it as one risk, so the box needs no header over it: it holds what a fresh
+% model has to be tested against before it ever sees traffic. The takeaway
+% carries the book's verdict on what a bad update costs.
+\begin{frame}{Evaluation challenge}
+  \begin{tdblock}
+  \end{tdblock}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two untitled boxes, levelled by the equal height group. The book
+% splits this challenge by model family, the ones that need the full dataset
+% to be updated at all and the ones that can be updated from a data batch, so
+% each family takes a box instead of two bullets in one. No box headers here:
+% the heading names only the challenge, the families arrive with the text.
+\begin{frame}{Algorithm challenge}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=algo]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=algo]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two by two block grid, sized to the count the heading names. Four
+% stages, each named by one of the deep headings under this frame, none
+% subordinate to another, so one box each rather than a numbered list. This is
+% the opener, so each box keeps to what the stage is; the four frames that
+% follow carry the detail. Two equal height groups keep the rows level.
+\begin{frame}{Four Stages of Continual Learning}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=stg1]{Stage 1}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=stg1]{Stage 2}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \vskip0.5em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=stg2]{Stage 3}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=stg2]{Stage 4}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The stage is one state of practice, so the main column
+% runs it as one claim: what triggers the retraining and who does each step by
+% hand. Margin takes the book's reading of why a team sits here, the cadence
+% it settles into and what it is not yet paying for.
+\begin{frame}{Stage 1: Manual, stateless retraining}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: captioned code panel plus a takeaway. This stage is reached by
+% writing a script and a schedule, so the honest slot is the panel: it takes
+% the steps the script has to chain and what the scheduler hands it, written
+% out rather than described. The takeaway keeps the book's condition on the
+% retraining frequency the schedule is allowed to claim.
+\begin{frame}{Stage 2: Automated retraining}
+  \begin{tdcodet}{Automated retraining}
+  \end{tdcodet}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The step from stage 2 to stage 3 is a reconfiguration
+% rather than a new set of parts, so the main column takes what changes in the
+% script and what the system now has to track per run. Margin takes the book's
+% account of what stateful training buys, stated as the resource it stops
+% spending.
+\begin{frame}{Stage 3: Automated, stateful training}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef, kept bare. The last stage is where the chapter's title term
+% finally earns its definition, so the term box is the whole slide: it takes
+% what replaces the schedule as the trigger for an update, and the condition
+% the book attaches to running that way.
+\begin{frame}{Stage 4: Continual learning}
+  \begin{tddef}{Continual learning}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, the overview form, since this frame opens the two deep
+% headings under it and must not preempt them. Main column reframes the
+% heading's question into the one the book says is answerable. Margin holds the
+% aside that the answer is not a schedule but a measurement.
+\begin{frame}{How Often to Update Your Models}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: booktabs table, because the book settles this heading with an
+% experiment and its numbers only make their point ranked against one another.
+% Rows are the book's freshness buckets, the age of the training data; the
+% second column takes the measured performance and gets its own header with
+% the metric in the next pass. booktabs only, no vertical rules.
+\begin{frame}{Value of data freshness}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.34\textwidth}%
+    >{\raggedright\arraybackslash}p{0.34\textwidth}@{}}
+    \toprule
+    \textbf{Data freshness} & \\
+    \midrule
+     & \\
+     & \\
+     & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast, levelled by the equal height group. The heading
+% is a versus, so each kind of iteration takes one box rather than a bullet
+% list: one box for what is changed in the model, one for what is changed in
+% the data. Each holds the cost the book attaches to that move and the signal
+% that says which one to spend on next.
+\begin{frame}{Model iteration versus data iteration}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=iter]{Model iteration}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=iter]{Data iteration}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Test in Production}
+
+% TEMPLATE: side image hero, the second and last of this chapter's two. The
+% book makes this technique concrete with a drawing of traffic forked to two
+% models with only one answering, so the strip takes that figure and the
+% sidebody takes how the shadow traffic is logged and compared. Caption names
+% the figure; placeholder stays until the asset exists.
+\begin{frame}{Shadow Deployment}
+  \phimgside[0.33]{shadow_deployment.png}{Shadow deployment}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The technique is one procedure, so the main column runs
+% it in the book's order: how traffic is split, what is measured, and when the
+% result may be read. Margin takes the two conditions the book puts on the
+% split, which are the part teams get wrong and read better stacked.
+\begin{frame}{A/B Testing}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef, the form this deck uses for a named technique the book
+% introduces by definition rather than by comparison. The term box is the whole
+% slide: it takes the book's definition, the way traffic is shifted over, and
+% the abort condition that makes it a release strategy and not a test.
+\begin{frame}{Canary Release}
+  \begin{tddef}{Canary release}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The book argues this one against the split it replaces,
+% so the main column takes what is interleaved and how a preference is read off
+% a single user's session. Margin takes the position bias the method has to
+% correct for and the sample size the book says it saves.
+\begin{frame}{Interleaving Experiments}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three untitled boxes, 0.31 each, levelled by the equal height
+% group. The book gates this technique on a short list of requirements the
+% system has to meet before a bandit can be run at all, so one box per
+% requirement rather than three bullets. No headers: the heading names only the
+% method. This is the opener for the deep heading under it, so exploration
+% against exploitation stays here and the contextual case follows.
+\begin{frame}{Bandits}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=band]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=band]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=band]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef. The heading names a term and then says what it is for, which
+% is exactly a definition plus its use, so the term box is the slide's one
+% slot. It takes what the context adds to a plain bandit and what is being
+% explored once the context is in, with the book's data efficiency claim.
+\begin{frame}{Contextual bandits as an exploration strategy}
+  \begin{tddef}{Contextual bandits}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: statement, kept bare. A summary is a closing line, not a slide of
+% bullets, so it takes the loud centred form and nothing else. The main line is
+% the book's own summary of why a deployed model is never finished; the
+% substatement is the consequence it carries, that evaluation moves into
+% production.
+\begin{frame}{Summary}
+  \begin{statement}
+    \substatement{}
+  \end{statement}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

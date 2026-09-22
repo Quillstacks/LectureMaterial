@@ -1,0 +1,453 @@
+%% ch08_distribution_shifts.tex -- Intelligence Engineering, chapter 08 "Data
+%% Distribution Shifts and Monitoring".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 8. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{VIII}{Data Distribution Shifts and Monitoring}{}
+\section[Distribution Shifts]{Data Distribution Shifts and Monitoring}
+
+% ----------------------------------------------------------------------
+\subsection{Causes of ML System Failures}
+
+% TEMPLATE: two by two block grid. The heading is plural and the book answers
+% it with four peer causes of the same kind (dependency failure, deployment
+% failure, hardware failure, downtime), so one box each rather than a bullet
+% list, levelled by the equal height group. The box headers stay empty until
+% the next pass names each box after the book's own cause.
+\begin{frame}{Software System Failures}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=ssf]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=ssf]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=ssf]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=ssf]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, the opener for the three child frames below. An opener
+% needs room for an overview rather than a detail layout, so the main column
+% names the three ML-specific failures in the book's order and leaves the
+% detail to their own frames. Margin takes the aside on why these failures are
+% harder to detect than the software ones on the frame before.
+\begin{frame}{ML-Specific Failures}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: booktabs comparison table. The heading names both sides of a
+% difference and the book separates them along named dimensions, so it reads
+% as a table rather than as two boxes, and it keeps this subchapter off a
+% second box grid in three frames. The two column headers are the sides the
+% heading names; the row labels are the book's own dimensions and get filled
+% together with the cells in the next pass.
+\begin{frame}{Production data differing from training data}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth} >{\raggedright\arraybackslash}p{0.32\textwidth} >{\raggedright\arraybackslash}p{0.32\textwidth}@{}}
+    \toprule
+     & \textbf{Training data} & \textbf{Production data}\\
+    \midrule
+     & & \\
+     & & \\
+     & & \\
+     & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin with a definition box. The heading is a term the book
+% defines and then separates from a neighbouring term, so the definition takes
+% the main column's one titled box and the margin holds the distinction the
+% book draws against outliers.
+\begin{frame}{Edge cases}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tddef}{Edge cases}
+      \end{tddef}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero on the grey placeholder, the first of this
+% chapter's two image frames. A degenerate feedback loop is a dataflow, the
+% predictions feeding the labels that feed the next model, so the book's own
+% content here is a loop and it wants the figure, not a box. Sidebody takes
+% the loop in the book's order, the caption names the loop.
+\begin{frame}{Degenerate feedback loops}
+  \phimgside[0.33]{degenerate_feedback_loops.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Distribution Shifts}
+
+% TEMPLATE: three block row, the opener for the three child frames below. The
+% heading promises a countable set and its children name it, so each type
+% takes one box headed with its own heading, levelled by the equal height
+% group. Each box takes the one line that says which term of the joint
+% distribution moves; the decomposition itself goes above the row.
+\begin{frame}{Types of Data Distribution Shifts}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=types]{Covariate shift}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=types]{Label shift}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=types]{Concept drift}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: definition box on its own, full width. The heading is a term with
+% a precise probabilistic meaning, so it takes the titled definition box and
+% nothing competes with it on the frame. The causes the book lists and its
+% worked example go inside that box.
+\begin{frame}{Covariate shift}
+  \begin{tddef}{Covariate shift}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. Label shift is not defined on its own but against the
+% covariate shift on the frame before, so the main column carries the
+% definition and the overlap between the two, and the margin takes the book's
+% example where one shift brings the other with it.
+\begin{frame}{Label shift}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin with a definition box. Third of the three types and the
+% only one with a time axis, so the definition keeps the main column's titled
+% box for consistency with covariate shift, while the margin holds the cyclic
+% and seasonal variation the book raises only here.
+\begin{frame}{Concept drift}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tddef}{Concept drift}
+      \end{tddef}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three plain boxes in a row. Pushed to a grid on purpose, since a
+% fourth withmargin in this subchapter would stall: the heading collects the
+% shifts the three named types do not cover, and the book lists three of them
+% (feature change, label schema change, non-stationarity), so one box each.
+% Headers stay empty until the next pass names them.
+\begin{frame}{General Data Distribution Shifts}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=gen]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=gen]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=gen]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast, the opener for the two child frames below. The
+% heading splits into the methods and the windows those methods run over, so
+% each half takes one levelled box as an overview rather than a detail layout.
+% Each box takes one line on what that half of detection does.
+\begin{frame}{Detecting Data Distribution Shifts}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=det]{Statistical methods}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=det]{Time scale windows}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: captioned code panel. The book answers this heading with named
+% tests and a library call, which read as a listing and not as prose, so the
+% mono panel carries them. The caption is the heading itself; the panel takes
+% the two sample test and the detector call in the book's form.
+\begin{frame}{Statistical methods}
+  \begin{tdcodet}{Statistical methods}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero on the grey placeholder, the second and last image
+% frame of the chapter, so the budget is spent here and on the feedback loop.
+% The book makes this point with a plot, the same metric read as a cumulative
+% against a sliding statistic, so the strip holds the figure and the sidebody
+% the reading of it. Caption names the window the plot shows.
+\begin{frame}{Time scale windows for detecting shifts}
+  \phimgside[0.33]{time_scale_windows_for_detecting_shifts.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin plus a takeaway. The book answers this heading with one
+% decision and not a set of peers, train on a wider distribution or adapt the
+% model, so the main column runs the options in the book's order and the
+% margin holds the stateless against stateful retraining aside. The takeaway
+% keeps the book's own caution about what retraining does not fix.
+\begin{frame}{Addressing Data Distribution Shifts}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Monitoring and Observability}
+
+% TEMPLATE: two by two block grid, the opener for the four child frames below.
+% Four peers, none subordinate to another, so a levelled grid rather than a
+% list, and each box is headed with its own child heading so the frame reads
+% as the map of what follows. Each box takes one line on what that artifact
+% tells you and how cheaply you get it.
+\begin{frame}{ML-Specific Metrics}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=mlm]{Accuracy-related metrics}
+      \end{tdblockt}
+      \vskip0.5em
+      \begin{tdblockt}[equal height group=mlm]{Predictions}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=mlm]{Features}
+      \end{tdblockt}
+      \vskip0.5em
+      \begin{tdblockt}[equal height group=mlm]{Raw inputs}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. Accuracy-related metrics are the most direct signal
+% and the one that depends on a condition, user feedback arriving in
+% production, so the main column carries the condition and what follows from
+% it. Margin takes the book's own examples of that feedback.
+\begin{frame}{Monitoring accuracy-related metrics}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: single plain box plus a takeaway. Predictions are the one artifact
+% low-dimensional enough to watch directly, which is one claim and not a
+% comparison or a set, so it gets one untitled box and no margin. The takeaway
+% keeps the book's own alert condition on a prediction distribution.
+\begin{frame}{Monitoring predictions}
+  \begin{tdblock}
+  \end{tdblock}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin with an uncaptioned code panel in the main column.
+% Feature monitoring is schema and range checking, which the book shows as a
+% validation snippet rather than a sentence, so the panel carries the checks.
+% Margin takes the cost aside, what it means to check every feature of every
+% request.
+\begin{frame}{Monitoring features}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tdcode}
+      \end{tdcode}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. A short section carrying one claim, that raw inputs
+% are the hardest artifact to reach because another team owns the data
+% platform, so the main column takes the claim and the margin the aside on
+% whose job this monitoring is.
+\begin{frame}{Monitoring raw inputs}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three block row, the opener for the three child frames below. The
+% toolbox heading names a set, so each tool takes one box headed with its own
+% heading, levelled by the equal height group. Each box takes what that tool
+% is for in the book's words, one line, with the detail left to its frame.
+\begin{frame}{Monitoring Toolbox}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=tool]{Logs}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=tool]{Dashboards}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=tool]{Alerts}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: uncaptioned code panel, full width. A log is a record, so the
+% slide shows one instead of describing one, and the frame title already
+% names it. The panel takes a single log record with the metadata the book
+% asks for; the distributed tracing point goes under it.
+\begin{frame}{Logs}
+  \begin{tdcode}
+  \end{tdcode}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. This one wanted a screenshot, but the chapter's two
+% image frames are already spent on the feedback loop and the window plot, so
+% the main column takes what a dashboard makes visible and to whom, and the
+% margin the book's caveat about too many metrics on one board.
+\begin{frame}{Dashboards}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three plain boxes in a row. The book gives an alert three parts of
+% the same kind (the policy, the channels, the description), a countable set of
+% peers, so one box each rather than three bullets. Headers stay empty until
+% the next pass names each part after the book.
+\begin{frame}{Alerts}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=alert]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=alert]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=alert]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast plus a takeaway. The subchapter heading names
+% both sides, so monitoring and observability take one levelled box each and
+% the stronger notion reads off against the weaker instead of being asserted
+% in prose. The takeaway is the book's one line on what observability buys
+% that monitoring does not.
+\begin{frame}{Observability}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=obs]{Monitoring}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=obs]{Observability}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: bare takeaway. A summary frame earns one line and nothing else, so
+% no box, no margin and no grid; the takeaway holds the chapter's closing
+% claim about shifts and monitoring in the book's own wording.
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

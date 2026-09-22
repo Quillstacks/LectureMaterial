@@ -1,0 +1,710 @@
+%% ch00_orientation.tex -- Intelligence Engineering, chapter 00 "Orientation".
+%%
+%% THE ONE WRITTEN CHAPTER. ch01 to ch11 are spine only, every frame titled and
+%% empty. This one is not: it is the opening lecture and it carries prose,
+%% because the course has to say what it is before it can be skipped through.
+%%
+%% SOURCES. Segments 1 to 3 are Huyen, Designing Machine Learning Systems,
+%% preface: "Who This Book Is For", "What This Book Is Not", "Navigating This
+%% Book". Segment 4 is the opening of chapter 1, everything before the heading
+%% "When to Use Machine Learning" -- that heading is where ch01 picks up, so
+%% the two files meet without overlap and without a gap.
+%%
+%% NUMERAL. Every other chapter opens on \lecturepage{I} .. \lecturepage{XI},
+%% and the numeral equals the book chapter. This lecture has no book chapter,
+%% so its numeral is a blank: LECTURE _. Change the \_ below to 0 if the blank
+%% ever reads as a mistake rather than as a slot.
+%%
+%% PACING. One frame is two to three minutes of talk, roughly eighty minutes
+%% over the thirty-two content frames. Frames are lean on purpose: a short
+%% prose lead, one visual, one red accent, nothing that needs five minutes.
+%%
+%% IMAGES. Every content frame carries a \phimg placeholder box rather than a
+%% drawn figure. The label inside the box is the filename to drop into images/;
+%% swapping in the asset is \includegraphics[width=\linewidth]{<label>} in place
+%% of the \phimg call, nothing else moves. The takeaway frame is the one
+%% deliberate exception: it is the punchline, and a box beside it fights it.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture, so
+%% the \lecturepage divider sits here rather than in the master.
+
+\begin{refsection}
+
+\lecturepage{\_}{Orientation}{what this course is, what it assumes,
+  and why a deployed model is where the work starts}
+\section[Orientation]{Orientation}
+
+% ======================================================================
+% SEGMENT 1 -- what this lecture teaches.
+% Source: Huyen, preface, "Who This Book Is For". The six reader scenarios
+% become one frame each, and each is pointed at the chapters that answer it.
+% ======================================================================
+
+\subchaptergloss{the six situations this course is written for}
+\subsection{Who this is for}
+
+\begin{frame}{What this lecture teaches}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      How to take machine learning from an idea to a system that runs in
+      production, and keeps running after you have stopped watching it.
+
+      \vskip0.6em
+      Machine learning here means \alertbf{deep learning and classical
+      algorithms alike}. Logistic regression counts. So does a transformer.
+      The course does not pick a side, because a production system rarely
+      gets to.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{course_arc_idea_to_production}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{The scale this course assumes}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      The leaning is toward ML systems at scale: medium to large enterprises
+      and fast growing startups.
+
+      \vskip0.6em
+      Systems at a smaller scale are less complex and \alertbf{benefit less}
+      from the comprehensive approach laid out here. One model, one consumer,
+      retrained by hand twice a year, does not need a feature store, a model
+      registry, or a monitoring stack. Know which of the two you are building.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{scale_ladder_small_to_enterprise}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Written in an engineer's language}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      The vocabulary of this course is \alertbf{an engineer's}, because the
+      problems are an engineer's: latency budgets, schema drift, on call
+      pages, rollback.
+
+      \vskip0.5em
+      \begin{itemize}
+        \item ML engineers and data scientists
+        \item data engineers
+        \item ML platform engineers
+        \item engineering managers
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{roles_around_the_system}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{A problem lands, with raw data attached}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      The first situation you will recognise. You are handed a business
+      problem and a lot of raw data, and it is on you to engineer that data
+      and \alertbf{choose the metric} that decides whether the problem is
+      solved.
+
+      \vskip0.6em
+      Picking the metric is the part that looks administrative and is not.
+      Chapters 2 to 5.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{raw_data_to_chosen_metric}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{The model works offline}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      The second. Your initial models perform well in offline experiments and
+      you want to deploy them.
+
+      \vskip0.6em
+      Offline performance is \alertbf{a hypothesis about production}, not a
+      measurement of it. Chapter 6 is how you evaluate the hypothesis,
+      chapter 7 is how you put it in front of traffic without betting the
+      service on it.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{offline_experiment_vs_online_traffic}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Deployed, and blind}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      The third. The model is live and you have little feedback on how it is
+      performing, so you want a way to \alertbf{detect, debug and address}
+      an issue quickly.
+
+      \vskip0.6em
+      Three verbs, three different problems. Detection is monitoring,
+      debugging is observability, addressing is a deployment path you can
+      walk in minutes. Chapters 8 and 9.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{no_feedback_after_deployment}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Manual, slow, error prone}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      The fourth and fifth arrive together. Developing, evaluating, deploying
+      and updating models is done by hand for your team, and every ML use
+      case in the organization was deployed with its own workflow.
+
+      \vskip0.6em
+      What you want is \alertbf{one shared foundation}: a model store, a
+      feature store, monitoring tools, reused across use cases instead of
+      rebuilt per team. Chapters 9 and 10.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{per_usecase_workflows_vs_platform}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Responsibility is not a separate module}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      The sixth. You suspect there are biases in your ML systems and you want
+      to make those systems responsible.
+
+      \vskip0.6em
+      That is chapter 11, the last chapter and not the optional one. ML
+      systems are built by people, for people, and \alertbf{can have outsized
+      impact on the life of many}.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{bias_audit_of_a_live_system}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Also for you if}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      \begin{itemize}
+        \item you build tools and want to find the underserved areas of ML
+          production, and where your tool sits in that ecosystem
+        \item you are looking for an ML role in industry
+        \item you lead a team or a business and are weighing whether to adopt
+          ML in a product or a process
+      \end{itemize}
+      \vskip0.5em
+      Without a strong technical background, the value is concentrated in
+      \alertbf{chapters 1, 2 and 11}.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{three_other_audiences}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ======================================================================
+% SEGMENT 2 -- what this lecture is not.
+% Source: Huyen, preface, "What This Book Is Not". The first frame is
+% deliberately the short one; the prerequisite list is its own material and
+% would bury the boundary if it shared a slide with it.
+% ======================================================================
+
+\subchaptergloss{the boundary, and what sits on the other side of it}
+\subsection{What this is not}
+
+\begin{frame}{What this lecture is not}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      Not an introduction to machine learning. The theory has books, courses
+      and resources enough, and this course starts where they stop.
+
+      \vskip0.8em
+      Not a tutorial. \alertbf{Few code snippets, many trade-offs.}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{in_scope_out_of_scope}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Assumed: models and techniques}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      You need \alertbf{a rough sense} of these, not command of them.
+
+      \vskip0.4em
+      \begin{itemize}
+        \item models: clustering, logistic regression, decision trees,
+          collaborative filtering, and neural network architectures
+          including feed-forward, recurrent, convolutional and transformer
+        \item techniques: supervised versus unsupervised, gradient descent,
+          objective and loss functions, regularization, generalization,
+          hyperparameter tuning
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{prerequisite_models_map}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Assumed: metrics, statistics, tasks}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      \begin{itemize}
+        \item metrics: accuracy, F1, precision, recall, ROC, mean squared
+          error, log-likelihood
+        \item statistics: variance, probability, normal and long-tail
+          distributions
+        \item tasks: language modeling, anomaly detection, object
+          classification, machine translation
+      \end{itemize}
+      \vskip0.4em
+      Where the exact definition takes effort to recall, F1 being the usual
+      one, \alertbf{a margin note hands it back to you} at the point of use.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{prerequisite_metrics_checklist}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Tools go out of style, problems do not}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      Tools appear in this course to illustrate a concept, never as the
+      lesson. Technologies evolve, tools go in and out of style quickly, and
+      \alertbf{fundamental approaches to problem solving last longer}.
+
+      \vskip0.6em
+      What you get instead is a framework for judging which tool fits your
+      case. Once you have picked one, its tutorial is a search away.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{tool_churn_timeline}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022,Lakshmanan2020}
+\end{frame}
+
+% ======================================================================
+% SEGMENT 3 -- navigating this lecture.
+% Source: Huyen, preface, "Navigating This Book". One frame per chapter
+% grouping, in the book's own grouping, plus the two asides the section
+% makes: why data systems come early, and what "data scientist" means here.
+% ======================================================================
+
+\subchaptergloss{the order of the chapters is the order in which the problems
+  arrive}
+\subsection{Navigating this lecture}
+
+\begin{frame}{Navigating this lecture}
+  \begin{withmargin}
+    \begin{tdmain}
+      \centering
+      \phimg[0.92]{course_map_eleven_chapters}
+    \end{tdmain}
+    \begin{tdmargin}
+      Eleven chapters, one lecture each, ordered by the
+      \alertbf{lifecycle of an ML project} rather than by the taxonomy of the
+      field. Each chapter is the problem you meet next, not the next topic in
+      a syllabus.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Chapters 1 and 2: the groundwork}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      The two chapters that set a project up for success, starting from the
+      most basic question there is: \alertbf{does your project need ML at
+      all?}
+
+      \vskip0.6em
+      Then choosing the objectives, and framing the problem so the solution
+      gets simpler. Already familiar with all of this and impatient for the
+      technical part? These two are the skippable ones.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{groundwork_does_it_need_ml}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Chapters 4 to 6: before deployment}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      Creating the training data, engineering the features, developing and
+      evaluating models in a development environment.
+
+      \vskip0.6em
+      This is the phase where \alertbf{ML expertise and domain expertise are
+      needed at the same time}. Neither one alone gets a usable label
+      definition out of a subject matter expert.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{predeployment_data_features_models}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Chapters 7 to 9: deployment, and after}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      Having a model deployed is not the end of the deployment process.
+
+      \vskip0.6em
+      The deployed model has to be monitored and continually updated as
+      \alertbf{the environment and the business requirements change}
+      underneath it. Chapters 8 and 9 are that story, told through a failure
+      most practitioners will recognise.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{post_deployment_loop}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Chapters 3 and 10: the layer underneath}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      Infrastructure is what lets stakeholders from different backgrounds
+      deliver one system together.
+
+      \vskip0.6em
+      Chapter 3 is data systems: databases, data formats, data movement,
+      processing engines. Chapter 10 is \alertbf{compute infrastructure and
+      ML platforms}. They sit at opposite ends of the book because they sit
+      under opposite ends of the system.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{infrastructure_data_and_compute}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Why data systems come this early}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      Data systems are sparsely covered in ML coursework, so many data
+      scientists file them under low level, or under someone else's job.
+
+      \vskip0.6em
+      An ML system \alertbf{depends on data}. Covering the basics in chapter
+      3 is what puts the room on the same page for every argument about data
+      that the remaining eight chapters have.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{data_systems_before_models}
+    \end{column}
+  \end{columns}
+  \slidesources{Kleppmann2017}
+\end{frame}
+
+\begin{frame}{Chapter 11: the human side}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      ML systems are built by people, for people, and can have outsized
+      impact on the life of many. A course on ML in production that stopped
+      at the technical aspects would stop early.
+
+      \vskip0.6em
+      The last chapter covers the user experience the system produces, how a
+      team divides this work, and \alertbf{responsible AI}.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{people_build_it_people_use_it}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{``Data scientist'' is an umbrella term here}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      The role has evolved a lot in the last few years and what it should
+      entail is still being argued about. Chapter 10 goes into some of those
+      arguments.
+
+      \vskip0.6em
+      In this course the term covers \alertbf{anyone who develops and deploys
+      ML models}, whatever the job title says: ML engineer, data engineer,
+      data analyst.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{job_titles_one_job}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022,Amershi2019}
+\end{frame}
+
+% ======================================================================
+% SEGMENT 4 -- the motivation.
+% Source: Huyen, chapter 1, everything before the heading "When to Use
+% Machine Learning". ch01 opens on exactly that heading, so this segment
+% hands over to it without repeating a line of it.
+% ======================================================================
+
+\subchaptergloss{November 2016, the five years after it, and the small box in
+  the middle}
+\subsection{Why any of this}
+
+\begin{frame}{November 2016}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      Google announced that its multilingual neural machine translation
+      system had gone into Google Translate: one of the \alertbf{first
+      success stories of deep neural networks in production at scale}.
+
+      \vskip0.6em
+      By Google's own account, translation quality improved more in that
+      single leap than in the previous ten years combined.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{google_translate_nmt_2016}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Five years later}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      That success renewed interest in machine learning at large, and more
+      and more companies turned to it for their hardest problems.
+
+      \vskip0.6em
+      In five years ML reached how we access information, how we communicate,
+      how we work, \alertbf{how we find love}. The spread has been fast enough
+      that life without it is already hard to picture.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{ml_in_daily_life}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{And mostly still ahead}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      Many more use cases are waiting to be explored: health care,
+      transportation, farming, and helping us understand the universe.
+
+      \vskip0.6em
+      What stands between those fields and a working system is rarely the
+      algorithm. \alertbf{It is everything around the algorithm}, and that is
+      what the next eleven lectures are.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{open_fields_health_transport_farming}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{What people picture}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      Say ``machine learning system'' and most people picture the algorithms
+      being used: logistic regression, or some architecture of neural
+      network.
+
+      \vskip0.8em
+      \alertbf{The algorithm is only a small part of an ML system in
+      production.}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{what_people_picture_just_the_model}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022,Sculley2015}
+\end{frame}
+
+\begin{frame}{What is actually in there}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      \begin{itemize}
+        \item the business requirements that gave birth to the project
+        \item the interface where users and developers meet the system
+        \item the data stack
+        \item the logic for developing, monitoring and updating the models
+        \item the infrastructure that delivers that logic
+      \end{itemize}
+      \vskip0.4em
+      Six components, and \alertbf{five of them are not the model}.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{system_components_stacked}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022,Sculley2015}
+\end{frame}
+
+\begin{frame}{Anatomy of an ML system}
+  \begin{withmargin}
+    \begin{tdmain}
+      \centering
+      \phimg[0.92]{anatomy_of_an_ml_system}
+    \end{tdmain}
+    \begin{tdmargin}
+      Figure 1-1 of the book, redrawn dark. Every box on it is a chapter of
+      this course, which is also how you read the map: the chapter numbers
+      are printed on the components they cover.
+
+      \vskip0.6em
+      \alertbf{ML algorithms} is the small box in the middle.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{MLOps and ML systems design}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      \small
+      \begin{tdblock}
+        \textbf{MLOps.} Ops comes from DevOps, Developments and Operations.
+        To operationalize is to bring into production: deploy, monitor,
+        maintain. MLOps is the set of tools and best practices for bringing
+        ML into production.
+      \end{tdblock}
+      \vskip0.3em
+      \begin{tddef}{ML systems design}
+        The system approach to MLOps: the whole system at once, so that every
+        component and every stakeholder can meet the specified objectives and
+        requirements.
+      \end{tddef}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{mlops_inside_systems_design}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022,Zinkevich2017}
+\end{frame}
+
+\begin{frame}{Not a course about algorithms}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      There are excellent books about individual ML algorithms. This course
+      is not one of them, and covers none of them in detail.
+
+      \vskip0.6em
+      Algorithms become outdated quickly as new ones are developed.
+      \alertbf{The framework should still fit the new ones}: a way to build
+      the solution that works for your problem, regardless of which algorithm
+      you end up using.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{framework_outlives_the_algorithm}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022,Breck2017}
+\end{frame}
+
+\begin{frame}{What Lecture I does}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      It asks the question that comes before every other question in the
+      course: \alertbf{when to use machine learning, and when not to}. Then
+      it walks the popular use cases, so the answer stops being abstract.
+
+      \vskip0.6em
+      After the use cases come the two comparisons that explain why
+      production is hard: ML in research versus ML in production, and ML
+      systems versus traditional software.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{lecture_one_route}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Which of the two are you?}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.58\textwidth}
+      If your experience with ML has been academic, the next chapter gives an
+      honest view of ML in the real world, and \alertbf{sets your first
+      application up for success}.
+
+      \vskip0.6em
+      If you have already been in the trenches of developing applied ML
+      systems, much of it will be familiar. Read it as a checklist instead,
+      and mark the lines your last project skipped.
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \centering
+      \phimg[1.0]{academic_versus_applied}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% The punchline of Lecture 0. No \phimg here on purpose: the takeaway is one
+% centred red statement and a placeholder box beside it competes with it.
+\begin{frame}{}
+  \begin{takeaway}
+    The algorithm is the small box in the middle.\\
+    Everything else is this course.
+  \end{takeaway}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  % Every entry in the bib is cited somewhere in this lecture, so this frame is
+  % the full bibliography and does not fit one column. Two columns, same as the
+  % master's closing Bibliography frame.
+  % \bibfont is \footnotesize deck-wide; seven entries still overrun two
+  % columns at that size, so this frame drops a step. Local to the frame group.
+  \renewcommand*{\bibfont}{\scriptsize}%
+  \setlength{\bibitemsep}{0.25em}%
+  \begin{multicols}{2}
+    \printbibliography[heading=none]
+  \end{multicols}
+\end{frame}
+\end{refsection}

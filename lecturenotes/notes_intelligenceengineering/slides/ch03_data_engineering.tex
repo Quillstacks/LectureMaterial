@@ -1,0 +1,329 @@
+%% ch03_data_engineering.tex -- Intelligence Engineering, chapter 03 "Data
+%% Engineering Fundamentals".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 3. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{III}{Data Engineering Fundamentals}{}
+\section[Data Engineering]{Data Engineering Fundamentals}
+
+% ----------------------------------------------------------------------
+\subsection{Data Sources}
+
+% TEMPLATE: two by two block grid. The heading is plural and the book answers
+% it with four peer sources, user input data, system generated data, internal
+% databases and third party data, so one box each rather than a bullet list,
+% levelled by the equal height groups. The boxes stay untitled because the
+% heading names no source; the later pass opens each box with its source name
+% in bold, and the book's warning about malformed user input goes in the first.
+\begin{frame}{Data Sources}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=src]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=src2]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=src]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=src2]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Formats}
+
+% TEMPLATE: withmargin carrying a code panel. The heading is a serialization
+% format, so the main column shows the book's own JSON object instead of
+% describing it, captioned with the format the heading names. Margin takes the
+% cost the book draws from it, the schema that is committed to the moment the
+% data is written, and the pain of changing it afterwards.
+\begin{frame}{JSON}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tdcodet}{JSON}
+      \end{tdcodet}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast. The heading is a versus, so each format takes
+% one box rather than a bullet list, levelled by the equal height group, with
+% the headers taken from the two sides the heading names. Each box holds what
+% that layout makes cheap and what it makes expensive in the book's words, and
+% the numpy against pandas timing example belongs in the column it favours.
+\begin{frame}{Row-Major Versus Column-Major Format}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=rowcol]{Row-major}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=rowcol]{Column-major}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two code panels side by side. A versus again, but the frame before
+% it already spends the block contrast, and the point here is what the bytes
+% look like, so each side takes a dark mono panel captioned with the side the
+% heading names. Text panel takes the book's CSV row, binary panel the same row
+% as it reads on disk, and the AWS saving for CSV against Parquet goes with it.
+\begin{frame}{Text Versus Binary Format}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdcodet}{Text}
+      \end{tdcodet}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdcodet}{Binary}
+      \end{tdcodet}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Models}
+
+% TEMPLATE: definition plus a code panel. The heading names a data model, so
+% the term takes the titled definition box and the relational vocabulary,
+% relation, tuple and normalization, lands inside it. Under it the mono panel
+% takes the book's SQL query, which is on the slide to make one point: the
+% query says what the result should be, not how to compute it.
+\begin{frame}{Relational Model}
+  \begin{tddef}{Relational model}
+  \end{tddef}
+  \vskip0.5em
+  \begin{tdcode}
+  \end{tdcode}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast used as an opener. This heading owns the two
+% deeper headings that follow, so its own frame previews them by name instead
+% of going into either, levelled by the equal height group. Each box takes one
+% child's single line claim; the book's reading of the acronym, Not Only SQL
+% against nonrelational, belongs in the line above the row.
+\begin{frame}{NoSQL}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=nosql]{Document model}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=nosql]{Graph model}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, the chapter's workhorse, one claim with one aside. The
+% main column takes the book's document and collection, and the consequence it
+% draws, that the schema moves to the reader. Margin takes the price of that,
+% the join the document model cannot do for you.
+\begin{frame}{Document model}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: full height side image. The book's content here is a figure, the
+% graph of people and the countries they were born in, so the strip carries
+% that diagram and the body keeps to nodes, edges and the query that walks an
+% edge. First of this chapter's two image frames; the caption takes the
+% figure's own one line reading, not a repeat of the frame title.
+\begin{frame}{Graph model}
+  \phimgside[0.33]{graph_model.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: comparison table. The book already gives this contrast as a table,
+% two columns of paired statements with no row labels, so it stays a table
+% rather than a third block pair. Column headers are the two sides the heading
+% names; each row takes one of the book's pairs, the defined schema against the
+% schema on read, the warehouse against the lake.
+\begin{frame}{Structured Versus Unstructured Data}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.44\textwidth}%
+    >{\raggedright\arraybackslash}p{0.44\textwidth}@{}}
+    \toprule
+    \textbf{Structured data} & \textbf{Unstructured data}\\
+    \midrule
+     & \\
+     & \\
+     & \\
+     & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Storage Engines and Processing}
+
+% TEMPLATE: two block contrast. The heading names both processing types, so
+% each takes one box, levelled by the equal height group. Transactional box
+% holds the ACID properties and the latency each transaction is held to,
+% analytical box the aggregated queries over columns. The line under the row is
+% the book's own correction, that storage and processing have come apart.
+\begin{frame}{Transactional and Analytical Processing}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=tap]{Transactional processing}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=tap]{Analytical processing}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three block row. The heading itself names three stages in order, so
+% the box headers are the heading, one stage per third of the width, levelled
+% by the equal height group. Each box takes what that stage does in the book's
+% words, with the transform box carrying the bulk of the work. ELT and the data
+% lake belong in the line under the row, as the reversal of this order.
+\begin{frame}{ETL: Extract, Transform, and Load}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=etl]{Extract}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=etl]{Transform}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=etl]{Load}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Modes of Dataflow}
+
+% TEMPLATE: withmargin. One mode, one consequence, so the main column takes the
+% mechanism, one process writes to a shared table and the other reads it, then
+% the two reasons the book rules it out. Margin takes the access condition, both
+% processes on the same database, and the read latency that makes it unusable
+% for anything a user waits on.
+\begin{frame}{Data Passing Through Databases}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: full height side image. The book draws this mode as an
+% architecture, two services sending requests to each other and the price
+% service in the middle, so the strip carries that diagram and the body keeps
+% to the request driven style and its two implementations, REST and RPC.
+% Second and last image frame of the chapter; the rest goes into words.
+\begin{frame}{Data Passing Through Services}
+  \phimgside[0.33]{data_passing_through_services.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin plus a takeaway. The image budget is spent, so the
+% broker goes into words: main column takes the event driven mechanism,
+% producers and consumers over a shared topic, with Kafka and Kinesis named as
+% the log based brokers. Margin holds what the broker buys, the connections
+% between services that fall away. The takeaway is the book's own verdict.
+\begin{frame}{Data Passing Through Real-Time Transport}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Batch Processing Versus Stream Processing}
+
+% TEMPLATE: two block contrast plus a takeaway. A versus, and the chapter turns
+% on this one, so each side keeps its own box, levelled by the equal height
+% group, headers from the two sides the heading names. Batch box takes bounded
+% data and the static features, stream box unbounded data and the features that
+% only exist in the window. Takeaway is the book's claim about the special case.
+\begin{frame}{Batch Processing Versus Stream Processing}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=bstr]{Batch processing}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=bstr]{Stream processing}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: a bare takeaway, nothing else on the frame. The heading is the
+% chapter summary, so it gets one centred line: the decision the whole chapter
+% has been circling, how the data is stored and how it is passed between
+% processes, and not a recap of everything said.
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

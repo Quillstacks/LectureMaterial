@@ -1,0 +1,301 @@
+%% ch02_systems_design.tex -- Intelligence Engineering, chapter 02
+%% "Introduction to Machine Learning Systems Design".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 2. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{II}{Introduction to Machine Learning Systems Design}{}
+\section[Systems Design]{Introduction to Machine Learning Systems Design}
+
+% ----------------------------------------------------------------------
+\subsection{Business and ML Objectives}
+
+% TEMPLATE: two block contrast. The heading names both sides, so each side
+% takes one box rather than one shared list, levelled by the equal height
+% group. Left box takes the metrics the business actually reports, right box
+% the metrics a model is trained to move. The filling pass has to make the
+% mapping from the right box to the left one explicit.
+\begin{frame}{Business and ML Objectives}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=obj]{Business objectives}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=obj]{ML objectives}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Requirements for ML Systems}
+
+% TEMPLATE: withmargin plus tddef. This is the first of the book's four
+% requirements and the book states it as a definition, so it takes the
+% slide's one titled box. Margin holds the aside that makes the requirement
+% hard for a machine learning system: it can fail silently and still return
+% a prediction that looks plausible.
+\begin{frame}{Reliability}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tddef}{Reliability}
+      \end{tddef}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three plain boxes in a row. Scalability is not one thing in the
+% book, it is growth along several axes at once, so each axis takes one box
+% and the row makes the count visible instead of burying it in a list. The
+% boxes stay unheaded until the filling pass names the axes; the equal
+% height group keeps the row level.
+\begin{frame}{Scalability}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=scale]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=scale]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=scale]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, and a deliberate break from the row above it. Main
+% column takes what maintainability asks of the artifacts themselves, code,
+% data and documentation. Margin takes who those artifacts are handed to,
+% the book's point that an ML system is built by people who do not share a
+% vocabulary.
+\begin{frame}{Maintainability}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef alone. The book states this requirement as a definition
+% too, and the frame reads stronger bare than boxed inside a margin layout,
+% so the term carries the whole slide. The box takes the capacities the book
+% asks for and nothing else; what they imply for the workflow is the next
+% subchapter's job.
+\begin{frame}{Adaptability}
+  \begin{tddef}{Adaptability}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Iterative Process}
+
+% TEMPLATE: side image hero, the first of this chapter's two figures. The
+% heading is a process, so the book's own cycle owns the frame and the grey
+% placeholder holds its place until the diagram is drawn. sidebody takes the
+% steps in the book's order, the phimgside caption the one line that says why the
+% arrows run backwards as often as forwards.
+\begin{frame}{Iterative Process}
+  \phimgside[0.33]{iterative_process.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Framing ML Problems}
+
+% TEMPLATE: two by two grid of plain boxes, the opener for the four frames
+% below it. The heading introduces a countable set, so the grid is sized to
+% that count and each box previews one of the four headings that follow
+% rather than arguing anything itself. Unheaded on purpose: the detail
+% frames own the names.
+\begin{frame}{Types of ML Tasks}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=tasks]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=tasks]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=tasks]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=tasks]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast. The heading is a versus, so each task takes
+% one box with its header read straight off the heading, levelled by the
+% equal height group. Each box takes what that task predicts in the book's
+% words, and the filling pass owes the book's reminder that either one can
+% be turned into the other.
+\begin{frame}{Classification versus regression}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=clsreg]{Classification}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=clsreg]{Regression}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: comparison table. A second pair of boxes in a row would stall,
+% and the book separates these two along named dimensions rather than in
+% prose, so the columns are the two sides from the heading and the empty
+% rows are for those dimensions, one per row. booktabs only, no vertical
+% rules.
+\begin{frame}{Binary versus multiclass classification}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth} >{\raggedright\arraybackslash}p{0.32\textwidth} >{\raggedright\arraybackslash}p{0.32\textwidth}@{}}
+    \toprule
+     & \textbf{Binary} & \textbf{Multiclass}\\
+    \midrule
+     & & \\
+     & & \\
+     & & \\
+     & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two code panels. The book settles this distinction on how a
+% label is encoded, so the contrast belongs in the mono panels where a label
+% vector can be shown literally instead of described. The captions are the
+% two sides from the heading; each panel takes the encoding the book prints
+% for that case, and the ambiguity it creates.
+\begin{frame}{Multiclass versus multilabel classification}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdcodet}{Multiclass}
+      \end{tdcodet}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdcodet}{Multilabel}
+      \end{tdcodet}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two plain boxes. The heading promises more than one framing of
+% the same problem, so the framings sit side by side where they can be read
+% off against each other. Unheaded, because the heading names no framing;
+% each box takes one framing with its inputs, its outputs and what happens
+% to it when the set of classes grows.
+\begin{frame}{Multiple ways to frame a problem}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=ways]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=ways]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, the opener for the frame below it. Main column takes
+% what an objective function is for and the losses the book names, margin
+% the aside that the objective is a choice and not a given. Kept general on
+% purpose: the detail, two objectives inside one loss, is the next frame.
+\begin{frame}{Objective Functions}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero, the chapter's second and last figure. The
+% heading is an architecture decision, one model per objective with the
+% predictions combined afterwards, which reads as a diagram and not as
+% prose. sidebody takes the argument for decoupling in the book's order,
+% the phimgside caption what the decoupling costs.
+\begin{frame}{Decoupling objectives}
+  \phimgside[0.33]{decoupling_objectives.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Mind Versus Data}
+
+% TEMPLATE: two block contrast. This is the chapter's loudest versus and the
+% book gives it as a standing argument with named people on both sides, so
+% each camp takes one box, headed from the heading and levelled by the equal
+% height group. Each box takes that camp's position and the evidence it
+% leans on.
+\begin{frame}{Mind Versus Data}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=mind]{Mind}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=mind]{Data}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: takeaway alone. A summary earns no scaffold of its own, so the
+% chapter closes on one centred line with nothing competing against it. The
+% line is the single sentence the chapter should leave behind, lifted from
+% the book's own summary rather than written fresh.
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

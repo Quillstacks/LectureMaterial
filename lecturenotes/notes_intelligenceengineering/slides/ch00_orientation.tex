@@ -1,0 +1,381 @@
+%% ch00_orientation.tex -- Intelligence Engineering, chapter 00 "Orientation".
+%%
+%% The orientation lecture. It has no book chapter of its own: segments 1 to 3
+%% are Huyen's preface and segment 4 is the opening of chapter 1, everything
+%% before the heading "When to Use Machine Learning". ch01 opens on exactly that
+%% heading, so the two files meet without overlap and without a gap.
+%%
+%% STATE: titles, subtitles and TEMPLATE only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying why
+%% that layout. The subtitles are the book's own lines, not paraphrases.
+%% The earlier prose draft is kept at _archive/ch00_orientation_prose.tex.bak.
+%%
+%% NUMERAL. Every other chapter opens on \lecturepage{I} .. \lecturepage{XI} and
+%% the numeral equals the book chapter. This lecture has no book chapter, so its
+%% numeral is a blank: LECTURE _.
+%%
+%% IMAGES. \phimg draws a labelled placeholder box; the label is the filename to
+%% drop into images/. Swapping in the asset is
+%% \includegraphics[width=\linewidth]
+%% in place of the \phimg call, nothing else moves.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and gets
+%% exactly ONE \lecturepage, at the top. Inside it every \subsection opens on
+%% the subchapter divider, emitted by the master via \AtBeginSubsection.
+
+\begin{refsection}
+
+\lecturepage{\_}{Orientation}{what this course is, what it assumes,
+  what yor are going to know after.}
+\section[Orientation]{Orientation}
+
+% ----------------------------------------------------------------------
+
+
+
+\begin{frame}{}
+  \begin{statement}
+    \substatement{You have been given a lot of raw \alert{data}, }  
+    and you want to engineer the shit out of it.
+  \end{statement}
+\end{frame}
+
+\begin{frame}{}
+  \begin{statement}
+    \substatement{You have been given a business problem, }  
+    and you want to choose the right \alert{metrics and objectives} to solve it.
+  \end{statement}
+\end{frame}
+
+\begin{frame}{}
+  \begin{statement}
+    \substatement{Your initial models perform well in offline experiments, }  
+    and you
+    want to \alert{deploy} them at scale.
+    \end{statement}
+\end{frame}
+
+\begin{frame}{}
+  \begin{statement}
+    \substatement{You want to harden your deployments  }  
+    to quickly detect, debug, 
+and \alert{address issues} that arise in production.
+  \end{statement}
+\end{frame}
+
+\begin{frame}{}
+  \begin{statement}
+    \substatement{There is a lot of manual work and handling involved so far,  }  
+    and you want to \alert{operation vacation} your machine learning product or service.
+  \end{statement}
+\end{frame}
+
+\begin{frame}{}
+  \begin{statement}
+    \substatement{You want to learn about a framework and foundation for building machine learning systems}  
+    that can be
+    \alert{shared and reused} across machine learning use cases and data products.  
+  \end{statement}
+\end{frame}
+
+
+
+
+\subchaptergloss{Machine Learning and Data Engineering}
+\subsection{Overview}
+
+% TEMPLATE: overview table. One row per lecture, the numeral equals the
+% \lecturepage numeral and the title is the book's own chapter title. The
+% orientation row sits above the midrule because it has no book chapter.
+\begin{frame}{The lecture in one slide}
+  \sideimagecover[0.33]{placeholder_gray.png}
+  \sidecaption{Machine Learning Systems Overview}
+  \begin{sidebody}
+    \footnotesize
+    \renewcommand{\arraystretch}{1.1}%
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        Lecture & \alert{Contents}\\
+        \midrule
+        \alertbf{I} & Overview of Machine Learning Systems\\
+        \alertbf{II} & Introduction to Machine Learning Systems Design\\
+        \alertbf{III} & Data Engineering Fundamentals\\
+        \alertbf{IV} & Training Data\\
+        \alertbf{V} & Feature Engineering\\
+        \alertbf{VI} & Model Development and Offline Evaluation\\
+        \alertbf{VII} & Model Deployment and Prediction Service\\
+        \alertbf{VIII} & Data Distribution Shifts and Monitoring\\
+        \alertbf{IX} & Continual Learning and Test in Production\\
+        \alertbf{X} & Infrastructure and Tooling for MLOps\\
+        \alertbf{XI} & The Human Side of Machine Learning\\
+        \bottomrule
+    \end{tabular}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+
+% ----------------------------------------------------------------------
+% TEMPLATE: the one slide, unfolded. Three lectures per frame, one column
+% per lecture: the chapter header on top, its subchapters below, titles
+% only. The frame title stays the overview frame's. The size command sits
+% inside each column on purpose: a bare group wrapping the columns block
+% silently drops it.
+\begin{frame}{The lecture in one slide}
+  \begin{columns}[t]
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{I}\quad \textbf{Overview of Machine Learning Systems}}\\
+        \midrule
+        When to Use Machine Learning\\[0.2em]
+        Understanding Machine Learning Systems\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{II}\quad \textbf{Introduction to Machine Learning Systems Design}}\\
+        \midrule
+        Business and ML Objectives\\[0.2em]
+        Requirements for ML Systems\\[0.2em]
+        Iterative Process\\[0.2em]
+        Framing ML Problems\\[0.2em]
+        Mind Versus Data\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{III}\quad \textbf{Data Engineering Fundamentals}}\\
+        \midrule
+        Data Sources\\[0.2em]
+        Data Formats\\[0.2em]
+        Data Models\\[0.2em]
+        Data Storage Engines and Processing\\[0.2em]
+        Modes of Dataflow\\[0.2em]
+        Batch Processing Versus Stream Processing\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{The lecture in one slide}
+  \begin{columns}[t]
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{IV}\quad \textbf{Training Data}}\\
+        \midrule
+        Sampling\\[0.2em]
+        Labeling\\[0.2em]
+        Class Imbalance\\[0.2em]
+        Data Augmentation\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{V}\quad \textbf{Feature Engineering}}\\
+        \midrule
+        Learned Features Versus Engineered Features\\[0.2em]
+        Common Operations\\[0.2em]
+        Data Leakage\\[0.2em]
+        Engineering Good Features\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{VI}\quad \textbf{Model Development and Offline Evaluation}}\\
+        \midrule
+        Model Development and Training\\[0.2em]
+        Model Offline Evaluation\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{The lecture in one slide}
+  \begin{columns}[t]
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{VII}\quad \textbf{Model Deployment and Prediction Service}}\\
+        \midrule
+        ML Deployment Myths\\[0.2em]
+        Batch Prediction Versus Online Prediction\\[0.2em]
+        Model Compression\\[0.2em]
+        ML on the Cloud and on the Edge\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{VIII}\quad \textbf{Data Distribution Shifts and Monitoring}}\\
+        \midrule
+        Causes of ML System Failures\\[0.2em]
+        Data Distribution Shifts\\[0.2em]
+        Monitoring and Observability\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{IX}\quad \textbf{Continual Learning and Test in Production}}\\
+        \midrule
+        Continual Learning\\[0.2em]
+        Test in Production\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{The lecture in one slide}
+  \begin{columns}[t]
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{X}\quad \textbf{Infrastructure and Tooling for MLOps}}\\
+        \midrule
+        Storage and Compute\\[0.2em]
+        Development Environment\\[0.2em]
+        Resource Management\\[0.2em]
+        ML Platform\\[0.2em]
+        Build Versus Buy\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \footnotesize
+      \renewcommand{\arraystretch}{1.1}%
+      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+        \toprule
+        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{XI}\quad \textbf{The Human Side of Machine Learning}}\\
+        \midrule
+        User Experience\\[0.2em]
+        Team Structure\\[0.2em]
+        Responsible AI\\[0.2em]
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+
+
+% ----------------------------------------------------------------------
+% Course work, two frames under one title like the repeated "lecture in
+% one slide" frames. First the contract: format in the block title, the
+% project brief in its body, logistics in grey at the bottom. The judging
+% lens gets the second frame. Side strip on both: the bee hive.
+\begin{frame}{Course Work}
+  \sideimagecover[0.3]{bees}
+  \sidecaption{The bee}
+  \begin{sidebody}
+    \begin{block}{Presentation (15\,min) + Q\&A (open)}
+      You get recordings of a bee hive entrance, and you are to
+      contribute by data engineering, an annotation policy, a prediction
+      service or specialized tooling.
+    \end{block}
+    \vskip0.8em
+    {\color{tddim}Open whiteboard, three slides or one page only.
+    Be ready when the class starts.}
+  \end{sidebody}
+\end{frame}
+
+% The judging lens: bold term + grey rest, one row per talk section, in
+% the order a talk runs.
+\begin{frame}{Course Work}
+  \sideimagecover[0.3]{bee_mloverlay}
+  \sidecaption{The bee}
+  \begin{sidebody}
+    What I am looking for ..\\
+    \medskip
+
+    \textbf{\alertbf{I}ntroduction}\enskip{\color{tddim}by Motivation and Literature}\\[0.5em]
+    \textbf{\alertbf{M}ethod}\enskip{\color{tddim}by Explanation and or Demonstration}\\[0.5em]
+    \textbf{\alertbf{R}esults}\enskip{\color{tddim}show what was achieved and how well}\\[0.5em]
+    \textbf{\alertbf{D}iscussion}\enskip{\color{tddim}on findings, limitations and what's next}\\[0.5em]
+    \textbf{Smart and Aesthetic}\enskip{\color{tddim}Thoughts, Designs, Ideas and \alert{Questions}.}
+  \end{sidebody}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% The extra mile. The offer in the one block, the terms in grey under it,
+% and the trade as the closing line carrying the slide's single red peak.
+% Side strip: the large banana picture.
+\begin{frame}{Extra Mile}
+  \sideimagecover[0.33]{banana_1}
+  \sidecaption{A large banana}
+  \begin{sidebody}
+    \begin{block}{Special projects}
+      If you are in for an extra mile, let me know. I have special
+      projects that I can assign to you.
+    \end{block}
+    \vskip0.8em
+    {\color{tddim}Wrapped in the same presentation and Q\&A format, yes it will be about Bananas, and yes it will be
+    more challenging, more time and effort.}
+
+    \bigskip
+    Classic loose loose short term, yet \alertbf{win long term}.
+  \end{sidebody}
+\end{frame}
+
+
+\begin{frame}{}
+  \slideqr{The Hive is Real. Dataset on Hugging Face.}{https://huggingface.co/datasets/mrkschtr/thehiveisreal}
+  \begin{statement}
+    \substatement{By the end of this lecture, }
+    Get yourself a \alert{presentation slot} and brainstorm a project \alert{idea to work} on.
+    \end{statement}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers. Two columns and a step down in size: this lecture
+% cites the whole bib and it does not fit one column at \footnotesize.
+\begin{frame}{References}
+  \renewcommand*{\bibfont}{\scriptsize}%
+  \setlength{\bibitemsep}{0.25em}%
+  \begin{multicols}{2}
+    \printbibliography[heading=none]
+  \end{multicols}
+\end{frame}
+\end{refsection}

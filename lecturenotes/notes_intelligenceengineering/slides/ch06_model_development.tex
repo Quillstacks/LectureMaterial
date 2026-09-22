@@ -1,0 +1,430 @@
+%% ch06_model_development.tex -- Intelligence Engineering, chapter 06 "Model
+%% Development and Offline Evaluation".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 6. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and TEMPLATE layout only. No body text. Every frame carries
+%% the layout it is meant to be filled into, and a % TEMPLATE comment saying
+%% why that layout and what belongs in each slot. Filling them is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{VI}{Model Development and Offline Evaluation}{}
+\section[Model Development]{Model Development and Offline Evaluation}
+
+% ----------------------------------------------------------------------
+\subsection{Model Development and Training}
+
+% TEMPLATE: withmargin, the chapter's opening claim plus one aside. This frame
+% is the opener for the six tips below, so the main column takes the book's own
+% framing of how a model is chosen for a problem, and the margin takes the
+% caveat that qualifies it. Keep the six tips off this slide; each one gets its
+% own box on the next frame.
+\begin{frame}{Evaluating ML Models}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three by two block grid. The heading names a countable set of six
+% peers, none subordinate to another, so one box each rather than a six item
+% bullet list, levelled row by row with the equal height groups. Boxes are
+% untitled on purpose: the heading counts the tips but does not name them, so
+% each box takes one tip's name as its header and the book's reasoning as its
+% body when the slide is filled.
+\begin{frame}{Six tips for model selection}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips1]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips1]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips1]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \vskip0.5em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips2]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips2]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips2]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three block row, the overview layout for an opener. The heading
+% introduces exactly three peers, its own subheadings, so the three take one
+% levelled box each and the slide works as the map of the three frames that
+% follow. Each box takes that method's one line definition in the book's words;
+% the detail stays on the method's own frame.
+\begin{frame}{Ensembles}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=ens]{Bagging}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=ens]{Boosting}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=ens]{Stacking}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef. The heading is a term the book defines outright, bootstrap
+% aggregating, so it takes the titled definition box rather than a claim with an
+% aside. The box holds the sampling with replacement procedure and the vote or
+% average that closes it; the variance argument follows inside the same box.
+\begin{frame}{Bagging}
+  \begin{tddef}{Bagging}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero, the first of this chapter's two image slots. The
+% book carries this one as a diagram, a sequence of weak learners each reweighting
+% what the previous one got wrong, and a sequence is a picture before it is a
+% sentence. The strip takes that diagram, the caption names it, and the sidebody
+% takes the iteration in the book's steps.
+\begin{frame}{Boosting}
+  \phimgside[0.33]{boosting.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. Stacking has one mechanism, base learners feeding a
+% meta learner, so the main column runs it in the book's order rather than
+% splitting into boxes whose headers the heading does not license. Margin takes
+% the aside on how the combining is done, majority vote or the learned
+% combination.
+\begin{frame}{Stacking}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast, levelled by the equal height group. The heading
+% names two artefacts, and the book treats them as two jobs rather than one, so
+% each takes a box headed with its own name from the heading. Each box takes what
+% that job records and why it is kept; the two frames after this one open them
+% up one at a time.
+\begin{frame}{Experiment Tracking and Versioning}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=etv]{Experiment tracking}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=etv]{Versioning}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The book answers this heading with a list of what to
+% watch during training, loss curves, performance metrics, speed and system
+% metrics, so the main column takes that list in its order. Margin takes the
+% warning the book attaches, that tracking everything quickly becomes
+% overwhelming.
+\begin{frame}{Experiment tracking}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: code panel, caption taken from the heading. Versioning is the one
+% heading here that is about commands and artefacts on disk, so the dark mono
+% panel is the honest layout: it takes the book's code and data versioning
+% snippet, the checksum or the tool invocation. The argument about why data
+% versioning is the hard half goes under the panel when filled.
+\begin{frame}{Versioning}
+  \begin{tdcodet}{Versioning}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin, the opener for the two parallelism frames. The book sets
+% this one up as a condition rather than a comparison, the data or the model no
+% longer fits on one machine, so the main column takes that condition and what
+% it forces. Margin takes the practical aside, batch size and checkpointing.
+\begin{frame}{Distributed Training}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef. The heading is a named technique with a one sentence
+% definition in the book, so it takes the definition box. The box holds what is
+% split across machines and how the gradients come back together; the
+% synchronous and asynchronous variants follow inside the same box, since the
+% heading does not license two boxes of their own.
+\begin{frame}{Data parallelism}
+  \begin{tddef}{Data parallelism}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: side image hero, the second and last image slot of the chapter. The
+% book draws this one, a model cut into components that sit on different machines
+% and the pipeline that keeps them busy, and the picture carries the point that
+% the parts are not independent. Strip takes the diagram, caption names it,
+% sidebody takes the book's reading of it.
+\begin{frame}{Model parallelism}
+  \phimgside[0.33]{model_parallelism.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: comparison table, the chapter's one table, and a deliberate push
+% away from a third withmargin in this subchapter. The heading's two subheadings
+% are soft and hard AutoML, so they take the two columns; the empty stub column
+% takes one comparison axis per row, what is searched, what it costs and how far
+% the practice has got. Four rows are provided, drop the ones that stay empty.
+\begin{frame}{AutoML}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.22\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}@{}}
+    \toprule
+     & \textbf{Soft AutoML} & \textbf{Hard AutoML}\\
+    \midrule
+     & & \\
+     & & \\
+     & & \\
+     & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: code panel, caption taken from the heading. Hyperparameter tuning is
+% configuration before it is prose: the panel takes the book's search space and
+% the search it is handed to, so the difference between the searches reads off
+% the same snippet. The book's warning about tuning on the test split belongs
+% under the panel, not inside it.
+\begin{frame}{Soft AutoML: Hyperparameter tuning}
+  \begin{tdcodet}{Hyperparameter tuning}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: two block contrast, levelled by the equal height group. The heading
+% itself names two things, so each takes a box headed with its own name and the
+% two read off against one another rather than queueing in one column. Each box
+% takes what that line of work hands over to the search and what it costs.
+\begin{frame}{Hard AutoML: Architecture search and learned optimizer}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=hard]{Architecture search}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=hard]{Learned optimizer}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Model Offline Evaluation}
+
+% TEMPLATE: withmargin plus a takeaway. The book answers this heading with a
+% short list of baselines to compare against, so the main column takes them in
+% the book's order and the margin takes the worked example that shows a number
+% is meaningless without one. The takeaway keeps the book's own verdict on
+% comparing against the right baseline in front of the list.
+\begin{frame}{Baselines}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: three by two block grid, the overview layout for an opener with six
+% children. The heading introduces exactly six methods, its own subheadings, so
+% the grid is the map of the six frames that follow and each box is headed with
+% that method's name. One line of what the method does per box, nothing more;
+% the detail belongs on the method's own frame.
+\begin{frame}{Evaluation Methods}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em1]{Perturbation tests}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em1]{Invariance tests}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em1]{Directional expectation tests}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \vskip0.5em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em2]{Model calibration}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em2]{Confidence measurement}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em2]{Slice-based evaluation}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. One test, one claim, so the main column takes what is
+% perturbed and what the model's response to it is read as. Margin takes the
+% book's worked example, the input that a user would never hand over as cleanly
+% as the training set did.
+\begin{frame}{Perturbation tests}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: tddef. The heading is a test with a sharp definition, the input
+% change that must leave the prediction alone, so the titled box carries it and
+% the fairness consequence lands inside the same box. A definition box also
+% breaks the withmargin run either side of it.
+\begin{frame}{Invariance tests}
+  \begin{tddef}{Invariance tests}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The test is one rule about the sign of a change, so the
+% main column states the rule and what a violation means. Margin takes the
+% book's worked example, the feature whose increase may not move the prediction
+% the wrong way.
+\begin{frame}{Directional expectation tests}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: code panel, caption taken from the heading. Calibration is checked
+% rather than argued, and the book checks it with a curve and a library call, so
+% the panel takes that call and the frequencies it is fed. The property being
+% tested, predicted scores matching observed frequencies, goes under the panel
+% when filled.
+\begin{frame}{Model calibration}
+  \begin{tdcodet}{Model calibration}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin. The heading asks one question, whether a single
+% prediction is worth showing, so the main column takes the threshold and what
+% happens to the predictions below it. Margin takes the cost the book names for
+% each choice, the useless prediction against the one that is never shown.
+\begin{frame}{Confidence measurement}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% TEMPLATE: withmargin plus a takeaway, closing the subchapter the way it
+% opened. The book argues this one with numbers on slices of one dataset, so the
+% main column takes the slice comparison and the margin takes why the slices
+% exist at all, critical subgroups and the paradox behind the aggregate. The
+% takeaway keeps the book's conclusion about the aggregate number.
+\begin{frame}{Slice-based evaluation}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+% TEMPLATE: bare takeaway. The heading is the chapter's summary, so it gets one
+% line and no scaffolding: the book's own closing claim about model development,
+% big and centred, nothing competing with it on the slide.
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

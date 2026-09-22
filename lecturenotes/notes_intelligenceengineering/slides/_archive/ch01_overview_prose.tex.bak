@@ -1,0 +1,169 @@
+%% ch01_overview.tex -- Intelligence Engineering, chapter 01 "Overview of
+%% Machine Learning Systems".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 1. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{I}{Overview of Machine Learning Systems}{}
+\section[Overview]{Overview of Machine Learning Systems}
+
+% ----------------------------------------------------------------------
+\subsection{When to Use Machine Learning}
+
+\begin{frame}{What ML solutions generally do}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tddef}{Machine Learning}
+        An approach to \textbf{(1) learn} \textbf{(2) complex patterns} from
+        \textbf{(3) existing data} and use these patterns to make
+        \textbf{(4) predictions} on \textbf{(5) unseen data}.
+      \end{tddef}
+    \end{tdmain}
+    \begin{tdmargin}
+      ML is not a magic tool that can solve all problems.
+      \par\medskip
+      Even for problems that ML can solve, ML solutions might not be the
+      optimal solutions.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{(1) Learn}
+  \alertbf{The system has the capacity to learn.}
+  \begin{itemize}
+    \item A relational database isn't an ML system. It doesn't have the
+      capacity to learn.
+    \item There must be something for it to learn from. In most cases, data.
+    \item Supervised learning: from example input and output pairs, learn how
+      to generate outputs for arbitrary inputs.
+  \end{itemize}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{(2) Complex Patterns}
+  \alertbf{There are patterns to learn, and they are complex.}
+  \begin{itemize}
+    \item Only useful when there are patterns. No pattern in a fair die.
+    \item There are patterns in how stocks are priced. Billions invested.
+    \item Simple pattern, no ML. Zip code to state: use a lookup table.
+    \item Rental price against its characteristics: very challenging to
+      manually specify. ML is a good solution.
+    \item What is complex to machines is different from what is complex to
+      humans.
+  \end{itemize}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{(3) Existing Data}
+  \alertbf{Data is available, or it's possible to collect data.}
+  \begin{itemize}
+    \item Because ML learns from data, there must be data to learn from.
+    \item Zero-shot: no data for the task at hand, but still trained on data
+      for other tasks. It still requires data to learn.
+    \item Continual learning: deploy without training, learn from incoming
+      data in production. Risk is poor customer experience.
+    \item Fake it til you make it: serve predictions made by humans, train on
+      the generated data later.
+  \end{itemize}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{(4) Predictions}
+  \alertbf{It's a predictive problem.}
+  \begin{itemize}
+    \item ML models make predictions. They can only solve problems that
+      require predictive answers.
+    \item Especially appealing when you benefit from a large quantity of cheap
+      but approximate predictions.
+    \item Whatever the question: ``What would the answer to this question
+      be?'' Future, present, or past.
+    \item Compute-intensive problems reframe well. Approximate the outcome
+      instead of computing it.
+  \end{itemize}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{(5) Unseen Data}
+  \begin{withmargin}
+    \begin{tdmain}
+      \alertbf{Unseen data shares patterns with the training data.}
+      \begin{itemize}
+        \item Patterns learned are only useful if unseen data also share them.
+        \item Unseen and training data should come from similar distributions.
+        \item We don't know the distribution. We make assumptions, and hope
+          they hold.
+      \end{itemize}
+    \end{tdmain}
+    \begin{tdmargin}
+      Predicting app downloads on Christmas 2020, trained on data from 2008,
+      when the most popular app was Koi Pond.
+      \par\medskip
+      What's Koi Pond? Exactly.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Catalysts}
+  ML solutions will especially \alertbf{shine} with these additional
+  characteristics.
+  \begin{itemize}
+    \item \textbf{It's repetitive.} Each pattern is repeated multiple times.
+      Easier for machines to learn.
+    \item \textbf{The cost of wrong predictions is cheap.} A bad
+      recommendation is usually forgiving.
+    \item \textbf{It's at scale.} Nontrivial up-front investment, so it makes
+      sense to use the solution a lot.
+    \item \textbf{The patterns are constantly changing.} Cultures change.
+      Tastes change. Technologies change.
+  \end{itemize}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{When Not to Use Machine Learning}
+  Most of today's ML algorithms shouldn't be used under \alertbf{any} of the
+  following conditions.
+  \begin{itemize}
+    \item It's unethical.
+    \item Simpler solutions do the trick.
+    \item It's not cost-effective.
+  \end{itemize}
+  \vskip0.5em
+  Break the problem into smaller components, and use ML to solve some of them.
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Machine Learning Use Cases}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Understanding Machine Learning Systems}
+
+\begin{frame}{Machine Learning in Research Versus in Production}
+\end{frame}
+
+\begin{frame}{Machine Learning Systems Versus Traditional Software}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+\begin{frame}{Summary}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}
