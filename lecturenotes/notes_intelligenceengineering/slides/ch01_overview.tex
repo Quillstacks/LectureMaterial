@@ -237,6 +237,8 @@
 % frontier between hard and works is the one red element and it carries the
 % claim: it moves right. Margin holds the numbers that moved it, one per
 % source, so the diagram states the argument and the margin evidences it.
+% TODO: add a 0.33 gray Eisenhower captioned png to that slide. The caption should mention value over feasibility. Then on the left side list all the sample use cases into an itemize list. 
+
 \begin{frame}{Value over technical feasibility}
   \begin{withmargin}
     \begin{tdmain}
@@ -294,11 +296,8 @@
   \slidesources{AIIndex2026,OpenAI2025,McKinsey2026}
 \end{frame}
 
-% TEMPLATE: side image hero plus two label led columns. Mark's call, and the
-% reason holds: a pair of cards frames the two shares as peers of equal weight
-% when the point is that they disagree, so the boxes come off and the column
-% split alone carries the contrast. The strip takes the image; the headings
-% survive as bold lead lines rather than block titles.
+
+%TODO cite the sources as a marginnote styled thing. Then make adoption and value each a card. No itemize list in there. Keep the 0.33 png gray image. 
 \begin{frame}{The field is moving, 2026}
   \sideimagecover[0.33]{placeholder_gray.png}
   % Asset brief: the adoption curve against the value capture curve on one set
@@ -331,10 +330,8 @@
   \slidesources{McKinsey2026,AIIndex2026}
 \end{frame}
 
-% TEMPLATE: two block contrast plus a dimmed line. The two labs publish the
-% same map from their own vantage points, a benchmark against experts and a
-% telescope on live traffic, so one box per lab and the dim line reads the
-% two together.
+
+% TODO. Make this one slide per Lab. Then on the right in the sideimagecover add a screenshot of their study. Add the source as a marginnote. Then each slide should work as a one pager for the study the respective lab did. Make the sources openable by providing a QR code too.
 \begin{frame}{What the labs measure}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
@@ -361,7 +358,7 @@
 
 
 
-
+%TODO. Also in general the gray underline for the slide titles should not overlap with the caption
 
 
 
@@ -369,9 +366,8 @@
 \subchaptergloss{Research and Production are not the same.}
 \subsection{Understanding Machine Learning Systems}
 
-% TEMPLATE: comparison table. Table 1-1 of the book is already a table and
-% should stay one: five rows, research against production. booktabs only, no
-% vertical rules. The five row labels are the book's.
+% TEMPLATE: Comparison table. five rows, research against production. booktabs only, no
+% vertical rules.
 \begin{frame}{Horizontal versus Vertical}
   \footnotesize
   Nothing motivates \alert{system} thinking more than the need to go \alert{horizontal}.
@@ -400,26 +396,17 @@
 
 
 
+%TODO: Not every slide should show the Chip reference. Only keep it on a few where it makes sense and is necessary. 
 
 
-
-
-% TEMPLATE: side image hero plus a two row card grid. The five stakeholders are
-% peers, none subordinate to another, so a grid rather than a stack, and two
-% rows keep the sidebody inside its height budget. Each card carries an
-% objective and the solution space its owner already has in mind, which are the
-% two axes of the Eisenhower map in the strip. No red on the cards: the one red
-% element on this frame is the term the whole slide is about.
+%TODO: Make your human add a horse tinder screenshot here. Then only show the persons by using icons and only mentioning them by name here.
+% The detailed analysis of the stakholders then comes after the next slide. You can use the cards in detail there. Again with the icons.. and layout them more nicely there.
 \begin{frame}{Stakeholders and Objectives}
   \sideimagecover[0.33]{placeholder_gray.png}
-  % Asset brief: an Eisenhower map, concern or objective over solution space,
-  % both axes running from business to technical. The visible caption has to
-  % stay under ~50 characters: it is a rotated node with no text width and
-  % the page clips whatever runs past the top edge.
-  \sidecaption{Eisenhower: objective over solution space}
+  \sidecaption{Tinder for horses.}
   \begin{sidebody}
     \scriptsize
-    Tinder for horses. In research the objective is one number on one benchmark.
+    In research the objective is one number on one benchmark.
     Ship the same model as a product and five people want five different things
     from it, each arriving with a solution space already in mind:
     \alertbf{conflicting requirements} are the norm, and not all of them are must haves.
@@ -467,58 +454,65 @@
       \end{column}
     \end{columns}
   \end{sidebody}
-  \slidesources{Huyen2022}
 \end{frame}
 
 
-% TEMPLATE: side image hero plus a bullet list. Three separate charges against
-% the same practice, so a bullet each rather than boxes; none of them is a
-% comparison, so no paired blocks. The strip takes the joke the criticism is
-% named after. Picard's seed scan is the whole argument of the second bullet,
-% so its numbers sit in the bullet and not in a caption.
+\begin{frame}{}
+    \begin{statement}
+      \substatement{Different stakeholders have different objectives and think in different solution spaces.}  
+      Define the \alert{next step} for horse tinder and \alert{line out} how to reach that.
+      \end{statement}
+\end{frame}
+
+
+
+
+% TODO: There is also this full lecture from LMU on critics on benchmark validation. Maybe look into that. Or maybe this even becomes a full lecture later on? 
+% at least get the material in here. Or let your human get it. 
+% Add GLUE as a reference and make the sideimage show the first page of that paper. 
+% Keep the trust me bro reference even if you change the caption to fit the paper screenshot. 
+% Bring in the layout of the when not to use machine learning slide. withe four cards. Then drop the itemize from here. 
 \begin{frame}{Leaderboards and Benchmarks}
   \sideimagecover[0.33]{placeholder_gray.png}
-  % Asset brief: a trust me bro benchmark chart, bars with no axis, no
-  % baseline and no error bars, posted to announce a model. Caption kept
-  % under ~50 characters, see the note on the frame above.
   \sidecaption{Trust me bro benchmark: no axis, no error bars}
   \begin{sidebody}
     \scriptsize
-    A leaderboard scores the \alertbf{model}. A system is not a model.
     \vskip0.5em
     \begin{itemize}
-      \item What a benchmark measures is one metric on one frozen test set. What it
-        never measures is the pipeline around it: acquisition, cleaning, labelling,
-        feature engineering, deployment, monitoring.
-      \item Thousands of entries against the same test set is multiple hypothesis
-        testing, so part of the podium is pure chance. Scanning 10,000 seeds on
-        CIFAR 10 spreads accuracy from 89.01 to 90.83 percent, 1.82 points, with
-        nothing changed but the seed.
-      \item A benchmark is a proxy for a single metric. It was never forged in
-        production, where objectives conflict, data shifts, and the users are real.
+      \item System. A leaderboard scores a \alertbf{model}. A system is not a model.
+      \item Metric. A benchmark is limited to measure a specific set of metrics.
+      \item Overfit. A benchmark gets stale with every test that is run against it. 
+      \item Chance. Multiple hypothesis testing shows inherent performance spreads.     
     \end{itemize}
+        % Thousands of entries against the same test set is multiple hypothesis
+        % testing, so part of the podium is pure chance. Scanning 10,000 seeds on
+        % CIFAR 10 spreads accuracy from 89.01 to 90.83 percent, 1.82 points, with
+        % othing changed but the seed.
+        % Add the source with the seed is all you need paper.
   \end{sidebody}
   \slidesources{Picard2021}
 \end{frame}
 
+
+
+
+
+
+%TODO. Remove the two cards. 
+%TODO. make the table more central change the numbers for something more intuitive. But make the message play out still. 
+% Then in a margin note explain the trade-off between latency and throughput. Also ask for there training and where production usually leans. Are there easy answers? Is processing type the only thing? 
+% Model size. Sample sizes. Number of models. All that needs to be discussed in the margin note.
 \begin{frame}{Computational priorities}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
       \begin{tdblockt}[equal height group=cp]{Research: fast training}
         \scriptsize
-        \begin{itemize}
-          \item Training is the bottleneck: many models, each doing multiple passes over the data.
-          \item Prioritizes \alertbf{high throughput}, how many queries are processed in a period of time.
-        \end{itemize}
       \end{tdblockt}
     \end{column}
     \begin{column}{0.47\textwidth}
       \begin{tdblockt}[equal height group=cp]{Production: fast inference}
         \scriptsize
-        \begin{itemize}
-          \item Once deployed, inference is the bottleneck: the model's job is to generate predictions.
-          \item Prioritizes \alertbf{low latency}, the time from receiving a query to returning the result.
-        \end{itemize}
+
       \end{tdblockt}
     \end{column}
   \end{columns}
@@ -532,30 +526,26 @@
       One query at a time & 10 ms & 100 queries/second\\
       One query at a time & 100 ms & 10 queries/second\\
       Batches of 10 queries & 10 ms & 1,000 queries/second\\
-      Batches of 50 queries & 20 ms & 2,500 queries/second\\
+      Batches of 100 queries & 20 ms & 5,000 queries/second\\
       \bottomrule
     \end{tabular}\par}
   \vskip0.3em
-  {\color{tddim}Batched, higher latency might also mean higher throughput.}
   \slidesources{Huyen2022}
 \end{frame}
 
-% TEMPLATE: withmargin plus a takeaway. The main column runs the book's ten
-% measured latencies and its percentile argument in order, because the point is
-% arithmetic. Margin holds the three dated production studies as the evidence
-% that latency matters. The takeaway is the Amazon observation, the reason the
-% tail of the distribution is not a rounding error.
+
+% TODO find and add those sources, if you find better ones I would be happy to swap for more recent ones. 
 \begin{frame}{Latency is a distribution}
   \begin{withmargin}
     \begin{tdmain}
+      Users get less patient.
       \small
-      Ten requests, latency in ms: 100, 102, 100, 100, 99, 104, 110, 90, \alertbf{3,000}, 95.
+      Requests, latency in ms: 10, 10.2, 10.0, 10.0, 9.9, 10.4, 11.0, 90, \alertbf{67.0}, 9.5.
+      So how do we perform in terms of latency? 
 
-      The average latency is 390 ms, which makes your system seem slower than it actually is.
+      
 
-      Better to think in percentiles: p50 is the median, p90 and p99 expose the outliers.
 
-      The p90 here is 3,000 ms, the one request to investigate.
     \end{tdmain}
     \begin{tdmargin}
       Latency matters a lot.
@@ -567,17 +557,21 @@
       2016, Google: more than half of mobile users leave a page that takes more than three seconds to load.
     \end{tdmargin}
   \end{withmargin}
-  \begin{takeaway}
-    On Amazon the slowest requests come from the most valuable customers.
-  \end{takeaway}
-  \slidesources{Huyen2022}
 \end{frame}
 
-% TEMPLATE: two block contrast. The book's Data subheading is a straight
-% research against production split, so each world takes one box, headed with
-% its own entry from Table 1-1 and filled with its data properties in the
-% book's words. The dimmed line under them is the book's Karpathy anchor for
-% the same contrast.
+% TODO add a slide here which is basically a copy paste of the above updated slide just with 
+%      Showing how mean smooths over the outliers and gives an inaccurate and limitied view on performance. 
+%      Better to think in percentiles: p50 is the median, p90 and p99 expose the outliers.
+% It is also more valuable in terms on what to improve upon p90 -p99 (write this as mathematical sets.) These take into consideration the counts of specific symptoms.
+% add an equation for percentiles in latex equation style. 
+
+
+
+
+
+% TODO add sideimage IEa here. Caption based on Karpathies "sleep lost over.. " add this as a caption.
+% I do not like the way you are using the cards here again. We need to find another way. Contents wise this is great.
+% Also add the titanic dataset as a reference to explain what a clean dataset looks like. 
 \begin{frame}{Data}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
@@ -607,47 +601,23 @@
     \end{column}
   \end{columns}
   \vskip0.5em
-  {\color{tddim}\footnotesize Andrej Karpathy, director of AI at Tesla, drew the data problems of his PhD against those of his time at Tesla.}
-  \slidesources{Huyen2022}
 \end{frame}
 
-% TEMPLATE: one quote block between two lines. The book's fairness point is a
-% quotation and its rebuttal rather than a comparison, so the deferral gets the
-% slide's one box and the verdict lands inside it. The line above is the
-% research phase condition, the line below the asymmetry, and the takeaway the
-% leaderboard that does not exist.
-\begin{frame}{Fairness}
-  During the research phase, a model is not yet used on people, so it is easy for researchers to put off fairness as an afterthought.
-  \vskip0.4em
-  \begin{tdblock}
-    {\color{tddim}``Let's try to get state of the art first and worry about fairness when we get to production.''}
-    \vskip0.5em
-    \alertbf{When it gets to production, it is too late.}
-  \end{tdblock}
-  \vskip0.4em
-  Optimize for better accuracy or lower latency and you can show that you beat state of the art.
-  \begin{takeaway}
-    As of writing the book, there is no equivalent state of the art for fairness metrics.
-  \end{takeaway}
-  \slidesources{Huyen2022}
-\end{frame}
 
-% TEMPLATE: withmargin with a bullet list. The book argues this one by naming
-% victims, so the main column is one book example per bullet, opened by the
-% line that explains them all and closed by what deployment at scale does to
-% them. Margin takes the sourced evidence, the Berkeley lending finding and the
-% McKinsey number that says how few companies act on it.
-\begin{frame}{Fairness at scale}
+
+% TODO in your skill add a soft character limit per slide. Then we rather have the next one. Slides with viewer sentences and a sidefigure or another visual (a table or an equation are to be prioritized).
+
+
+% TODO: add the primary sources mentioned in this slide. Instead of the berkely thing show the amazon fuck up with female engineers and the google gorilla fuck up. With direct sources.
+% Also add this as a source. https://simons.berkeley.edu/talks/invisible-hand-prediction also find the paper to it. 
+
+
+\begin{frame}{Perpetuating Bias}
   \begin{withmargin}
     \begin{tdmain}
       \small
       Machine learning algorithms do not predict the future, they encode the past, thus perpetuating the biases in the data.
-      \begin{itemize}
-        \item Your loan application might be rejected because the algorithm picks on your \alert{zip code}, which embodies biases about one's socioeconomic background.
-        \item Your resume might be ranked lower because the ranking system employers use picks on the \alert{spelling of your name}.
-        \item Your mortgage might get a higher interest rate because it relies partially on \alert{credit scores}, which favor the rich and punish the poor.
-      \end{itemize}
-      \alertbf{Deployed at scale, they discriminate at scale}, judging millions in split seconds.
+      \alertbf{The invisible hand} of performative prediction at scale. 
     \end{tdmain}
     \begin{tdmargin}
       In 2019, Berkeley researchers found that both face-to-face and online lenders rejected \textbf{1.3 million} creditworthy Black and Latino applicants between 2008 and 2015. With the income and credit scores kept and the race identifiers deleted, the mortgage application was accepted.
@@ -655,180 +625,67 @@
       McKinsey \& Company, 2019: only \textbf{13\%} of the large companies surveyed said they are taking steps to mitigate risks to equity and fairness.
     \end{tdmargin}
   \end{withmargin}
-  \slidesources{Huyen2022}
 \end{frame}
 
-% TEMPLATE: two block contrast plus a dimmed closing line. Hinton's question is
-% a forced choice between two options, so each option takes one box and the two
-% cure rates read off against one another. The lines above set the scenario, the
-% quoted question sits under the boxes, and the dimmed line is what a room of
-% executives answered when the book's author put the question to them.
+
+% TODO. add a sidefigure 0.33 with an image of a keycap showing the character 2 ... in the caption mention that this is the hotkey for claude to give claude recursive permission for something. 
+% TODO. can you find research on human on the loop and whether this really works (if not we definitely can find research on this for autonomous driving functions.. so in the end humans are lazy.)
+% TODO add Jay the model as a source for this slide. 
 \begin{frame}{Interpretability}
-  In early 2020, Turing Award winner Geoffrey Hinton posed a heatedly debated question.
-  Suppose you have cancer and you have to choose.
-  \vskip0.9em
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=surgeon]{Black box AI surgeon}
-        \alertbf{90\%} cure rate, and it cannot explain how it works.
-      \end{tdblockt}
-    \end{column}
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=surgeon]{Human surgeon}
-        \alertbf{80\%} cure rate.
-      \end{tdblockt}
-    \end{column}
-  \end{columns}
-  \vskip0.9em
-  \alertbf{``Do you want the AI surgeon to be illegal?''}
-  \vskip0.6em
-  {\color{tddim}Put to a group of 30 technology executives at public nontech companies, half of them wanted the AI surgeon to operate on them. The other half wanted the human surgeon.}
-  \slidesources{Huyen2022}
-\end{frame}
-
-% TEMPLATE: withmargin. The main column carries the asymmetry this subchapter
-% is built on, research optimizes one objective and industry owes an
-% explanation, with the book's two reasons as bullets. Margin holds why the
-% discomfort is specific to AI, and the number showing that a requirement is
-% not yet a practice.
-\begin{frame}{Interpretability in production}
   \begin{withmargin}
     \begin{tdmain}
       \small
-      Most machine learning research is still evaluated on a single objective, model performance, so researchers are not incentivized to work on model interpretability.
-      In industry, interpretability is not just optional for most use cases but a requirement.
+      Most machine learning revolves around model performance, there is little incentive to work on model interpretability.
+      In industry, interpretability is not just optional for most use cases but a stated requirement by
       \begin{itemize}
-        \item Important for \alertbf{users}, both business leaders and end users, to understand why a decision is made, so that they can trust a model and detect potential biases.
-        \item Important for \alertbf{developers}, to be able to debug and improve a model.
+        \item  .. \alertbf{users}, both business leaders and end users, to understand why a decision is made, so that they can trust a model and detect potential biases.
+        \item  .. \alertbf{developers}, to be able to debug and improve a model.
       \end{itemize}
     \end{tdmain}
     \begin{tdmargin}
-      Most of us are comfortable using a microwave without understanding how it works. Many do not feel the same way about AI, especially if that AI makes important decisions about their lives.
+      Most of us are comfortable using a fridge without understanding how it works. Many do not feel the same way about AI, especially if that AI makes important decisions about their lives.
       \vskip0.5em
-      As of 2019, only \textbf{19\%} of large companies are working to improve the explainability of their algorithms.
+      Then again only \textbf{19\%} of large companies are working to improve the explainability of their algorithms. Press 2.
     \end{tdmargin}
   \end{withmargin}
-  \slidesources{Huyen2022}
 \end{frame}
 
 
-% TEMPLATE: single block plus a takeaway. The book closes the research versus
-% production subchapter with an argument and its rebuttal rather than a
-% comparison, so the claim takes the slide's one box and the takeaway carries
-% what the book answers. Neither a margin nor a pair of boxes, because both
-% neighbours already use those.
-\begin{frame}{Discussion}
-  \begin{tdblock}
-  \end{tdblock}
-  \begin{takeaway}
-  \end{takeaway}
-  \slidesources{Huyen2022}
-\end{frame}
 
-% TEMPLATE: two block contrast plus a takeaway. Departs from the stub's
-% withmargin on purpose: the frame before it is a withmargin and a second in a
-% row stalls, and the book's point here is symmetric, what software engineering
-% assumes against what a machine learning system is actually made of, which
-% reads as two levelled boxes rather than a claim with an aside. Each box holds
-% one world in the book's own properties; the takeaway is the book's own answer
-% to the question the subheading opens with.
-\begin{frame}{Machine Learning Systems Versus Traditional Software}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=mlsw]{Traditional software engineering}
-        \scriptsize
-        \begin{itemize}
-          \item An underlying assumption that \alertbf{code and data are separated}.
-          \item Keep things as modular and separate as possible: separation of concerns.
-          \item Many of its tools do work for machine learning.
-        \end{itemize}
-      \end{tdblockt}
-    \end{column}
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=mlsw]{Machine learning systems}
-        \scriptsize
-        \begin{itemize}
-          \item \alertbf{Part code, part data}, and part artifacts created from the two.
-          \item Applications with the most and best data win: companies improve data, not algorithms.
-          \item Data can change quickly, so applications need to be adaptive.
-        \end{itemize}
-      \end{tdblockt}
-    \end{column}
-  \end{columns}
-  \begin{takeaway}
-    ML production would be a much better place if ML experts were better software engineers.
-  \end{takeaway}
-  \slidesources{Huyen2022}
-\end{frame}
+%TODO: Adjust the takeaway layout and style. It is crazy ugly.. red, centered italic. Oh boy. Not the style we love.
 
-% TEMPLATE: withmargin, the layout this chapter uses when one claim needs one
-% worked example to land, and the stub's intent honoured one frame later. Main
-% column runs the book's argument in its order: code only, then code and data,
-% then the two open questions, then the inequality of samples, closing on the
-% risk that follows. Margin holds the book's lung scan counts, which are the
-% whole proof that samples are not equal.
-\begin{frame}{Test and version the data too}
+
+% TODO: add a marginnote here which references 2 books on software engineering, discuss with me which. I already have a preference. Engineering at google and maybe mythical men month.. but not sure on the second one.
+\begin{frame}{Why this is different from traditional software engineering}
   \begin{withmargin}
     \begin{tdmain}
       \small
       In traditional software engineering, you only need to focus on testing and versioning your code.
-      With machine learning, we have to test and version our data too, and \alertbf{that is the hard part}.
+      With machine learning, we have to test and version our code, data, and artifacts arising from the two.
+
       \begin{itemize}
         \item How to version large datasets?
-        \item How to know if a data sample is good or bad for your system?
+        \item How to train and deploy these large models? 
+        \item How to handle deployments in changing environments? 
+        \item How to scale, basically everything for production? 
+        \item How to monitor and debug these systems? 
+        \item How to not be harmful at scale?
       \end{itemize}
-      Not all data samples are equal. Some are more valuable to your model than others.
+      Good thing is a lot of people are working on these questions as we speak.
       \vskip0.3em
-      \alertbf{Indiscriminately accepting all available data might hurt performance and make your model susceptible to data poisoning attacks.}
+      \alertbf{This lecture series is trying to give some of their answers.}
     \end{tdmain}
-    \begin{tdmargin}
-      Your model has already trained on \textbf{one million} scans of normal lungs and only \textbf{one thousand} scans of cancerous lungs.
-      \vskip0.5em
-      A scan of a cancerous lung is much more valuable than a scan of a normal lung.
-    \end{tdmargin}
   \end{withmargin}
   \slidesources{Huyen2022}
 \end{frame}
 
-% TEMPLATE: three block row, two dimmed asides, one closing band. The book
-% names three engineering challenges of the same kind, size, speed and
-% visibility, so one box each rather than a bullet list, levelled by the equal
-% height group. Under the row sit the book's own two one-liners, the joke about
-% how fast this ages and the autocompletion example that says what fast enough
-% means. The band breaks the row on purpose: it is the last thing the chapter
-% says, so the good news gets its own box and keeps the BERT numbers that were
-% once called impractical.
-\begin{frame}{Size, speed and visibility}
-  \footnotesize
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.31\textwidth}
-      \begin{tdblockt}[equal height group=ssv]{Size}
-        \scriptsize
-        As of 2022 it is common for models to have \alertbf{hundreds of millions, if not billions, of parameters}, needing gigabytes of RAM.
-      \end{tdblockt}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-      \begin{tdblockt}[equal height group=ssv]{Speed}
-        \scriptsize
-        Getting large models into production, \alertbf{especially on edge devices}, is a massive challenge, as is running them fast enough.
-      \end{tdblockt}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-      \begin{tdblockt}[equal height group=ssv]{Visibility}
-        \scriptsize
-        Monitoring and debugging in production is also nontrivial: models get complex, with a \alertbf{lack of visibility} into their work.
-      \end{tdblockt}
-    \end{column}
-  \end{columns}
-  \vskip0.3em
-  {\color{tddim}\scriptsize
-    An autocompletion model is useless if the time it takes to suggest the next character is longer than the time it takes for you to type.}
-  \vskip0.3em
-  \begin{tdblockt}{The good news: these challenges are being tackled at a breakneck pace}
-    \scriptsize
-    In 2018 people said BERT was too big, too complex and too slow to be practical. The pretrained large BERT model has \alertbf{340 million} parameters and is \alertbf{1.35 GB}. Two years later, BERT and its variants were used in almost every English search on Google.
-  \end{tdblockt}
-  \slidesources{Huyen2022}
+
+
+\begin{frame}{}
+    \begin{statement}
+      \substatement{You might argue that the engineering and development sizde of machine learning is more exciting.}  
+      Most \alert{jobs} will be, and already are in \alert{productionizing} machine learning systems.
+      \end{statement}
 \end{frame}
 
 
