@@ -26,10 +26,15 @@ def main() -> int:
     adjs = load(adj_path)
     fruits = load(fruit_path)
     animals = load(animal_path)
-    sys.stdout.write(
-        f"{pick(adjs, hash_str, 'adj')} "
-        f"{pick(fruits, hash_str, 'fruit')} "
-        f"{pick(animals, hash_str, 'animal')}"
+    # Write UTF-8 bytes directly. The word lists hold German names with
+    # umlauts; relying on sys.stdout's text encoding emits cp1252 on Windows
+    # (a lone 0xe4 for "ä"), which inputenc then rejects as invalid UTF-8.
+    sys.stdout.buffer.write(
+        (
+            f"{pick(adjs, hash_str, 'adj')} "
+            f"{pick(fruits, hash_str, 'fruit')} "
+            f"{pick(animals, hash_str, 'animal')}"
+        ).encode("utf-8")
     )
     return 0
 

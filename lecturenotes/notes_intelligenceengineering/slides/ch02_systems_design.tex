@@ -13,41 +13,138 @@
 %% opens on the subchapter divider, which the master emits automatically via
 %% \AtBeginSubsection; do not write those divider frames by hand.
 
+
+
+% TODO: On a general note, I already did it in this tex. But get rid of all those template comments. in the end that information should only live in the frame
+% itself ... so clean and rinse all the other tex files of this lecture.
+% Also remember the character cap we introduced and rather having less elements and less contents per slide. Rather opting for more slides is key.
+% I also like the mechanism of copying over a single slide, then adding an extension on the next slide. You know what I mean... that mechanism is heavily underused in this deck. 
+
+
+
+
 \begin{refsection}
 
 \lecturepage{II}{Introduction to Machine Learning Systems Design}{}
 \section[Systems Design]{Introduction to Machine Learning Systems Design}
 
+
+%TODO then for all chapters bring the respective "lecture in one slide" 
+% into the slide decks. When building regularly check whether the slide changed in the 
+% chapter deck and update it in the 00 orientation slide. Maybe as a skill? Or as a comment in your built flow? 
+% or maybe is a comment above each of those in the section.tex prompting the next agent to check on that.
+
+
+
+
+
 % ----------------------------------------------------------------------
 \subsection{Business and ML Objectives}
 
-% TEMPLATE: two block contrast. The heading names both sides, so each side
-% takes one box rather than one shared list, levelled by the equal height
-% group. Left box takes the metrics the business actually reports, right box
-% the metrics a model is trained to move. The filling pass has to make the
-% mapping from the right box to the left one explicit.
-\begin{frame}{Business and ML Objectives}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=obj]{Business objectives}
-      \end{tdblockt}
-    \end{column}
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=obj]{ML objectives}
-      \end{tdblockt}
-    \end{column}
-  \end{columns}
-  \slidesources{Huyen2022}
-\end{frame}
+\begin{frame}{System Design}
+ \end{frame}
+
+
+  \iffalse
+
+(1) 
+Holistic approach that considers all components and allows to make them contribute and fulfill objectives.
+Therefore we will have to translate business objectives into ML objectives to guide their development and framing. 
+.. add IEb as a sidefigure.
+
+(1+) 
+Slide with IEc figure on full slide. It is not crazy it is just complex as caption.
+
+(2) 
+OKR book and a one pager on the main concepts and how this propagates down orgcharts. Add the reference for that as well.
+
+(3) 
+Statement slide. 
+Milton Freedman quote on "sole purpose of business is to maximize profits for shareholders". (find a reference New York Time Magazine) 
+While most companies want to convince you otherwise. 
+So it should not come as a surprise if those companies do not care too much about your ML metrics.
+Does can only be Key Results but are very seldom the Objective in itself.
+
+
+
+(4) 
+For an ML initiative to succeed within an organization you need to tie and align the ML performance to the overall business performance.
+Optimally such that your ML key indicators become proxies for business key indicators. IEd as sidefigure
+
+(5)
+Netflix as an example.
+Take rate (add an equation for that and find a reference a paper to cite in the margin notes) Quality plays / recommendations seen.
+
+Brought in context with business relevant metrics such as total streaming hours and lower subscription cancellation rates.
+This can be done with experimentation (A/B testing etc. to show beneficial correlations).
+
+As a manager this is great as you know that you pour money in a profitable initiative.
+As a teamlead a nice positive side-effect is that your ML team will not get fired anytime soon.
+And as a developer being able to communicate this effectively you will have a great time during performance reviews.
+
+(6)
+Statement slide.
+How important would you rate the importance of ML systems for the company you are associated with?
+Compare it to your estimation for Netflix. 
+
+(7)
+Statement slide.
+Which are the Business Key Indicators for your company or division. 
+Which ML metrics can you design that are well aligned and tied to those? 
+
+(8)
+For all the wrong reasons. Hype.
+Companies like to say that they use AI or have AI in their products. Because it sells.
+Regardless of whether the AI actually does something useful or not.
+Returns of investment in machine learning systems and products depens a lot on maturity levels of adoption across the organization.
+Enter Transformation (oh no again).
+
+It is a powerful narrative with a lot of room for, well, narrating a lot of things in there.
+
+
+ \fi 
+
 
 % ----------------------------------------------------------------------
 \subsection{Requirements for ML Systems}
 
-% TEMPLATE: withmargin plus tddef. This is the first of the book's four
-% requirements and the book states it as a definition, so it takes the
-% slide's one titled box. Margin holds the aside that makes the requirement
-% hard for a machine learning system: it can fail silently and still return
-% a prediction that looks plausible.
+\iffalse
+(1) 
+Slide with deep blue (hitchhikers guide to the galaxy in the sidefigure)
+Quote the moment it says 42. 
+We can only measure or report success if we know and are able to specify our requirements, and then of course to measure them.
+Of course that varies. 
+
+(2)
+Reliability 
+Definition: The system continues to perform the correct funtion at the desired level of performance even in the face of adversary.
+
+Hardware faults, human error. 
+Graceful degradation and non-silent failures. (add references for those two)
+
+
+(3) 
+Scalability
+Definition: 
+
+(4)
+Maintainability
+Definition.
+
+(5) 
+Adaptability
+Definition: 
+
+(6)
+Alignment and Controllability. With large language models and agent systems.
+Taking control of decision making or at least augmenting decision making processes.
+Being catered to a lot of users issues of scale, performative predictions and bias becomes increasingly relevant.
+Definition of alignment and a definition of controllability (human on and in the loop).
+(Add a few references.)
+This is also the place where interpretability and human machine interfaces play a major role. 
+
+\fi
+
 \begin{frame}{Reliability}
   \begin{withmargin}
     \begin{tdmain}
@@ -57,14 +154,9 @@
     \begin{tdmargin}
     \end{tdmargin}
   \end{withmargin}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% TEMPLATE: three plain boxes in a row. Scalability is not one thing in the
-% book, it is growth along several axes at once, so each axis takes one box
-% and the row makes the count visible instead of burying it in a list. The
-% boxes stay unheaded until the filling pass names the axes; the equal
-% height group keeps the row level.
+
 \begin{frame}{Scalability}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.31\textwidth}
@@ -80,14 +172,9 @@
       \end{tdblock}
     \end{column}
   \end{columns}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% TEMPLATE: withmargin, and a deliberate break from the row above it. Main
-% column takes what maintainability asks of the artifacts themselves, code,
-% data and documentation. Margin takes who those artifacts are handed to,
-% the book's point that an ML system is built by people who do not share a
-% vocabulary.
+
 \begin{frame}{Maintainability}
   \begin{withmargin}
     \begin{tdmain}
@@ -95,43 +182,37 @@
     \begin{tdmargin}
     \end{tdmargin}
   \end{withmargin}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% TEMPLATE: tddef alone. The book states this requirement as a definition
-% too, and the frame reads stronger bare than boxed inside a margin layout,
-% so the term carries the whole slide. The box takes the capacities the book
-% asks for and nothing else; what they imply for the workflow is the next
-% subchapter's job.
+
 \begin{frame}{Adaptability}
   \begin{tddef}{Adaptability}
   \end{tddef}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
+
+
+ \begin{frame}{Alignment and Controllability}
+  \begin{tddef}{Alignment and Controllability}
+  \end{tddef}
+ \end{frame}
 
 % ----------------------------------------------------------------------
+
+
+
 \subsection{Iterative Process}
 
-% TEMPLATE: side image hero, the first of this chapter's two figures. The
-% heading is a process, so the book's own cycle owns the frame and the grey
-% placeholder holds its place until the diagram is drawn. sidebody takes the
-% steps in the book's order, the phimgside caption the one line that says why the
-% arrows run backwards as often as forwards.
+
 \begin{frame}{Iterative Process}
   \phimgside[0.33]{iterative_process.png}{}
   \begin{sidebody}
   \end{sidebody}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
 % ----------------------------------------------------------------------
 \subsection{Framing ML Problems}
 
-% TEMPLATE: two by two grid of plain boxes, the opener for the four frames
-% below it. The heading introduces a countable set, so the grid is sized to
-% that count and each box previews one of the four headings that follow
-% rather than arguing anything itself. Unheaded on purpose: the detail
-% frames own the names.
+
 \begin{frame}{Types of ML Tasks}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
@@ -149,14 +230,9 @@
       \end{tdblock}
     \end{column}
   \end{columns}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% TEMPLATE: two block contrast. The heading is a versus, so each task takes
-% one box with its header read straight off the heading, levelled by the
-% equal height group. Each box takes what that task predicts in the book's
-% words, and the filling pass owes the book's reminder that either one can
-% be turned into the other.
+
 \begin{frame}{Classification versus regression}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
@@ -168,14 +244,9 @@
       \end{tdblockt}
     \end{column}
   \end{columns}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% TEMPLATE: comparison table. A second pair of boxes in a row would stall,
-% and the book separates these two along named dimensions rather than in
-% prose, so the columns are the two sides from the heading and the empty
-% rows are for those dimensions, one per row. booktabs only, no vertical
-% rules.
+
 \begin{frame}{Binary versus multiclass classification}
   \footnotesize
   \renewcommand{\arraystretch}{1.35}
@@ -189,14 +260,9 @@
      & & \\
     \bottomrule
   \end{tabular}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% TEMPLATE: two code panels. The book settles this distinction on how a
-% label is encoded, so the contrast belongs in the mono panels where a label
-% vector can be shown literally instead of described. The captions are the
-% two sides from the heading; each panel takes the encoding the book prints
-% for that case, and the ambiguity it creates.
+
 \begin{frame}{Multiclass versus multilabel classification}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
@@ -208,14 +274,9 @@
       \end{tdcodet}
     \end{column}
   \end{columns}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% TEMPLATE: two plain boxes. The heading promises more than one framing of
-% the same problem, so the framings sit side by side where they can be read
-% off against each other. Unheaded, because the heading names no framing;
-% each box takes one framing with its inputs, its outputs and what happens
-% to it when the set of classes grows.
+
 \begin{frame}{Multiple ways to frame a problem}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
@@ -227,13 +288,9 @@
       \end{tdblock}
     \end{column}
   \end{columns}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% TEMPLATE: withmargin, the opener for the frame below it. Main column takes
-% what an objective function is for and the losses the book names, margin
-% the aside that the objective is a choice and not a given. Kept general on
-% purpose: the detail, two objectives inside one loss, is the next frame.
+
 \begin{frame}{Objective Functions}
   \begin{withmargin}
     \begin{tdmain}
@@ -241,30 +298,20 @@
     \begin{tdmargin}
     \end{tdmargin}
   \end{withmargin}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% TEMPLATE: side image hero, the chapter's second and last figure. The
-% heading is an architecture decision, one model per objective with the
-% predictions combined afterwards, which reads as a diagram and not as
-% prose. sidebody takes the argument for decoupling in the book's order,
-% the phimgside caption what the decoupling costs.
+
 \begin{frame}{Decoupling objectives}
   \phimgside[0.33]{decoupling_objectives.png}{}
   \begin{sidebody}
   \end{sidebody}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
 % ----------------------------------------------------------------------
 \subsection{Mind Versus Data}
 
-% TEMPLATE: two block contrast. This is the chapter's loudest versus and the
-% book gives it as a standing argument with named people on both sides, so
-% each camp takes one box, headed from the heading and levelled by the equal
-% height group. Each box takes that camp's position and the evidence it
-% leans on.
-\begin{frame}{Mind Versus Data}
+
+\begin{frame}{Model Versus Data}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
       \begin{tdblockt}[equal height group=mind]{Mind}
@@ -275,26 +322,17 @@
       \end{tdblockt}
     \end{column}
   \end{columns}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
 % ----------------------------------------------------------------------
 \subsection{Summary}
 
-% TEMPLATE: takeaway alone. A summary earns no scaffold of its own, so the
-% chapter closes on one centred line with nothing competing against it. The
-% line is the single sentence the chapter should leave behind, lifted from
-% the book's own summary rather than written fresh.
 \begin{frame}{Summary}
   \begin{takeaway}
   \end{takeaway}
-  \slidesources{Huyen2022}
-\end{frame}
+ \end{frame}
 
-% ----------------------------------------------------------------------
-% This chapter's own references. The refsection opened above scopes the
-% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
-% its own [n] markers instead of pointing at a list it does not contain.
+
 \begin{frame}{References}
   \printbibliography[heading=none]
 \end{frame}
