@@ -1,0 +1,118 @@
+%% lecture_outline.tex -- the ONE place the eleven lecture titles and their
+%% subchapters are written down.
+%%
+%% Why this file exists. The orientation deck carries a "lecture in one slide"
+%% for the whole course, and every chapter now carries the same card for its
+%% own lecture. Two copies of the same list drift: ch01's first subchapter was
+%% renamed to "The small part and the big picture" while ch00 still announced
+%% "When to Use Machine Learning". So there are no copies. Both render from
+%% here, and tools/check_lecture_outline.sh fails the build if this file and
+%% the chapters' own \subsection commands disagree.
+%%
+%% To change a subchapter: rename the \subsection in the chapter file AND the
+%% matching line here. The checker tells you when you did only one of them.
+%% "Summary" subchapters are deliberately left out of the cards; the checker
+%% ignores them too.
+
+\makeatletter
+
+% \outlinetitle{<roman>} -- the lecture's title, the book's own chapter title.
+\newcommand{\outlinetitle}[1]{\csname td@lt@#1\endcsname}
+% \outlineitems{<roman>} -- its subchapters, already formatted as table rows.
+\newcommand{\outlineitems}[1]{\csname td@lo@#1\endcsname}
+
+\newcommand{\td@setlecture}[3]{%
+  \expandafter\gdef\csname td@lt@#1\endcsname{#2}%
+  \expandafter\gdef\csname td@lo@#1\endcsname{#3}%
+}
+
+\td@setlecture{I}{Overview of Machine Learning Systems}{%
+  The small part and the big picture\\[0.2em]
+  Understanding Machine Learning Systems\\[0.2em]
+}
+
+\td@setlecture{II}{Introduction to Machine Learning Systems Design}{%
+  Business and ML Objectives\\[0.2em]
+  Requirements for ML Systems\\[0.2em]
+  Iterative Process\\[0.2em]
+  Framing ML Problems\\[0.2em]
+  Mind Versus Data\\[0.2em]
+}
+
+\td@setlecture{III}{Data Engineering Fundamentals}{%
+  Data Sources\\[0.2em]
+  Data Formats\\[0.2em]
+  Data Models\\[0.2em]
+  Data Storage Engines and Processing\\[0.2em]
+  Modes of Dataflow\\[0.2em]
+  Batch Processing Versus Stream Processing\\[0.2em]
+}
+
+\td@setlecture{IV}{Training Data}{%
+  Sampling\\[0.2em]
+  Labeling\\[0.2em]
+  Class Imbalance\\[0.2em]
+  Data Augmentation\\[0.2em]
+}
+
+\td@setlecture{V}{Feature Engineering}{%
+  Learned Features Versus Engineered Features\\[0.2em]
+  Common Feature Engineering Operations\\[0.2em]
+  Data Leakage\\[0.2em]
+  Engineering Good Features\\[0.2em]
+}
+
+\td@setlecture{VI}{Model Development and Offline Evaluation}{%
+  Model Development and Training\\[0.2em]
+  Model Offline Evaluation\\[0.2em]
+}
+
+\td@setlecture{VII}{Model Deployment and Prediction Service}{%
+  Machine Learning Deployment Myths\\[0.2em]
+  Batch Prediction Versus Online Prediction\\[0.2em]
+  Model Compression\\[0.2em]
+  ML on the Cloud and on the Edge\\[0.2em]
+}
+
+\td@setlecture{VIII}{Data Distribution Shifts and Monitoring}{%
+  Causes of ML System Failures\\[0.2em]
+  Data Distribution Shifts\\[0.2em]
+  Monitoring and Observability\\[0.2em]
+}
+
+\td@setlecture{IX}{Continual Learning and Test in Production}{%
+  Continual Learning\\[0.2em]
+  Test in Production\\[0.2em]
+}
+
+\td@setlecture{X}{Infrastructure and Tooling for MLOps}{%
+  Storage and Compute\\[0.2em]
+  Development Environment\\[0.2em]
+  Resource Management\\[0.2em]
+  ML Platform\\[0.2em]
+  Build Versus Buy\\[0.2em]
+}
+
+\td@setlecture{XI}{The Human Side of Machine Learning}{%
+  User Experience\\[0.2em]
+  Team Structure\\[0.2em]
+  Responsible AI\\[0.2em]
+}
+
+% \outlinecard{<roman>} -- one lecture as a booktabs card: numeral and title in
+% the head, subchapters under it. Three of them side by side fill the
+% orientation frames; one on its own opens a chapter.
+\newcommand{\outlinecard}[1]{%
+  \footnotesize
+  \renewcommand{\arraystretch}{1.1}%
+  \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+    \toprule
+    \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright
+      \alertbf{#1}\quad \textbf{\outlinetitle{#1}}}\\
+    \midrule
+    \outlineitems{#1}
+    \bottomrule
+  \end{tabular}%
+}
+
+\makeatother

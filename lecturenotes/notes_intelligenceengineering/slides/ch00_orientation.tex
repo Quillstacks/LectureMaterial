@@ -5,9 +5,9 @@
 %% before the heading "When to Use Machine Learning". ch01 opens on exactly that
 %% heading, so the two files meet without overlap and without a gap.
 %%
-%% STATE: titles, subtitles and TEMPLATE only. No body text. Every frame carries
-%% the layout it is meant to be filled into, and a % TEMPLATE comment saying why
-%% that layout. The subtitles are the book's own lines, not paraphrases.
+%% STATE: titles and layout only, no body text. The reason for a layout is
+%% not written above the frame any more; it lives in the frame itself, in the
+%% environments it uses. Filling the frames is the next pass.
 %% The earlier prose draft is kept at _archive/ch00_orientation_prose.tex.bak.
 %%
 %% NUMERAL. Every other chapter opens on \lecturepage{I} .. \lecturepage{XI} and
@@ -28,7 +28,10 @@
 
 
 
-% REMEMBER if you need you can always bring in some design patterns by the first book you read on this. 
+%% The design-patterns material is Lakshmanan et al., Machine Learning Design
+%% Patterns, already in the bib as Lakshmanan2020. It is an add-on, not a
+%% spine: it attaches to lecture II (Framing ML Problems, Objective
+%% Functions) and lecture VII (serving patterns), never to ch00.
 
 \begin{refsection}
 
@@ -91,9 +94,6 @@ and \alert{address issues} that arise in production.
 \subchaptergloss{Machine Learning and Data Engineering}
 \subsection{Overview}
 
-% TEMPLATE: overview table. One row per lecture, the numeral equals the
-% \lecturepage numeral and the title is the book's own chapter title. The
-% orientation row sits above the midrule because it has no book chapter.
 \begin{frame}{The lecture in one slide}
   \sideimagecover[0.33]{placeholder_gray.png}
   \sidecaption{Machine Learning Systems Overview}
@@ -104,17 +104,17 @@ and \alert{address issues} that arise in production.
         \toprule
         Lecture & \alert{Contents}\\
         \midrule
-        \alertbf{I} & Overview of Machine Learning Systems\\
-        \alertbf{II} & Introduction to Machine Learning Systems Design\\
-        \alertbf{III} & Data Engineering Fundamentals\\
-        \alertbf{IV} & Training Data\\
-        \alertbf{V} & Feature Engineering\\
-        \alertbf{VI} & Model Development and Offline Evaluation\\
-        \alertbf{VII} & Model Deployment and Prediction Service\\
-        \alertbf{VIII} & Data Distribution Shifts and Monitoring\\
-        \alertbf{IX} & Continual Learning and Test in Production\\
-        \alertbf{X} & Infrastructure and Tooling for MLOps\\
-        \alertbf{XI} & The Human Side of Machine Learning\\
+        \alertbf{I}    & \outlinetitle{I}\\
+        \alertbf{II}   & \outlinetitle{II}\\
+        \alertbf{III}  & \outlinetitle{III}\\
+        \alertbf{IV}   & \outlinetitle{IV}\\
+        \alertbf{V}    & \outlinetitle{V}\\
+        \alertbf{VI}   & \outlinetitle{VI}\\
+        \alertbf{VII}  & \outlinetitle{VII}\\
+        \alertbf{VIII} & \outlinetitle{VIII}\\
+        \alertbf{IX}   & \outlinetitle{IX}\\
+        \alertbf{X}    & \outlinetitle{X}\\
+        \alertbf{XI}   & \outlinetitle{XI}\\
         \bottomrule
     \end{tabular}
   \end{sidebody}
@@ -122,186 +122,39 @@ and \alert{address issues} that arise in production.
 \end{frame}
 
 
-% ----------------------------------------------------------------------
-% TEMPLATE: the one slide, unfolded. Three lectures per frame, one column
-% per lecture: the chapter header on top, its subchapters below, titles
-% only. The frame title stays the overview frame's. The size command sits
-% inside each column on purpose: a bare group wrapping the columns block
-% silently drops it.
+% The same eleven lectures unfolded, three per frame. Every card is rendered
+% from lecture_outline.tex, so a subchapter renamed in a chapter file shows up
+% here without anyone retyping it.
 \begin{frame}{The lecture in one slide}
   \begin{columns}[t]
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{I}\quad \textbf{Overview of Machine Learning Systems}}\\
-        \midrule
-        When to Use Machine Learning\\[0.2em]
-        Understanding Machine Learning Systems\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{II}\quad \textbf{Introduction to Machine Learning Systems Design}}\\
-        \midrule
-        Business and ML Objectives\\[0.2em]
-        Requirements for ML Systems\\[0.2em]
-        Iterative Process\\[0.2em]
-        Framing ML Problems\\[0.2em]
-        Mind Versus Data\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{III}\quad \textbf{Data Engineering Fundamentals}}\\
-        \midrule
-        Data Sources\\[0.2em]
-        Data Formats\\[0.2em]
-        Data Models\\[0.2em]
-        Data Storage Engines and Processing\\[0.2em]
-        Modes of Dataflow\\[0.2em]
-        Batch Processing Versus Stream Processing\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{I}\end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{II}\end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{III}\end{column}
   \end{columns}
-  \slidesources{Huyen2022}
 \end{frame}
 
 \begin{frame}{The lecture in one slide}
   \begin{columns}[t]
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{IV}\quad \textbf{Training Data}}\\
-        \midrule
-        Sampling\\[0.2em]
-        Labeling\\[0.2em]
-        Class Imbalance\\[0.2em]
-        Data Augmentation\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{V}\quad \textbf{Feature Engineering}}\\
-        \midrule
-        Learned Features Versus Engineered Features\\[0.2em]
-        Common Operations\\[0.2em]
-        Data Leakage\\[0.2em]
-        Engineering Good Features\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{VI}\quad \textbf{Model Development and Offline Evaluation}}\\
-        \midrule
-        Model Development and Training\\[0.2em]
-        Model Offline Evaluation\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{IV}\end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{V}\end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{VI}\end{column}
   \end{columns}
-  \slidesources{Huyen2022}
 \end{frame}
 
 \begin{frame}{The lecture in one slide}
   \begin{columns}[t]
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{VII}\quad \textbf{Model Deployment and Prediction Service}}\\
-        \midrule
-        ML Deployment Myths\\[0.2em]
-        Batch Prediction Versus Online Prediction\\[0.2em]
-        Model Compression\\[0.2em]
-        ML on the Cloud and on the Edge\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{VIII}\quad \textbf{Data Distribution Shifts and Monitoring}}\\
-        \midrule
-        Causes of ML System Failures\\[0.2em]
-        Data Distribution Shifts\\[0.2em]
-        Monitoring and Observability\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{IX}\quad \textbf{Continual Learning and Test in Production}}\\
-        \midrule
-        Continual Learning\\[0.2em]
-        Test in Production\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{VII}\end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{VIII}\end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{IX}\end{column}
   \end{columns}
-  \slidesources{Huyen2022}
 \end{frame}
 
 \begin{frame}{The lecture in one slide}
   \begin{columns}[t]
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{X}\quad \textbf{Infrastructure and Tooling for MLOps}}\\
-        \midrule
-        Storage and Compute\\[0.2em]
-        Development Environment\\[0.2em]
-        Resource Management\\[0.2em]
-        ML Platform\\[0.2em]
-        Build Versus Buy\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.1}%
-      \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-        \toprule
-        \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright\alertbf{XI}\quad \textbf{The Human Side of Machine Learning}}\\
-        \midrule
-        User Experience\\[0.2em]
-        Team Structure\\[0.2em]
-        Responsible AI\\[0.2em]
-        \bottomrule
-      \end{tabular}
-    \end{column}
-    \begin{column}{0.31\textwidth}
-    \end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{X}\end{column}
+    \begin{column}{0.31\textwidth}\outlinecard{XI}\end{column}
+    \begin{column}{0.31\textwidth}\end{column}
   \end{columns}
-  \slidesources{Huyen2022}
 \end{frame}
 
 
@@ -312,7 +165,7 @@ and \alert{address issues} that arise in production.
 % project brief in its body, logistics in grey at the bottom. The judging
 % lens gets the second frame. Side strip on both: the bee hive.
 \begin{frame}{Course Work}
-  \sideimagecover[0.3]{bees}
+  \sideimagecover[0.33]{bees}
   \sidecaption{The bee}
   \begin{sidebody}
     \begin{block}{Presentation (15\,min) + Q\&A (open)}
@@ -329,7 +182,7 @@ and \alert{address issues} that arise in production.
 % The judging lens: bold term + grey rest, one row per talk section, in
 % the order a talk runs.
 \begin{frame}{Course Work}
-  \sideimagecover[0.3]{bee_mloverlay}
+  \sideimagecover[0.33]{bee_mloverlay}
   \sidecaption{The bee}
   \begin{sidebody}
     What I am looking for ..\\

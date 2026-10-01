@@ -112,6 +112,21 @@
 <!-- END:lecture:notes_missingsemester -->
 
 <br>
+
+---
+### Engineering and Operations
+
+<details markdown="1">
+<summary>📑 <b>Lecture Slides</b></summary>
+
+|   #  | Lecture | Download |
+| :--: | :--- | :-: |
+| Full | Engineering and Operations · Lecture Slides | [📄 PDF](https://material.schutera.com/lecturenotes/notes_intelligenceengineering/slides/intelligence_engineering.pdf) |
+|  00  | Orientation | [📄 PDF](https://material.schutera.com/lecturenotes/notes_intelligenceengineering/slides/chapter_pdfs/ch00_orientation.pdf) |
+
+</details>
+
+<br>
 <br>
 
 ---

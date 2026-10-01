@@ -44,33 +44,65 @@
     font=\ttfamily\scriptsize]{\detokenize{#2}};%
 }
 
-% Placeholder side image: \phimgside[frac]{label}{caption}. The
-% \sideimagecover hero at placeholder stage: a blank gray strip on the
-% right, inset from the page edges so it clears the rotated watermark and
-% the \slidesources marker (9mm right) and the footer band (16mm bottom).
-% The label is NOT drawn; it stays in the call as the record of the
-% filename to drop into images/. The caption runs up the strip's bottom
-% left edge in the placeholder's own typewriter style, mirroring
-% \slidesources on the right page edge. It sets the theme's strip
-% bookkeeping, so a following sidebody gets the right width. Swap for
-% \sideimagecover[frac]{img} + \sidecaption{caption} once the asset exists.
+% Side figure width. RULE (Mark, 2026-09-30): every side figure in this deck
+% takes the SAME strip, one third of the page, so the body column never jumps
+% width from frame to frame. The [frac] argument of \phimgside and
+% \sidedrawing is kept for old calls but IGNORED; direct \sideimagecover calls
+% pass [\sidestrip] or [0.33].
+\newcommand{\sidestrip}{0.33}
+
+% Placeholder side image: \phimgside[frac]{label}{caption}. Shorthand for the
+% full-height side strip at placeholder stage, \sideimagecover[\sidestrip] on
+% placeholder_gray.png plus the rotated \sidecaption, so a placeholder frame
+% looks exactly like the frame its finished image will give. The label is NOT
+% drawn; it stays in the call as the record of the filename to drop into
+% images/. Swap for \sideimagecover[\sidestrip]{img} + \sidecaption{caption}
+% once the asset exists.
+% RULE (Mark, 2026-09-25): side figures are ALWAYS the full-height edge strip,
+% never an inset or padded box. An earlier \phimgside drew a box inset 9mm
+% from the page edges and was rejected; do not bring it back.
+\newcommand{\phimgside}[3][]{%
+  \sideimagecover[\sidestrip]{placeholder_gray.png}%
+  \sidecaption{#3}%
+}
+
+% Hand drawn side figure: \sidedrawing[frac]{img}. The side strip for the iPad
+% sketches that tools/notes_drawing.py exports: transparent, off-white ink, red
+% where the pen was red. A drawing must stay whole, so it is not cover-cropped
+% like a photo: it is scaled to fit the fixed \sidestrip strip (full height if
+% it is narrow enough, full strip width otherwise) and centred in it. sidebody
+% and \sidecaption then see the same strip as on every other side-figure frame.
+% It leaves the \sideimage flag down, because a transparent drawing does not
+% cover the \slidesources marker, and a marker turned red for a photo would be
+% the slide's second red next to the drawing's own.
 \makeatletter
-\newcommand{\phimgside}[3][0.33]{%
-  \renewcommand{\td@sidefrac}{#1}\renewcommand{\td@sideside}{east}%
+\newcommand{\sidedrawing}[2][]{%
+  \renewcommand{\td@sidefrac}{\sidestrip}\renewcommand{\td@sideside}{east}%
+  \td@sideimagefalse
+  \setlength{\td@stripw}{\sidestrip\paperwidth}%
   \begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north east, draw=tddim, thick, fill=tddim!12, inner sep=0pt,
-      minimum width={#1*\paperwidth},
-      minimum height={\dimexpr\paperheight-20mm\relax}]
-      (phstrip) at ([xshift=-9mm,yshift=-4mm]current page.north east){};
-    \node[rotate=90, anchor=west, inner sep=0pt, text=tddim,
-      font=\ttfamily\scriptsize]
-      at ([xshift=-2mm]phstrip.south west){#3};
+    \node[anchor=center,inner sep=0pt]
+      at ([xshift=-0.5\td@stripw]current page.east)
+      {\includegraphics[width=\td@stripw,height=\paperheight,keepaspectratio]{#2}};
   \end{tikzpicture}%
 }
 \makeatother
 
+% Hand drawn figure as the whole slide: \fulldrawing{img}{caption}. Centred,
+% 92% of the page height, with the caption running up its left edge in the
+% \sidecaption style. For a frame with no title and no body.
+\newcommand{\fulldrawing}[2]{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[inner sep=0pt] (fulldrawing) at (current page.center)
+      {\includegraphics[height=0.92\paperheight]{#1}};
+    \node[rotate=90, anchor=west, inner sep=0pt, text=tddim,
+      font=\ttfamily\scriptsize]
+      at ([xshift=-2mm,yshift=13mm]fulldrawing.west |- current page.south){#2};
+  \end{tikzpicture}%
+}
+
 % Placeholder QR code: \phqr{caption}. A small square placeholder box
-% pinned to the page's upper right corner, inset like \phimgside so it
+% pinned to the page's upper right corner, inset 9mm from the edge so it
 % clears the rotated watermark, with a typewriter caption run in on its
 % left. Swap for \slideqr{caption}{url} once the target url is settled;
 % the caption stays as it is.
@@ -98,6 +130,7 @@
 % Longer urls can cost a version, and a version is module size, which at
 % 9mm is what scanning depends on.
 \usepackage{qrcode}
+\usepackage{fontawesome5}% stakeholder icons, see sharedAssets/beamer/icons.md
 \newcommand{\slideqr}[2]{%
   \begin{tikzpicture}[remember picture,overlay]
     \node[anchor=north east, inner sep=0pt]
@@ -146,8 +179,7 @@
 % ([1-3]) in the same vertical spot, in place of hand-typed author-years.
 % The marker sits 3mm off the right page edge, which a \sideimage or
 % \sideimagecover strip covers, so grey stops reading there; on those frames it
-% goes red. \phimgside is deliberately NOT covered by this: its strip is inset
-% to clear the marker, so the placeholder keeps the grey.
+% goes red. \phimgside is the same strip, so it goes red too.
 \makeatletter
 \renewcommand{\slidesources}[1]{%
   \iftd@sideimage\def\td@srccol{DHBWred}\else\def\td@srccol{tddim}\fi
@@ -163,17 +195,23 @@
 % the strip's outer edge in the placeholder's own typewriter grey, mirroring
 % \slidesources on the opposite page edge, so a real image and its
 % \phimgside placeholder caption the same way. 13mm clears the footer band.
+% The node is filled with the page's own card colour and given a little
+% horizontal padding, so wherever a long caption runs up past the frametitle's
+% hairline rule it masks that rule instead of crossing it. The caption always
+% sits OUTSIDE the image strip, on the card, so the fill is invisible; it only
+% ever paints over the rule. Keep captions under ~50 characters anyway: the
+% node has no text width and the page clips whatever runs past the top edge.
 \renewcommand{\sidecaption}[1]{%
   \setlength{\td@stripw}{\td@sidefrac\paperwidth}%
   \def\td@westtest{west}%
   \begin{tikzpicture}[remember picture,overlay]
     \ifx\td@sideside\td@westtest
-      \node[rotate=90,anchor=west,inner sep=0pt,text=tddim,
-            font=\ttfamily\scriptsize]
+      \node[rotate=90,anchor=west,inner xsep=1.2mm,inner ysep=0.6mm,
+            fill=tdcard,text=tddim,font=\ttfamily\scriptsize]
         at ([xshift=\dimexpr\td@stripw+2mm\relax,yshift=13mm]current page.south west){#1};
     \else
-      \node[rotate=90,anchor=west,inner sep=0pt,text=tddim,
-            font=\ttfamily\scriptsize]
+      \node[rotate=90,anchor=west,inner xsep=1.2mm,inner ysep=0.6mm,
+            fill=tdcard,text=tddim,font=\ttfamily\scriptsize]
         at ([xshift=\dimexpr-\td@stripw-2mm\relax,yshift=13mm]current page.south east){#1};
     \fi
   \end{tikzpicture}%
@@ -181,6 +219,30 @@
 \makeatother
 
 % ------------------------------------------------------------- deck helpers
+
+% A References frame that runs long is set [allowframebreaks]; beamer then
+% appends a roman continuation counter to the title ("References II"), which
+% reads like a second section. Blank it: both pages are just References.
+\setbeamertemplate{frametitle continuation}{}
+
+% ------------------------------------------------------- lecture outline
+% The eleven lecture titles and their subchapters, defined once. ch00 renders
+% the whole course from it, every chapter renders its own card from it, and
+% tools/check_lecture_outline.sh fails the build when the file and the
+% chapters' \subsection commands disagree. Never hand-copy an outline again.
+\input{lecture_outline.tex}
+
+% ----------------------------------------------------------- stakeicon
+% One stakeholder, named under its icon. Used twice in chapter 1: the roll
+% call slide, where the five are only named, and the detail slide after it,
+% where each gets a card. Icons come from fontawesome5 per
+% sharedAssets/beamer/icons.md, in tdfg so they stay out of the one-red budget.
+%   \stakeicon{\faServer}{Platform team}
+\newcommand{\stakeicon}[2]{%
+  \begin{minipage}[t]{0.19\linewidth}\centering
+    {\large\color{tdfg}#1}\\[4pt]{\tiny\color{tddim}#2}%
+  \end{minipage}%
+}
 
 % ------------------------------------------------------------- statement
 % The punchline slide, overridden deck level. The theme's own statement is
@@ -210,6 +272,24 @@
 % \substatement stays \protected so the surrounding grab cannot expand it.
 \RenewDocumentCommand{\substatement}{m}{%
   \par\vskip0.9em{\large\color{tddim}\raggedright #1\par}}
+
+% -------------------------------------------------------------- takeaway
+% Also overridden deck level, and for the same reason as statement above: the
+% theme's takeaway is \Large italic red centred, which shouts in a typeface
+% that was never drawn to shout, and centring strands an orphan word when the
+% line wraps. Here it joins the statement family instead: red rule, claim flush
+% left in bold MIXED case, the red carried inline by \alertbf rather than
+% painted over the whole sentence. One step smaller than statement, because a
+% takeaway closes a chapter where a statement opens a question.
+%
+%   \begin{takeaway}
+%     The gap between the two is the \alertbf{machine learning system}.
+%   \end{takeaway}
+\RenewDocumentEnvironment{takeaway}{+b}{%
+  \par\vfill
+  {\color{DHBWred}\rule{0.07\paperwidth}{2.5pt}}\par\vskip0.9em
+  {\fontsize{22}{27}\selectfont\bfseries\raggedright #1\par}%
+  \vfill\par}{}
 
 % ---------------------------------------------------------- frame subtitle
 % The theme's frametitle template prints the title and the hairline rule and
@@ -380,16 +460,18 @@
 % The framing frames that used to sit here, commented out behind \iffalse,
 % are gone. Their job is now done by ch00_orientation.tex, which is written
 % from the book's preface and the opening of its chapter 1 rather than from
-% the earlier hand-written framing.
+% the earlier hand-written framing.‚
 
 % ------------------------------------------------------------------ chapters
 % One \input per book chapter, in the book's order. Each fragment carries its
 % own \lecturepage divider and its \section. ch00 has no book chapter: it is
 % the orientation lecture, built from the preface and the run-up to chapter 1's
 % first heading, and it opens on a blank numeral (LECTURE _) for that reason.
-%\input{ch00_orientation.tex}
+% main carries ch00 only; ch01 to ch11 are drafted on the branch inprogress
+% and come back here one \input at a time as each lecture is ready.
+\input{ch00_orientation.tex}
 %\input{ch01_overview.tex}
-\input{ch02_systems_design.tex}
+%\input{ch02_systems_design.tex}
 %\input{ch03_data_engineering.tex}
 %\input{ch04_training_data.tex}
 %\input{ch05_feature_engineering.tex}

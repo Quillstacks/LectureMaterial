@@ -10,8 +10,9 @@ of content, read the companion [slidedesign.md](slidedesign.md).
 ## Files
 
 - `beamerthemetuftedark.sty` — the theme. One file: palette, fonts, colours,
-  inner theme, background card, title/section pages, footer, blocks, margin
-  layout, and the dark figure vocabulary. Invoked with `\usetheme{tuftedark}`.
+  inner theme, the two-band background (grey content + dark footer), title/section
+  pages, footer, blocks, margin layout, and the dark figure vocabulary. Invoked
+  with `\usetheme{tuftedark}`.
 - `demo.tex` / `demo.pdf` — a showcase deck exercising every layout. Treat it as
   the living reference: if you add a feature to the theme, demonstrate it here.
 - `AGENTS.md` (this file) and `slidedesign.md` — documentation.
@@ -34,7 +35,7 @@ practice, keep the deck in this directory (next to the `.sty`) or export the pat
 ```latex
 \documentclass[aspectratio=169]{beamer}   % 16:9
 \usetheme{tuftedark}
-\title[Short Title]{Full Title}            % short forms feed the footer
+\title[Short Title]{Full Title}            % short forms used on the title page
 \author[Surname]{Full Name}
 \institute{DHBW Ravensburg}
 \date{\today}
@@ -48,7 +49,6 @@ practice, keep the deck in this directory (next to the `.sty`) or export the pat
 
 - Use `\section{...}` (and optionally `\subsection`) — the footer nav is built
   from sections, so a deck with no sections has an empty nav.
-- Set the short title/author; the footer shows `author – short title`.
 
 ## Theme API (what you can use in a deck)
 
@@ -75,25 +75,50 @@ practice, keep the deck in this directory (next to the `.sty`) or export the pat
 \end{withmargin}
 ```
 
+**Full-height side image** (`\sideimage`) — a portrait image bleeds the full
+slide height on one edge, text confined to the other side. Ported from the KIT
+corporate "picture NN vertical" layout.
+```latex
+\begin{frame}{Title}                 % keep the title short: the image
+  \sideimage[0.33]{portrait}         % bleeds over the title strip on its side
+  \begin{sidebody} ...concise text... \end{sidebody}
+\end{frame}
+```
+The optional argument is the width fraction reserved for the image. **Always
+0.33** (Mark, 2026-09-30): every side figure in a deck takes the same strip, so
+the text column never jumps width from frame to frame. Do not size the strip to
+the image; fit the image to the strip instead (cover-crop a photo, scale a
+drawing to fit). `\sideimage` puts the image at the right edge; `\sideimage*`
+at the left. The text column is the image's caption, so keep it concise.
+
+`\sideimagecover[0.33]{img}` is the same, but **cover-crops** the image to fill a
+strip of exactly the reserved width at full height (centre crop) — use it to
+force a photo or near-square screenshot into a full-height one-third strip. Use
+plain `\sideimage` for a diagram that must stay whole (no crop).
+
 **Figures — always dark-native, never inverted.** Use the parallel light-on-dark
 styles, the twins of the print TikZ / tufteplot vocabulary:
 - TikZ: `td`, `tdbox`, `tdboxhi` (red highlight), `tdarr`, `tdarrhi`, `tdarrdim`
   (dashed grey). E.g. `\node[tdbox]{...}; \draw[tdarr] ... ;`.
 - pgfplots: the `tufteplotdark` axis style (no frame, outside thin ticks, white
   strokes). Highlight a point with `DHBWred`.
-- A figure must clear the **12 mm footer strip**: keep plot `height` modest
+- A figure must clear the **footer**: keep plot `height` modest
   (≈`0.40\textwidth`) or content collides with the footer.
 
 ## Palette (defined in the theme)
 
 `DHBWred` `#E2001A` (HKS 14, the only accent) · `DHBWgray` `#717776` (HKS 92) ·
-`tdpage` `#050505` (page/margin behind the card) · `tdcard` `#17181A` (content
-card) · `tdfg` `#F2F2F2` (text) · `tddim` `#9A9A9A` (de-emphasis) · `tdrule`
+`tdpage` `#050505` (page + recessed footer margin, darkest) · `tdcard` `#16171B`
+(lighter content card) · `tdfg` `#F2F2F2` (text) · `tddim` `#9A9A9A`
+(de-emphasis, also the mini-frame grey) · `tdrule`
 (hairlines). Block fills: `tdblocktitle`, `tdblockbody`, `tdexbody`.
 
 ## Conventions (do not drift from these)
 
-- **Dark only.** Near-black card on a darker page. No light variant.
+- **Dark only.** A lighter content card (`tdcard`) on a darker page (`tdpage`) --
+  the KIT structure inverted for dark mode. The footer navigation is recessed in
+  the dark page margin below the card, separated by the rounded card edge. No
+  light variant.
 - **Red is the single accent, used sparingly.** The highlighted equation term,
   `\alert{...}`, the takeaway, `alertblock`, the section/title accent rules. Body
   text, bullets, frame-title rules, and the footer are off-white / grey — **never
@@ -101,9 +126,11 @@ card) · `tdfg` `#F2F2F2` (text) · `tddim` `#9A9A9A` (de-emphasis) · `tdrule`
 - **Sans body + serif math.** Source Sans for text and titles; Palatino for math
   (`mathpazo`). Do not switch equations to a sans math font.
 - **Prose-first.** Lead with short prose; reserve `itemize` for genuine lists.
-- **Footer** = KIT mini-frame navigation (section names + per-frame circles that
-  fill off-white as you advance) over `author – title` / `date  n/total`. It is
-  driven by `\section{}` and the short title/author.
+- **Footer** = the standard KIT mini-frame navigation (section names + per-frame
+  grey circles; only the *current* frame is filled, the rest hollow, other
+  sections dimmed) recessed in the dark page margin below the card, with the
+  slide counter `n / total` on the *same row* at the right edge. One full-width
+  `beamercolorbox`, driven by `\section{}`.
 
 ## Gotchas
 
@@ -111,10 +138,11 @@ card) · `tdfg` `#F2F2F2` (text) · `tddim` `#9A9A9A` (de-emphasis) · `tdrule`
 - **`\MakeUppercase` crashes** here (LaTeX3 `\__text_expand_space:w` clash). Use
   `\uppercase\expandafter{...}` instead, as the title page does.
 - **Verbatim needs `[fragile]`** frames (the code slide).
-- **Figure height** must respect the footer strip (see above).
-- Editing the theme: keep `demo.tex` building and re-render to verify visually;
-  this theme has a lot of pgf/beamer-internal code (the custom `\slideentry` that
-  drives the cumulative circle fill) where a silent wrong number breaks the nav.
+- **Figure height** must respect the footer (see above).
+- Editing the theme: keep `demo.tex` building and re-render to verify visually.
+  The navigation is now beamer's stock `\insertnavigation` (no custom
+  `\slideentry`); recolour via the `mini frame` beamer-colour, do not reintroduce
+  a cumulative-fill override.
 
 When in doubt about *what kind of slide to build for a given purpose*, defer to
 [slidedesign.md](slidedesign.md) — that is the editorial guide; this file is the

@@ -33,14 +33,15 @@
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins}
 \RequirePackage{fancyvrb}
+\RequirePackage{animate}   % plays GIF frame sequences in the PDF (see \gif below)
 
 %% ----------------------------------------------------------------------
 %% Palette -- DHBW corporate colours on a dark, layered canvas
 %% ----------------------------------------------------------------------
 \definecolor{DHBWred}{HTML}{E2001A}   % HKS 14, the single accent
 \definecolor{DHBWgray}{HTML}{717776}  % HKS 92, secondary
-\definecolor{tdpage}{HTML}{050505}    % page / margin (darkest, behind the card)
-\definecolor{tdcard}{HTML}{17181A}    % content card (slightly elevated)
+\definecolor{tdpage}{HTML}{050505}    % page + recessed footer margin (darkest)
+\definecolor{tdcard}{HTML}{16171B}    % elevated content card (lighter, KIT-style)
 \definecolor{tdfg}{HTML}{F2F2F2}      % primary text (off-white)
 \definecolor{tddim}{HTML}{9A9A9A}     % dimmed grey
 \definecolor{tdrule}{gray}{0.40}      % hairline rules
@@ -48,6 +49,11 @@
 \definecolor{tdblocktitle}{HTML}{3A3B3D} % block title bar
 \definecolor{tdblockbody}{HTML}{1F2022}  % block body
 \definecolor{tdexbody}{HTML}{202326}     % example block body
+% per-slide name watermark: a hair lighter than the card so it reads only on
+% close inspection. Push the second number up (e.g. 97) to make it fainter.
+% tdwmname lifts the surname half just slightly so it stays a touch more legible.
+\colorlet{tdwm}{tdcard!94!tdfg}
+\colorlet{tdwmname}{tdcard!90!tdfg}
 
 %% ----------------------------------------------------------------------
 %% Fonts -- modern sans (Source Sans) for text, Palatino for math
@@ -58,7 +64,9 @@
 \renewcommand{\familydefault}{\sfdefault}
 
 \setbeamerfont{title}{size=\LARGE,series=\bfseries}
-\setbeamerfont{subtitle}{size=\large,series=\mdseries}
+% subtitle matches the title in size and weight; only the colour (off-white vs
+% grey) separates them.
+\setbeamerfont{subtitle}{size=\LARGE,series=\bfseries}
 \setbeamerfont{frametitle}{size=\Large,series=\bfseries}
 \setbeamerfont{section title}{size=\huge,series=\bfseries}
 \setbeamerfont{section in head/foot}{size=\scriptsize}
@@ -88,8 +96,9 @@
 \setbeamercolor{enumerate item}{fg=tddim}
 \setbeamercolor{caption name}{fg=tddim}
 
-% navigation / footer roles
-\setbeamercolor{mini frame}{fg=tdfg,bg=tdpage}
+% navigation / footer roles -- grey mini frames (current filled, rest hollow)
+% recessed in the dark page margin (tdpage) below the lighter content card
+\setbeamercolor{mini frame}{fg=tddim,bg=tdpage}
 \setbeamercolor{section in head/foot}{fg=tddim,bg=tdpage}
 \setbeamercolor{author in head/foot}{fg=tddim,bg=tdpage}
 \setbeamercolor{title in head/foot}{fg=tddim,bg=tdpage}
@@ -101,6 +110,34 @@
 \setbeamercolor{block body alerted}{fg=tdfg,bg=DHBWred!16!tdcard}
 \setbeamercolor{block title example}{fg=tdfg,bg=DHBWgray}
 \setbeamercolor{block body example}{fg=tdfg,bg=tdexbody}
+
+%% ----------------------------------------------------------------------
+%% Inline emphasis -- \alert is beamer's built-in red accent; \alertbf is its
+%% bold twin, for the one word on a slide that must land hardest. Both draw the
+%% "alerted text" colour (DHBW red), so recolouring the role moves both. Keep
+%% \alert the frequent accent and reserve \alertbf for the single peak term.
+%% ----------------------------------------------------------------------
+\newcommand{\alertbf}[1]{{\usebeamercolor[fg]{alerted text}\bfseries#1}}
+
+%% ----------------------------------------------------------------------
+%% Per-slide source marker -- a compact citation running vertically up the
+%% right edge, reading upward and sitting BELOW the rotated name watermark,
+%% wrapped in corner brackets. Drawn in tddim (not the fainter watermark
+%% tone) so it stays legible. Keeps the body prose free of inline citations;
+%% the full entries live on the unit's closing References frame. Overlay-
+%% placed, so it never affects layout and may go anywhere in the frame body.
+%% Reads upward from just above the footer band; keep the list short so it
+%% clears the name (long lists belong on the References frame only).
+%% Needs the two compile passes latexmk already runs (remember picture).
+%%   \slidesources{Vaswani 2017; Devlin 2018}
+%% ----------------------------------------------------------------------
+\newcommand{\slidesources}[1]{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[rotate=90,anchor=west,inner sep=0pt,text=tddim,font=\scriptsize]
+      at ([xshift=-3mm,yshift=13mm]current page.south east)
+      {$\ulcorner$\,#1\,$\urcorner$};
+  \end{tikzpicture}%
+}
 
 %% ----------------------------------------------------------------------
 %% Inner theme -- rounded blocks (no shadow on dark)
@@ -127,20 +164,32 @@
 \setbeamertemplate{navigation symbols}{}
 
 %% ----------------------------------------------------------------------
-%% Background -- a rounded dark card on a darker page (KIT card, inverted).
-%% The footer strip lives in the darker margin below the card.
+%% Background -- two full-width horizontal bands, no card, no rounded corners:
+%% the grey content fills the top edge to edge, the dark footer band sits at the
+%% bottom and holds the navigation. On plain frames the grey fills the whole
+%% slide (the footer band collapses to zero).
 %% ----------------------------------------------------------------------
-\newlength{\tdcardbottom}
+\newlength{\tdfootband}
+\newlength{\tdwmx}\newlength{\tdwmy}
+% Vertical name watermark on the right edge. Decks may override it in their
+% master, e.g. \renewcommand{\tdwatermark}{[1,\,3,\,6]}; the default is the
+% author signature, so existing decks are unchanged.
+\newcommand{\tdwatermark}{Prof.\ Dr.-Ing.\ \textcolor{tdwmname}{Mark Schutera}}
 \usebackgroundtemplate{%
-  \setlength{\tdcardbottom}{\ifbeamer@plainframe1.2mm\else12mm\fi}%
+  \setlength{\tdfootband}{\ifbeamer@plainframe0mm\else11mm\fi}%
+  \setlength{\tdwmx}{\dimexpr\paperwidth-3mm\relax}%         rotated name hugs the right edge
+  \setlength{\tdwmy}{\dimexpr\paperheight-3mm\relax}%        end of the name sits at the top-right corner
   \begin{tikzpicture}
     \useasboundingbox (0,0) rectangle (\paperwidth,\paperheight);
     \fill[tdpage] (0,0) rectangle (\paperwidth,\paperheight);
-    \fill[tdcard,rounded corners=2mm]
-      (1mm,\tdcardbottom) rectangle
-      (\dimexpr\paperwidth-1mm\relax,\dimexpr\paperheight-1mm\relax);
+    \fill[tdcard] (0,\tdfootband) rectangle (\paperwidth,\paperheight);
+    % name watermark: a small italic signature reading up the right edge and
+    % ending at the top-right corner. Surname half lifted slightly (tdwmname).
+    \node[rotate=90, anchor=east, font=\footnotesize\itshape, text=tdwm, inner sep=0pt]
+      at (\tdwmx, \tdwmy) {\tdwatermark};
   \end{tikzpicture}%
 }
+
 
 %% ----------------------------------------------------------------------
 %% Frame title -- bold sans with a hairline grey rule
@@ -155,103 +204,90 @@
 }
 
 %% ----------------------------------------------------------------------
-%% Title page -- KIT-style structure: institute strip, accent band, title,
-%% subtitle, author | date.
+%% Version tag -- mirrors the lecture-notes \setbookversion{date}{codename}
+%% convention (sharedAssets/meta.tex). \printbookversion renders "date .
+%% codename" with the codename italic, and falls back to \insertdate when no
+%% version is set.
+%% ----------------------------------------------------------------------
+\newcommand{\bookver@date}{}
+\newcommand{\bookver@name}{}
+\newcommand{\setbookversion}[2]{%
+  \renewcommand{\bookver@date}{#1}\renewcommand{\bookver@name}{#2}}
+\newcommand{\printbookversion}{%
+  \ifx\bookver@name\@empty
+    \insertdate
+  \else
+    \ifx\bookver@date\@empty\insertdate\else\bookver@date\fi
+    \;\textperiodcentered\;{\itshape\bookver@name}%
+  \fi}
+
+%% ----------------------------------------------------------------------
+%% Title page -- KIT-style structure: institute wordmark, accent band, title,
+%% subtitle (same size, greyed), then author | date . version-tag, set lower.
+%% The institute strip is a plain wordmark; colour DHBW red in the deck via
+%% \institute{\textcolor{DHBWred}{DHBW} Ravensburg}. Drop a real logo in by
+%% redefining this strip with \includegraphics.
 %% ----------------------------------------------------------------------
 \setbeamertemplate{title page}{%
   \vskip2mm%
-  {\color{DHBWred}\rule[-0.05ex]{1.5ex}{1.5ex}}\hskip1ex%
-  {\small\color{tddim}\uppercase\expandafter{\insertinstitute}}\par%
+  {\small\usebeamercolor[fg]{institute}\insertinstitute}\par%
   \vfill
   {\color{DHBWred}\rule{0.16\paperwidth}{2pt}}\par\vskip0.8em%
   {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}%
   \ifx\insertsubtitle\@empty\else
     \vskip0.35em{\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}%
   \fi
-  \vskip1.3em%
+  \vskip3em%
   {\normalsize\usebeamercolor[fg]{author}\insertauthor%
-    \ifx\insertdate\@empty\else\;\textbar\;\insertdate\fi\par}%
+    \;\textbar\;\printbookversion\par}%
   \vfill
 }
 
 %% ----------------------------------------------------------------------
-%% Section divider -- a mini title page
+%% Section divider -- a mini title page, with an OPTIONAL secondary title.
+%% Set \sectionsubtitle{...} just before \section{...}; it renders greyed under
+%% the section title and clears itself, so the next divider has none unless set.
 %% ----------------------------------------------------------------------
+\newcommand{\sectionsubtitle@text}{}
+\newcommand{\sectionsubtitle}[1]{\gdef\sectionsubtitle@text{#1}}
 \setbeamertemplate{section page}{%
   \vfill
   {\color{DHBWred}\rule{0.13\paperwidth}{2pt}}\par\vskip0.7em%
   {\usebeamercolor[fg]{section number}\large\bfseries
     \ifnum\c@section>0 \insertsectionnumber\fi}\par\vskip0.25em%
   {\usebeamerfont{section title}\usebeamercolor[fg]{section title}\insertsectionhead\par}%
+  \ifdefempty{\sectionsubtitle@text}{}{%
+    \vskip0.35em
+    {\usebeamerfont{section title}\color{tddim}\sectionsubtitle@text\par}}%
+  \gdef\sectionsubtitle@text{}%
   \vfill
 }
 
 %% ----------------------------------------------------------------------
-%% Footline -- KIT layout: mini-frame navigation (cumulative fill, off-white,
-%% no red) on top; author -- title (left) and date + slide counter (right)
-%% beneath, sitting in the dark margin strip. Compression keeps each section
-%% to one circle row.
+%% Footline -- the KIT layout, unchanged in behaviour: the standard beamer
+%% mini-frame navigation (\insertnavigation) on top, then author -- title
+%% (left) and date + slide counter (right) beneath. The standard navigation
+%% fills only the *current* frame and leaves every other frame as a hollow
+%% circle (dimmer for other sections); we just recolour it grey. Compression
+%% keeps each section to one circle row.
 %% ----------------------------------------------------------------------
 \beamer@compresstrue
-\setbeamersize{mini frame size=0.10cm,mini frame offset=0.04cm}
+\setbeamersize{mini frame size=0.12cm,mini frame offset=0.04cm}
 \setbeamertemplate{section in head/foot}{\color{tdfg}\insertsectionhead}
 \setbeamertemplate{section in head/foot shaded}{\color{tddim}\insertsectionhead}
 
-% filled off-white once a frame's first page is reached, hollow grey ahead
-\def\tuftedark@pagecmp#1/#2\relax{%
-  \ifnum\c@page<#1\relax
-    {\color{tddim}\usebeamertemplate{mini frame in current subsection}}%
-  \else
-    {\color{tdfg}\usebeamertemplate{mini frame}}%
-  \fi}
-\def\tuftedark@slideentry#1#2#3#4#5#6{%
-  \ifnum#6=\c@part\ifnum#1>0\ifnum#3>0%
-    \ifbeamer@compress%
-      \advance\beamer@xpos by1\relax%
-    \else%
-      \ifnum#2=0%
-        \beamer@ypos@offset=1\relax%
-      \fi
-      \beamer@xpos=#3\relax%
-      \beamer@ypos=#2\relax%
-      \advance\beamer@ypos by \beamer@ypos@offset\relax
-    \fi%
-    \hbox to 0pt{%
-      \beamer@tempdim=-\beamer@vboxoffset%
-      \advance\beamer@tempdim by-\beamer@boxsize%
-      \multiply\beamer@tempdim by\beamer@ypos%
-      \advance\beamer@tempdim by -.05cm%
-      \raise\beamer@tempdim\hbox{%
-        \beamer@tempdim=\beamer@boxsize%
-        \multiply\beamer@tempdim by\beamer@xpos%
-        \advance\beamer@tempdim by -\beamer@boxsize%
-        \advance\beamer@tempdim by 1pt%
-        \kern\beamer@tempdim
-        \global\beamer@section@min@dim\beamer@tempdim
-        \hbox{\beamer@link(#4){%
-            \usebeamerfont{mini frame}%
-            \tuftedark@pagecmp#4\relax%
-          }}}\hskip-10cm plus 1fil%
-    }\fi\fi%
-  \else%
-    \fakeslideentry{#1}{#2}{#3}{#4}{#5}{#6}%
-  \fi\ignorespaces%
-}
-
 \setbeamertemplate{headline}{}
+% Footer = the mini-frame navigation recessed in the dark page margin below the
+% content card, with the slide counter on the SAME row at the right edge. The
+% box height matches the card's bottom inset so content never spills onto the
+% margin.
 \setbeamertemplate{footline}{%
-  \vskip1pt%
-  {\let\slideentry\tuftedark@slideentry\insertnavigation{\paperwidth}}%
-  \vskip0.5pt%
-  \hbox to \paperwidth{\hskip6mm%
-    {\usebeamerfont{author in head/foot}\usebeamercolor[fg]{author in head/foot}%
-      \insertshortauthor\ifx\insertshorttitle\@empty\else\;\textendash\;\insertshorttitle\fi}%
-    \hfill%
-    {\usebeamerfont{author in head/foot}\usebeamercolor[fg]{author in head/foot}%
-      \ifx\insertshortdate\@empty\else\insertshortdate\hskip1.6em\fi
+  \begin{beamercolorbox}[wd=\paperwidth,ht=6mm,dp=5mm,leftskip=6mm,rightskip=6mm]{section in head/foot}%
+    \insertnavigation{\dimexpr\paperwidth-12mm-4em\relax}%
+    \hfill
+    {\usebeamerfont{section in head/foot}\color{tddim}%
       \insertframenumber\,/\,\inserttotalframenumber}%
-    \hskip6mm}%
-  \vskip2mm%
+  \end{beamercolorbox}%
 }
 
 %% ----------------------------------------------------------------------
@@ -263,34 +299,267 @@
   colframe=DHBWgray, colback=tdblockbody, coltext=tdfg,
   left=7pt,right=7pt,top=5pt,bottom=5pt, #1}
 
+% Titled variant of tdblock: the same plain box with a red bold header
+% line, for blocks whose first line names the point being made.
+%   \begin{tdblockt}[extra options]{The task is repetitive.} ... \end{tdblockt}
+\newtcolorbox{tdblockt}[2][]{%
+  enhanced, arc=2pt, boxrule=0.8pt,
+  colframe=DHBWgray, colback=tdblockbody, coltext=tdfg,
+  coltitle=DHBWred, colbacktitle=tdblockbody, fonttitle=\bfseries,
+  titlerule=0pt, toptitle=2pt, bottomtitle=0pt, halign title=flush left,
+  left=7pt,right=7pt,top=3pt,bottom=5pt, title={#2}, #1}
+
 \newtcolorbox{tddef}[1]{%
   enhanced, arc=2pt, boxrule=0.8pt,
   colframe=DHBWgray, colback=tdblockbody, coltext=tdfg,
   coltitle=DHBWred, colbacktitle=tdblockbody, fonttitle=\bfseries,
   titlerule=0pt, toptitle=2pt, bottomtitle=0pt,
-  left=7pt,right=7pt,top=3pt,bottom=5pt, title={#1}}
+  left=7pt,right=7pt,top=3pt,bottom=5pt, title={Definition: #1}}
 
 \newtcolorbox{tdcode}{%
   enhanced, arc=2pt, boxrule=0.8pt,
   colframe=DHBWgray, colback=black!88, coltext=tdfg,
   fontupper=\ttfamily\small, left=7pt,right=7pt,top=5pt,bottom=5pt}
 
+% Titled variant of tdcode: the same dark code panel with a grey bold caption
+% bar, for labelling a short listing (e.g. "System prompt", "One turn").
+%   \begin{tdcodet}{System prompt} ... \end{tdcodet}
+\newtcolorbox{tdcodet}[1]{%
+  enhanced, arc=2pt, boxrule=0.8pt,
+  colframe=DHBWgray, colback=black!88, coltext=tdfg,
+  coltitle=tddim, colbacktitle=black!88, fonttitle=\bfseries\footnotesize,
+  titlerule=0pt, toptitle=2pt, bottomtitle=1pt,
+  fontupper=\ttfamily\scriptsize, left=6pt,right=4pt,top=4pt,bottom=5pt,
+  title={#1}}
+
 \newenvironment{takeaway}{%
   \par\vfill\begin{center}\Large\itshape\color{DHBWred}}{%
   \end{center}\vfill\par}
+
+%% statement -- the loud sibling of takeaway: one centred line of bold
+%% letterspaced caps in the text colour, \vfill-centred on the frame like
+%% takeaway. The body is grabbed (+b) so the environment can uppercase it;
+%% write it in normal case. Inside a sidebody or minipage the \vfill has no
+%% height to distribute, so it centres horizontally only.
+%%   \begin{statement} not a course about algorithms \end{statement}
+%% Letterspaced-caps helper for statement/substatement: fontspec's
+%% LetterSpace under lualatex; under pdftex there is no fontspec, so fall
+%% back to plain caps rather than an undefined control sequence.
+\newcommand{\td@lscaps}{%
+  \ifdefined\addfontfeature\addfontfeature{LetterSpace=8.0}\fi}
+
+\NewDocumentEnvironment{statement}{+b}{%
+  \par\vfill\begin{center}
+    {\Large\bfseries\td@lscaps\MakeUppercase{#1}}%
+  \end{center}\vfill\par}{}
+
+%% \substatement -- a second, quieter line inside a statement: one step
+%% smaller and DHBW red, same letterspaced caps. Call it inside the
+%% statement body, after the main line.
+%%   \begin{statement} the claim \substatement{the consequence} \end{statement}
+% \NewDocumentCommand on purpose: it is \protected, so the statement's
+% \MakeUppercase cannot expand it and uppercase the colour name inside.
+\NewDocumentCommand{\substatement}{m}{%
+  \par\vskip0.6em
+  {\large\bfseries\td@lscaps\color{DHBWred}\MakeUppercase{#1}}\par}
 
 %% ----------------------------------------------------------------------
 %% Tufte margin column -- narrow right column for sidenotes / citations.
 %%   \begin{withmargin}\begin{tdmain}...\end{tdmain}
 %%   \begin{tdmargin}...\end{tdmargin}\end{withmargin}
 %% ----------------------------------------------------------------------
-\newenvironment{withmargin}{\begin{columns}[T]}{\end{columns}}
+% onlytextwidth keeps both columns inside the text block -- content never bleeds
+% left of the title's margin.
+% centred by default: the main artefact and its margin reading sit on one line,
+% so horizontal alignment holds throughout and slides stay tidy.
+\newenvironment{withmargin}{\begin{columns}[c,onlytextwidth]}{\end{columns}}
 \newenvironment{tdmain}{\begin{column}{0.64\textwidth}}{\end{column}}
 \newenvironment{tdmargin}{%
   \begin{column}{0.30\textwidth}%
     \usebeamercolor[fg]{normal text}\color{tddim}%
     \footnotesize\raggedright}{%
   \end{column}}
+
+% Wide artefact column for the GIF slide: fills more of the frame than tdmain
+% (a GIF wants the room), still pairs with a tdmargin on the right.
+%   \begin{withmargin}
+%     \begin{gifmain}\gif{clip}\end{gifmain}
+%     \begin{tdmargin} the reading \end{tdmargin}
+%   \end{withmargin}
+\newenvironment{gifmain}{\begin{column}{0.68\textwidth}\centering}{\end{column}}
+
+%% ----------------------------------------------------------------------
+%% Full-height side image ("hero") -- learned from the KIT corporate-design
+%% "picture NN vertical" layout: a portrait image bleeds the full slide
+%% height on one edge, and the text is confined to the other side. The KIT
+%% class does it with a full-height background image plus a narrowed text
+%% geometry; here we drop the image as an overlay anchored to the page edge
+%% and hold the text in a width-matched minipage (\sidebody).
+%%
+%%   \begin{frame}{Title}
+%%     \sideimage[0.34]{portrait}          % right strip, full height, ~34% wide
+%%     \begin{sidebody} ...text on the left... \end{sidebody}
+%%   \end{frame}
+%%
+%% The optional argument is the width fraction reserved for the image: pick it
+%% to match the image's natural width at full slide height (portraits ~0.33,
+%% near-square ~0.6). Call \sideimage FIRST in the frame body. The starred form
+%% \sideimage*[..]{..} puts the image on the LEFT (keep such titles short --
+%% the image bleeds over the title/footer on its strip, as in the KIT original).
+%% ----------------------------------------------------------------------
+\newcommand{\td@sidefrac}{0.40}
+\newcommand{\td@sideside}{east}
+% Raised by the side-image commands below so the rest of the frame can ask
+% whether a real image is covering the edges; \slidesources uses it to pick a
+% colour that survives on top of one. Plain \newif, so the flag is local to
+% the frame group and clears itself at \end{frame}. Nothing in this theme
+% reads it -- a deck opts in by shadowing \slidesources.
+\newif\iftd@sideimage
+\newlength{\td@bodywidth}
+\newcommand{\sideimage}{\@ifstar{\td@sideimageL}{\td@sideimageR}}
+\newcommand{\td@sideimageR}[2][0.40]{%
+  \renewcommand{\td@sidefrac}{#1}\renewcommand{\td@sideside}{east}%
+  \td@sideimagetrue
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north east,inner sep=0pt]
+      at (current page.north east){\includegraphics[height=\paperheight]{#2}};
+  \end{tikzpicture}%
+}
+\newcommand{\td@sideimageL}[2][0.40]{%
+  \renewcommand{\td@sidefrac}{#1}\renewcommand{\td@sideside}{west}%
+  \td@sideimagetrue
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north west,inner sep=0pt]
+      at (current page.north west){\includegraphics[height=\paperheight]{#2}};
+  \end{tikzpicture}%
+}
+%% \sideimagecover -- same layout, but the image is COVER-CROPPED to fill a
+%% strip of exactly the reserved width at full height (centre crop). Use it for
+%% a photo or screenshot whose natural aspect does not match the strip: e.g. a
+%% near-square screenshot forced into a full-height one-third strip. (Use plain
+%% \sideimage for a diagram that must stay whole.) Starred = left edge.
+\newlength{\td@stripw}
+\newcommand{\sideimagecover}{\@ifstar{\td@sideimagecoverL}{\td@sideimagecoverR}}
+\newcommand{\td@sideimagecoverR}[2][0.33]{%
+  \renewcommand{\td@sidefrac}{#1}\renewcommand{\td@sideside}{east}%
+  \td@sideimagetrue
+  \setlength{\td@stripw}{#1\paperwidth}%
+  \begin{tikzpicture}[remember picture,overlay]
+    \begin{scope}
+      \clip ([xshift=-\td@stripw]current page.north east) rectangle (current page.south east);
+      \node[anchor=center,inner sep=0pt]
+        at ([xshift=-0.5\td@stripw]current page.east){\includegraphics[height=\paperheight]{#2}};
+    \end{scope}
+  \end{tikzpicture}%
+}
+\newcommand{\td@sideimagecoverL}[2][0.33]{%
+  \renewcommand{\td@sidefrac}{#1}\renewcommand{\td@sideside}{west}%
+  \td@sideimagetrue
+  \setlength{\td@stripw}{#1\paperwidth}%
+  \begin{tikzpicture}[remember picture,overlay]
+    \begin{scope}
+      \clip (current page.north west) rectangle ([xshift=\td@stripw]current page.south west);
+      \node[anchor=center,inner sep=0pt]
+        at ([xshift=0.5\td@stripw]current page.west){\includegraphics[height=\paperheight]{#2}};
+    \end{scope}
+  \end{tikzpicture}%
+}
+\newlength{\td@sidegutter}
+\setlength{\td@sidegutter}{8mm}
+\newenvironment{sidebody}{%
+  % width left for text = full width minus the image strip, the frame's own
+  % text margin, and the gutter to the image strip. The margin must come out
+  % too: the minipage already starts at the margin, so a bare constant here
+  % leaves only (constant minus margin) of visible gap.
+  % Computed with a length register: \dimexpr rejects a decimal coefficient.
+  \setlength{\td@bodywidth}{\paperwidth}%
+  \addtolength{\td@bodywidth}{-\td@sidefrac\paperwidth}%
+  \addtolength{\td@bodywidth}{-\beamer@leftmargin}%
+  \addtolength{\td@bodywidth}{-\td@sidegutter}%
+  \def\td@westtest{west}%
+  \ifx\td@sideside\td@westtest\hfill\fi
+  \begin{minipage}[t]{\td@bodywidth}%
+}{%
+  \end{minipage}%
+}
+
+%% \sidecaption -- a short caption bound to the bottom of the image strip laid
+%% down by the preceding \sideimage/\sideimagecover: italic, bottom-anchored,
+%% and right-aligned inside the strip (left-aligned when the image is on the
+%% west edge). Call it right after the image command.
+\newcommand{\sidecaption}[1]{%
+  \setlength{\td@stripw}{\td@sidefrac\paperwidth}%
+  \def\td@westtest{west}%
+  \begin{tikzpicture}[remember picture,overlay]
+    \ifx\td@sideside\td@westtest
+      \node[anchor=south west,inner sep=0pt,text width=\dimexpr\td@stripw-6mm\relax,
+            align=left,font=\scriptsize\itshape,text=white]
+        at ([xshift=3mm,yshift=13mm]current page.south west){#1};
+    \else
+      \node[anchor=south east,inner sep=0pt,text width=\dimexpr\td@stripw-6mm\relax,
+            align=right,font=\scriptsize\itshape,text=white]
+        at ([xshift=-3mm,yshift=13mm]current page.south east){#1};
+    \fi
+  \end{tikzpicture}%
+}
+
+%% ----------------------------------------------------------------------
+%% \gif -- drop a .gif in the gif directory and play it, no manual frame
+%% splitting. On compile the theme shell-escapes gifsplit.sh (ffmpeg) to
+%% extract the frames into a git-ignored cache, then \animategraphics plays
+%% them. The split is cached and only re-runs when the GIF changes, so
+%% ordinary recompiles cost nothing. Once a cache exists the deck also
+%% compiles WITHOUT shell-escape (handy for sharing / CI).
+%%
+%%   \gif{clip}        plays  <gifdir>/clip.gif  at its native frame rate
+%%   \gif[8]{clip}     same, but forced to 8 fps
+%%   \setgifdir{media}  point at another drop folder (default: gifs)
+%%
+%% Requirements for the first build of a new/changed GIF: -shell-escape and
+%% ffmpeg on PATH. If either is missing the slide shows a placeholder note
+%% instead of crashing.
+%% ----------------------------------------------------------------------
+\newcommand{\td@gifdir}{gifs}
+\newcommand{\setgifdir}[1]{\renewcommand{\td@gifdir}{#1}}
+% run a shell command at compile time. Under LuaTeX (this theme's engine)
+% os.execute is reliable and synchronous; other engines fall back to \write18.
+% Either way it is a no-op unless the deck is compiled with -shell-escape.
+\newcommand{\td@shell}[1]{%
+  \ifdefined\directlua \directlua{os.execute([[#1]])}%
+  \else \immediate\write18{#1}\fi}
+\newread\td@gifread
+% \td@readnum{<file>}{<macro>} -- read one clean line (no trailing space) into <macro>
+\newcommand{\td@readnum}[2]{%
+  \begingroup\endlinechar=-1\relax
+    \openin\td@gifread=#1\relax
+    \read\td@gifread to \td@gifline
+    \closein\td@gifread
+    \global\let#2\td@gifline
+  \endgroup}
+% placeholder when frames are unavailable (shell-escape off / ffmpeg missing)
+\newcommand{\td@gifmissing}[1]{%
+  \begin{tdblock}\centering
+    \textcolor{DHBWred}{GIF} \texttt{#1} not rendered.\par\smallskip
+    {\footnotesize\color{tddim}First build needs \texttt{-shell-escape} and
+    \texttt{ffmpeg}; recompile once with both.}
+  \end{tdblock}}
+\newcommand{\gif}[2][]{%
+  \edef\td@gifsrc{\td@gifdir/#2.gif}%
+  \edef\td@gifcache{_gifcache/#2}%
+  % (re)generate frames -- idempotent, silently skipped if shell-escape is off
+  \td@shell{sh gifsplit.sh "\td@gifsrc" "\td@gifcache"}%
+  \IfFileExists{\td@gifcache/frames.count}{%
+    \td@readnum{\td@gifcache/frames.count}{\td@giflast}%
+    % frame rate: explicit optional arg wins, else the GIF's own (fps.count)
+    \ifblank{#1}{%
+      \IfFileExists{\td@gifcache/fps.count}%
+        {\td@readnum{\td@gifcache/fps.count}{\td@giffps}}%
+        {\def\td@giffps{12}}%
+    }{\def\td@giffps{#1}}%
+    \animategraphics[autoplay,loop,poster=first,width=\linewidth]%
+      {\td@giffps}{\td@gifcache/f-}{0}{\td@giflast}%
+  }{\td@gifmissing{#2}}%
+}
 
 %% ----------------------------------------------------------------------
 %% Dark-native figure vocabulary -- light-on-dark twin of the print TikZ /
@@ -317,6 +586,13 @@
     legend style={draw=none, fill=none, text=tdfg, font=\scriptsize},
     every axis plot/.append style={tdfg},
   },
+  % gapped line (Tufte ink economy): draw the line, then a band-coloured halo
+  % that erases it around each marker (this is the gap), then the small data
+  % dots; the focal point is the one red mark. Use in this order.
+  gapline/.style={tdfg, thin},
+  gaphalo/.style={only marks, mark=*, mark size=6pt, tdcard},
+  gapdot/.style={only marks, mark=*, mark size=1.6pt, tdfg},
+  gapfocal/.style={only marks, mark=*, mark size=2.6pt, DHBWred},
 }
 
 \mode<all>
