@@ -1,0 +1,51 @@
+% !TEX root = ../notes_egpu.tex
+% Chapter 1: Quickstart -- from a compatible laptop to a running external GPU
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Whether a laptop is compatible is settled by the flow in the
+% introduction; this chapter assumes it is and does not repeat the checks.
+% Windows is Sonnet's supported path, Ubuntu runs unofficially, so every
+% step names both.
+
+\index{quickstart}\index{eGPU Breakaway Box}
+\chapter{Quickstart}
+\printchapterversion{01_quickstart}
+
+\section{Aaaah-ah-ah-ah, aaaah-ah-ah-ah, Thunder!}
+\marginnote{\newthought{The soundtrack} for first use. Meant to be played loud. Your neighbours will understand.\par\medskip
+\noindent\qrcode[height=1.0cm]{https://open.spotify.com/track/57bgtoPSgt236HzfBOd8kj}}
+
+\index{borrowing}\newthought{Lucky you.} Your machine is compatible.
+Ask for the box next. You get a time slot and
+hand the box back with its cable and power cord. Never attempt to open the case, and don't drop it.
+\marginnote{\newthought{Scan the code} and send a mail stating your name,
+course, laptop model, why and what you want to run.\par\medskip
+\null\hfill\qrcode[height=1.0cm]{mailto:schutera@dhbw-ravensburg.de?subject=External\%20GPU\%20Box\&body=Name\%3A\%20\%0ACourse\%3A\%20\%0ALaptop\%3A\%20\%0AProject\%3A\%20}}
+
+\index{driver}\newthought{Prepare the laptop before picking up the box.} I want to see it running before you will be allowed to take it with you.
+On Windows, install pending updates, the newest BIOS from your laptop's
+manufacturer, and the NVIDIA driver from NVIDIA's site; outdated firmware
+can hide the card \cite{sonnet2023windows}. On Ubuntu, run
+\texttt{sudo ubuntu-drivers install}.
+
+\index{Thunderbolt cable}\newthought{Plug in.} Use the cable that comes with
+the box, connect the power cord, and flip the switch on the back. The front
+LED lights once the laptop is on. Keep the ventilator shafts clear.
+
+\index{device approval}\newthought{Approve the device.} Windows on
+Thunderbolt~3 asks once, choose \texttt{Always connect}. On Ubuntu, run
+\texttt{boltctl enroll} with the device id that \texttt{boltctl list} shows.
+
+\index{nvidia-smi}\newthought{Check the card.} \texttt{nvidia-smi} in a
+terminal shows it with its 16~GB.
+\marginnote{\newthought{Checks.} Nothings in Device
+Manager means the driver is missing. Nothing at all means the box is not
+detected: Check cable, power switch, and port.}
+
+
+
+\index{eject}\newthought{Always eject before you unplug.} Stop every process
+\texttt{nvidia-smi} lists, then on Windows use the NVIDIA eject icon in the
+taskbar tray. Pulling the cable from a running card can crash the laptop.
+\marginnote{\newthought{After a reconnect} on Windows, click
+\texttt{Connect GPU} in the same tray icon.}

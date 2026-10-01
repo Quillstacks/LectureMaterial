@@ -224,6 +224,23 @@
 <br>
 
 ---
+### External GPU
+
+<!-- BEGIN:lecture:notes_egpu -->
+<details markdown="1">
+<summary>📖 <b>Field Manual</b></summary>
+
+|   #  | Chapter | Download |
+| :--: | :--- | :-: |
+| Full | External GPU · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_egpu/notes_egpu.pdf) |
+|  01  | Quickstart | [📄 PDF](https://material.schutera.com/lecturenotes/notes_egpu/chapter_pdfs/01_quickstart.pdf) |
+
+</details>
+<!-- END:lecture:notes_egpu -->
+
+<br>
+
+---
 ---
 <br>
 
