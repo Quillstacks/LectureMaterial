@@ -1,0 +1,264 @@
+%% ch03_data_engineering.tex -- Intelligence Engineering, chapter 03 "Data
+%% Engineering Fundamentals".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 3. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and layout only, no body text. The reason for a layout is
+%% not written above the frame any more; it lives in the frame itself, in the
+%% environments it uses. Filling the frames is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{III}{Data Engineering Fundamentals}{}
+\section[Data Engineering]{Data Engineering Fundamentals}
+
+
+% This lecture in one slide. The card is rendered from lecture_outline.tex,
+% the same source ch00 renders the whole course from, so the two cannot drift.
+\begin{frame}{This lecture in one slide}
+  \begin{withmargin}
+    \begin{tdmain}
+      \outlinecard{III}
+    \end{tdmain}
+    \begin{tdmargin}
+      \tofill{why this lecture matters, and what you can do after it}
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Sources}
+
+\begin{frame}{Data Sources}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=src]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=src2]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=src]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=src2]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Formats}
+
+\begin{frame}{JSON}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tdcodet}{JSON}
+      \end{tdcodet}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Row-Major Versus Column-Major Format}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=rowcol]{Row-major}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=rowcol]{Column-major}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Text Versus Binary Format}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdcodet}{Text}
+      \end{tdcodet}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdcodet}{Binary}
+      \end{tdcodet}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Models}
+
+\begin{frame}{Relational Model}
+  \begin{tddef}{Relational model}
+  \end{tddef}
+  \vskip0.5em
+  \begin{tdcode}
+  \end{tdcode}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{NoSQL}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=nosql]{Document model}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=nosql]{Graph model}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Document model}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Graph model}
+  \phimgside[0.33]{graph_model.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Structured Versus Unstructured Data}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.44\textwidth}%
+    >{\raggedright\arraybackslash}p{0.44\textwidth}@{}}
+    \toprule
+    \textbf{Structured data} & \textbf{Unstructured data}\\
+    \midrule
+     & \\
+     & \\
+     & \\
+     & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Storage Engines and Processing}
+
+\begin{frame}{Transactional and Analytical Processing}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=tap]{Transactional processing}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=tap]{Analytical processing}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{ETL: Extract, Transform, and Load}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=etl]{Extract}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=etl]{Transform}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=etl]{Load}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Modes of Dataflow}
+
+\begin{frame}{Data Passing Through Databases}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Data Passing Through Services}
+  \phimgside[0.33]{data_passing_through_services.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Data Passing Through Real-Time Transport}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Batch Processing Versus Stream Processing}
+
+\begin{frame}{Batch Processing Versus Stream Processing}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=bstr]{Batch processing}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=bstr]{Stream processing}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

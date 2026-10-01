@@ -1,0 +1,268 @@
+%% ch05_feature_engineering.tex -- Intelligence Engineering, chapter 05
+%% "Feature Engineering".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 5. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and layout only, no body text. The reason for a layout is
+%% not written above the frame any more; it lives in the frame itself, in the
+%% environments it uses. Filling the frames is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{V}{Feature Engineering}{}
+\section[Feature Engineering]{Feature Engineering}
+
+
+% This lecture in one slide. The card is rendered from lecture_outline.tex,
+% the same source ch00 renders the whole course from, so the two cannot drift.
+\begin{frame}{This lecture in one slide}
+  \begin{withmargin}
+    \begin{tdmain}
+      \outlinecard{V}
+    \end{tdmain}
+    \begin{tdmargin}
+      \tofill{why this lecture matters, and what you can do after it}
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Learned Features Versus Engineered Features}
+
+\begin{frame}{Learned Features Versus Engineered Features}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=lfef]{Learned features}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=lfef]{Engineered features}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Common Feature Engineering Operations}
+
+\begin{frame}{Handling Missing Values}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}lllll@{}}
+    \toprule
+     & & & & \\
+    \midrule
+     & & & & \\
+     & & & & \\
+     & & & & \\
+     & & & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Deletion}
+  \begin{tddef}{Deletion}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Imputation}
+  \begin{tdcodet}{Imputation}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Scaling}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Discretization}
+  \begin{tdcodet}{Discretization}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Encoding Categorical Features}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Feature Crossing}
+  \begin{tdcodet}{Feature crossing}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Discrete and Continuous Positional Embeddings}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=pos]{Discrete}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=pos]{Continuous}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Data Leakage}
+
+\begin{frame}{Common Causes for Data Leakage}
+  \footnotesize
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause1]{Time-correlated splits}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause1]{Scaling before splitting}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause1]{Test split statistics}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \vskip0.5em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause2]{Data duplication}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause2]{Group leakage}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=cause2]{Data generation process}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Splitting time-correlated data randomly instead of by time}
+  \phimgside[0.33]{splitting_time_correlated_data_randomly_instead_of_by_time.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Scaling before splitting}
+  \begin{tdcodet}{Scaling before splitting}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Filling in missing data with statistics from the test split}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Poor handling of data duplication before splitting}
+  \begin{tddef}{Data duplication}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Group leakage}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Leakage from data generation process}
+  \phimgside[0.33]{leakage_from_data_generation_process.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Detecting Data Leakage}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Engineering Good Features}
+
+\begin{frame}{Feature Importance}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Feature} & \textbf{Importance}\\
+    \midrule
+     & \\
+     & \\
+     & \\
+     & \\
+     & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Feature Generalization}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

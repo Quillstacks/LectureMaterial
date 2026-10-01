@@ -193,11 +193,11 @@
 
 <!-- BEGIN:lecture:notes_3dprinting -->
 <details markdown="1">
-<summary>📖 <b>Field Manual</b></summary>
+<summary>📑 <b>Lecture Notes</b></summary>
 
 |   #  | Chapter | Download |
 | :--: | :--- | :-: |
-| Full | 3D Printing · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/notes_3dprinting.pdf) |
+| Full | notes_3dprinting · Lecture Notes | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/notes_3dprinting.pdf) |
 |  01  | Quickstart | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/01_quickstart.pdf) |
 |  11  | TPU | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/11_tpu.pdf) |
 

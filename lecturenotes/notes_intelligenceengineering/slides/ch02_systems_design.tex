@@ -1,0 +1,634 @@
+%% ch02_systems_design.tex -- Intelligence Engineering, chapter 02
+%% "Introduction to Machine Learning Systems Design".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 2. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: Business and ML Objectives and Requirements for ML Systems are
+%% written, built from the slide plan Mark left in iffalse blocks (commit
+%% b3d930f holds the plan). Iterative Process onwards is still titles and
+%% layout only. IEb, IEc and IEd are Mark's iPad drawings, exported from
+%% Notes by tools/notes_drawing.py. Image slot still waiting: deep_thought_42.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+
+
+%% DONE 2026-09-25: the 184 "% TEMPLATE:" blocks are gone from all twelve
+%% chapter files; a layout now has to justify itself by being readable. The
+%% soft character cap is written down in sharedAssets/beamer/slidedesign.md
+%% (500 characters of visible body text) and ch01 was split against it. The
+%% copy-then-extend pairs it bought in ch01: latency then percentiles, data in
+%% research then data in production, interpretability then human on the loop.
+
+
+
+
+\begin{refsection}
+
+\lecturepage{II}{Introduction to Machine Learning Systems Design}{}
+\section[Systems Design]{Introduction to Machine Learning Systems Design}
+
+
+
+% This lecture in one slide. The card is rendered from lecture_outline.tex,
+% the same source ch00 renders the whole course from, so the two cannot drift.
+\begin{frame}{This lecture in one slide}
+  \begin{withmargin}
+    \begin{tdmain}
+      \outlinecard{II}
+    \end{tdmain}
+    \begin{tdmargin}
+      \tofill{why this lecture matters, and what you can do after it}
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+%% DONE 2026-09-25: solved by removing the second copy rather than reminding
+%% anyone to sync it. slides/lecture_outline.tex holds the eleven titles and
+%% their subchapters once; ch00 and every chapter render from it, and
+%% tools/check_lecture_outline.sh diffs it against the chapters' own
+%% \subsection commands on every chapter build.
+
+
+
+
+
+% ----------------------------------------------------------------------
+\subsection{Business and ML Objectives}
+
+\begin{frame}{System Design}
+  \sidedrawing{IEb}
+  \begin{sidebody}
+    ML systems design takes a \alertbf{system approach} to MLOps: the business
+    requirements, the data stack, infrastructure, deployment, monitoring, and
+    their stakeholders work together to satisfy the specified objectives and
+    requirements.
+    \vskip0.8em
+    If this system is built for a business, it must be driven by business
+    objectives, which will need to be translated into ML objectives to guide
+    the development of ML models.
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+
+% IEc: the same six stages as IEb with every loop between them drawn in. The
+% figure is the slide; no title, no body.
+\begin{frame}{}
+  \fulldrawing{IEc}{It is not crazy, it is just complex}
+\end{frame}
+
+
+% The cascade is illustrative, not Netflix's: it sets up take-rate two slides
+% later without claiming how any real company wrote its OKRs.
+\begin{frame}{Objectives and Key Results}
+  \begin{withmargin}
+    \begin{tdmain}
+      \centering
+      \begin{tikzpicture}[font=\scriptsize, node distance=4mm and 5mm,
+          o/.style={tdbox, minimum width=30mm, minimum height=8mm},
+          kr/.style={tdbox, draw=tddim, minimum width=30mm, minimum height=8mm},
+          lvl/.style={font=\tiny, text=tddim, anchor=east}]
+        \node[o] (o1) {O\quad members stay};
+        \node[kr, right=of o1] (k1) {KR\quad churn $-1$ point};
+        \node[o, below=of o1] (o2) {O\quad members find\\something to watch};
+        \node[kr, right=of o2] (k2) {KR\quad take-rate $+5\%$};
+        \node[o, below=of o2] (o3) {O\quad rank what\\members will play};
+        \node[tdboxhi, minimum width=30mm, minimum height=8mm, right=of o3]
+          (k3) {KR\quad recall@10 $+2$ points};
+        \draw[tdarrdim] (k1.south) -- (o2.north east);
+        \draw[tdarrdim] (k2.south) -- (o3.north east);
+        \node[lvl] at ([xshift=-3mm]o1.west) {Company};
+        \node[lvl] at ([xshift=-3mm]o2.west) {Product};
+        \node[lvl] at ([xshift=-3mm]o3.west) {ML team};
+      \end{tikzpicture}
+    \end{tdmain}
+    \begin{tdmargin}
+      \textbf{Objective} what is to be achieved.
+      \vskip0.5em
+      \textbf{Key result} how we get there: specific, time bound, measurable
+      and verifiable.
+      \vskip0.5em
+      One level's key result becomes the next level's objective, all the way
+      down the org chart. The ML metric lands at the bottom.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Doerr2018}
+\end{frame}
+
+
+\begin{frame}{}
+  \begin{statement}
+    ``There is one and only one social responsibility of business \ldots\ to
+    \alertbf{increase its profits}.''
+    \substatement{Milton Friedman, 1970. While most companies want to convince
+    you otherwise.}
+  \end{statement}
+  \slidesources{Friedman1970}
+\end{frame}
+
+
+% Copy then extend: the same statement card, the consequence for the ML team.
+\begin{frame}{}
+  \begin{statement}
+    Your ML metric is a \alertbf{key result}, very seldom the objective.
+    \substatement{Most companies don't care about increasing a model's accuracy
+    from 94\% to 94.2\% unless it moves some business metrics.}
+  \end{statement}
+  \slidesources{Huyen2022}
+\end{frame}
+
+
+\begin{frame}{Tie ML to business}
+  \sidedrawing{IEd}
+  \begin{sidebody}
+    For an ML project to succeed within a business organization, it's crucial
+    to tie the performance of an ML system to the overall business
+    performance. At best the ML metric becomes a \textbf{proxy} for a
+    business metric.
+    \vskip0.8em
+    \begin{itemize}
+      \item \textbf{Ad click-through rate} every increase results in actual
+        ad revenue.
+      \item \textbf{Fraud detection} every fraudulent transaction stopped
+        results in actual money saved.
+    \end{itemize}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+
+\begin{frame}{Netflix take-rate}
+  \begin{withmargin}
+    \begin{tdmain}
+      Netflix measures the performance of their recommender system using
+      take-rate.
+      \[
+        \text{take-rate} \;=\;
+        \frac{\textcolor{DHBWred}{\text{quality plays}}}
+             {\text{recommendations seen}}
+      \]
+      The higher the take-rate, the better the recommender system.
+    \end{tdmain}
+    \begin{tdmargin}
+      Put in context with total streaming hours and the subscription
+      cancellation rate: a higher take-rate also results in more streaming
+      hours and fewer cancellations.
+      \vskip0.5em
+      Over years of personalization, monthly churn fell by several percentage
+      points, worth more than \$1B per year~\cite{GomezUribe2015}.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Chandrashekar2017,GomezUribe2015}
+\end{frame}
+
+
+\begin{frame}{Who gains from the link}
+  How ML metrics influence business metrics usually takes an experiment: run
+  an \alertbf{A/B test} and choose the model that leads to better business
+  metrics, regardless of whether it has better ML metrics.
+  \vskip0.8em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[coltitle=tdfg,before upper=\raggedright,equal height group=gain]{\faUserTie~Manager}
+        You know you pour money into a profitable initiative.
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[coltitle=tdfg,before upper=\raggedright,equal height group=gain]{\faUsers~Team lead}
+        Your ML team will not get killed with the project anytime soon.
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[coltitle=tdfg,before upper=\raggedright,equal height group=gain]{\faCode~Developer}
+        Communicate it well and you will have a great time in performance
+        reviews.
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+
+\begin{frame}{}
+  \begin{statement}
+    How important are ML systems for \alertbf{your company}?
+    \substatement{Rate it. Then compare it to your estimate for Netflix.}
+  \end{statement}
+\end{frame}
+
+
+\begin{frame}{}
+  \begin{statement}
+    Which are the \alertbf{business key indicators} of your company or
+    division?
+    \substatement{Which ML metrics can you design that are tied to them?}
+  \end{statement}
+\end{frame}
+
+
+\begin{frame}{For all the wrong reasons}
+  \begin{withmargin}
+    \begin{tdmain}
+      {\fontsize{54}{58}\selectfont\bfseries\alertbf{40\%}}\par
+      \vskip0.6em
+      of 2{,}830 European startups classed as AI companies showed no evidence
+      of AI material to their value proposition.
+    \end{tdmain}
+    \begin{tdmargin}
+      Many companies like to say that they use ML because ``being AI powered''
+      alone already helps them attract customers, regardless of whether the
+      AI part actually does anything useful.
+      \vskip0.5em
+      Hype sells.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{MMC2019,Olson2019}
+\end{frame}
+
+
+\begin{frame}{Magically: possible. Overnight: no.}
+  \begin{withmargin}
+    \begin{tdmain}
+      Returns on investment in ML depend a lot on the \alertbf{maturity stage}
+      of adoption.
+      \vskip1.0em
+      \renewcommand{\arraystretch}{1.3}
+      {\centering
+        \begin{tabular}{@{}lr@{}}
+          \toprule
+          \textbf{ML adoption} & \textbf{Model deployed in}\\
+          \midrule
+          In production over 5 years & under 30 days, 75\%\\
+          Just getting started       & over 30 days, 60\%\\
+          \bottomrule
+        \end{tabular}\par}
+    \end{tdmain}
+    \begin{tdmargin}
+      Google has been investing in ML for decades.
+      \vskip0.5em
+      Enter Transformation, oh no, again. A powerful narrative, with a lot of
+      room for, well, narrating.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Algorithmia2020,Huyen2022}
+\end{frame}
+
+
+% ----------------------------------------------------------------------
+\subsection{Requirements for ML Systems}
+
+\begin{frame}{Forty-two}
+  % Asset brief: Deep Thought announcing forty-two, the answer seven and a half
+  % million years in the making, to a crowd that never knew the question.
+  \phimgside[0.33]{deep_thought_42.png}{Deep Thought: forty-two}
+  \begin{sidebody}
+    ``I think the problem, to be quite honest with you, is that you've never
+    actually known what the question is.''
+    \vskip1.0em
+    We can't say that we've successfully built an ML system without knowing
+    what \alertbf{requirements} the system has to satisfy.
+    \vskip0.6em
+    They vary from use case to use case. Most systems should have four:
+    reliability, scalability, maintainability, and adaptability.
+  \end{sidebody}
+  \slidesources{Adams1979,Huyen2022}
+\end{frame}
+
+
+\begin{frame}{Reliability}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tddef}{Reliability}
+        The system should continue to perform the correct function at the
+        desired level of performance even in the face of adversity: hardware
+        or software faults, and even human error.
+      \end{tddef}
+    \end{tdmain}
+    \begin{tdmargin}
+      Traditional software warns you: a crash, a runtime error, a 404.
+      \vskip0.5em
+      ML systems can fail silently. \texttt{model.predict()} is called
+      correctly, but the predictions are wrong, and without ground truth labels
+      nobody knows. Translate a sentence into a language you don't know.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Kleppmann2017,Huyen2022}
+\end{frame}
+
+
+% Copy then extend: the same definition, the margin turns from the failure to
+% the design answer to it.
+\begin{frame}{Reliability}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tddef}{Reliability}
+        The system should continue to perform the correct function at the
+        desired level of performance even in the face of adversity: hardware
+        or software faults, and even human error.
+      \end{tddef}
+    \end{tdmain}
+    \begin{tdmargin}
+      \textbf{Fail loudly.} A fault surfaces immediately and visibly, where it
+      happens, instead of carrying on with bad state.
+      \vskip0.5em
+      \textbf{Degrade gracefully.} Under overload, lower the quality of the
+      response rather than drop it: a smaller index, a cheaper ranking, a
+      simpler model.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Shore2004,Beyer2016}
+\end{frame}
+
+
+\begin{frame}{Scalability}
+  Whichever way your system grows, there should be \alertbf{reasonable ways}
+  of dealing with that growth.
+  \vskip0.8em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[coltitle=tdfg,before upper=\raggedright,equal height group=scale]{Complexity}
+        Last year a logistic regression on 1 GB of RAM. This year a 100 million
+        parameter network that needs 16 GB.
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[coltitle=tdfg,before upper=\raggedright,equal height group=scale]{Traffic volume}
+        10{,}000 prediction requests daily at launch. Between 1 million and 10
+        million once the user base grows.
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[coltitle=tdfg,before upper=\raggedright,equal height group=scale]{Model count}
+        One model per enterprise customer. A startup Huyen worked with had
+        8{,}000 models in production.
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Kleppmann2017,Huyen2022}
+\end{frame}
+
+
+\begin{frame}{Scaling is not only resources}
+  \begin{withmargin}
+    \begin{tdmain}
+      \textbf{Resource scaling.} At peak 100 GPUs, most of the time 10.
+      Autoscaling scales up and down with usage, and is tricky to implement.
+      \vskip0.8em
+      \textbf{\alertbf{Artifact management.}} One model you can monitor and
+      retrain by hand. With one hundred, monitoring and retraining need to be
+      automated, and every model reproducible.
+    \end{tdmain}
+    \begin{tdmargin}
+      Even Amazon fell victim: autoscaling failed on Prime Day 2018 and the
+      system crashed.
+      \vskip0.5em
+      One hour of downtime was estimated to cost Amazon between \$72 million
+      and \$99 million.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Wolfe2018,Huyen2022}
+\end{frame}
+
+
+\begin{frame}{Maintainability}
+  \begin{withmargin}
+    \begin{tdmain}
+      ML engineers, DevOps engineers, and subject matter experts, from very
+      different backgrounds, own different parts of the process.
+      \vskip0.6em
+      \begin{itemize}
+        \item Everyone works with tools they are comfortable with
+        \item Code is documented
+        \item Code, data, and artifacts are \alertbf{versioned}
+        \item Models are reproducible when the original authors are not around
+        \item Problems get solved without finger pointing
+      \end{itemize}
+    \end{tdmain}
+    \begin{tdmargin}
+      ``Over time, many different people will work on the system \ldots\ and
+      they should all be able to work on it productively.''
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Kleppmann2017,Huyen2022}
+\end{frame}
+
+
+\begin{frame}{Adaptability}
+  \begin{tddef}{Adaptability}
+    To adapt to shifting data distributions and business requirements, the
+    system should have some capacity for both discovering aspects for
+    performance improvement and allowing updates without service interruption.
+  \end{tddef}
+  \vskip1.0em
+  ML systems are part code, part data, and data can change quickly.
+  \vskip0.4em
+  {\color{tddim}Lecture VIII, Data Distribution Shifts and
+  Monitoring. Lecture IX, Continual Learning and Test in Production.}
+  \slidesources{Huyen2022}
+\end{frame}
+
+
+% Not one of Huyen's four. Added because LLMs and agents take over decisions,
+% and at that scale the question is no longer only whether the system works.
+\begin{frame}{Alignment and Controllability}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tdblockt}[coltitle=tdfg]{Alignment}
+        Make AI systems behave in line with human intentions and values.
+      \end{tdblockt}
+      \vskip0.5em
+      \begin{tdblockt}[coltitle=tdfg]{Controllability}
+        Humans can supervise the system and intervene when it deviates from
+        the expected behavior.
+      \end{tdblockt}
+    \end{tdmain}
+    \begin{tdmargin}
+      Robustness, Interpretability, \alertbf{Controllability}, Ethicality: the
+      four objectives of alignment.
+      \vskip0.5em
+      LLMs and agents take over decision making, or at least augment it.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Ji2023}
+\end{frame}
+
+
+\begin{frame}{In the loop, on the loop}
+  \begin{withmargin}
+    \begin{tdmain}
+      Controllability is a design decision: \alertbf{who decides}, and who
+      acts.
+      \vskip1.0em
+      \renewcommand{\arraystretch}{1.3}
+      {\centering
+        \begin{tabular}{@{}lll@{}}
+          \toprule
+          \textbf{Human} & \textbf{Decides} & \textbf{Acts}\\
+          \midrule
+          in the loop     & human, on a proposal & system\\
+          on the loop     & system, human can veto & system\\
+          out of the loop & system & system\\
+          \bottomrule
+        \end{tabular}\par}
+    \end{tdmain}
+    \begin{tdmargin}
+      Served to a lot of users, scale, bias and performative prediction
+      become requirements.
+      \vskip0.5em
+      Interpretability and the human machine interface decide whether the
+      human can intervene at all. Lecture I: human on the loop.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Parasuraman2000,Perdomo2020}
+\end{frame}
+
+
+% ----------------------------------------------------------------------
+
+
+
+\subsection{Iterative Process}
+
+
+\begin{frame}{Iterative Process}
+  \phimgside[0.33]{iterative_process.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+ \end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Framing ML Problems}
+
+
+\begin{frame}{Types of ML Tasks}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=tasks]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=tasks]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=tasks]
+      \end{tdblock}
+      \vskip0.5em
+      \begin{tdblock}[equal height group=tasks]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+ \end{frame}
+
+
+\begin{frame}{Classification versus regression}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=clsreg]{Classification}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=clsreg]{Regression}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+ \end{frame}
+
+
+\begin{frame}{Binary versus multiclass classification}
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth} >{\raggedright\arraybackslash}p{0.32\textwidth} >{\raggedright\arraybackslash}p{0.32\textwidth}@{}}
+    \toprule
+     & \textbf{Binary} & \textbf{Multiclass}\\
+    \midrule
+     & & \\
+     & & \\
+     & & \\
+     & & \\
+    \bottomrule
+  \end{tabular}
+ \end{frame}
+
+
+\begin{frame}{Multiclass versus multilabel classification}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdcodet}{Multiclass}
+      \end{tdcodet}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdcodet}{Multilabel}
+      \end{tdcodet}
+    \end{column}
+  \end{columns}
+ \end{frame}
+
+
+\begin{frame}{Multiple ways to frame a problem}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=ways]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=ways]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+ \end{frame}
+
+
+\begin{frame}{Objective Functions}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+ \end{frame}
+
+
+\begin{frame}{Decoupling objectives}
+  \phimgside[0.33]{decoupling_objectives.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+ \end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Mind Versus Data}
+
+
+\begin{frame}{Model Versus Data}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=mind]{Mind}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=mind]{Data}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+ \end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+ \end{frame}
+
+
+% [allowframebreaks] like ch01: the objectives and requirements subchapters
+% cite enough to overrun one frame, so beamer flows the list onto a second.
+\begin{frame}[allowframebreaks]{References}
+  \renewcommand*{\bibfont}{\scriptsize}%
+  \setlength{\bibitemsep}{0.3em}%
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

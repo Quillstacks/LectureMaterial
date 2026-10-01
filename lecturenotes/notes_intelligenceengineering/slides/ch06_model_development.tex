@@ -1,0 +1,332 @@
+%% ch06_model_development.tex -- Intelligence Engineering, chapter 06 "Model
+%% Development and Offline Evaluation".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 6. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: titles and layout only, no body text. The reason for a layout is
+%% not written above the frame any more; it lives in the frame itself, in the
+%% environments it uses. Filling the frames is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{VI}{Model Development and Offline Evaluation}{}
+\section[Model Development]{Model Development and Offline Evaluation}
+
+
+% This lecture in one slide. The card is rendered from lecture_outline.tex,
+% the same source ch00 renders the whole course from, so the two cannot drift.
+\begin{frame}{This lecture in one slide}
+  \begin{withmargin}
+    \begin{tdmain}
+      \outlinecard{VI}
+    \end{tdmain}
+    \begin{tdmargin}
+      \tofill{why this lecture matters, and what you can do after it}
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Model Development and Training}
+
+\begin{frame}{Evaluating ML Models}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Six tips for model selection}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips1]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips1]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips1]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \vskip0.5em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips2]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips2]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=tips2]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Ensembles}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=ens]{Bagging}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=ens]{Boosting}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=ens]{Stacking}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Bagging}
+  \begin{tddef}{Bagging}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Boosting}
+  \phimgside[0.33]{boosting.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Stacking}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Experiment Tracking and Versioning}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=etv]{Experiment tracking}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=etv]{Versioning}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Experiment tracking}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Versioning}
+  \begin{tdcodet}{Versioning}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Distributed Training}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Data parallelism}
+  \begin{tddef}{Data parallelism}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Model parallelism}
+  \phimgside[0.33]{model_parallelism.png}{}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{AutoML}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.22\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}%
+    >{\raggedright\arraybackslash}p{0.35\textwidth}@{}}
+    \toprule
+     & \textbf{Soft AutoML} & \textbf{Hard AutoML}\\
+    \midrule
+     & & \\
+     & & \\
+     & & \\
+     & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Soft AutoML: Hyperparameter tuning}
+  \begin{tdcodet}{Hyperparameter tuning}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Hard AutoML: Architecture search and learned optimizer}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=hard]{Architecture search}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=hard]{Learned optimizer}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Model Offline Evaluation}
+
+\begin{frame}{Baselines}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Evaluation Methods}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em1]{Perturbation tests}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em1]{Invariance tests}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em1]{Directional expectation tests}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \vskip0.5em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em2]{Model calibration}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em2]{Confidence measurement}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=em2]{Slice-based evaluation}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Perturbation tests}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Invariance tests}
+  \begin{tddef}{Invariance tests}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Directional expectation tests}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Model calibration}
+  \begin{tdcodet}{Model calibration}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Confidence measurement}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Slice-based evaluation}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Summary}
+
+\begin{frame}{Summary}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+\begin{frame}{References}
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}

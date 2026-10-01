@@ -1,0 +1,693 @@
+%% ch01_overview.tex -- Intelligence Engineering, chapter 01 "Overview of
+%% Machine Learning Systems".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter 1.
+%% The subchapters, the frame titles and the frame subtitles are the book's own
+%% headings and its own one-line conditions, in the book's order.
+%%
+%% STATE: titles and layout only, no body text. The reason for a layout is
+%% not written above the frame any more; it lives in the frame itself, in the
+%% environments it uses. Filling the frames is the next pass.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\begin{refsection}
+
+\lecturepage{I}{Overview of a Machine Learning System}{}
+\section[Overview]{Overview of a Machine Learning System}
+
+
+% This lecture in one slide. The card is rendered from lecture_outline.tex,
+% the same source ch00 renders the whole course from, so the two cannot drift.
+\begin{frame}{This lecture in one slide}
+  \begin{withmargin}
+    \begin{tdmain}
+      \outlinecard{I}
+    \end{tdmain}
+    \begin{tdmargin}
+      A \alertbf{model} is only a small part from the system around it, and some might argue there are a lot of moments when not to
+reach for machine learning at all.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+% ======================================================================
+\subchaptergloss{Don't confuse the model with the machine learning system.}
+\subsection{The small part and the big picture}
+
+\begin{frame}{Enabling the delivery of the logic}
+  \begin{withmargin}
+    \begin{tdmain}
+      The \alertbf{model} is the small part of a machine learning system. 
+      With foundation models and AI engineering, that part got smaller still. 
+      The essential work of a machine learning system remains and stacks around business understanding, infrastructure, design pattern and data engineering.
+    \end{tdmain}
+    \begin{tdmargin}
+      Before learning about solving a problem with machine learning, let's first assess when it is actually a good idea to do so.  
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{(1) Learn}
+  \begin{withmargin}
+    \begin{tdmain}
+        The problem you are solving, requires your system to have the capability to \alertbf{learn}.
+        Learning can look different depending on the problem and its context and boundary conditions.
+        You already know about supervised learning, unsupervised learning and reinforcement learning paradigms.
+    \end{tdmain}
+    \begin{tdmargin}
+        Machine learning is an approach to (1) learn (2) complex patterns
+        from (3) existing data and use these patterns to make (4)
+        predictions on (5) unseen data.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+\begin{frame}{(2) Pattern}
+    \begin{withmargin}
+      \begin{tdmain}
+          Learning requires the existence of a \alertbf{pattern}, as opposed to noise or randomness. 
+          It is not trivial nor obvious whether there is a pattern in the data, and whether it is learnable.
+          Complex pattern is more difficult to embed or state explicitly, this is where machine learning has an edge over classical approaches.
+      \end{tdmain}
+      \begin{tdmargin}
+          Machine learning is an approach to (1) learn (2) complex patterns
+          from (3) existing data and use these patterns to make (4)
+          predictions on (5) unseen data.
+      \end{tdmargin}
+    \end{withmargin}
+  \end{frame}
+
+
+  \begin{frame}{(3) Data}
+    \begin{withmargin}
+      \begin{tdmain}
+          Data is available, accessible or acquirable. 
+          The data is of \alertbf{sufficient} quality and quantity to support learning, (and to validate for that matter).
+          If your approach does not require data, it is because you build on embeddings or foundation models, 
+          which themselves are built on data in the first place, or you need to rely on data acquisition and curation as part of your system.
+      \end{tdmain}
+      \begin{tdmargin}
+          Machine learning is an approach to (1) learn (2) complex patterns
+          from (3) existing data and use these patterns to make (4)
+          predictions on (5) unseen data.
+      \end{tdmargin}
+    \end{withmargin}
+  \end{frame}
+
+  \begin{frame}{(4) Predictions}
+    \begin{withmargin}
+      \begin{tdmain}
+          Machine learning is about making predictions, \alertbf{always}. Predictions can be of different types, such as 
+          classification, regression, ranking, clustering, generation and on and on.
+          By reframing problems in terms of predictions, we can leverage machine learning to solve them.
+          Predictions are approximations by nature and therefore come with uncertainty, 
+          which needs to be accounted for.
+
+      \end{tdmain}
+      \begin{tdmargin}
+          Machine learning is an approach to (1) learn (2) complex patterns
+          from (3) existing data and use these patterns to make (4)
+          predictions on (5) unseen data.
+      \end{tdmargin}
+    \end{withmargin}
+  \end{frame}
+
+  \begin{frame}{(5) Unseen Data}
+    \begin{withmargin}
+      \begin{tdmain}
+          In a closed system or domain, the data is finite and the system can be fully specified by optimization.
+          However, often the domain is open and infinite, and the system needs to be able to \alertbf{generalize} to unseen data.
+          Of course, the unseen data is not completely unknown, it is drawn from the same distribution (i.i.d.) as the 
+          training data and is thus able to generalize to the unseen data inside a specific domain or distribution.
+      \end{tdmain}
+      \begin{tdmargin}
+          Machine learning is an approach to (1) learn (2) complex patterns
+          from (3) existing data and use these patterns to make (4)
+          predictions on (5) unseen data.
+      \end{tdmargin}
+    \end{withmargin}
+  \end{frame}
+
+
+\begin{frame}{Catalysts}
+    A catalyst is a substance that increases the rate of reaction without 
+    undergoing change itself.
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=cat]{The task is repetitive.}
+        In a sense that we have a lot of data to learn a pattern from.
+      \end{tdblockt}
+      \vskip0.5em
+      \begin{tdblockt}[equal height group=cat]{The context changes.}
+        Meaning that hard coded or other solutions will be brittle and break.
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=cat]{It scales.}
+        The need to scale a specific prediction capability, not only a few times.
+      \end{tdblockt}
+      \vskip0.5em
+      \begin{tdblockt}[equal height group=cat]{Being wrong is not too bad.}
+        Approximations on unseen data. Failures need to be manageable.  
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{When Not to Use Machine Learning}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=not]{It is unethical.}
+        Well, that might also be a general rule. But doing stuff at scale, without human oversight, has its implications.$^*$
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=not]{There's a simple solution.}
+        A simple solution, heuristic, or baseline should always be the first step regardless.
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=not]{It's not economically viable.}
+        The value of the prediction, needs to be greater than the cost of the system, including development, deployment and maintenance.
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \vskip0.8em
+  $^*$ More? Enroll to my Philosophy of AI course.
+  \vskip0.8em
+\end{frame}
+
+
+
+
+
+
+
+\begin{frame}{}
+    \begin{statement}
+      \substatement{Describe two use-cases and the rationale for whether or not to use machine learning.}  
+      \alert{One} Machine Learning Use-Case and \alert{One} which is not.
+      \end{statement}
+\end{frame}
+
+
+
+
+
+
+
+
+
+
+
+% The next four frames map value over technical feasibility and how that map
+% moved between 2018 and 2026. Order: the 2018 baseline, the Eisenhower matrix
+% in the middle, the 2026 survey numbers, the labs' own measurements. Four
+% rather than the asked two to three, so there is something to cut.
+
+\begin{frame}{Mapping the value, 2018}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=map18]{The map: value in the trillions}
+        McKinsey sized \alertbf{400+} use cases across \alertbf{19} industries and nine business functions: deep learning promised \alertbf{\$3.5 to \$5.8 trillion} in value per year, the largest shares in marketing and sales plus supply chain and manufacturing.
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=map18]{The ground: months per model}
+        Algorithmia surveyed \alertbf{745} practitioners in October 2019: most companies needed \alertbf{8 to 90 days} to deploy a single model, 18\% needed longer than 90 days, and deployment time grew year over year.
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \vskip0.8em
+  {\color{tddim}The value was mapped in trillions while shipping one model took a quarter: feasibility, not value, was the bottleneck.}
+  \slidesources{Chui2018,Algorithmia2020}
+\end{frame}
+
+\begin{frame}{Value over technical feasibility}
+  \sideimagecover[0.33]{placeholder_gray.png}
+  % Asset brief: the Eisenhower map as a 2x2, business value over technical
+  % feasibility, the four verbs in the quadrants and the domains placed as
+  % dots, with the feasibility frontier drawn as an arrow moving right.
+  % Caption stays under ~50 characters, the rotated node has no text width.
+  \sidecaption{Eisenhower: value over technical feasibility}
+  \begin{sidebody}
+    SWE-bench Verified went from 60\% to near 100\% in a year. The frontier
+    between hard today and works today \alertbf{moves right} every quarter.
+    \vskip0.6em
+    \begin{itemize}
+      \item \textbf{Deploy now} coding agents, recommender systems, fraud detection, machine translation
+      \item \textbf{Invest} autonomous driving, medical diagnosis, agentic workflows end to end
+      \item \textbf{Automate cheaply} speech transcription, document OCR
+      \item \textbf{Skip} bespoke one off models
+    \end{itemize}
+  \end{sidebody}
+  \slidesources{AIIndex2026}
+\end{frame}
+
+
+\begin{frame}{The field is moving, 2026}
+  \sideimagecover[0.33]{placeholder_gray.png}
+  % Asset brief: the adoption curve against the value capture curve on one set
+  % of axes, 2023 to 2026, the two visibly diverging.
+  \sidecaption{Adoption climbs, value capture flat}
+  \begin{sidebody}
+    \begin{columns}[T,onlytextwidth]
+      \begin{column}{0.47\linewidth}
+        \begin{tdblockt}[before upper=\raggedright,equal height group=m26]{Adoption is near universal}
+          88\% of organizations use AI in at least one business function, 72\% use gen AI. Gen AI reached 53\% of the population in three years, faster than the PC or the internet.
+        \end{tdblockt}
+      \end{column}
+      \hfill
+      \begin{column}{0.47\linewidth}
+        \begin{tdblockt}[before upper=\raggedright,equal height group=m26]{Value capture is not}
+          80\% of users report personal productivity gains. Only \alertbf{37\%} of organizations can attribute any EBIT impact to AI, flat since 2025, and 6\% qualify as high performers.
+        \end{tdblockt}
+      \end{column}
+    \end{columns}
+    \vskip0.7em
+    {\color{tddim}McKinsey, The State of AI 2026~\cite{McKinsey2026}.\quad Stanford AI Index 2026~\cite{AIIndex2026}.}
+  \end{sidebody}
+\end{frame}
+
+
+\begin{frame}{OpenAI measures the work}
+  \sideimagecover[0.33]{placeholder_gray.png}
+  % Asset brief: screenshot of the GDPval paper's first page, or its headline
+  % win-rate figure. One pager: the study, its size, its result, its link.
+  \sidecaption{GDPval: 1320 tasks, 44 occupations}
+  \begin{sidebody}
+    GDPval takes \alertbf{1{,}320} real deliverables from \textbf{44} occupations
+    across nine sectors, and has experts averaging 14 years in the field grade
+    them head to head against the model.
+    \vskip0.4em
+    Frontier models finish them roughly \textbf{100$\times$} faster and
+    \textbf{100$\times$} cheaper. What is left is judgment, not speed.
+    \vskip0.7em
+    \begin{minipage}[c]{0.16\linewidth}
+      {\color{tdfg}\qrcode[height=0.95cm]{https://arxiv.org/abs/2510.04374}}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.80\linewidth}
+      {\color{tddim}OpenAI, GDPval, 2025~\cite{OpenAI2025}. A benchmark built
+      out of what people are actually paid to produce.}
+    \end{minipage}
+  \end{sidebody}
+\end{frame}
+
+\begin{frame}{Anthropic measures the traffic}
+  \sideimagecover[0.33]{placeholder_gray.png}
+  % Asset brief: screenshot of the Economic Index report, the occupation
+  % coverage chart. Same one pager shape as the GDPval frame before it.
+  \sidecaption{Economic Index: where Claude is used}
+  \begin{sidebody}
+    The Economic Index reads Claude's own live traffic rather than a benchmark.
+    \alertbf{49\%} of occupations show Claude on at least a quarter of their tasks.
+    \vskip0.4em
+    Augmentation leads automation \textbf{52\% to 45\%}, and the single most
+    common task is modifying software to correct errors, 6\% of all usage.
+    \vskip0.7em
+    \begin{minipage}[c]{0.16\linewidth}
+      {\color{tdfg}\qrcode[height=0.95cm]{https://www.anthropic.com/economic-index}}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.80\linewidth}
+      {\color{tddim}Anthropic Economic Index, 2026~\cite{Anthropic2026}. Broad
+      across occupations, thin within them, and the densest use is code.}
+    \end{minipage}
+  \end{sidebody}
+\end{frame}
+
+
+
+
+
+
+
+
+
+
+% ======================================================================
+\subchaptergloss{Research and Production are not the same.}
+\subsection{Understanding Machine Learning Systems}
+
+\begin{frame}{Horizontal versus Vertical}
+  Nothing motivates \alert{system} thinking more than the need to go \alert{horizontal}.
+  Academia is vertical, with a narrow focus on a single problem, where drilling deep, fast is rewarded and
+  focus allows to teach a wide range of concepts.
+  \vspace{0.8em}
+
+  \renewcommand{\arraystretch}{1.25}
+  
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.20\textwidth}%
+    >{\raggedright\arraybackslash}p{0.37\textwidth}%
+    >{\raggedright\arraybackslash}p{0.37\textwidth}@{}}
+    \toprule
+     & \textbf{Research} & \textbf{Production}\\
+    \midrule
+    \textbf{Objectives} & State of the art, highly engineered &  Stakeholder outcome driven \\
+    \textbf{Compute} & Training and high throughput &  Fast inference with low latency \\
+    \textbf{Data} & Often static benchmark oriented & Shifting domains and structures  \\
+    \textbf{Usability metrics} & Usually not considered & UI, Fairness, Robust, Interpretability \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+
+
+
+
+\begin{frame}{Stakeholders and Objectives}
+  \phimgside[0.33]{horse_tinder_screenshot.png}{Tinder for horses}
+  \begin{sidebody}
+    In research the objective is one number on one benchmark. Ship the same
+    model as a product and five people want five different things from it:
+    \alertbf{conflicting requirements} are the norm, and not all of them are
+    must haves.
+    \vskip1.4em
+    \centering
+    \stakeicon{\faBrain}{ML engineers}\hfill
+    \stakeicon{\faServer}{Platform team}\hfill
+    \stakeicon{\faMobile}{Product team}\hfill
+    \stakeicon{\faChartLine}{Sales team}\hfill
+    \stakeicon{\faUserTie}{Manager}
+  \end{sidebody}
+\end{frame}
+
+
+\begin{frame}{}
+    \begin{statement}
+      \substatement{Different stakeholders have different objectives and think in different solution spaces.}
+      Define the \alert{next step} for horse tinder and \alert{line out} how to reach that.
+      \end{statement}
+\end{frame}
+
+
+\begin{frame}{Five people, five solution spaces}
+  Each of them is right. The \alertbf{objective} is what they are measured on,
+  the solution space is where they will look for it.
+  \vskip0.8em
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+     & \textbf{Objective} & \textbf{Solution space}\\
+    \midrule
+    \faBrain~ML engineers     & better matches          & more data, a bigger model\\
+    \faServer~Platform team   & nothing pages at 3am    & freeze the model, build the platform\\
+    \faMobile~Product team    & the swipe feels instant & a latency budget of 100 ms\\
+    \faChartLine~Sales team   & revenue per match       & rank the premium stallions first\\
+    \faUserTie~Manager        & margin                  & fewer models, and maybe fewer engineers\\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+
+
+
+% Four charges, one bullet each; they were cards until the body went back to
+% the default size and the 2x2 grid no longer fit beside the strip. Still open, and Mark's own note: the LMU material on
+% benchmark validation may be worth a lecture of its own later.
+\begin{frame}{Leaderboards and Benchmarks}
+  \phimgside[0.33]{glue_paper_firstpage.png}{GLUE 2018. Trust me bro, nine tasks}
+  \begin{sidebody}
+    \begin{itemize}
+      \item \textbf{System} A leaderboard scores a \alertbf{model}, and a system is not a model.
+      \item \textbf{Metric} One metric on one frozen test set. Whether it measures what it claims is rarely argued.
+      \item \textbf{Overfit} Every run against a benchmark stales it. GLUE was saturated within a year.
+      \item \textbf{Chance} Scanning 10,000 seeds moves CIFAR 10 by 1.82 points, nothing else changed.
+    \end{itemize}
+  \end{sidebody}
+  \slidesources{Wang2018,Raji2021,Freiesleben2025,Picard2021}
+\end{frame}
+
+
+
+
+
+
+\begin{frame}{Computational priorities}
+  \begin{withmargin}
+    \begin{tdmain}
+      Research optimises \alertbf{throughput}, production optimises
+      \textbf{latency}, and one buys the other.
+      \vskip1.0em
+      \renewcommand{\arraystretch}{1.3}
+      {\centering
+        \begin{tabular}{@{}lrr@{}}
+          \toprule
+          \textbf{Processing} & \textbf{Latency} & \textbf{Throughput}\\
+          \midrule
+          One query at a time  & 10 ms & 100 queries/s\\
+          Batches of 10        & 20 ms & 500 queries/s\\
+          Batches of 100       & 50 ms & 2{,}000 queries/s\\
+          \bottomrule
+        \end{tabular}\par}
+      \vskip1.0em
+      Every row is the same model on the same hardware. Only the batch changed.
+    \end{tdmain}
+    \begin{tdmargin}
+      Batching waits for the queue to fill, so each single request waits longer
+      while the machine as a whole serves far more of them.
+      \vskip0.5em
+      Training leans throughput: nobody is waiting on one gradient step.
+      Serving leans latency: somebody is.
+      \vskip0.5em
+      Batch size is not the only lever. Model size, sample size and how many
+      models sit in one request all move both numbers, and they do not move
+      them in the same direction.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+
+\begin{frame}{Latency is a distribution}
+  \begin{withmargin}
+    \begin{tdmain}
+      Ten requests, latency in ms:
+      \vskip0.4em
+      9.5,\; 9.7,\; 9.9,\; 10.0,\; 10.0,\; 10.0,\; 10.2,\; 10.4,\; 11.0,\; \alertbf{90.0}
+      \vskip0.6em
+      The mean is 18.1 ms. Nine of the ten requests were served in about 10 ms
+      and not one of them took 18. The average describes a request that never
+      happened.
+    \end{tdmain}
+    \begin{tdmargin}
+      Users get less patient.
+      \vskip0.5em
+      2017, Akamai: a 100 ms delay can cost 7\% of conversions.
+      \vskip0.5em
+      2019, Booking.com: about 30\% more latency cost about 0.5\% in conversion,
+      ``a relevant cost for our business''.
+      \vskip0.5em
+      2016, Google: over half of mobile users leave a page that takes more than
+      three seconds.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Akamai2017,Booking2019,Google2016}
+\end{frame}
+
+
+% The same ten numbers as the frame before, read the other way: this is the
+% copy-then-extend pair, so the sample stays put and only the statistic moves.
+\begin{frame}{Percentiles, not averages}
+  \begin{withmargin}
+    \begin{tdmain}
+      The same ten requests. The \alertbf{median} is 10.0 ms, p90 is 11.0 ms,
+      p99 is 90.0 ms.
+      \vskip0.6em
+      \[
+        p_q \;=\; \inf\Bigl\{\, t \;:\; F_\ell(t) \;\ge\; \tfrac{q}{100} \,\Bigr\}
+      \]
+      \vskip0.2em
+      A percentile is a promise: $q$ percent of requests finish in $p_q$ or less.
+      The mean hides the outlier, the percentile is the outlier.
+    \end{tdmain}
+    \begin{tdmargin}
+      What you actually work on is the gap between two percentiles, the slowest
+      tenth that is not the worst hundredth:
+      \vskip0.4em
+      \[
+        S_{90,99} \;=\; \{\, r \;:\; p_{90} \le \ell(r) < p_{99} \,\}
+      \]
+      \vskip0.4em
+      That set is big enough to hold a repeatable cause and small enough to
+      count. $S_{99,100}$ is usually one broken machine.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+% Copy then extend: this frame and the next are the same layout and the same
+% question, one world each. Splitting them is what the character cap buys.
+\begin{frame}{Data in research}
+  \sidedrawing{IEa}
+  \sidecaption{Karpathy: at Tesla you lose sleep over data}
+  \begin{sidebody}
+    A research dataset is a teaching artefact. Somebody already did the work.
+    \begin{itemize}
+      \item Clean and well formatted
+      \item Static, so the community can benchmark against it
+      \item Quirks of the dataset are known and documented
+      \item Open source scripts to feed your models
+      \item Historical, already stored somewhere
+    \end{itemize}
+    {\color{tddim}Titanic~\cite{Titanic2012}: 891 rows, 12 columns, and every
+    one of its quirks is written up in a tutorial somewhere.}
+  \end{sidebody}
+  \slidesources{Karpathy2018}
+\end{frame}
+
+
+\begin{frame}{Data in production}
+  Nobody did the work. The data is a by-product of a business that was not run
+  for your benefit.
+  \vskip0.8em
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{itemize}
+        \item Messy, noisy, possibly unstructured
+        \item \alertbf{Likely biased, and you do not know how}
+        \item Labels sparse, imbalanced, or incorrect
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{itemize}
+        \item Changing requirements can mean relabeling
+        \item Privacy and regulatory concerns
+        \item Generated by users, systems, third parties
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+\begin{frame}{Perpetuating Bias}
+  \begin{withmargin}
+    \begin{tdmain}
+      Machine learning algorithms do not predict the future, they encode the
+      past, and then they act on it.
+      \vskip0.5em
+      \alertbf{The invisible hand} of performative prediction at scale: the
+      prediction is not a reading of the world, it is a push on it.
+    \end{tdmain}
+    \begin{tdmargin}
+      2014 to 2018, Amazon built a r\'esum\'e ranker on ten years of its own
+      hiring. It learned to penalise the word ``women's'' and graduates of two
+      women's colleges. The project was scrapped.
+      \vskip0.5em
+      2015, Google Photos labelled two Black users as gorillas. The fix shipped,
+      and three years later, was still to delete the label from the vocabulary.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Dastin2018,Simonite2018,Hardt2022,Perdomo2020}
+\end{frame}
+
+
+% OPEN: Mark asked for "Jay the model" as a source here and said it is a new
+% model. Searched the release trackers and the interpretability literature for
+% September 2026 and found no model by that name, so nothing is cited rather
+% than a citation invented. Give me the right name and it goes in.
+\begin{frame}{Interpretability}
+  \phimgside[0.33]{keycap_2.png}{Press 2: hand Claude recursive permission}
+  \begin{sidebody}
+    Research rewards performance, not interpretability. Industry asks for it
+    anyway, from two directions:
+    \begin{itemize}
+      \item \alertbf{Users}, business leaders and end users alike, to see why a
+        decision was made, so they can trust it and catch what is wrong with it.
+      \item \alertbf{Developers}, to debug and improve the model at all.
+    \end{itemize}
+    {\color{tddim}Most of us use a fridge without understanding it. Fewer feel
+    that way about the thing deciding on their mortgage. Only 19\% of large
+    companies are working on explainability.}
+  \end{sidebody}
+\end{frame}
+
+
+% Copy then extend: the frame before asks for a human in the loop, this one
+% asks whether the human in the loop actually does anything.
+\begin{frame}{Human on the loop}
+  \begin{withmargin}
+    \begin{tdmain}
+      Putting a human on the loop is the standard answer to an uninterpretable
+      model. The evidence that it works is \alertbf{thin}.
+      \vskip0.6em
+      Supervising reliable automation degrades exactly the capability being
+      supervised: vigilance falls, response to the first failure is poor, and
+      the takeover you designed for arrives too late.
+    \end{tdmain}
+    \begin{tdmargin}
+      Victor et al., 2018: drivers supervising automation drove into a
+      conflict object with \textbf{eyes on the threat} and \textbf{hands on the
+      wheel}. Looking at it was not the same as expecting it.
+      \vskip0.5em
+      So a human on the loop is a design decision that has to be tested, not a
+      control you get for free by writing it into the spec.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Victor2018}
+\end{frame}
+
+
+
+\begin{frame}{Why this is different from traditional software engineering}
+  \begin{withmargin}
+    \begin{tdmain}
+      Traditional software engineering tests and versions \textbf{code}.
+      A machine learning system has to test and version code, \alertbf{data},
+      and everything the two produce together.
+      \vskip0.6em
+      \begin{itemize}
+        \item How do you version a dataset, and diff two versions of one?
+        \item How do you deploy into an environment that keeps moving?
+        \item How do you monitor and debug a system with no stack trace?
+        \item How do you avoid being harmful at scale?
+      \end{itemize}
+    \end{tdmain}
+    \begin{tdmargin}
+      Two books worth owning, and neither is about machine learning.
+      \vskip0.5em
+      \textbf{Software Engineering at Google}~\cite{Winters2020}: engineering is
+      programming integrated over time. Every question on the left is a question
+      about time.
+      \vskip0.5em
+      \textbf{The Mythical Man-Month}~\cite{Brooks1975}: essential complexity
+      against accidental. Data is essential complexity, and there is no silver
+      bullet for it either.
+    \end{tdmargin}
+  \end{withmargin}
+\end{frame}
+
+
+\begin{frame}{}
+  \begin{takeaway}
+    A trained model is the \alertbf{small box in the middle}.
+  \end{takeaway}
+\end{frame}
+
+
+
+\begin{frame}{}
+    \begin{statement}
+      \substatement{You might argue that the engineering and development side of machine learning is more exciting.}  
+      Most \alert{jobs} will be, and already are in \alert{productionizing} machine learning systems.
+      \end{statement}
+\end{frame}
+
+
+% ----------------------------------------------------------------------
+% This chapter's own references. The refsection opened above scopes the
+% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
+% its own [n] markers instead of pointing at a list it does not contain.
+% Two columns and a step down in size, like ch00: this chapter now cites the
+% labs, the benchmark critics, the latency studies, the two bias incidents and
+% two software engineering books, and that does not fit one column.
+% [allowframebreaks] rather than ch00's two columns: this chapter now cites the
+% labs, the benchmark critics, the latency studies, the two bias incidents and
+% two software engineering books, which overruns a single frame even at two
+% columns. Beamer flows the list onto a second page instead; the master blanks
+% the continuation counter so both pages just say References.
+\begin{frame}[allowframebreaks]{References}
+  \renewcommand*{\bibfont}{\scriptsize}%
+  \setlength{\bibitemsep}{0.3em}%
+  \printbibliography[heading=none]
+\end{frame}
+\end{refsection}
