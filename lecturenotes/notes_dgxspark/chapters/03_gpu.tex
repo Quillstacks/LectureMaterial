@@ -1,0 +1,53 @@
+% !TEX root = ../notes_dgxspark.tex
+% Chapter 3: Run on the GPU -- without taking all of it
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The Spark has no dedicated GPU memory: CPU and GPU share 128 GB, and so
+% do all users. nvidia-smi therefore prints "Memory-Usage: Not Supported"
+% (NVIDIA known issue) but still lists per-process GPU memory; total use
+% comes from free -h. The default cap of a quarter is Mark's call.
+
+\index{GPU}
+\chapter{Run on the GPU}
+\printchapterversion{03_gpu}
+
+\section{One Memory for Everyone}
+
+\index{unified memory}\newthought{CPU and GPU share the same 128~GB.} Every
+gigabyte your training takes is missing for everyone else, whether it sits
+on the CPU side or the GPU side.
+\begin{verbatim}
+nvidia-smi    # who runs on the GPU, per process
+free -h       # how much memory is left overall
+\end{verbatim}
+\marginnote{\newthought{Memory-Usage: Not Supported} in \texttt{nvidia-smi}
+is expected. There is no separate GPU memory to report. The per-process
+list below it still works.}
+
+\section{Cap Your Framework}
+
+\index{memory cap}\newthought{Frameworks take more than they need unless
+told otherwise.} Cap yours at a quarter of the memory, 32~GB, before the
+first tensor touches the GPU:
+\begin{verbatim}
+torch.cuda.set_per_process_memory_fraction(0.25)  # PyTorch
+export XLA_PYTHON_CLIENT_MEM_FRACTION=0.25        # JAX
+\end{verbatim}
+\marginnote{\newthought{JAX grabs 75\%} of the memory at startup by
+default, whether it needs it or not.}
+\marginnote{\newthought{Need more than a quarter?} Ask me first.}
+
+\section{Start Small, Then Scale}
+
+\index{batch size}\index{bfloat16}\index{checkpoint}\newthought{Run a few
+steps on a slice of the data first.} Watch \mbox{\texttt{free -h}} while it runs,
+then raise the batch size until you reach your cap, not the machine's.
+Train in \texttt{bfloat16}, reach a large effective batch through gradient
+accumulation, and save checkpoints to \texttt{\textasciitilde/runs} so a
+stopped job resumes instead of starting over.
+\marginnote{\newthought{bfloat16 in PyTorch.} Wrap the training step in
+\texttt{torch.autocast} with \texttt{dtype=torch.bfloat16}.}
+
+\newthought{Memory is freed only when your process ends.} An idle Python
+session or notebook kernel keeps holding it. Find yours in
+\texttt{nvidia-smi} and end it.

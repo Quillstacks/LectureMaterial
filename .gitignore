@@ -96,3 +96,6 @@ students*.csv
 lecturenotes/*/exams/
 !lecturenotes/*/open_exams/
 !lecturenotes/*/open_exams/**
+
+# DGX Spark student setup bundle: holds the WireGuard config, never publish
+lecturenotes/notes_dgxspark/student_setup/

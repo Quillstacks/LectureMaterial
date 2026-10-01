@@ -36,8 +36,24 @@ LECTURE_TITLES = {
     "notes_numerischemethoden": "Numerical Methods",
     "notes_missingsemester": "Full Stack Handwerkszeug",
     "notes_papersovertime": "Papers Over Time",
+    "notes_intelligenceengineering": "Intelligence Engineering",
     "notes_everythingeverywhereallatonce": "Everything Everywhere All at Once",
+    "notes_3dprinting": "Bambu Lab P1S",
+    "notes_dgxspark": "DGX Spark",
 }
+
+# (emoji, label) shown in the <summary> line and the "Full" table row.
+# Books not listed here are lecture notes.
+DOC_LABELS = {
+    "notes_3dprinting": ("📖", "Field Manual"),
+    "notes_dgxspark": ("📖", "Field Manual"),
+}
+DEFAULT_DOC_LABEL = ("📑", "Lecture Notes")
+
+# Books whose README rows are numbered 01, 02, ... in order instead of by
+# the file prefix: the manual's chapter files keep gaps (01_quickstart,
+# 11_tpu) while only some chapters are published.
+SEQUENTIAL_NUMBERS = {"notes_3dprinting"}
 
 
 def detex(s: str) -> str:
@@ -104,20 +120,22 @@ def build_exercises_block(book_dir: Path, base: str) -> str:
 
 def build_block(book: str) -> str:
     full_title = LECTURE_TITLES.get(book, book)
+    emoji, doc_label = DOC_LABELS.get(book, DEFAULT_DOC_LABEL)
     book_dir = REPO_ROOT / "lecturenotes" / book
     base = f"{BASE_URL}/{book}"
     full_pdf = f"{base}/{book}.pdf"
 
-    rows = [f"| Full | {full_title} · Lecture Notes | [📄 PDF]({full_pdf}) |"]
+    rows = [f"| Full | {full_title} · {doc_label} | [📄 PDF]({full_pdf}) |"]
 
     chapter_dir = book_dir / "chapter_pdfs"
     if chapter_dir.is_dir():
-        pdfs = sorted(chapter_dir.glob("*.pdf"))
+        # `_ch_*.pdf` are intermediate build artefacts, never chapters.
+        pdfs = sorted(p for p in chapter_dir.glob("*.pdf") if not p.stem.startswith("_"))
         numeric = [p for p in pdfs if not APPENDIX_PREFIX.match(p.stem)]
         appendix = [p for p in pdfs if APPENDIX_PREFIX.match(p.stem)]
 
-        for p in numeric:
-            label = number_label(p.stem)
+        for i, p in enumerate(numeric, start=1):
+            label = f"{i:02d}" if book in SEQUENTIAL_NUMBERS else number_label(p.stem)
             title = chapter_title(book_dir, p.stem)
             url = f"{base}/chapter_pdfs/{p.name}"
             rows.append(f"|  {label}  | {title} | [📄 PDF]({url}) |")
@@ -130,7 +148,7 @@ def build_block(book: str) -> str:
 
     notes_block = (
         '<details markdown="1">\n'
-        "<summary>📑 <b>Lecture Notes</b></summary>\n"
+        f"<summary>{emoji} <b>{doc_label}</b></summary>\n"
         "\n"
         "|   #  | Chapter | Download |\n"
         "| :--: | :--- | :-: |\n"

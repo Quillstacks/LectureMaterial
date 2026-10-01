@@ -1,0 +1,106 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DGX Spark -- NVIDIA DGX Spark field manual
+% Author: Prof. Dr.-Ing. Mark Schutera
+% Based on Tufte-style layout
+\makeindex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% A field manual for the lab's NVIDIA DGX Spark. Same shape as
+% notes_3dprinting: short chapters, one topic each, every chapter also
+% ships as its own handout PDF under chapter_pdfs/.
+%
+% Chapter spine.
+%   01 Quickstart                  -- WRITTEN, from laptop to a shell on the Spark
+%   02 Settle In                   -- WRITTEN, commented out, folders, venv, detached runs
+%   03 Run on the GPU              -- WRITTEN, commented out, cap memory, start small, free it
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{../sharedAssets/tufte}
+
+%%
+% Book metadata
+\title{DGX Spark}
+\author[\defaultauthor]{\defaultauthor}
+\publisher[\defaultpublisher]{\defaultpublisher}
+\renewcommand{\notesdir}{notes_dgxspark}
+
+% Load optional fonts
+\loadoptionalfonts
+
+% Additional packages
+\usepackage{amsmath}
+\usepackage{soul}
+\usepackage{textcase}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{fancyvrb}
+\usepackage{float}
+% Break long URLs anywhere so href'd links in the narrow Tufte margins
+% wrap instead of running off the side of the page.
+\usepackage{xurl}
+\Urlmuskip=0mu plus 1mu\relax
+
+% Let chapters open on any page instead of always on a recto. The shared
+% class hardcodes \LoadClass[a5paper]{tufte-book} and forwards no options,
+% so the flag is set here rather than passed (as in notes_3dprinting).
+\makeatletter
+\@openrightfalse
+\makeatother
+
+\begin{document}
+
+\makestandardfrontmatter
+% Three line epigraph: \openepigraph letterspaces a \\ inside its quote
+% argument into a stray indent, so its body is spelled out here, one
+% \allcaps per line.
+\makededication{%
+  \begin{fullwidth}
+  \sffamily\large
+  \begin{doublespace}
+  \noindent\allcaps{``Poca favilla gran fiamma seconda.''}\\
+  \noindent\allcaps{``A great flame follows a little spark.''}\\
+  \noindent\allcaps{Dante Alighieri, Paradiso I, 34}
+  \end{doublespace}
+  \end{fullwidth}}
+\tableofcontents
+
+% Introduction
+\makeintroduction{%
+  \newthought{This is a manual.} It gets you onto the lab's NVIDIA DGX
+  Spark: A desktop machine with one GB10 Grace Blackwell chip and 128~GB
+  of memory shared between CPU and GPU, running DGX OS, NVIDIA's Ubuntu.
+  It is here for training runs, not as an inference server.
+  This is a powerful compute substrate, use it. Then again you will probably never be
+  alone on this machine, so be kind to data, jobs, and artifacts on this machine.
+  Sandbox whatever you do, so you don't hamper the work of others. 
+  On the other hand, expect that someone else could nuke your stuff, so backups are advised.
+  If you put stuff on that machine, expect that someone else will be able to see and use it.
+  \vspace{1.5em}
+  
+  \marginnote{\newthought{The official documentation.} NVIDIA's user
+  guide and the playbooks at \url{https://build.nvidia.com/spark}.}
+  This is currently a quickstart only, so chapters on how to setup a proper project structure and environment
+  is highly appreciated. Same holds for a chapter on how to effectively run jobs on a shared GPU. Anything is worth adding, that you would have loved to have known before diving deep.
+  The goal is to have a short, concise, and practical manual for the lab's DGX Spark over time.
+  If a step is deprecated or you found a better way, contribute it back.
+  }
+
+
+%% Start the main matter
+\mainmatter
+\authorinrectoheader
+
+% ----------------------------------------------------------------------
+% Short chapters, one topic each.
+% ----------------------------------------------------------------------
+\input{chapters/01_quickstart.tex}
+% \input{chapters/02_settlein.tex}
+% \input{chapters/03_gpu.tex}
+
+% Register the vendor documentation so the reference machinery has entries
+% to resolve even while the book has a single chapter.
+\nocite{nvidia2026sparkconnect}
+\makestandardbackmatter{spark}
+
+\end{document}

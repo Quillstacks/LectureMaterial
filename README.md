@@ -189,7 +189,7 @@
 <br>
 
 ---
-### 3D Printing
+### Bambu Lab P1S
 
 <!-- BEGIN:lecture:notes_3dprinting -->
 <details markdown="1">
@@ -197,12 +197,29 @@
 
 |   #  | Chapter | Download |
 | :--: | :--- | :-: |
-| Full | 3D Printing · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/notes_3dprinting.pdf) |
+| Full | Bambu Lab P1S · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/notes_3dprinting.pdf) |
 |  01  | Quickstart | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/01_quickstart.pdf) |
-|  11  | TPU | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/11_tpu.pdf) |
+|  02  | TPU | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/11_tpu.pdf) |
 
 </details>
 <!-- END:lecture:notes_3dprinting -->
+
+<br>
+
+---
+### DGX Spark
+
+<!-- BEGIN:lecture:notes_dgxspark -->
+<details markdown="1">
+<summary>📖 <b>Field Manual</b></summary>
+
+|   #  | Chapter | Download |
+| :--: | :--- | :-: |
+| Full | DGX Spark · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_dgxspark/notes_dgxspark.pdf) |
+|  01  | Quickstart. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_dgxspark/chapter_pdfs/01_quickstart.pdf) |
+
+</details>
+<!-- END:lecture:notes_dgxspark -->
 
 <br>
 

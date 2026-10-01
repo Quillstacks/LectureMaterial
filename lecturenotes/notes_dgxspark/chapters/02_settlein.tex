@@ -1,0 +1,63 @@
+% !TEX root = ../notes_dgxspark.tex
+% Chapter 2: Settle In -- folders, environment, detached runs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Sandbox: everything a student does lives under their home directory.
+% Sandbag: their runs are niced, time-limited, and detached.
+% The venv + cu130 wheel route is the one NVIDIA's own LLaMA Factory
+% playbook uses; the NGC container route is in its Unsloth playbook.
+
+\index{settle in}
+\chapter{Settle In}
+\printchapterversion{02_settlein}
+
+\section{Your Home Is Your Sandbox}
+
+\index{home directory}\newthought{Everything you do lives under your home
+directory.} Nothing goes into \texttt{/opt}, \texttt{/usr/local}, or
+another user's folder, and nothing you do in this chapter needs
+\texttt{sudo}.
+\begin{verbatim}
+mkdir -p ~/projects ~/data ~/runs
+\end{verbatim}
+\marginnote{\newthought{Code, data, and results apart.} Code in
+\texttt{projects}, datasets in \texttt{data}, logs and checkpoints in
+\texttt{runs}. Deleting a run then never touches your code.}
+
+\index{disk}\newthought{The disk is shared too.} Check what you hold, and
+delete what you no longer need. Model downloads pile up in
+\texttt{\textasciitilde/.cache}.
+\begin{verbatim}
+du -sh ~ ~/.cache/*
+\end{verbatim}
+
+\section{One Environment per Project}
+
+\index{venv}\index{PyTorch}\newthought{A virtual environment keeps your
+packages yours.} Create one inside the project and install PyTorch for
+CUDA 13 into it:
+\begin{verbatim}
+cd ~/projects/myproject
+python3 -m venv .venv
+source .venv/bin/activate
+pip install torch --index-url \
+  https://download.pytorch.org/whl/cu130
+\end{verbatim}
+\marginnote{\newthought{Never \texttt{sudo pip install}.} It writes into
+the system Python that every other user runs on.}
+\marginnote{\index{ARM}\newthought{The Spark is an ARM machine.} A package
+without an \texttt{aarch64} wheel builds from source or fails. Check
+before you plan around it.}
+
+\section{Start, Detach, Leave}
+
+\index{nohup}\index{nice}\newthought{Run jobs detached, at low priority,
+with a time limit.} The job keeps running after you log out, yields the
+CPU to interactive users, and stops itself after eight hours:
+\begin{verbatim}
+nohup nice -n 10 timeout 8h \
+  python train.py > ~/runs/train.log 2>&1 &
+\end{verbatim}
+\marginnote{\newthought{Check on it later} with
+\texttt{tail -f \textasciitilde/runs/train.log}. Stop it with
+\texttt{kill} and the PID from \texttt{ps -u \$USER}.}

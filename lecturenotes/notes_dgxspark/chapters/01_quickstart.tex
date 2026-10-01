@@ -1,0 +1,61 @@
+% !TEX root = ../notes_dgxspark.tex
+% Chapter 1: Quickstart -- from your laptop to a shell on the Spark
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Access path: WireGuard tunnel into the lab network, then ssh. Accounts
+% and tunnel configs are issued by Mark by mail. mDNS does not cross the
+% tunnel, so the chapter uses the IP address from that mail, never the
+% spark-xxxx.local name.
+
+\index{quickstart}\index{DGX Spark}
+\chapter{Quickstart.}
+\printchapterversion{01_quickstart}
+
+\section{Ignition}
+
+\index{account}\newthought{The Spark has one user account per person.}%
+\marginnote{\newthought{This setup is far from perfect.} If you want to
+build a job scheduler, per-user VPN configurations, or sandboxes that keep
+users apart, reach out.}
+Request yours by mail. The reply carries your username and
+password, and the setup folder as an attached zip with the WireGuard
+configuration and the Spark's IP address.
+\marginnote{\newthought{Scan the code} and send a mail stating your name, why you need access, which
+course, and what you want to run.\par\medskip
+\null\hfill\qrcode[height=1.0cm]{mailto:schutera@dhbw-ravensburg.de?subject=DGX\%20Spark\%20Account\&body=Name\%3A\%20\%0ACourse\%3A\%20\%0AProject\%3A\%20}}
+
+\index{sudo}\index{shared infrastructure}\newthought{Your account is an
+admin account} on a shared machine. With \texttt{sudo} you can install what
+you need, and also break the machine for everyone. With great power comes great
+responsibility: Store nothing sensitive on it, leave other users' files and
+processes alone, sandbox your stuff and never touch the system config itself. 
+Protect yourself from others, and protect others from yourself. 
+While you have your own user, two users being logged in at the same time
+will produce lag and slowdowns. If you experience this, please log out and try again later.
+\marginnote{\newthought{Remember?} Chapter 1 of
+Full Stack Handwerkszeug, Development and Production, covers this split,
+along with SSH and Linux servers.
+\url{https://material.schutera.com/lecturenotes/notes_missingsemester/notes_missingsemester.pdf}}%
+That also means the Spark is used most efficiently when you spend as little time as possible to deploy your jobs and leave, 
+not for interactive development. If you need to develop interactively, please do so on your own machine.
+\marginnote{\newthought{You learn useful stuff here. qed.}}  
+
+
+\marginnote{\newthought{Download.} \url{https://www.wireguard.com/install/}}
+\index{WireGuard}\newthought{WireGuard opens a tunnel into the lab
+network.} Only traffic to the lab goes through it; the rest of your
+connection stays as it is. Install the WireGuard client, choose
+\texttt{Import tunnel(s) from file}, pick \texttt{dgx-spark.conf} from the
+setup folder, and press \texttt{Activate}.
+The status should now read
+\texttt{Active} and \texttt{Latest handshake} is seconds old. No handshake
+means your network blocks the tunnel. 
+
+\index{SSH}\newthought{Then log in} with the IP address from the mail:
+\begin{verbatim}
+ssh <username>@<spark-ip>
+\end{verbatim}
+
+\index{nvidia-smi}\newthought{Before you start a job,} run
+\texttt{nvidia-smi} to see who is on the GPU.
+
