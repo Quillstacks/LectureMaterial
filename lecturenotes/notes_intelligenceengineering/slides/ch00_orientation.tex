@@ -33,8 +33,6 @@
 %% spine: it attaches to lecture II (Framing ML Problems, Objective
 %% Functions) and lecture VII (serving patterns), never to ch00.
 
-\begin{refsection}
-
 \lecturepage{\_}{Orientation}{what this course is, what it assumes,
   what yor are going to know after.}
 \section[Orientation]{Orientation}
@@ -227,15 +225,7 @@ and \alert{address issues} that arise in production.
 \end{frame}
 
 % ----------------------------------------------------------------------
-% This chapter's own references. The refsection opened above scopes the
-% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
-% its own [n] markers. Two columns and a step down in size: this lecture
-% cites the whole bib and it does not fit one column at \footnotesize.
-\begin{frame}{References}
-  \renewcommand*{\bibfont}{\scriptsize}%
-  \setlength{\bibitemsep}{0.25em}%
-  \begin{multicols}{2}
-    \printbibliography[heading=none]
-  \end{multicols}
-\end{frame}
-\end{refsection}
+% This chapter's references, printed only in this chapter's own PDF. The
+% full deck collects every chapter's sources in one References frame at its
+% very end instead; see \chapterreferences in the master.
+\chapterreferences

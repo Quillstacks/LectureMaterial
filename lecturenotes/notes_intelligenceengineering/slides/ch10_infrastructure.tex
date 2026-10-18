@@ -13,8 +13,6 @@
 %% opens on the subchapter divider, which the master emits automatically via
 %% \AtBeginSubsection; do not write those divider frames by hand.
 
-\begin{refsection}
-
 \lecturepage{X}{Infrastructure and Tooling for MLOps}{}
 \section[Infrastructure]{Infrastructure and Tooling for MLOps}
 
@@ -176,10 +174,7 @@
 \end{frame}
 
 % ----------------------------------------------------------------------
-% This chapter's own references. The refsection opened above scopes the
-% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
-% its own [n] markers instead of pointing at a list it does not contain.
-\begin{frame}{References}
-  \printbibliography[heading=none]
-\end{frame}
-\end{refsection}
+% This chapter's references, printed only in this chapter's own PDF. The
+% full deck collects every chapter's sources in one References frame at its
+% very end instead; see \chapterreferences in the master.
+\chapterreferences

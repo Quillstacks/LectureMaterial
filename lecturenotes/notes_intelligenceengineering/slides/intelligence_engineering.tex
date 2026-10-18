@@ -154,19 +154,39 @@
 \renewcommand{\tdwatermark}{$P(y \mid x)$}
 
 % ---------------------------------------------------------------- citations
-% Sources are cited with biblatex, numbered PER CHAPTER. Each chapter file
-% wraps its frames in a \begin{refsection}, so its \cite/\slidesources markers
-% run [1..N] within that chapter and its own closing References frame resolves
-% them. There is no deck-level bibliography; a chapter PDF pulled out of the
-% set is therefore self-contained. Reuses the notes' bib. sorting=none keeps
-% the numbers in citation order, so the sources on one slide compress to a
-% tidy range, e.g. [1-3].
+% Sources are cited with biblatex, numbered once across the whole deck in
+% citation order (sorting=none), so the sources on one slide compress to a
+% tidy range, e.g. [1-3]. Where the list is printed depends on the build
+% (Mark, 2026-10-18): the full deck prints ONE References frame at its very
+% end, after the last chapter; a chapter PDF ends on that chapter's own
+% References frame instead. No refsections: a chapter PDF holds only its
+% chapter, so its bibliography is exactly that chapter's sources. Reuses the
+% notes' bib.
 \usepackage[style=numeric-comp,sortcites,sorting=none,backend=biber]{biblatex}
 \addbibresource{../intelligenceengineering.bib}
 \renewcommand*{\bibfont}{\footnotesize}
 \setlength{\bibitemsep}{0.35em plus 0.15em}
 \AtEveryBibitem{\clearfield{url}\clearfield{doi}\clearfield{urldate}\clearfield{note}}
-\usepackage{multicol}% two-column References frame (ch00 uses it)
+
+% Chapter PDF or full deck? tools/build_slide_chapter_pdfs.sh compiles each
+% chapter through a wrapper named _chap_<chapter>.tex, so the jobname tells
+% the two builds apart without touching that shared script.
+\newif\ifchapterpdf
+\ExplSyntaxOn
+\str_if_in:NnT \c_sys_jobname_str { _chap_ } { \chapterpdftrue }
+\ExplSyntaxOff
+
+% The one References frame, used at the end of the deck and at the end of
+% each chapter PDF. [allowframebreaks] flows a long list onto more pages.
+\newcommand{\referencesframe}{%
+  \begin{frame}[allowframebreaks]{References}
+    \renewcommand*{\bibfont}{\scriptsize}%
+    \setlength{\bibitemsep}{0.3em}%
+    \printbibliography[heading=none]
+  \end{frame}}
+% Every chapter file ends on \chapterreferences: the frame in a chapter PDF,
+% nothing in the full deck.
+\newcommand{\chapterreferences}{\ifchapterpdf\expandafter\referencesframe\fi}
 
 \setbeamercolor{bibliography entry author}{fg=tddim}
 \setbeamercolor{bibliography entry title}{fg=tdfg}
@@ -480,15 +500,6 @@
 %\input{ch10_infrastructure.tex}
 %\input{ch11_human_side.tex}
 
-% ---------------------------------------------------------- bibliography
-% There is none at deck level, on purpose. Every chapter wraps itself in a
-% \begin{refsection} and closes on its own References frame, which is what
-% lets a standalone chapter PDF resolve its own [n] markers. A closing frame
-% here would reprint the same bib once more, after twelve chapters have each
-% already printed the part of it they use. If you ever want one anyway, it
-% needs \nocite{*}: refsection 0, the material outside every chapter, cites
-% nothing, so a bare \printbibliography typesets an empty frame.
-
 % ===================================================================== close
 
 %\begin{frame}{What you learned}
@@ -500,6 +511,11 @@
   Look how far you've come.
 
 \end{frame}
+
+% ---------------------------------------------------------- bibliography
+% The deck's one References frame, the very last page(s): every source any
+% chapter cites, numbered in citation order across the deck.
+\referencesframe
 
 \end{document}
 
