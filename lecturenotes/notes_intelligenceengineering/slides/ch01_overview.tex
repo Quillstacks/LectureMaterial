@@ -13,8 +13,6 @@
 %% opens on the subchapter divider, which the master emits automatically via
 %% \AtBeginSubsection; do not write those divider frames by hand.
 
-\begin{refsection}
-
 \lecturepage{I}{Overview of a Machine Learning System}{}
 \section[Overview]{Overview of a Machine Learning System}
 
@@ -608,20 +606,7 @@ reach for machine learning at all.
 
 
 % ----------------------------------------------------------------------
-% This chapter's own references. The refsection opened above scopes the
-% citation numbering to this chapter, so chapter_pdfs/<this>.pdf resolves
-% its own [n] markers instead of pointing at a list it does not contain.
-% Two columns and a step down in size, like ch00: this chapter now cites the
-% labs, the benchmark critics, the latency studies, the two bias incidents and
-% two software engineering books, and that does not fit one column.
-% [allowframebreaks] rather than ch00's two columns: this chapter now cites the
-% labs, the benchmark critics, the latency studies, the two bias incidents and
-% two software engineering books, which overruns a single frame even at two
-% columns. Beamer flows the list onto a second page instead; the master blanks
-% the continuation counter so both pages just say References.
-\begin{frame}[allowframebreaks]{References}
-  \renewcommand*{\bibfont}{\scriptsize}%
-  \setlength{\bibitemsep}{0.3em}%
-  \printbibliography[heading=none]
-\end{frame}
-\end{refsection}
+% This chapter's references, printed only in this chapter's own PDF. The
+% full deck collects every chapter's sources in one References frame at its
+% very end instead; see \chapterreferences in the master.
+\chapterreferences
