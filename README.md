@@ -123,6 +123,7 @@
 | :--: | :--- | :-: |
 | Full | Engineering and Operations · Lecture Slides | [📄 PDF](https://material.schutera.com/lecturenotes/notes_intelligenceengineering/slides/intelligence_engineering.pdf) |
 |  00  | Orientation | [📄 PDF](https://material.schutera.com/lecturenotes/notes_intelligenceengineering/slides/chapter_pdfs/ch00_orientation.pdf) |
+|  01  | Overview of Machine Learning Systems | [📄 PDF](https://material.schutera.com/lecturenotes/notes_intelligenceengineering/slides/chapter_pdfs/ch01_overview.pdf) |
 
 </details>
 
