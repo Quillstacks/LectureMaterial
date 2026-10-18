@@ -202,50 +202,10 @@ reach for machine learning at all.
 
 
 
-% The next four frames map value over technical feasibility and how that map
-% moved between 2018 and 2026. Order: the 2018 baseline, the Eisenhower matrix
-% in the middle, the 2026 survey numbers, the labs' own measurements. Four
-% rather than the asked two to three, so there is something to cut.
-
-\begin{frame}{Mapping the value, 2018}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=map18]{The map: value in the trillions}
-        McKinsey sized \alertbf{400+} use cases across \alertbf{19} industries and nine business functions: deep learning promised \alertbf{\$3.5 to \$5.8 trillion} in value per year, the largest shares in marketing and sales plus supply chain and manufacturing.
-      \end{tdblockt}
-    \end{column}
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=map18]{The ground: months per model}
-        Algorithmia surveyed \alertbf{745} practitioners in October 2019: most companies needed \alertbf{8 to 90 days} to deploy a single model, 18\% needed longer than 90 days, and deployment time grew year over year.
-      \end{tdblockt}
-    \end{column}
-  \end{columns}
-  \vskip0.8em
-  {\color{tddim}The value was mapped in trillions while shipping one model took a quarter: feasibility, not value, was the bottleneck.}
-  \slidesources{Chui2018,Algorithmia2020}
-\end{frame}
-
-\begin{frame}{Value over technical feasibility}
-  \sideimagecover[0.33]{placeholder_gray.png}
-  % Asset brief: the Eisenhower map as a 2x2, business value over technical
-  % feasibility, the four verbs in the quadrants and the domains placed as
-  % dots, with the feasibility frontier drawn as an arrow moving right.
-  % Caption stays under ~50 characters, the rotated node has no text width.
-  \sidecaption{Eisenhower: value over technical feasibility}
-  \begin{sidebody}
-    SWE-bench Verified went from 60\% to near 100\% in a year. The frontier
-    between hard today and works today \alertbf{moves right} every quarter.
-    \vskip0.6em
-    \begin{itemize}
-      \item \textbf{Deploy now} coding agents, recommender systems, fraud detection, machine translation
-      \item \textbf{Invest} autonomous driving, medical diagnosis, agentic workflows end to end
-      \item \textbf{Automate cheaply} speech transcription, document OCR
-      \item \textbf{Skip} bespoke one off models
-    \end{itemize}
-  \end{sidebody}
-  \slidesources{AIIndex2026}
-\end{frame}
-
+% The next two frames: the 2026 survey numbers, then the coding forecast held
+% against the forecaster's own job board. The 2018 baseline, the Eisenhower
+% map, GDPval and the Economic Index frames were cut on main; they survive on
+% branch inprogress.
 
 \begin{frame}{The field is moving, 2026}
   \sideimagecover[0.33]{placeholder_gray.png}
@@ -271,50 +231,25 @@ reach for machine learning at all.
 \end{frame}
 
 
-\begin{frame}{OpenAI measures the work}
-  \sideimagecover[0.33]{placeholder_gray.png}
-  % Asset brief: screenshot of the GDPval paper's first page, or its headline
-  % win-rate figure. One pager: the study, its size, its result, its link.
-  \sidecaption{GDPval: 1320 tasks, 44 occupations}
+% The quote is verbatim from CFR's own transcript; the job count is every open
+% role with "Software Engineer" in its title on Anthropic's Greenhouse board,
+% read 18 October 2026 (managers left out). The screenshot is one of them.
+\begin{frame}{}
+  \sideimagecover[0.33]{anthropic_swe_claude_code}
+  \sidecaption{Anthropic hiring, October 2026}
   \begin{sidebody}
-    GDPval takes \alertbf{1{,}320} real deliverables from \textbf{44} occupations
-    across nine sectors, and has experts averaging 14 years in the field grade
-    them head to head against the model.
-    \vskip0.4em
-    Frontier models finish them roughly \textbf{100$\times$} faster and
-    \textbf{100$\times$} cheaper. What is left is judgment, not speed.
-    \vskip0.7em
-    \begin{minipage}[c]{0.16\linewidth}
-      {\color{tdfg}\qrcode[height=0.95cm]{https://arxiv.org/abs/2510.04374}}
-    \end{minipage}\hfill
-    \begin{minipage}[c]{0.80\linewidth}
-      {\color{tddim}OpenAI, GDPval, 2025~\cite{OpenAI2025}. A benchmark built
-      out of what people are actually paid to produce.}
+    \begin{minipage}[c][0.62\paperheight][c]{\linewidth}
+      \begin{takeaway}
+        ``\ldots\ in twelve months, we may be in a world where AI is writing
+        \alertbf{essentially all of the code}.''
+        \substatement{Dario Amodei, March 2025. Nineteen months later,
+        Anthropic lists 94 open software engineer roles.}
+      \end{takeaway}
     \end{minipage}
   \end{sidebody}
+  \slidesources{Amodei2025,AnthropicJobs2026}
 \end{frame}
 
-\begin{frame}{Anthropic measures the traffic}
-  \sideimagecover[0.33]{placeholder_gray.png}
-  % Asset brief: screenshot of the Economic Index report, the occupation
-  % coverage chart. Same one pager shape as the GDPval frame before it.
-  \sidecaption{Economic Index: where Claude is used}
-  \begin{sidebody}
-    The Economic Index reads Claude's own live traffic rather than a benchmark.
-    \alertbf{49\%} of occupations show Claude on at least a quarter of their tasks.
-    \vskip0.4em
-    Augmentation leads automation \textbf{52\% to 45\%}, and the single most
-    common task is modifying software to correct errors, 6\% of all usage.
-    \vskip0.7em
-    \begin{minipage}[c]{0.16\linewidth}
-      {\color{tdfg}\qrcode[height=0.95cm]{https://www.anthropic.com/economic-index}}
-    \end{minipage}\hfill
-    \begin{minipage}[c]{0.80\linewidth}
-      {\color{tddim}Anthropic Economic Index, 2026~\cite{Anthropic2026}. Broad
-      across occupations, thin within them, and the densest use is code.}
-    \end{minipage}
-  \end{sidebody}
-\end{frame}
 
 
 
@@ -357,7 +292,8 @@ reach for machine learning at all.
 
 
 \begin{frame}{Stakeholders and Objectives}
-  \phimgside[0.33]{horse_tinder_screenshot.png}{Tinder for horses}
+  \sideimagecover[0.33]{bees}
+  \sidecaption{The bee hive}
   \begin{sidebody}
     In research the objective is one number on one benchmark. Ship the same
     model as a product and five people want five different things from it:
@@ -377,7 +313,7 @@ reach for machine learning at all.
 \begin{frame}{}
     \begin{statement}
       \substatement{Different stakeholders have different objectives and think in different solution spaces.}
-      Define the \alert{next step} for horse tinder and \alert{line out} how to reach that.
+      Define the \alert{next step} for the bee hive and \alert{line out} how to reach that.
       \end{statement}
 \end{frame}
 
@@ -391,10 +327,10 @@ reach for machine learning at all.
     \toprule
      & \textbf{Objective} & \textbf{Solution space}\\
     \midrule
-    \faBrain~ML engineers     & better matches          & more data, a bigger model\\
+    \faBrain~ML engineers     & better bee counts       & more labelled frames, a bigger model\\
     \faServer~Platform team   & nothing pages at 3am    & freeze the model, build the platform\\
-    \faMobile~Product team    & the swipe feels instant & a latency budget of 100 ms\\
-    \faChartLine~Sales team   & revenue per match       & rank the premium stallions first\\
+    \faMobile~Product team    & the hive view feels live & a latency budget of 100 ms\\
+    \faChartLine~Sales team   & revenue per hive        & an alert for every hive, sold as premium\\
     \faUserTie~Manager        & margin                  & fewer models, and maybe fewer engineers\\
     \bottomrule
   \end{tabular}
