@@ -604,25 +604,25 @@ reach for machine learning at all.
 % Copy then extend: the frame before asks for a human in the loop, this one
 % asks whether the human in the loop actually does anything.
 \begin{frame}{Human on the loop}
-  \begin{withmargin}
-    \begin{tdmain}
-      Putting a human on the loop is the standard answer to an uninterpretable
-      model. The evidence that it works is \alertbf{thin}.
-      \vskip0.6em
-      Supervising reliable automation degrades exactly the capability being
-      supervised: vigilance falls, response to the first failure is poor, and
-      the takeover you designed for arrives too late.
-    \end{tdmain}
-    \begin{tdmargin}
-      Victor et al., 2018: drivers supervising automation drove into a
-      conflict object with \textbf{eyes on the threat} and \textbf{hands on the
-      wheel}. Looking at it was not the same as expecting it.
-      \vskip0.5em
-      So a human on the loop is a design decision that has to be tested, not a
-      control you get for free by writing it into the spec.
-    \end{tdmargin}
-  \end{withmargin}
-  \slidesources{Victor2018}
+  % NTSB HAR-19/03, figure 1 (public domain): the Uber ATG crash in Tempe,
+  % 18 March 2018, vehicle and pedestrian positions in seconds to impact.
+  % Full figure at strip width over a blurred copy of itself.
+  \sideimagecover[0.33]{ntsb_tempe_aerial}
+  \sidecaption{Tempe 2018, NTSB: seconds to impact}
+  \begin{sidebody}
+    Putting a human on the loop is the standard answer to an uninterpretable
+    model. The evidence that it works is \alertbf{thin}.
+    \vskip0.6em
+    Supervising reliable automation degrades exactly the capability being
+    supervised: vigilance falls, response to the first failure is poor, and
+    the takeover you designed for arrives too late.
+    \vskip0.5em
+    {\color{tddim}Tempe, 2018: the system saw the pedestrian 5.6\,s before
+    impact and handed over at 1.2\,s. The safety driver, eyes on her phone for
+    34\% of the drive, looked up 1\,s before. Test a human on the loop like
+    any other design decision.}
+  \end{sidebody}
+  \slidesources{NTSB2019}
 \end{frame}
 
 
