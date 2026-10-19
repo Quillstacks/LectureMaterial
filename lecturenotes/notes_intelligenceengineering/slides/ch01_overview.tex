@@ -400,26 +400,38 @@ reach for machine learning at all.
 \begin{frame}{Percentiles, not averages}
   \begin{withmargin}
     \begin{tdmain}
-      The same ten requests. The \alertbf{median} is 10.0 ms, p90 is 11.0 ms,
-      p99 is 90.0 ms.
+      The same ten requests, sorted. A percentile is a kind of promise:
+      $q$ percent of requests finish in $p_q$ or less.
+      \vskip0.8em
+      {\centering
+        \begin{tikzpicture}[x=8.6mm,
+            v/.style={tdbox, minimum width=7.0mm, minimum height=5mm,
+              inner sep=1pt, font=\footnotesize},
+            lab/.style={font=\footnotesize, text=tddim}]
+          \foreach \val [count=\i] in {9.5,9.7,9.9,10.0,10.0,10.0,10.2,10.4,11.0}
+            \node[v] (r\i) at (\i,0) {\val};
+          \node[v, draw=DHBWred, text=DHBWred] (r10) at (10,0) {90.0};
+          \node[lab, below=1.5mm of r5]  {$p_{50}$};
+          \node[lab, below=1.5mm of r9]  {$p_{90}$};
+          \node[lab, below=1.5mm of r10] {$p_{99}$};
+        \end{tikzpicture}\par}
       \vskip0.6em
       \[
-        p_q \;=\; \inf\Bigl\{\, t \;:\; F_\ell(t) \;\ge\; \tfrac{q}{100} \,\Bigr\}
+        p_q \;=\; \min\Bigl\{\, t \;:\; \frac{\#\,\text{requests} \le t}{n} \;\ge\; \frac{q}{100} \,\Bigr\}
       \]
-      \vskip0.2em
-      A percentile is a promise: $q$ percent of requests finish in $p_q$ or less.
-      The mean hides the outlier, the percentile is the outlier.
+      The mean of 18.1 ms moves with the outlier, the \alert{percentile makes} the
+      outlier visible.
     \end{tdmain}
     \begin{tdmargin}
-      What you actually work on is the gap between two percentiles, the slowest
-      tenth that is not the worst hundredth:
-      \vskip0.4em
-      \[
-        S_{90,99} \;=\; \{\, r \;:\; p_{90} \le \ell(r) < p_{99} \,\}
-      \]
-      \vskip0.4em
-      That set is big enough to hold a repeatable cause and small enough to
-      count. $S_{99,100}$ is usually one broken machine.
+      Now that you see it, you can work on the gap between two percentiles:
+      the requests slower than $p_{90}$ but faster than $p_{99}$, the slowest
+      tenth that is not the worst hundredth.
+      \vskip0.5em
+      A rule of thumb: that band is common enough to share a cause you can
+      find. Above $p_{99}$ it is often a one-off, one broken machine.
+      \vskip0.5em
+      With ten requests $p_{99}$ is just the maximum. It takes 100 requests
+      before $p_{99}$ and the maximum can differ.
     \end{tdmargin}
   \end{withmargin}
 \end{frame}
