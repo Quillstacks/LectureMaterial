@@ -532,31 +532,24 @@ reach for machine learning at all.
 % calls, so measured and true accuracy differ by at most P. The 65% is GPT-4's
 % position consistency in Zheng et al. (default prompt, order swapped).
 \begin{frame}{LLM as a judge}
-  \begin{withmargin}
-    \begin{tdmain}
-      An LLM judge grades your model with another model. Measured against its
-      labels $\tilde y$ instead of the true $y$, your accuracy can be off by
-      as much as the judge is wrong:
-      \[
-        \bigl|\, \mathrm{acc}_{\tilde y} - \mathrm{acc}_{y} \,\bigr|
-        \;\le\; P(\tilde y \ne y)
-      \]
-      Never for \alertbf{validation}. If you feel the need, use it for training
-      data, and only while it adds no more $\tilde y$ than your ground truth
-      already has.
-    \end{tdmain}
-    \begin{tdmargin}
-      \textbf{Hallucination} Confident grades for claims it cannot check.
-      \vskip0.5em
-      \textbf{Position bias} Swap the two answers and GPT-4 keeps its verdict
-      in only 65\% of cases.
-      \vskip0.5em
-      \textbf{Self-preference} A judge rates its own outputs above others.
-      \vskip0.5em
-      \textbf{Preference leakage} It also favours models related to it: the
-      same model, a fine-tuned child, the same family.
-    \end{tdmargin}
-  \end{withmargin}
+  % Spider-Man pointing at Spider-Man (Spider-Man, 1967, "Double Identity"),
+  % via Know Your Meme; full strip width over a blurred copy of itself.
+  \sideimagecover[0.33]{spiderman_pointing}
+  \sidecaption{The judge meets the judged}
+  \begin{sidebody}
+    An LLM judge grades your model with another model. Against its labels
+    \alertbf{$\tilde y$} instead of the true $y$, your accuracy is off by as
+    much as the judge is wrong.
+    \vskip0.5em
+    Never for \textbf{validation}. For training data at most, and only while
+    it adds no more $\tilde y$ than your ground truth already has.
+    \begin{itemize}
+      \item \textbf{Hallucination} grades claims it cannot check
+      \item \textbf{Position bias} swap the answers, 65\% of verdicts hold
+      \item \textbf{Self-preference} rates its own, and its family's, outputs
+        higher
+    \end{itemize}
+  \end{sidebody}
   \slidesources{Zheng2023,Panickssery2024,Li2025}
 \end{frame}
 \begin{frame}{Perpetuating Bias}
