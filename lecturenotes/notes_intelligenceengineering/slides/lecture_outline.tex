@@ -115,4 +115,34 @@
   \end{tabular}%
 }
 
+% \outlinecardblurred{<roman>} -- the same card with its subchapters blurred:
+% a teaser for the orientation deck, where the lectures are announced but not
+% yet opened. PDF has no blur for text, so the items are drawn 25 times, each
+% copy nudged by up to 4pt and nearly transparent; an invisible copy keeps
+% the card exactly as tall as the sharp one. Each chapter's own card stays
+% sharp (\outlinecard).
+\newcommand{\td@blurred}[1]{%
+  \begin{tikzpicture}[baseline=(b.base),
+      bl/.style={inner sep=0pt, text width=\linewidth, align=left,
+        font=\footnotesize, anchor=north west}]
+    \node[bl, opacity=0] (b) at (0,0) {#1};
+    \node[bl, text=tdfg, opacity=0.06] at (0,0) {#1};
+    \foreach \a in {0,30,...,330} {
+      \node[bl, text=tdfg, opacity=0.07] at (\a:2.0pt) {#1};
+      \node[bl, text=tdfg, opacity=0.05] at (\a+15:4.0pt) {#1};
+    }
+  \end{tikzpicture}}
+\newcommand{\outlinecardblurred}[1]{%
+  \footnotesize
+  \renewcommand{\arraystretch}{1.1}%
+  \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+    \toprule
+    \parbox[t][2\baselineskip][t]{\linewidth}{\raggedright
+      \alertbf{#1}\quad \textbf{\outlinetitle{#1}}}\\
+    \midrule
+    \td@blurred{\outlineitems{#1}}\\
+    \bottomrule
+  \end{tabular}%
+}
+
 \makeatother
