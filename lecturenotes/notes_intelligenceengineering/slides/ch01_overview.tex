@@ -403,18 +403,11 @@ reach for machine learning at all.
       The same ten requests, sorted. A percentile is a kind of promise:
       $q$ percent of requests finish in $p_q$ or less.
       \vskip0.8em
-      {\centering
-        \begin{tikzpicture}[x=8.6mm,
-            v/.style={tdbox, minimum width=7.0mm, minimum height=5mm,
-              inner sep=1pt, font=\footnotesize},
-            lab/.style={font=\footnotesize, text=tddim}]
-          \foreach \val [count=\i] in {9.5,9.7,9.9,10.0,10.0,10.0,10.2,10.4,11.0}
-            \node[v] (r\i) at (\i,0) {\val};
-          \node[v, draw=DHBWred, text=DHBWred] (r10) at (10,0) {90.0};
-          \node[lab, below=1.5mm of r5]  {$p_{50}$};
-          \node[lab, below=1.5mm of r9]  {$p_{90}$};
-          \node[lab, below=1.5mm of r10] {$p_{99}$};
-        \end{tikzpicture}\par}
+      % Same line as the frame before; \pmark (master) hangs a grey label
+      % under a value without moving it.
+      9.5,\; 9.7,\; 9.9,\; 10.0,\; \pmark{10.0}{$p_{50}$},\; 10.0,\; 10.2,\;
+      10.4,\; \pmark{11.0}{$p_{90}$},\; \pmark{\alertbf{90.0}}{$p_{99}$}
+      \vskip1.6em
       \vskip0.6em
       \[
         p_q \;=\; \min\Bigl\{\, t \;:\; \frac{\#\,\text{requests} \le t}{n} \;\ge\; \frac{q}{100} \,\Bigr\}

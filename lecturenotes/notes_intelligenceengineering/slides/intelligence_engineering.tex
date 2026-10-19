@@ -93,6 +93,13 @@
 }
 \makeatother
 
+% A value with a grey label hung under it, set inline: \pmark{11.0}{$p_{90}$}.
+% The label is an overlay, so the value sits in the running line exactly
+% where plain text would; leave a little vertical room after the line.
+\newcommand*{\pmark}[2]{\tikz[baseline=(v.base)]{%
+  \node[inner sep=0pt] (v) {#1};
+  \node[overlay, below=1.2mm of v, inner sep=0pt, text=tddim] {#2};}}
+
 % Hand drawn figure as the whole slide: \fulldrawing{img}{caption}. Centred,
 % 92% of the page height, with the caption running up its left edge in the
 % \sidecaption style. For a frame with no title and no body.
