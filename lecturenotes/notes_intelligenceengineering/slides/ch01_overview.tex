@@ -332,30 +332,6 @@ reach for machine learning at all.
 
 
 
-% Four charges, one bullet each; they were cards until the body went back to
-% the default size and the 2x2 grid no longer fit beside the strip. Still open, and Mark's own note: the LMU material on
-% benchmark validation may be worth a lecture of its own later.
-\begin{frame}{Leaderboards and Benchmarks}
-  % First page of Wang et al. 2018 as published at BlackboxNLP (ACL Anthology
-  % W18-5446), rendered at 220 dpi and centre cropped to the strip.
-  \sideimagecover[0.33]{glue_paper_firstpage}
-  \sidecaption{GLUE 2018. Trust me bro, nine tasks}
-  \begin{sidebody}
-    \begin{itemize}
-      \item \textbf{System} A leaderboard scores a \alertbf{model}, and a system is not a model.
-      \item \textbf{Metric} One metric on one frozen test set. Whether it measures what it claims is rarely argued.
-      \item \textbf{Overfit} Every run against a benchmark stales it. GLUE was saturated within a year.
-      \item \textbf{Chance} Scanning 10,000 seeds moves CIFAR 10 by 1.82 points, nothing else changed.
-    \end{itemize}
-  \end{sidebody}
-  \slidesources{Wang2018,Raji2021,Freiesleben2025,Picard2021}
-\end{frame}
-
-
-
-
-
-
 \begin{frame}{Computational priorities}
   \begin{withmargin}
     \begin{tdmain}
@@ -477,8 +453,9 @@ reach for machine learning at all.
   \end{withmargin}
   \slidesources{Picard2021}
 \end{frame}
-% Copy then extend: this frame and the next are the same layout and the same
-% question, one world each. Splitting them is what the character cap buys.
+% Copy then extend: Data in research and Data in production are the same
+% layout and the same question, one world each. Leaderboards sits between
+% them (Mark, 2026-10-19): research data, then what research does with it.
 \begin{frame}{Data in research}
   % IEa is padded for full height: 3% top, 14% bottom to clear the 11mm
   % footer band. Re-export with: tools/notes_drawing.py IEa <out> --padt 0.03 --padb 0.14
@@ -497,6 +474,26 @@ reach for machine learning at all.
     one of its quirks is written up in a tutorial somewhere.}
   \end{sidebody}
   \slidesources{Karpathy2018}
+\end{frame}
+
+
+% Four charges, one bullet each; they were cards until the body went back to
+% the default size and the 2x2 grid no longer fit beside the strip. Still open, and Mark's own note: the LMU material on
+% benchmark validation may be worth a lecture of its own later.
+\begin{frame}{Leaderboards and Benchmarks}
+  % First page of Wang et al. 2018 as published at BlackboxNLP (ACL Anthology
+  % W18-5446), rendered at 220 dpi and centre cropped to the strip.
+  \sideimagecover[0.33]{glue_paper_firstpage}
+  \sidecaption{GLUE 2018. Trust me bro, nine tasks}
+  \begin{sidebody}
+    \begin{itemize}
+      \item \textbf{System} A leaderboard scores a \alertbf{model}, and a system is not a model.
+      \item \textbf{Metric} One metric on one frozen test set. Whether it measures what it claims is rarely argued.
+      \item \textbf{Overfit} Every run against a benchmark stales it. GLUE was saturated within a year.
+      \item \textbf{Chance} Scanning 10,000 seeds moves CIFAR 10 by 1.82 points, nothing else changed.
+    \end{itemize}
+  \end{sidebody}
+  \slidesources{Wang2018,Raji2021,Freiesleben2025,Picard2021}
 \end{frame}
 
 
