@@ -337,7 +337,7 @@ reach for machine learning at all.
   \begin{withmargin}
     \begin{tdmain}
       Research optimises \alertbf{throughput}, production optimises
-      \textbf{latency}, and one buys the other.
+      \textbf{latency}. 
       \vskip1.0em
       \renewcommand{\arraystretch}{1.3}
       {\centering
@@ -357,15 +357,10 @@ reach for machine learning at all.
       Batching waits for the queue to fill, so each single request waits longer
       while the machine as a whole serves far more of them.
       \vskip0.5em
-      Training leans throughput: nobody is waiting on one gradient step.
-      Serving leans latency: somebody is.
-      \vskip0.5em
       Batch size is not the only lever. Model size, sample size and how many
-      models sit in one request all move both numbers, and they do not move
-      them in the same direction.
+      models sit in one request all move the numbers.
     \end{tdmargin}
   \end{withmargin}
-  \slidesources{Huyen2022}
 \end{frame}
 
 
@@ -376,19 +371,16 @@ reach for machine learning at all.
       \vskip0.4em
       10.0,\; 9.7,\; 10.4,\; \alertbf{90.0},\; 9.9,\; 10.0,\; 11.0,\; 9.5,\; 10.2,\; 10.0
       \vskip0.6em
-      The mean is 18.1 ms. Nine of the ten requests were served in about 10 ms
-      and not one of them took 18. The average describes a request that never
-      happened.
+      The mean would be 18.1 ms. Nine of the ten requests were served in about 10 ms. Mean only holds at larger scales.
     \end{tdmain}
     \begin{tdmargin}
-      Users get less patient.
+  
       \vskip0.5em
-      2017, Akamai: a 100 ms delay can cost 7\% of conversions.
+      2017, Akamai: A 100 ms delay can cost 7\% of conversions.
       \vskip0.5em
-      2019, Booking.com: about 30\% more latency cost about 0.5\% in conversion,
-      ``a relevant cost for our business''.
+      2019, Booking.com: about 30\% more latency cost about 0.5\% in conversion.
       \vskip0.5em
-      2016, Google: over half of mobile users leave a page that takes more than
+      2016, Google: Over half of mobile users leave a page that takes more than
       three seconds.
     \end{tdmargin}
   \end{withmargin}
@@ -417,15 +409,11 @@ reach for machine learning at all.
       outlier visible.
     \end{tdmain}
     \begin{tdmargin}
-      A rule of thumb: the band between $p_{90}$ and $p_{99}$ shares a cause
-      you can find, above $p_{99}$ it is often one broken machine.
-      \vskip0.5em
       With ten requests $p_{99}$ is just the maximum. It takes 100 requests
-      before $p_{99}$ and the maximum can differ.
+      before $p_{99}$ and the maximum can differ. Precision needs to be bought with data. 
       \vskip0.5em
-      Quality gates count in nines: three nines is $p_{99.9}$ (1{,}000
-      requests), five nines $p_{99.999}$ (100{,}000). As uptime, 8.8 hours
-      against 5.3 minutes down a year.
+      Quality gates count in nines: Three nines is $p_{99.9}$ (1 in 1000
+      requests), five nines $p_{99.999}$ (1 in 100000).
     \end{tdmargin}
   \end{withmargin}
   \slidesources{Beyer2016}
@@ -435,15 +423,15 @@ reach for machine learning at all.
 % Latency was the worked example; this frame generalises it to every metric
 % and fixes the order of work. The seed spread is Picard's, the same number
 % the Leaderboards frame uses.
-\begin{frame}{Any metric is a distribution}
+\begin{frame}{Your toxic relationship with mean accuracy}
   \begin{withmargin}
     \begin{tdmain}
-      Latency is a distribution. As is any metric. So if you are only
-      reporting accuracy, you are \alertbf{underdelivering} already.
+      Latency is one metric. It might not be yours to measure. Latency is a distribution. As is any metric. So if you are only 
+      reporting mean accuracy, you are \alertbf{underdelivering} already.
       \vskip1.4em
       {\centering
         \begin{tikzpicture}[node distance=9mm]
-          \node[tdbox] (q) {Questions};
+          \node[tdbox] (q) {Feature};
           \node[tdbox, right=of q] (m) {Metrics};
           \node[tdbox, right=of m] (b) {Methods};
           \draw[tdarr] (q) -- (m);
@@ -451,11 +439,9 @@ reach for machine learning at all.
         \end{tikzpicture}\par}
     \end{tdmain}
     \begin{tdmargin}
-      One model, 10,000 random seeds: CIFAR 10 accuracy moves by 1.82 points.
-      A single run is a single draw.
       \vskip0.5em
-      Start with the questions the system has to answer. Pick the metrics
-      that answer them. Only then build the methods that move those metrics.
+      Start with the feature the solution has to deliver on. Pick the metrics
+      that speak to them. Then curate the data that allows to measure them. Only then build the methods that move those metrics.
     \end{tdmargin}
   \end{withmargin}
   \slidesources{Picard2021}
@@ -468,18 +454,19 @@ reach for machine learning at all.
   % between the ink and the 11mm footer band. Re-export with:
   % tools/notes_drawing.py IEa <out> --padt 0.0444 --padb 0.1667
   \sidedrawing{IEa}
-  \sidecaption{Karpathy: at Tesla you lose sleep over data}
+  \sidecaption{Karpathy: At Tesla you lose sleep over data}
   \begin{sidebody}
-    A research dataset is a teaching artefact. Somebody already did the work.
+    A research dataset is a teaching artefact. Somebody already did the work, for something very specific.
     \begin{itemize}
       \item Clean and well formatted
       \item Static, so the community can benchmark against it
       \item Quirks of the dataset are known and documented
       \item Open source scripts to feed your models
       \item Historical, already stored somewhere
+      \item Reported results usually overfit
     \end{itemize}
-    {\color{tddim}Titanic~\cite{Titanic2012}: 891 rows, 12 columns, and every
-    one of its quirks is written up in a tutorial somewhere.}
+    \vspace{1.5em}
+    {\color{tddim}Titanic~\cite{Titanic2012}: 891 rows, 12 columns.}
   \end{sidebody}
   \slidesources{Karpathy2018}
 \end{frame}
@@ -494,11 +481,14 @@ reach for machine learning at all.
   \sideimagecover[0.33]{glue_paper_firstpage}
   \sidecaption{GLUE 2018. Trust me bro, nine tasks}
   \begin{sidebody}
+    Well curated data is expensive and cumbersome. Benchmarks allow comparability, come at scale, and usually link proper metrics and state of the art methods. And
+    they can be adjusted.
     \begin{itemize}
-      \item \textbf{System} A leaderboard scores a \alertbf{model}, and a system is not a model.
-      \item \textbf{Metric} One metric on one frozen test set. Whether it measures what it claims is rarely argued.
-      \item \textbf{Overfit} Every run against a benchmark stales it. GLUE was saturated within a year.
-      \item \textbf{Chance} Scanning 10,000 seeds moves CIFAR 10 by 1.82 points, nothing else changed.
+      \item \alert{System} This scores a model, and a model is not a system.
+      \item \alert{Metric} It measures not necessarily what you care about.
+      \item \alert{Overfit} Every run against a benchmark stales it, fast.
+      \item \alert{Chance} Seeds move CIFAR 10 by 1.82 points.
+      \item \alert{Problem} Benchmarks are a great proxy, but usually not your problem exactly.
     \end{itemize}
   \end{sidebody}
   \slidesources{Wang2018,Raji2021,Freiesleben2025,Picard2021}
@@ -507,13 +497,14 @@ reach for machine learning at all.
 
 \begin{frame}{Data in production}
   Nobody did the work. The data is a by-product of a business that was not run
-  for your benefit.
+  for your benefit. \alert{Usually you don't get away with building and curating your own dataset} to gain back control and clear the fog.
+
   \vskip0.8em
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
       \begin{itemize}
         \item Messy, noisy, possibly unstructured
-        \item \alertbf{Likely biased, and you do not know how}
+        \item Likely biased, and you need to find out how
         \item Labels sparse, imbalanced, or incorrect
       \end{itemize}
     \end{column}
@@ -532,7 +523,7 @@ reach for machine learning at all.
 % P of the items can flip at most that fraction of the correct/incorrect
 % calls, so measured and true accuracy differ by at most P. The 65% is GPT-4's
 % position consistency in Zheng et al. (default prompt, order swapped).
-\begin{frame}{LLM as a judge}
+\begin{frame}{LLM as a judge (is the new "I tested on the training data")}
   % Spider-Man pointing at Spider-Man (Spider-Man, 1967, "Double Identity"),
   % via Know Your Meme; full strip width over a blurred copy of itself.
   \sideimagecover[0.33]{spiderman_pointing}
@@ -553,14 +544,16 @@ reach for machine learning at all.
   \end{sidebody}
   \slidesources{Zheng2023,Panickssery2024,Li2025}
 \end{frame}
+
+
 \begin{frame}{Perpetuating Bias}
   \begin{withmargin}
     \begin{tdmain}
       Machine learning algorithms do not predict the future, they encode the
       past, and then they act on it.
       \vskip0.5em
-      \alertbf{The invisible hand} of performative prediction at scale: the
-      prediction is not a reading of the world, it is a push on it.
+      \alertbf{The invisible hand} of performative prediction plays out t scale: With an increase in agentic systems the
+      prediction is not merely a reading of the world, it is a push on it.
     \end{tdmain}
     \begin{tdmargin}
       2014 to 2018, Amazon built a r\'esum\'e ranker on ten years of its own
@@ -582,21 +575,20 @@ reach for machine learning at all.
   % A drawn keycap (PIL, off-white key on the block-body grey), the "2" that
   % answers Claude Code's permission prompt with yes, and don't ask again.
   \sideimagecover[0.33]{keycap_2}
-  \sidecaption{Press 2: hand Claude recursive permission}
+  \sidecaption{Press 2: Hand Claude recursive permission}
   \begin{sidebody}
-    Research rewards performance, not interpretability. Industry asks for it
-    anyway, from two directions:
+    Research rewards performance, not interpretability. Industry asks for it, but is anyway slow to build it:
     \begin{itemize}
       \item \alertbf{Users}, business leaders and end users alike, to see why a
         decision was made, so they can trust it and catch what is wrong with it.
-      \item \alertbf{Developers}, to debug and improve the model at all.
+      \item \alertbf{Developers}, to debug, improve and align the model.
     \end{itemize}
+    \vspace{0.5em}
     {\color{tddim}Most of us use a fridge without understanding it. Fewer feel
     that way about the thing deciding on their mortgage. Only 19\% of large
-    companies are working on explainability.}
-    \vskip0.5em
-    {\color{tddim}Jev, 2026, is built only to decide: a typed answer with a
-    probability, and no text to read an explanation from.}
+    companies are working on explainability. Jev, 2026, is built only to
+    decide: a typed answer with a probability, and no text to read an
+    explanation from.}
   \end{sidebody}
   \slidesources{TypeSafe2026}
 \end{frame}
@@ -613,11 +605,11 @@ reach for machine learning at all.
   \sideimagecover[0.33]{tempe_dashcam}
   \sidecaption{Tempe Police dashcam, March 2018}
   \begin{sidebody}
-    Putting a human on the loop is the standard answer to an uninterpretable
+    Putting a human on the loop is the standard answer to an uninterpretable or weak
     model. The evidence that it works is \alertbf{thin}.
     \vskip0.6em
     Supervising reliable automation degrades exactly the capability being
-    supervised: vigilance falls, response to the first failure is poor, and
+    supervised: Vigilance falls, response to the first failure is poor, and
     the takeover you designed for arrives too late.
     \vskip0.5em
     {\color{tddim}Tempe, 2018: the system saw the pedestrian 5.6\,s before
@@ -633,15 +625,15 @@ reach for machine learning at all.
 \begin{frame}{Why this is different from traditional software engineering}
   \begin{withmargin}
     \begin{tdmain}[0.70]
-      Traditional software engineering tests and versions \textbf{code}.
-      A machine learning system has to test and version code, \alertbf{data},
+      Traditional \alert{software engineering} tests and versions code.
+      A machine learning system has to test and version code, data,
       and everything the two produce together.
       \vskip0.6em
       \begin{itemize}
         \item How do you version a dataset, and diff two versions of one?
         \item How do you deploy into an environment that keeps moving?
         \item How do you monitor and debug a system with no stack trace?
-        \item How do you avoid being harmful at scale?
+        \item How do you avoid being harmful at scale and even push it?
       \end{itemize}
       \vskip0.9em
       \begin{minipage}[c]{0.13\linewidth}
@@ -678,7 +670,7 @@ reach for machine learning at all.
 \begin{frame}{}
     \begin{statement}
       \substatement{You might argue that the engineering and development side of machine learning is more exciting.}  
-      Most \alert{jobs} will be, and already are in \alert{productionizing} machine learning systems.
+      Most \alert{jobs} will be, and already are in \alert{productionizing} machine learning systems or \alert{decision making}.
       \end{statement}
 \end{frame}
 
