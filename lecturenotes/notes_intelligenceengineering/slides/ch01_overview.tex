@@ -423,17 +423,19 @@ reach for machine learning at all.
       outlier visible.
     \end{tdmain}
     \begin{tdmargin}
-      Now that you see it, you can work on the gap between two percentiles:
-      the requests slower than $p_{90}$ but faster than $p_{99}$, the slowest
-      tenth that is not the worst hundredth.
       \vskip0.5em
       A rule of thumb: that band is common enough to share a cause you can
       find. Above $p_{99}$ it is often a one-off, one broken machine.
       \vskip0.5em
       With ten requests $p_{99}$ is just the maximum. It takes 100 requests
       before $p_{99}$ and the maximum can differ.
+      \vskip0.5em
+      Quality gates count in nines: three nines is $p_{99.9}$ (1{,}000
+      requests), five nines $p_{99.999}$ (100{,}000). As uptime, 8.8 hours
+      against 5.3 minutes down a year.
     \end{tdmargin}
   \end{withmargin}
+  \slidesources{Beyer2016}
 \end{frame}
 
 
