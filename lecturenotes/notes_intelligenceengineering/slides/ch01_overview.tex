@@ -447,6 +447,36 @@ reach for machine learning at all.
     \end{tdmargin}
   \end{withmargin}
 \end{frame}
+
+
+% Latency was the worked example; this frame generalises it to every metric
+% and fixes the order of work. The seed spread is Picard's, the same number
+% the Leaderboards frame uses.
+\begin{frame}{Any metric is a distribution}
+  \begin{withmargin}
+    \begin{tdmain}
+      Latency is a distribution. As is any metric. So if you are only
+      reporting accuracy, you are \alertbf{underdelivering} already.
+      \vskip1.4em
+      {\centering
+        \begin{tikzpicture}[node distance=9mm]
+          \node[tdbox] (q) {Questions};
+          \node[tdbox, right=of q] (m) {Metrics};
+          \node[tdbox, right=of m] (b) {Methods};
+          \draw[tdarr] (q) -- (m);
+          \draw[tdarr] (m) -- (b);
+        \end{tikzpicture}\par}
+    \end{tdmain}
+    \begin{tdmargin}
+      One model, 10,000 random seeds: CIFAR 10 accuracy moves by 1.82 points.
+      A single run is a single draw.
+      \vskip0.5em
+      Start with the questions the system has to answer. Pick the metrics
+      that answer them. Only then build the methods that move those metrics.
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Picard2021}
+\end{frame}
 % Copy then extend: this frame and the next are the same layout and the same
 % question, one world each. Splitting them is what the character cap buys.
 \begin{frame}{Data in research}
