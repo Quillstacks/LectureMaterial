@@ -81,6 +81,11 @@
   \td@sideimagefalse
   \setlength{\td@stripw}{\sidestrip\paperwidth}%
   \begin{tikzpicture}[remember picture,overlay]
+    % Paint the strip in the card colour first, so it covers the frametitle
+    % rule the way a photo strip does and the drawing can run the full page
+    % height (Mark, 2026-10-19) without the rule crossing its strokes.
+    \fill[tdcard] ([xshift=-\td@stripw]current page.north east)
+      rectangle (current page.south east);
     \node[anchor=center,inner sep=0pt]
       at ([xshift=-0.5\td@stripw]current page.east)
       {\includegraphics[width=\td@stripw,height=\paperheight,keepaspectratio]{#2}};
