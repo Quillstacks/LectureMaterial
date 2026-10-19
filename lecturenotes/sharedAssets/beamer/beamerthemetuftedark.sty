@@ -373,9 +373,12 @@
 % centred by default: the main artefact and its margin reading sit on one line,
 % so horizontal alignment holds throughout and slides stay tidy.
 \newenvironment{withmargin}{\begin{columns}[c,onlytextwidth]}{\end{columns}}
-\newenvironment{tdmain}{\begin{column}{0.64\textwidth}}{\end{column}}
-\newenvironment{tdmargin}{%
-  \begin{column}{0.30\textwidth}%
+% Optional width as a fraction of \textwidth, for a frame whose main column
+% needs more room (defaults 0.64 / 0.30; keep the two summing to about 0.94).
+%   \begin{tdmain}[0.72] ... \end{tdmain}  \begin{tdmargin}[0.22] ... \end{tdmargin}
+\newenvironment{tdmain}[1][0.64]{\begin{column}{#1\textwidth}}{\end{column}}
+\newenvironment{tdmargin}[1][0.30]{%
+  \begin{column}{#1\textwidth}%
     \usebeamercolor[fg]{normal text}\color{tddim}%
     \footnotesize\raggedright}{%
   \end{column}}
