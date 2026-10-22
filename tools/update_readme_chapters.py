@@ -41,6 +41,7 @@ LECTURE_TITLES = {
     "notes_3dprinting": "Bambu Lab P1S",
     "notes_dgxspark": "DGX Spark",
     "notes_egpu": "External GPU",
+    "notes_bizon": "Bizon",
 }
 
 # (emoji, label) shown in the <summary> line and the "Full" table row.
@@ -49,6 +50,7 @@ DOC_LABELS = {
     "notes_3dprinting": ("📖", "Field Manual"),
     "notes_dgxspark": ("📖", "Field Manual"),
     "notes_egpu": ("📖", "Field Manual"),
+    "notes_bizon": ("📖", "Field Manual"),
 }
 DEFAULT_DOC_LABEL = ("📑", "Lecture Notes")
 

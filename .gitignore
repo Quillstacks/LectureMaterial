@@ -99,3 +99,6 @@ lecturenotes/*/exams/
 
 # DGX Spark student setup bundle: holds the WireGuard config, never publish
 lecturenotes/notes_dgxspark/student_setup/
+
+# Bizon student setup bundle: holds the server address, never publish
+lecturenotes/notes_bizon/student_setup/

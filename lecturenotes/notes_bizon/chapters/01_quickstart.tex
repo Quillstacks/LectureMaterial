@@ -1,0 +1,60 @@
+% !TEX root = ../notes_bizon.tex
+% Chapter 1: Quickstart -- from your laptop to a shell on the Bizon
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Access path: Sophos SSL VPN into the DHBW network, then ssh with the
+% DHBW account, as in the DHBW guide (bizon.bib). Students log in as
+% <username>@ab.ba.ba-ravensburg.de. The server address never appears in
+% the book: it ships in the setup package (student_setup/, gitignored),
+% handed out by mail as for the DGX Spark.
+% TODO after bizon_recon.sh: confirm the ssh -l form and the GPU count.
+
+\index{quickstart}\index{Bizon}
+\chapter{Quickstart.}
+\printchapterversion{01_quickstart}
+
+\section{Where the buffalo roam}
+
+\index{account}\newthought{The Bizon runs on your DHBW account.} Log in
+with the username and password of the lab PCs. On the server, the
+username carries the domain: \texttt{<username>@ab.ba.ba-ravensburg.de}
+\cite{dhbw2021bizon}. The Bizon's address comes by mail, as a setup package.
+\marginnote{\newthought{Scan the code} and send a mail stating your name,
+course, and what you want to run.\par\medskip
+\null\hfill\qrcode[height=1.0cm]{mailto:schutera@dhbw-ravensburg.de?subject=Bizon\%20Setup\&body=Name\%3A\%20\%0ACourse\%3A\%20\%0AProject\%3A\%20}}
+
+\index{shared infrastructure}\newthought{Your account is one of many} on
+a shared machine. Store nothing sensitive on it, leave other users' files
+and processes alone, and sandbox your stuff.
+Protect yourself from others, and protect others from yourself.
+\marginnote{\newthought{Remember?} Chapter 1 of
+Full Stack Handwerkszeug, Development and Production, covers this split,
+along with SSH and Linux servers.
+\url{https://material.schutera.com/lecturenotes/notes_missingsemester/notes_missingsemester.pdf}}%
+The Bizon is used most efficiently when you spend as little time as possible to deploy your jobs and leave,
+not for interactive development. If you need to develop interactively, please do so on your own machine.
+
+\marginnote{\newthought{Scan the code} for the VPN user portal.\par\medskip
+\null\hfill\qrcode[height=1.0cm]{https://vpn-rv.dhbw-ravensburg.de}}
+\index{VPN}\newthought{The Sophos VPN takes you into the DHBW network.}
+On campus you are already inside. Off campus, open
+\url{https://vpn-rv.dhbw-ravensburg.de}, log in to the user portal with
+your DHBW credentials, open the page \texttt{VPN}, and download the
+client and the configuration. Then connect with your DHBW credentials:
+\begin{itemize}[nosep]
+  \item Windows: Sophos SSL VPN Client, tray icon, \texttt{Connect}.
+  \item macOS: \texttt{.ovpn} into Tunnelblick \cite{tunnelblick2026}, \texttt{Connect}.
+  \item Linux: \texttt{sudo openvpn -{}-config <file>.ovpn}.
+\end{itemize}
+
+\index{SSH}\newthought{Then log in} with the address from the package:
+\begin{verbatim}
+ssh -l <username>@ab.ba.ba-ravensburg.de <bizon-ip>
+\end{verbatim}
+
+\index{nvidia-smi}\newthought{Before you start a job,} run
+\texttt{nvidia-smi} to see who is on which GPU. Pick a free one and pin
+your job to it, for example GPU 3:
+\begin{verbatim}
+CUDA_VISIBLE_DEVICES=3 python train.py
+\end{verbatim}

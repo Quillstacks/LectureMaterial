@@ -242,6 +242,23 @@
 <br>
 
 ---
+### Bizon
+
+<!-- BEGIN:lecture:notes_bizon -->
+<details markdown="1">
+<summary>📖 <b>Field Manual</b></summary>
+
+|   #  | Chapter | Download |
+| :--: | :--- | :-: |
+| Full | Bizon · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/notes_bizon.pdf) |
+|  01  | Quickstart. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/chapter_pdfs/01_quickstart.pdf) |
+
+</details>
+<!-- END:lecture:notes_bizon -->
+
+<br>
+
+---
 ---
 <br>
 
