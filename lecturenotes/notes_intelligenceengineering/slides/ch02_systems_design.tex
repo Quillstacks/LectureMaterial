@@ -270,6 +270,13 @@
 \end{frame}
 
 
+% IEe bottom half: the four requirements in one hand drawn overview; each of
+% them gets its own frame next.
+\begin{frame}{}
+  \fulldrawing{IEe2}{The four requirements}
+\end{frame}
+
+
 \begin{frame}{Reliability}
   \begin{withmargin}
     \begin{tdmain}
@@ -464,15 +471,84 @@
 
 \subsection{Iterative Process}
 
+% The subchapter is Mark's sketch series IEe to IEk: the same six stage base,
+% annotated one station at a time, so the cycle builds up across the frames.
+% IEe top half: every loop between the stages drawn in, with the header
+% "Developing ML systems is a cycle with a lot of back and forth. #ITERATIVE".
+\begin{frame}{}
+  \fulldrawing{IEe1}{Developing ML systems is a cycle}
+\end{frame}
 
-\begin{frame}{Iterative Process}
-  \phimgside[0.33]{iterative_process.png}{}
-  \begin{sidebody}
-  \end{sidebody}
- \end{frame}
+
+% IEf stage 1: vision and scoping is set through objectives, key results and
+% constraints.
+\begin{frame}{}
+  \fulldrawing{IEf1}{Vision and scoping}
+\end{frame}
+
+
+% IEf stage 2, copy then extend: the stakeholders arrive. Users, managers,
+% humanity drive the vision.
+\begin{frame}{}
+  \fulldrawing{IEf2}{Stakeholders: users, managers, humanity}
+\end{frame}
+
+
+% IEg stage 1: we learn from data, so the craftsmanship starts here; sources,
+% modalities and formats for the samples x.
+\begin{frame}{}
+  \fulldrawing{IEg1}{Data engineering: the samples}
+\end{frame}
+
+
+% IEg stage 2, copy then extend: the label tag lands on the data.
+\begin{frame}{}
+  \fulldrawing{IEg2}{It is all about the labels}
+\end{frame}
+
+
+% IEh stage 1: training data flows into the model theta, the station that
+% takes the most ML specific knowledge.
+\begin{frame}{}
+  \fulldrawing{IEh1}{Model development}
+\end{frame}
+
+
+% IEh stage 2, copy then extend: feature engineering, model selection,
+% training, evaluation, and y hat leaves the model.
+\begin{frame}{}
+  \fulldrawing{IEh2}{Feature engineering to evaluation}
+\end{frame}
+
+
+% IEi: deployment exposes the system to its users; you will never reach a
+% point where your system is done.
+\begin{frame}{}
+  \fulldrawing{IEi}{Deployment: expose your system}
+\end{frame}
+
+
+% IEj: monitoring is the capability to stay adaptive against changing
+% requirements, performance decay and changing environments.
+\begin{frame}{}
+  \fulldrawing{IEj}{Monitoring: stay adaptive}
+\end{frame}
+
+
+% IEk: business analysis evaluates against business goals, generates business
+% insights, and influences scope and vision: the loop closes.
+\begin{frame}{}
+  \fulldrawing{IEk}{Business analysis closes the loop}
+\end{frame}
 
 % ----------------------------------------------------------------------
 \subsection{Framing ML Problems}
+
+% IEl top band: the FRAMING header, "not everything is an ML problem, but a
+% lot can be framed as one", and the red path vision, data, model.
+\begin{frame}{}
+  \fulldrawing{IEl1}{A lot can be framed as an ML problem}
+\end{frame}
 
 
 \begin{frame}{Types of ML Tasks}
@@ -495,33 +571,18 @@
  \end{frame}
 
 
-\begin{frame}{Classification versus regression}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=clsreg]{Classification}
-      \end{tdblockt}
-    \end{column}
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=clsreg]{Regression}
-      \end{tdblockt}
-    \end{column}
-  \end{columns}
- \end{frame}
+% IEl middle band, stage 1: classification against regression, the threshold
+% that turns one into the other, and the reframe toward regression.
+\begin{frame}{}
+  \fulldrawing{IEl2}{Classification versus regression}
+\end{frame}
 
 
-\begin{frame}{Binary versus multiclass classification}
-  \renewcommand{\arraystretch}{1.35}
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth} >{\raggedright\arraybackslash}p{0.32\textwidth} >{\raggedright\arraybackslash}p{0.32\textwidth}@{}}
-    \toprule
-     & \textbf{Binary} & \textbf{Multiclass}\\
-    \midrule
-     & & \\
-     & & \\
-     & & \\
-     & & \\
-    \bottomrule
-  \end{tabular}
- \end{frame}
+% IEl middle band, stage 2, copy then extend: binary and multiclass join
+% below, cardinality, and the reframe toward binary where possible.
+\begin{frame}{}
+  \fulldrawing{IEl3}{Binary, multiclass, and where to reframe}
+\end{frame}
 
 
 \begin{frame}{Multiclass versus multilabel classification}
@@ -552,38 +613,62 @@
  \end{frame}
 
 
-\begin{frame}{Objective Functions}
-  \begin{withmargin}
-    \begin{tdmain}
-    \end{tdmain}
-    \begin{tdmargin}
-    \end{tdmargin}
-  \end{withmargin}
- \end{frame}
+% IEl bottom band: restrain from buying framing wins with an increasing
+% number of models; hierarchical and sequential systems are sophisticated but
+% hard to maintain. Talk is cheap, go try it on MNIST.
+\begin{frame}{}
+  \fulldrawing{IEl4}{Talk is cheap, sharpen your intuition on MNIST}
+\end{frame}
 
 
-\begin{frame}{Decoupling objectives}
-  \phimgside[0.33]{decoupling_objectives.png}{}
-  \begin{sidebody}
-  \end{sidebody}
- \end{frame}
+% IEm top band: the objective function L(yhat, ytilde) guides the learning
+% process and defines what optimal, theta star, is; cross entropy, RMSE.
+\begin{frame}{}
+  \fulldrawing{IEm1}{The objective function defines what optimal is}
+\end{frame}
+
+
+% IEm lower band, stage 1: the weighted sum alpha_1 L_1 + alpha_n L_n;
+% usually you have multiple objectives anyway, this states them explicitly.
+\begin{frame}{}
+  \fulldrawing{IEm2}{Decoupling objectives}
+\end{frame}
+
+
+% IEm lower band, stage 2, copy then extend: Pareto optimization. Weighting
+% while training makes every touch a retrain; train two models and weight
+% adaptively during inference. Objective functions require gradients, for
+% everything else we still need metrics.
+\begin{frame}{}
+  \fulldrawing{IEm3}{Weight during inference, not during training}
+\end{frame}
 
 % ----------------------------------------------------------------------
 \subsection{Mind Versus Data}
 
 
-\begin{frame}{Model Versus Data}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=mind]{Mind}
-      \end{tdblockt}
-    \end{column}
-    \begin{column}{0.47\textwidth}
-      \begin{tdblockt}[equal height group=mind]{Data}
-      \end{tdblockt}
-    \end{column}
-  \end{columns}
- \end{frame}
+% IEn top band: the mind side. As data flows through models, owning the
+% infrastructure is key; intelligent architectural designs frozen within the
+% current paradigm (the grey ink is Mark's blue aside).
+\begin{frame}{}
+  \fulldrawing{IEn1}{Mind: owning the infrastructure}
+\end{frame}
+
+
+% IEn middle band, copy then extend: the data side. Model success heavily
+% depends on data, the biggest leverage is managing and improving data
+% quality and quantity, and data utilization is tied to compute.
+\begin{frame}{}
+  \fulldrawing{IEn2}{Data: model success depends on it}
+\end{frame}
+
+
+% IEn bottom band: "We don't have better algorithms. We just have better
+% data." Norvig. And more data is a regularization method, driving
+% generalization.
+\begin{frame}{}
+  \fulldrawing{IEn3}{Better data beats better algorithms}
+\end{frame}
 
 % ----------------------------------------------------------------------
 \subsection{Summary}

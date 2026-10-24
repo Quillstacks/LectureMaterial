@@ -89,12 +89,14 @@
 \makeatother
 
 % Hand drawn figure as the whole slide: \fulldrawing{img}{caption}. Centred,
-% 92% of the page height, with the caption running up its left edge in the
-% \sidecaption style. For a frame with no title and no body.
+% 92% of the page height, capped at 92% of the page width so a wide band
+% crop of a sketch stays on the page, with the caption running up its left
+% edge in the \sidecaption style. For a frame with no title and no body.
 \newcommand{\fulldrawing}[2]{%
   \begin{tikzpicture}[remember picture,overlay]
     \node[inner sep=0pt] (fulldrawing) at (current page.center)
-      {\includegraphics[height=0.92\paperheight]{#1}};
+      {\includegraphics[height=0.92\paperheight,width=0.92\paperwidth,%
+        keepaspectratio]{#1}};
     \node[rotate=90, anchor=west, inner sep=0pt, text=tddim,
       font=\ttfamily\scriptsize]
       at ([xshift=-2mm,yshift=13mm]fulldrawing.west |- current page.south){#2};
