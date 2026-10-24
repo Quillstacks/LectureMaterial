@@ -201,6 +201,7 @@
 | Full | Bambu Lab P1S · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/notes_3dprinting.pdf) |
 |  01  | Quickstart | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/01_quickstart.pdf) |
 |  02  | TPU | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/11_tpu.pdf) |
+|  03  | Inlays | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/07_sequenced.pdf) |
 
 </details>
 <!-- END:lecture:notes_3dprinting -->
@@ -242,7 +243,7 @@
 <br>
 
 ---
-### Bizon
+### Moneypenny
 
 <!-- BEGIN:lecture:notes_bizon -->
 <details markdown="1">
@@ -250,8 +251,10 @@
 
 |   #  | Chapter | Download |
 | :--: | :--- | :-: |
-| Full | Bizon · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/notes_bizon.pdf) |
+| Full | Moneypenny · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/notes_bizon.pdf) |
 |  01  | Quickstart. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/chapter_pdfs/01_quickstart.pdf) |
+|  02  | OpenCode. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/chapter_pdfs/02_opencode.pdf) |
+|  03  | Open WebUI. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/chapter_pdfs/03_openwebui.pdf) |
 
 </details>
 <!-- END:lecture:notes_bizon -->
