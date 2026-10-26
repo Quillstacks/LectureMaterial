@@ -35,15 +35,12 @@
 
 % This lecture in one slide. The card is rendered from lecture_outline.tex,
 % the same source ch00 renders the whole course from, so the two cannot drift.
+% Side strip: the overview figure placeholder, as on ch00's overview frame.
 \begin{frame}{This lecture in one slide}
-  \begin{withmargin}
-    \begin{tdmain}
-      \outlinecard{II}
-    \end{tdmain}
-    \begin{tdmargin}
-      \tofill{why this lecture matters, and what you can do after it}
-    \end{tdmargin}
-  \end{withmargin}
+  \phimgside{overview_ch02}{Machine Learning Systems Overview}
+  \begin{sidebody}
+    \outlinecard{II}
+  \end{sidebody}
 \end{frame}
 
 %% DONE 2026-09-25: solved by removing the second copy rather than reminding
@@ -59,6 +56,16 @@
 % ----------------------------------------------------------------------
 \subsection{Business and ML Objectives}
 
+% IEb: the six stages of an ML system, no loops drawn in yet. Full page like
+% the rest of the sketch walk.
+\begin{frame}[plain]
+  \fulldrawing{IEb}{System Design}
+\end{frame}
+
+
+% Parked 2026-10-26: the text the IEb frame carried as a side drawing, before
+% it went full page.
+\iffalse
 \begin{frame}{System Design}
   \sidedrawing{IEb}
   \begin{sidebody}
@@ -73,12 +80,12 @@
   \end{sidebody}
   \slidesources{Huyen2022}
 \end{frame}
+\fi
 
 
-% IEc: the same six stages as IEb with every loop between them drawn in. The
-% figure is the slide; no title, no body.
+% IEd: the stages that tie the model to the business, drawn in red.
 \begin{frame}[plain]
-  \fulldrawing{IEc}{It is not crazy, it is just complex}
+  \fulldrawing{IEd}{Tie ML to business}
 \end{frame}
 
 
@@ -147,6 +154,16 @@
 \fi
 
 
+% IEc: the same six stages as IEb with every loop between them drawn in. The
+% figure is the slide; no title, no body.
+\begin{frame}[plain]
+  \fulldrawing{IEc}{It is not crazy, it is just complex}
+\end{frame}
+
+
+% Parked 2026-10-26: the text the IEd frame carried as a side drawing, before
+% it went full page.
+\iffalse
 \begin{frame}{Tie ML to business}
   \sidedrawing{IEd}
   \begin{sidebody}
@@ -164,6 +181,7 @@
   \end{sidebody}
   \slidesources{Huyen2022}
 \end{frame}
+\fi
 
 
 % Parked 2026-10-26, see the note at the first parked block.
@@ -649,38 +667,43 @@
 \end{frame}
 
 
-% IEm lower band, stage 1: the weighted sum alpha_1 L_1 + alpha_n L_n;
-% usually you have multiple objectives anyway, this states them explicitly.
+% IEm lower band, stage 1: only the weighted sum alpha_1 L_1 + alpha_n L_n.
 \begin{frame}[plain]
   \fulldrawing{IEm2}{Decoupling objectives}
 \end{frame}
 
 
-% IEm lower band, stage 2, copy then extend: Pareto optimization. Weighting
-% while training makes every touch a retrain; train two models and weight
-% adaptively during inference. Objective functions require gradients, for
-% everything else we still need metrics.
+% IEm lower band, stage 2, copy then extend: usually you have multiple
+% objectives anyway; the weighted sum states them explicitly.
 \begin{frame}[plain]
-  \fulldrawing{IEm3}{Weight during inference, not during training}
+  \fulldrawing{IEm3}{State your objectives explicitly}
+\end{frame}
+
+
+% IEm lower band, stage 3, copy then extend: Pareto optimization. Weighting
+% while training makes every touch a retrain; train two models and weight
+% adaptively during inference.
+\begin{frame}[plain]
+  \fulldrawing{IEm4}{Weight during inference, not during training}
+\end{frame}
+
+
+% IEm bottom lines as the closing banner: objective functions require
+% gradients, for everything else we still need metrics.
+\begin{frame}[plain]
+  \fulldrawing{IEm5}{Gradients to train, metrics for everything else}
 \end{frame}
 
 % ----------------------------------------------------------------------
 \subsection{Mind Versus Data}
 
 
-% IEn top band: the mind side. As data flows through models, owning the
-% infrastructure is key; intelligent architectural designs frozen within the
-% current paradigm (the grey ink is Mark's blue aside).
+% IEn top and middle bands on ONE slide (Mark, 2026-10-26: the two halves
+% are connected). The mind side, owning the infrastructure, intelligent
+% designs frozen within the paradigm (grey ink is Mark's blue aside), against
+% the data side, where model success, leverage and compute live.
 \begin{frame}[plain]
-  \fulldrawing{IEn1}{Mind: owning the infrastructure}
-\end{frame}
-
-
-% IEn middle band, copy then extend: the data side. Model success heavily
-% depends on data, the biggest leverage is managing and improving data
-% quality and quantity, and data utilization is tied to compute.
-\begin{frame}[plain]
-  \fulldrawing{IEn2}{Data: model success depends on it}
+  \fulldrawing{IEn12}{Mind versus data}
 \end{frame}
 
 
@@ -690,15 +713,6 @@
 \begin{frame}[plain]
   \fulldrawing{IEn3}{Better data beats better algorithms}
 \end{frame}
-
-% ----------------------------------------------------------------------
-\subsection{Summary}
-
-\begin{frame}{Summary}
-  \begin{takeaway}
-  \end{takeaway}
- \end{frame}
-
 
 % ----------------------------------------------------------------------
 % This chapter's references, printed only in this chapter's own PDF. The
