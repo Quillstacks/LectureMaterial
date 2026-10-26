@@ -105,9 +105,13 @@
 % [plain] frame (Mark, 2026-10-26: the sketches use the full height). The
 % page becomes one clean card with no bottom footer; the drawing runs the
 % FULL page height, wide band crops capped at 94% of the page width instead.
-% A slim footer, section plus page count, runs up the LEFT page edge where
-% the bottom footer used to be, and the caption runs up the RIGHT page edge.
+% The bottom footer turned on its side runs up the LEFT page edge: name and
+% section, progress track, page count. The page height is too short for the
+% bottom footer's 30% track next to the name, so the track here takes what
+% the two texts leave, 5mm clear of each. The caption runs up the RIGHT edge.
 % The images bake in a 3% margin, so the ink clears the page edges.
+\newlength{\ievertleft}
+\newlength{\ievertright}
 \newcommand{\fulldrawing}[2]{%
   \begin{tikzpicture}[remember picture,overlay]
     \fill[tdcard] (current page.north west) rectangle (current page.south east);
@@ -117,7 +121,11 @@
     \node[rotate=90, anchor=west, inner sep=0pt, text=tddim,
       font=\sffamily\scriptsize]
       at ([xshift=4.5mm,yshift=4mm]current page.south west)
-      {\insertsectionhead\ \ \insertframenumber\,/\,\inserttotalframenumber};
+      {\settowidth{\ievertleft}{\iefootname\insertsectionhead}%
+        \settowidth{\ievertright}{\insertframenumber\,/\,\inserttotalframenumber}%
+        \setlength{\ieprogwd}{\dimexpr\paperheight-8mm-\ievertleft-\ievertright-10mm\relax}%
+        \iefootname\insertsectionhead\hspace{5mm}\ieprogressbar\hspace{5mm}%
+        \insertframenumber\,/\,\inserttotalframenumber};
     \node[rotate=90, anchor=west, inner sep=0pt, text=tddim,
       font=\ttfamily\scriptsize]
       at ([xshift=-2mm,yshift=4mm]current page.south east){#2};
@@ -493,9 +501,13 @@
     \rlap{\textcolor{tdrule}{\rule{\ieprogwd}{1.1pt}}}%
     \textcolor{tdfg}{\rule{\ieprogfill}{1.1pt}}}}%
 }
+% The speaker's name leads the footer on every slide, so a photo taken during
+% the talk carries it (Mark, 2026-10-26). The right edge watermark cannot do
+% this: side strips and full page sketches cover it.
+\newcommand{\iefootname}{Prof.\ Dr.-Ing.\ Mark Schutera\enspace\textperiodcentered\enspace}
 \setbeamertemplate{footline}{%
   \begin{beamercolorbox}[wd=\paperwidth,ht=6mm,dp=5mm,leftskip=6mm,rightskip=6mm]{section in head/foot}%
-    {\usebeamerfont{section in head/foot}\color{tddim}\insertsectionhead}%
+    {\usebeamerfont{section in head/foot}\color{tddim}\iefootname\insertsectionhead}%
     \hfill
     \ieprogressbar
     \hfill
