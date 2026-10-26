@@ -101,16 +101,26 @@
   \node[inner sep=0pt] (v) {#1};
   \node[overlay, below=1.2mm of v, inner sep=0pt, text=tddim] {#2};}}
 
-% Hand drawn figure as the whole slide: \fulldrawing{img}{caption}. Centred,
-% 92% of the page height, with the caption running up its left edge in the
-% \sidecaption style. For a frame with no title and no body.
+% Hand drawn figure as the whole slide: \fulldrawing{img}{caption}, on a
+% [plain] frame (Mark, 2026-10-26: the sketches use the full height). The
+% page becomes one clean card with no bottom footer; the drawing runs the
+% FULL page height, wide band crops capped at 94% of the page width instead.
+% A slim footer, section plus page count, runs up the LEFT page edge where
+% the bottom footer used to be, and the caption runs up the RIGHT page edge.
+% The images bake in a 3% margin, so the ink clears the page edges.
 \newcommand{\fulldrawing}[2]{%
   \begin{tikzpicture}[remember picture,overlay]
-    \node[inner sep=0pt] (fulldrawing) at (current page.center)
-      {\includegraphics[height=0.92\paperheight]{#1}};
+    \fill[tdcard] (current page.north west) rectangle (current page.south east);
+    \node[inner sep=0pt] at (current page.center)
+      {\includegraphics[height=\paperheight,width=0.94\paperwidth,%
+        keepaspectratio]{#1}};
+    \node[rotate=90, anchor=west, inner sep=0pt, text=tddim,
+      font=\sffamily\scriptsize]
+      at ([xshift=4.5mm,yshift=4mm]current page.south west)
+      {\insertsectionhead\ \ \insertframenumber\,/\,\inserttotalframenumber};
     \node[rotate=90, anchor=west, inner sep=0pt, text=tddim,
       font=\ttfamily\scriptsize]
-      at ([xshift=-2mm,yshift=13mm]fulldrawing.west |- current page.south){#2};
+      at ([xshift=-2mm,yshift=4mm]current page.south east){#2};
   \end{tikzpicture}%
 }
 
@@ -337,7 +347,7 @@
 \setbeamertemplate{frametitle}{%
   \nointerlineskip%
   \vskip2.4ex%
-  {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\strut\insertframetitle\par}%
+  {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\strut\tikz[remember picture,overlay]\coordinate (tdframetitle);\insertframetitle\par}%
   \ifx\insertframesubtitle\@empty\else
     \vskip0.35ex%
     {\usebeamerfont{framesubtitle}\usebeamercolor[fg]{framesubtitle}%
@@ -348,6 +358,18 @@
   \vskip0.4ex%
 }
 \makeatother
+
+% Title on top of a side strip: \titleontop, called after \sideimagecover.
+% The frametitle is typeset before the frame body, so a strip laid down in
+% the body covers a long title's right end. The template above marks where
+% the title starts with a zero-size coordinate; this draws the title again
+% at that mark, over the photo.
+\newcommand{\titleontop}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=base west,inner sep=0pt] at (tdframetitle)
+      {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle};
+  \end{tikzpicture}%
+}
 
 % ------------------------------------------------------- subchapter divider
 % A lecture is one chapter and gets exactly ONE \lecturepage. Inside it, the
@@ -504,7 +526,7 @@
 % on the branch inprogress and come back here one \input at a time.
 \input{ch00_orientation.tex}
 \input{ch01_overview.tex}
-%\input{ch02_systems_design.tex}
+\input{ch02_systems_design.tex}
 %\input{ch03_data_engineering.tex}
 %\input{ch04_training_data.tex}
 %\input{ch05_feature_engineering.tex}
