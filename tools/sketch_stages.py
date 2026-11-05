@@ -16,6 +16,8 @@ spec.json:
   "red_gain": 1,             // alpha gain on red ink; a pen like (254,58,48)
                              // caps at 81% alpha and reads maroon, 1.25 fixes it
   "canvas_height": null,     // pin the canvas (px) to match an earlier run
+  "normalize_width": null,   // upscale raws to this width first; Notes caps tall
+                             // drawings near 3076 px, shrinking their handwriting
   "stages": {
     "IEf1": {"src": "IEf", "band": [0, 1],
              "masks": [[0.40, 0.68, 1, 1], [0.735, 0.24, 0.93, 0.70]]},
@@ -38,8 +40,10 @@ DIM = (0x9A, 0x9A, 0x9A)
 YEL = (0xFF, 0xCE, 0x00)
 
 
-def prepared(raw_dir, src, band, masks, thicken):
+def prepared(raw_dir, src, band, masks, thicken, width=None):
     im = Image.open(os.path.join(raw_dir, src + ".png")).convert("RGB")
+    if width and im.width != width:
+        im = im.resize((width, round(im.height * width / im.width)), Image.BICUBIC)
     w, h = im.size
     d = ImageDraw.Draw(im)
     for x0, y0, x1, y1 in masks:
@@ -70,11 +74,12 @@ def main():
     margin = spec.get("margin", 0.03)
     thicken = spec.get("thicken", 5)
     red_gain = spec.get("red_gain", 1)
+    width = spec.get("normalize_width")
     stages = spec["stages"]
 
     prep, boxes = {}, {}
     for name, st in stages.items():
-        im = prepared(raw_dir, st["src"], st["band"], st.get("masks", []), thicken)
+        im = prepared(raw_dir, st["src"], st["band"], st.get("masks", []), thicken, width)
         ink, red, blue, yellow = split(im)
         if red_gain != 1:
             boosted = ink.point(lambda v: min(255, int(v * red_gain)))

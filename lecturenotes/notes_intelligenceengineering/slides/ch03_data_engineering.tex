@@ -5,12 +5,10 @@
 %% 3. The subchapters and the frame titles under them are the book's own
 %% section and subsection headings, in the book's order.
 %%
-%% STATE: the opening and Data Sources are Mark's iPad sketches IE3a and IE3b,
-%% cut into stages by tools/sketch_stages.py from
-%% sketches/ch03_data_engineering/stages_spec.json. Every later subchapter is
-%% parked whole in an iffalse block, divider included, until its sketches land.
-%% The outline card keeps listing them: it is the lecture's plan, and
-%% check_lecture_outline.sh still finds the parked \subsection lines.
+%% STATE: every live frame is one of Mark's iPad sketches IE3a to IE3m, cut into
+%% stages by tools/sketch_stages.py from
+%% sketches/ch03_data_engineering/stages_spec.json. The spine's empty frames
+%% wait in an iffalse block at the end of each subchapter.
 %%
 %% Fragment of intelligence_engineering.tex. One chapter is one lecture and
 %% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
@@ -21,8 +19,8 @@
 \section[Data Engineering]{Data Engineering Fundamentals}
 
 % The sketches carry no \slidesources marker: they rest on Huyen's chapter 3,
-% and IE3a names Kleppmann as further reading.
-\nocite{Huyen2022,Kleppmann2017}
+% IE3a names Kleppmann as further reading and IE3k names Newman.
+\nocite{Huyen2022,Kleppmann2017,Newman2021}
 
 % This lecture in one slide. The card is rendered from lecture_outline.tex,
 % the same source ch00 renders the whole course from, so the two cannot drift.
@@ -152,10 +150,104 @@
 \fi
 
 % ----------------------------------------------------------------------
-% Parked 2026-11-05, divider included: an empty divider is not a slide.
-\iffalse
 \subsection{Data Formats}
 
+% IE3c stage 1: to pick a format, answer the question on how the data
+% will be used in future.
+\begin{frame}[plain]
+  \fulldrawing{IE3c1}{To pick a format, ask how the data will be used}
+\end{frame}
+
+% IE3c, copy then extend: match the format based on the access pattern,
+% how a system will read or write your data.
+\begin{frame}[plain]
+  \fulldrawing{IE3c2}{Match the format to the access pattern}
+\end{frame}
+
+% IE3c, copy then extend: data serialization. JSON, CSV, Parquet in red,
+% Avro, Protobuf, Pickle in yellow.
+\begin{frame}[plain]
+  \fulldrawing{IE3c3}{Data serialization: JSON, CSV, Parquet and more}
+\end{frame}
+
+% IE3c, the full sketch: what decides. Modalities, access frequencies,
+% human readability.
+\begin{frame}[plain]
+  \fulldrawing{IE3c4}{Modalities, access frequencies, readability}
+\end{frame}
+
+% IE3d stage 1: JSON, JavaScript Object Notation. The key value paradigm
+% is trivial and versatile.
+\begin{frame}[plain]
+  \fulldrawing{IE3d1}{JSON: the key value paradigm}
+\end{frame}
+
+% IE3d, copy then extend: adaptable structuredness and types, with the
+% yellow example object.
+\begin{frame}[plain]
+  \fulldrawing{IE3d2}{Adaptable structuredness and types}
+\end{frame}
+
+% IE3d, copy then extend: language independent, even human readable.
+\begin{frame}[plain]
+  \fulldrawing{IE3d3}{Language independent, even human readable}
+\end{frame}
+
+% IE3d, the full sketch: so they also take up quite some space, text
+% versus binary.
+\begin{frame}[plain]
+  \fulldrawing{IE3d4}{They take up space: text versus binary}
+\end{frame}
+
+% IE3e stage 1: CSV, row major. Consecutive elements are stored next to
+% each other in memory.
+\begin{frame}[plain]
+  \fulldrawing{IE3e1}{CSV: consecutive elements side by side in memory}
+\end{frame}
+
+% IE3e, copy then extend: fast access to samples in the table, and numpy
+% ndarray as the yellow default.
+\begin{frame}[plain]
+  \fulldrawing{IE3e2}{Row major: fast access to samples}
+\end{frame}
+
+% IE3e, copy then extend: the plus, usually better in sample writing
+% scenarios.
+\begin{frame}[plain]
+  \fulldrawing{IE3e3}{Usually better in sample writing scenarios}
+\end{frame}
+
+% IE3e, copy then extend: Parquet, column major. Consecutive elements in
+% a column are stored next to each other, fast access to features.
+\begin{frame}[plain]
+  \fulldrawing{IE3e4}{Parquet, column major: fast access to features}
+\end{frame}
+
+% IE3e, the full sketch: R and Pandas dataframes in yellow.
+\begin{frame}[plain]
+  \fulldrawing{IE3e5}{R and Pandas dataframes}
+\end{frame}
+
+% IE3f left side: text files, assume each character is one byte.
+\begin{frame}[plain]
+  \fulldrawing{IE3f1}{Text files: assume each character is one byte}
+\end{frame}
+
+% IE3f, copy then extend: across the arc, binary files. Programs require
+% knowledge to interpret those.
+\begin{frame}[plain]
+  \fulldrawing{IE3f2}{Binary files need knowledge to interpret}
+\end{frame}
+
+% IE3f, the full sketch: not even one byte but two characters, depending
+% on type. In yellow, 2x faster to load, 6x more compact.
+\begin{frame}[plain]
+  \fulldrawing{IE3f3}{Binary: 2x faster to load, 6x more compact}
+\end{frame}
+
+% Parked 2026-11-05: the spine's empty frames, the sketches above replace
+% them.
+\iffalse
 \begin{frame}{JSON}
   \begin{withmargin}
     \begin{tdmain}
@@ -198,10 +290,53 @@
 \fi
 
 % ----------------------------------------------------------------------
-% Parked 2026-11-05, divider included: an empty divider is not a slide.
-\iffalse
 \subsection{Data Models}
 
+% IE3g top band: data models, how data is represented.
+\begin{frame}[plain]
+  \fulldrawing{IE3g1}{Data models: how data is represented}
+\end{frame}
+
+% IE3g top band, copy then extend: affecting how your system gets built
+% and which problems you can solve.
+\begin{frame}[plain]
+  \fulldrawing{IE3g2}{Data models affect what your system can solve}
+\end{frame}
+
+% IE3g second band, right side: relational. Each relation is a set of
+% tuples, which are not ordered. Think table, CSV, Parquet.
+\begin{frame}[plain]
+  \fulldrawing{IE3g3}{Relational: think table}
+\end{frame}
+
+% IE3g second band, copy then extend: NoSQL or nonrelational or not only
+% relational. Document model and graph model share one beat, their two
+% curves are entangled.
+\begin{frame}[plain]
+  \fulldrawing{IE3g4}{NoSQL: document model and graph model}
+\end{frame}
+
+% IE3g: the yellow arrow from the table to the quick sidequest on query
+% language. SQL is declarative: specify the output, not the steps.
+\begin{frame}[plain]
+  \fulldrawing{IE3g5}{Quick sidequest on query language: SQL}
+\end{frame}
+
+% IE3g bottom band: data models are a pain to maintain, extend or migrate.
+% Unstructured data doesn't adhere to a predefined schema.
+\begin{frame}[plain]
+  \fulldrawing{IE3g6}{Unstructured data has no predefined schema}
+\end{frame}
+
+% IE3g bottom band, copy then extend: it usually still contains valuable
+% patterns and can be stored effectively, the lake.
+\begin{frame}[plain]
+  \fulldrawing{IE3g7}{Still valuable, stored effectively: the lake}
+\end{frame}
+
+% Parked 2026-11-05: the spine's empty frames, the sketches above replace
+% them.
+\iffalse
 \begin{frame}{Relational Model}
   \begin{tddef}{Relational model}
   \end{tddef}
@@ -262,10 +397,96 @@
 \fi
 
 % ----------------------------------------------------------------------
-% Parked 2026-11-05, divider included: an empty divider is not a slide.
-\iffalse
 \subsection{Data Storage Engines and Processing}
 
+% IE3h top: data storage engines and processing, databases. Redundant
+% data is always a bad practice, but...
+\begin{frame}[plain]
+  \fulldrawing{IE3h1}{Databases: redundant data is a bad practice, but}
+\end{frame}
+
+% IE3h, copy then extend: online transaction processing, high
+% availability and low latency.
+\begin{frame}[plain]
+  \fulldrawing{IE3h2}{Online transaction processing}
+\end{frame}
+
+% IE3h, copy then extend: online analytical processing.
+\begin{frame}[plain]
+  \fulldrawing{IE3h3}{Online analytical processing}
+\end{frame}
+
+% IE3h ACID walk: atomicity, a transaction fails with a single failed
+% step.
+\begin{frame}[plain]
+  \fulldrawing{IE3h4}{Atomicity}
+\end{frame}
+
+% IE3h ACID walk: consistency, all transactions follow the same rules.
+\begin{frame}[plain]
+  \fulldrawing{IE3h5}{Consistency}
+\end{frame}
+
+% IE3h ACID walk: isolation, two transactions don't interfere with each
+% other.
+\begin{frame}[plain]
+  \fulldrawing{IE3h6}{Isolation}
+\end{frame}
+
+% IE3h ACID walk: durability, committed transactions are persisted in
+% any case.
+\begin{frame}[plain]
+  \fulldrawing{IE3h7}{Durability}
+\end{frame}
+
+% IE3h in yellow: today this separational gap is closed from both sides.
+% DuckDB under analytical, CockroachDB under transactional.
+\begin{frame}[plain]
+  \fulldrawing{IE3h8}{The gap is closed from both sides}
+\end{frame}
+
+% IE3i top: a paradigm to decouple storage from compute, to reach general
+% purpose data. Sources converge, consumers fan out.
+\begin{frame}[plain]
+  \fulldrawing{IE3i1}{Decouple storage from compute}
+\end{frame}
+
+% IE3i ETL walk: extract. Validate, reject, notify sources.
+\begin{frame}[plain]
+  \fulldrawing{IE3i2}{Extract}
+\end{frame}
+
+% IE3i ETL walk: transform. Join, clean, standardize, any operation.
+\begin{frame}[plain]
+  \fulldrawing{IE3i3}{Transform}
+\end{frame}
+
+% IE3i ETL walk: load. Frequency, destination, shape.
+\begin{frame}[plain]
+  \fulldrawing{IE3i4}{Load}
+\end{frame}
+
+% IE3i red frame: the underlying structure of the data layers of many,
+% most, ML companies. Keeping sources structured lets you scale.
+\begin{frame}[plain]
+  \fulldrawing{IE3i5}{The structure of most ML data layers}
+\end{frame}
+
+% IE3i in yellow: for fast arriving data, ELT, the data lake had its
+% moment. Searching raw data at scale soon becomes intractable.
+\begin{frame}[plain]
+  \fulldrawing{IE3i6}{ELT: extract, load, transform. The data lake}
+\end{frame}
+
+% IE3i, copy then extend: the raw points answer nope, no, nnno. Data
+% lakehouse.
+\begin{frame}[plain]
+  \fulldrawing{IE3i7}{Searching raw data at scale: the lakehouse}
+\end{frame}
+
+% Parked 2026-11-05: the spine's empty frames, the sketches above replace
+% them.
+\iffalse
 \begin{frame}{Transactional and Analytical Processing}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
@@ -300,10 +521,104 @@
 \fi
 
 % ----------------------------------------------------------------------
-% Parked 2026-11-05, divider included: an empty divider is not a slide.
-\iffalse
 \subsection{Modes of Dataflow}
 
+% IE3j base: the dataflow pipe between process A and process B. Not all
+% data is persisted, not all processes share memory.
+\begin{frame}[plain]
+  \fulldrawing{IE3j1}{Not all data is persisted, not all memory shared}
+\end{frame}
+
+% IE3j, copy then extend: process A writes to a database, persisted and
+% shared.
+\begin{frame}[plain]
+  \fulldrawing{IE3j2}{Write to a database: persisted and shared}
+\end{frame}
+
+% IE3j, the full sketch: process B reads from the database. Slow.
+\begin{frame}[plain]
+  \fulldrawing{IE3j3}{Read from the database, slow}
+\end{frame}
+
+% IE3k upper band: service oriented design, over a shared network.
+\begin{frame}[plain]
+  \fulldrawing{IE3k1}{Service oriented design, over a shared network}
+\end{frame}
+
+% IE3k, copy then extend: process B requests, process A exposes.
+\begin{frame}[plain]
+  \fulldrawing{IE3k2}{Request and expose}
+\end{frame}
+
+% IE3k, copy then extend: process C joins, the upper band in full.
+\begin{frame}[plain]
+  \fulldrawing{IE3k3}{More processes, more requests}
+\end{frame}
+
+% IE3k lower band: microservice architecture as a design principle.
+% Develop, test, maintain independently. API first, REST.
+\begin{frame}[plain]
+  \fulldrawing{IE3k4}{Microservice architecture as a design principle}
+\end{frame}
+
+% IE3k lower band, copy then extend: further reading in yellow, Building
+% Microservices by Sam Newman.
+\begin{frame}[plain]
+  \fulldrawing{IE3k5}{Further reading: Newman, Building Microservices}
+\end{frame}
+
+% IE3k lower band, copy then extend: and then design your org chart
+% around your architecture.
+\begin{frame}[plain]
+  \fulldrawing{IE3k6}{Design your org chart around your architecture}
+\end{frame}
+
+% IE3l: four processes, every pair talking.
+\begin{frame}[plain]
+  \fulldrawing{IE3l1}{Many processes, many data paths}
+\end{frame}
+
+% IE3l, the full sketch: passing data can get complicated and stale fast.
+\begin{frame}[plain]
+  \fulldrawing{IE3l2}{Passing data gets complicated and stale fast}
+\end{frame}
+
+% IE3m top band: event driven. The pipe and the processes, no bus yet.
+\begin{frame}[plain]
+  \fulldrawing{IE3m1}{Event driven}
+\end{frame}
+
+% IE3m top band, copy then extend: the bus, events flow in and out.
+\begin{frame}[plain]
+  \fulldrawing{IE3m2}{Processes publish events to a bus}
+\end{frame}
+
+% IE3m bus alone: most recent data and less complex communication. The
+% broker: technically a DB can be a broker, but usually this is in memory.
+\begin{frame}[plain]
+  \fulldrawing{IE3m3}{The broker, usually in memory}
+\end{frame}
+
+% IE3m: publish subscribe, publish to a topic, consume on demand.
+\begin{frame}[plain]
+  \fulldrawing{IE3m4}{Publish subscribe: to a topic, consume on demand}
+\end{frame}
+
+% IE3m, copy then extend: a retention policy to delete or persist
+% somewhere else. Apache Kafka, Amazon Kinesis.
+\begin{frame}[plain]
+  \fulldrawing{IE3m5}{Retention policy. Apache Kafka, Amazon Kinesis}
+\end{frame}
+
+% IE3m, copy then extend, both patterns on one slide: the message queue
+% proactively delivers to consumers on arrival. RabbitMQ.
+\begin{frame}[plain]
+  \fulldrawing{IE3m6}{Message queue: delivers on arrival. RabbitMQ}
+\end{frame}
+
+% Parked 2026-11-05: the spine's empty frames, the sketches above replace
+% them.
+\iffalse
 \begin{frame}{Data Passing Through Databases}
   \begin{withmargin}
     \begin{tdmain}
@@ -335,10 +650,17 @@
 \fi
 
 % ----------------------------------------------------------------------
-% Parked 2026-11-05, divider included: an empty divider is not a slide.
-\iffalse
 \subsection{Batch Processing Versus Stream Processing}
 
+% IE3m bottom band in yellow: this is all for streaming data, as opposed
+% to historical, batch processed data.
+\begin{frame}[plain]
+  \fulldrawing{IE3m7}{Streaming versus historical, batch processed data}
+\end{frame}
+
+% Parked 2026-11-05: the spine's empty frames, the sketches above replace
+% them.
+\iffalse
 \begin{frame}{Batch Processing Versus Stream Processing}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
