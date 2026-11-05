@@ -125,6 +125,7 @@
 |  00  | Orientation | [📄 PDF](https://material.schutera.com/lecturenotes/notes_intelligenceengineering/slides/chapter_pdfs/ch00_orientation.pdf) |
 |  01  | Overview of Machine Learning Systems | [📄 PDF](https://material.schutera.com/lecturenotes/notes_intelligenceengineering/slides/chapter_pdfs/ch01_overview.pdf) |
 |  02  | Introduction to Machine Learning Systems Design | [📄 PDF](https://material.schutera.com/lecturenotes/notes_intelligenceengineering/slides/chapter_pdfs/ch02_systems_design.pdf) |
+|  03  | Data Engineering Fundamentals | [📄 PDF](https://material.schutera.com/lecturenotes/notes_intelligenceengineering/slides/chapter_pdfs/ch03_data_engineering.pdf) |
 
 </details>
 

@@ -5,7 +5,7 @@
 
 Recolouring as in tools/notes_drawing.py: white -> transparent, dark ink ->
 tdfg #F2F2F2, red -> DHBWred #E2001A, plus blue -> tddim #9A9A9A (an aside
-voice). Every stage lands centred on ONE shared 16:9 canvas sized so the
+voice) and yellow -> #FFCE00, kept as drawn (further reading). Every stage lands centred on ONE shared 16:9 canvas sized so the
 tallest ink spans (1 - 2*margin) of the page height: one handwriting scale
 across all slides, full height for the tallest sketch, centred otherwise.
 
@@ -13,6 +13,8 @@ spec.json:
 {
   "margin": 0.03,            // ink clearance from the page edges
   "thicken": 5,              // MinFilter px; odd, 1 = off
+  "red_gain": 1,             // alpha gain on red ink; a pen like (254,58,48)
+                             // caps at 81% alpha and reads maroon, 1.25 fixes it
   "canvas_height": null,     // pin the canvas (px) to match an earlier run
   "stages": {
     "IEf1": {"src": "IEf", "band": [0, 1],
@@ -33,6 +35,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 FG = (0xF2, 0xF2, 0xF2)
 RED = (0xE2, 0x00, 0x1A)
 DIM = (0x9A, 0x9A, 0x9A)
+YEL = (0xFF, 0xCE, 0x00)
 
 
 def prepared(raw_dir, src, band, masks, thicken):
@@ -55,7 +58,10 @@ def split(im):
         lambda v: 255 if v > 40 else 0)
     blue = ImageChops.subtract(b, ImageChops.lighter(r, g)).point(
         lambda v: 255 if v > 40 else 0)
-    return ink, red, blue
+    # Pure yellow also clears the red test, so it composites last, over red.
+    yellow = ImageChops.subtract(ImageChops.darker(r, g), b).point(
+        lambda v: 255 if v > 40 else 0)
+    return ink, red, blue, yellow
 
 
 def main():
@@ -63,16 +69,20 @@ def main():
     spec = json.load(open(spec_path))
     margin = spec.get("margin", 0.03)
     thicken = spec.get("thicken", 5)
+    red_gain = spec.get("red_gain", 1)
     stages = spec["stages"]
 
     prep, boxes = {}, {}
     for name, st in stages.items():
         im = prepared(raw_dir, st["src"], st["band"], st.get("masks", []), thicken)
-        ink, red, blue = split(im)
+        ink, red, blue, yellow = split(im)
+        if red_gain != 1:
+            boosted = ink.point(lambda v: min(255, int(v * red_gain)))
+            ink = Image.composite(boosted, ink, red)
         bbox = ink.getbbox()
         if bbox is None:
             sys.exit(f"{name}: no ink in band {st['band']}")
-        prep[name] = (im, ink, red, blue)
+        prep[name] = (im, ink, red, blue, yellow)
         boxes[name] = bbox
 
     href = max(b[3] - b[1] for b in boxes.values())
@@ -86,10 +96,11 @@ def main():
         assert href <= pinned * (1 - 2 * margin), \
             "pinned canvas smaller than the ink"
 
-    for name, (im, ink, red, blue) in prep.items():
+    for name, (im, ink, red, blue, yellow) in prep.items():
         out = Image.composite(Image.new("RGB", im.size, RED),
                               Image.new("RGB", im.size, FG), red)
         out = Image.composite(Image.new("RGB", im.size, DIM), out, blue)
+        out = Image.composite(Image.new("RGB", im.size, YEL), out, yellow)
         out.putalpha(ink)
         out = out.crop(boxes[name])
         canvas = Image.new("RGBA", (W, H), (0, 0, 0, 0))
