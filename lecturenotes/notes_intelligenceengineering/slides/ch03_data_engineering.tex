@@ -8,7 +8,9 @@
 %% STATE: the opening and Data Sources are Mark's iPad sketches IE3a and IE3b,
 %% cut into stages by tools/sketch_stages.py from
 %% sketches/ch03_data_engineering/stages_spec.json. Every later subchapter is
-%% its divider only, the spine's empty frames wait in iffalse blocks.
+%% parked whole in an iffalse block, divider included, until its sketches land.
+%% The outline card keeps listing them: it is the lecture's plan, and
+%% check_lecture_outline.sh still finds the parked \subsection lines.
 %%
 %% Fragment of intelligence_engineering.tex. One chapter is one lecture and
 %% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
@@ -82,22 +84,22 @@
   \fulldrawing{IE3b2}{Knowing your data lets you use it efficiently}
 \end{frame}
 
-% IE3b right column, the four sources one by one. User input data:
+% IE3b top left note, opening the four sources: common practice to log
+% everything you can, and you can store, and are allowed to.
+\begin{frame}[plain]
+  \fulldrawing{IE3b3}{Log everything you can, store, are allowed to}
+\end{frame}
+
+% IE3b, copy then extend, the four sources one by one. User input data:
 % malformatted, any format, requires fast processing.
 \begin{frame}[plain]
-  \fulldrawing{IE3b3}{User input data}
+  \fulldrawing{IE3b4}{User input data}
 \end{frame}
 
 % IE3b, copy then extend. System generated data: logs, system outputs,
 % model predictions.
 \begin{frame}[plain]
-  \fulldrawing{IE3b4}{System generated data}
-\end{frame}
-
-% IE3b top left note, which hangs on the logs above: common practice to
-% log everything you can, and you can store, and are allowed to.
-\begin{frame}[plain]
-  \fulldrawing{IE3b5}{Log everything you can, store, are allowed to}
+  \fulldrawing{IE3b5}{System generated data}
 \end{frame}
 
 % IE3b, copy then extend. Internal databases: enterprise applications
@@ -150,10 +152,10 @@
 \fi
 
 % ----------------------------------------------------------------------
+% Parked 2026-11-05, divider included: an empty divider is not a slide.
+\iffalse
 \subsection{Data Formats}
 
-% Parked 2026-11-05: the spine's empty frames, until sketches land here.
-\iffalse
 \begin{frame}{JSON}
   \begin{withmargin}
     \begin{tdmain}
@@ -196,10 +198,10 @@
 \fi
 
 % ----------------------------------------------------------------------
+% Parked 2026-11-05, divider included: an empty divider is not a slide.
+\iffalse
 \subsection{Data Models}
 
-% Parked 2026-11-05: the spine's empty frames, until sketches land here.
-\iffalse
 \begin{frame}{Relational Model}
   \begin{tddef}{Relational model}
   \end{tddef}
@@ -260,10 +262,10 @@
 \fi
 
 % ----------------------------------------------------------------------
+% Parked 2026-11-05, divider included: an empty divider is not a slide.
+\iffalse
 \subsection{Data Storage Engines and Processing}
 
-% Parked 2026-11-05: the spine's empty frames, until sketches land here.
-\iffalse
 \begin{frame}{Transactional and Analytical Processing}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
@@ -298,10 +300,10 @@
 \fi
 
 % ----------------------------------------------------------------------
+% Parked 2026-11-05, divider included: an empty divider is not a slide.
+\iffalse
 \subsection{Modes of Dataflow}
 
-% Parked 2026-11-05: the spine's empty frames, until sketches land here.
-\iffalse
 \begin{frame}{Data Passing Through Databases}
   \begin{withmargin}
     \begin{tdmain}
@@ -333,10 +335,10 @@
 \fi
 
 % ----------------------------------------------------------------------
+% Parked 2026-11-05, divider included: an empty divider is not a slide.
+\iffalse
 \subsection{Batch Processing Versus Stream Processing}
 
-% Parked 2026-11-05: the spine's empty frames, until sketches land here.
-\iffalse
 \begin{frame}{Batch Processing Versus Stream Processing}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.47\textwidth}
