@@ -1,8 +1,7 @@
 # Sketches
 
 The original iPad drawings, one directory per chapter, exported untouched
-from the Apple Notes folder "IntelligenceEngineering" (one note per file,
-named after it). The dark recoloured versions the deck includes live in
-slides/images/; regenerate one with tools/notes_drawing.py, which reads the
-note, recolours the ink for the dark theme, and prints the matching
-\sidedrawing width fraction.
+from Apple Notes, folder "IntelligenceEngineering" or the default "Notes"
+(one note per file, named after it). The dark recoloured versions the deck includes live in
+slides/images/ as vector PDFs; tools/sketch_stages.py regenerates them from the
+originals and each chapter's stages_spec.json (needs potrace).

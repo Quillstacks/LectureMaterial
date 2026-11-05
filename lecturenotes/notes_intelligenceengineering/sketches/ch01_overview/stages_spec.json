@@ -1,0 +1,10 @@
+{
+  "_comment": "The side strip behind ch01's \\sidedrawing{IEa}. Canvas and ink position match the PNG tools/notes_drawing.py wrote, so the frame's layout holds.",
+  "margin": 0.0,
+  "thicken": 5,
+  "vector": true,
+  "canvas": [869, 1762],
+  "stages": {
+    "IEa": {"src": "IEa", "band": [0, 1], "masks": [], "at": [49, 81]}
+  }
+}

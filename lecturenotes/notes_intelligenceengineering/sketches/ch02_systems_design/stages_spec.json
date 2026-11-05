@@ -1,8 +1,9 @@
 {
-  "_comment": "The real spec behind notes_intelligenceengineering ch02 (IEb to IEn, final state 2026-10-26). Raw dir: lecturenotes/notes_intelligenceengineering/sketches/ch02_systems_design. Out dir: .../slides/images. Produced canvas 3486x1961; pin canvas_height to 1961 when adding stages later so the handwriting scale stays.",
+  "_comment": "The real spec behind notes_intelligenceengineering ch02 (IEb to IEn, final state 2026-10-26). Raw dir: lecturenotes/notes_intelligenceengineering/sketches/ch02_systems_design. Out dir: .../slides/images. canvas_height stays pinned to 1961 so the handwriting scale stays. vector writes PDFs; for the earlier PNGs drop vector and set canvas_height to null.",
   "margin": 0.03,
   "thicken": 5,
-  "canvas_height": null,
+  "canvas_height": 1961,
+  "vector": true,
   "stages": {
     "IEb": {"src": "IEb", "band": [0, 1], "masks": []},
     "IEc": {"src": "IEc", "band": [0, 1], "masks": []},

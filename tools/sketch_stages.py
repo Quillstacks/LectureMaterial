@@ -27,10 +27,23 @@ spec.json:
 band = [y0, y1] and masks = [x0, y0, x1, y1] as fractions of the FULL raw
 image; masks are erased (white) before the band crop. Each stage crops to its
 OWN ink bbox, so every slide's visible content is centred on the page.
+
+With "vector": true each stage is a PDF instead of a PNG, sharp at any
+projector resolution: every ink colour is traced by potrace (brew install
+potrace) from a "trace_scale"-fold upscale, then filled and stroked with round
+joins, the stroke (thicken - 1 canvas px wide) doing the thickening. The traces
+come from Notes' PNG, not the original pencil strokes, which Notes keeps out of
+reach. \\includegraphics without an extension prefers the PDF over a PNG. A
+side strip keeps its own page: "canvas": [W, H] replaces the shared canvas and
+a stage's "at": [x, y] places the ink's top left corner instead of centring.
 """
 import json
 import os
+import re
+import subprocess
 import sys
+import tempfile
+import zlib
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
@@ -68,9 +81,112 @@ def split(im):
     return ink, red, blue, yellow
 
 
+def layers(im, red_gain):
+    """Coverage per ink, painted in this order: later inks win an overlap."""
+    r, g, b = im.split()
+    top = ImageChops.lighter(ImageChops.lighter(r, g), b)
+    chroma = ImageChops.subtract(top, ImageChops.darker(ImageChops.darker(r, g), b))
+    # Mixing with the white page scales these differences evenly, so the tests
+    # hold along a stroke's soft edge too.
+    blue = ImageChops.subtract(b, ImageChops.lighter(r, g)).point(
+        lambda v: 255 if v > 4 else 0)
+    yellow = ImageChops.subtract(
+        ImageChops.subtract(g, b).point(lambda v: min(255, int(v * 1.25))),
+        chroma.point(lambda v: v // 2)).point(lambda v: 255 if v > 0 else 0)
+    none = Image.new("L", im.size, 0)
+    red = Image.composite(none, chroma, ImageChops.lighter(blue, yellow))
+    return [(YEL, Image.composite(chroma, none, yellow)),
+            (DIM, Image.composite(chroma, none, blue)),
+            (RED, red.point(lambda v: min(255, int(v * red_gain)))),
+            (FG, top.point(lambda v: 255 - v))]
+
+
+def trace(cover, scale, tmp):
+    """potrace one coverage layer; PDF path operators, 0.1 upscaled px units."""
+    big = cover.resize((cover.width * scale, cover.height * scale), Image.BICUBIC)
+    big = big.point(lambda v: 0 if v > 127 else 255).convert("1", dither=Image.Dither.NONE)
+    pbm, pdf = os.path.join(tmp, "l.pbm"), os.path.join(tmp, "l.pdf")
+    big.save(pbm)
+    subprocess.run(["potrace", "-b", "pdf", "-c", "-M", "0", "-r", "72",
+                    "-t", str(2 * scale), "-o", pdf, pbm], check=True)
+    data = open(pdf, "rb").read()
+    body = re.search(rb"stream\r?\n(.*?)endstream", data, re.S).group(1).decode("ascii")
+    body = body.split("\n", 1)[1].replace("0 g\n", "", 1)  # our own cm and colours
+    return re.sub(r"(?m)^f$", "B", body)
+
+
+def write_pdf(path, W, H, content):
+    stream = zlib.compress(content.encode("ascii"), 9)
+    parts = [b"<</Type/Catalog/Pages 2 0 R>>",
+             b"<</Type/Pages/Kids[3 0 R]/Count 1>>",
+             f"<</Type/Page/Parent 2 0 R/MediaBox[0 0 {W} {H}]/Resources<<>>"
+             f"/Contents 4 0 R>>".encode(),
+             f"<</Length {len(stream)}/Filter/FlateDecode>>\nstream\n".encode()
+             + stream + b"\nendstream"]
+    out, offsets = bytearray(b"%PDF-1.5\n"), []
+    for i, part in enumerate(parts, 1):
+        offsets.append(len(out))
+        out += f"{i} 0 obj\n".encode() + part + b"\nendobj\n"
+    xref = len(out)
+    out += f"xref\n0 {len(parts) + 1}\n0000000000 65535 f \n".encode()
+    for off in offsets:
+        out += f"{off:010d} 00000 n \n".encode()
+    out += (f"trailer\n<</Size {len(parts) + 1}/Root 1 0 R>>\n"
+            f"startxref\n{xref}\n%%EOF\n").encode()
+    open(path, "wb").write(out)
+
+
+def main_vector(spec, raw_dir, out_dir):
+    margin = spec.get("margin", 0.03)
+    stroke = spec.get("thicken", 5) - 1
+    scale = spec.get("trace_scale", 3)
+    red_gain = spec.get("red_gain", 1)
+    width = spec.get("normalize_width")
+    prep = {}
+    for name, st in spec["stages"].items():
+        im = prepared(raw_dir, st["src"], st["band"], st.get("masks", []), 1, width)
+        total = None
+        for _, cover in layers(im, red_gain):
+            total = cover if total is None else ImageChops.lighter(total, cover)
+        bbox = total.point(lambda v: 255 if v > 127 else 0).getbbox()
+        if bbox is None:
+            sys.exit(f"{name}: no ink in band {st['band']}")
+        prep[name] = im.crop(bbox)
+    href = max(im.height for im in prep.values())
+    H = spec.get("canvas_height") or int(href / (1 - 2 * margin))
+    W = int(H * 16 / 9)
+    canvas = spec.get("canvas")
+    if canvas:
+        W, H = canvas
+    else:
+        assert href <= H * (1 - 2 * margin), "pinned canvas smaller than the ink"
+    print(f"shared canvas {W}x{H}, tallest ink {href}")
+    unit = 1 / (10 * scale)
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, im in prep.items():
+            assert im.width <= W * (1 - 2 * margin), f"{name} is too wide for the canvas"
+            x, y = (W - im.width) // 2, (H - im.height) // 2
+            at = spec["stages"][name].get("at")
+            if at:
+                x, y = at[0], H - at[1] - im.height
+            content = [f"q {unit:.6f} 0 0 {unit:.6f} {x} {y} cm\n"
+                       f"{stroke * 10 * scale} w 1 J 1 j\n"]
+            for colour, cover in layers(im, red_gain):
+                if cover.point(lambda v: 255 if v > 127 else 0).getbbox() is None:
+                    continue
+                rgb = " ".join(f"{c / 255:.4f}" for c in colour)
+                content.append(f"{rgb} rg {rgb} RG\n{trace(cover, scale, tmp)}")
+            content.append("Q\n")
+            path = os.path.join(out_dir, name + ".pdf")
+            write_pdf(path, W, H, "".join(content))
+            print(f"{name}  ink {im.width}x{im.height}  {os.path.getsize(path) // 1024} KB")
+
+
 def main():
     spec_path, raw_dir, out_dir = sys.argv[1:4]
     spec = json.load(open(spec_path))
+    if spec.get("vector"):
+        return main_vector(spec, raw_dir, out_dir)
     margin = spec.get("margin", 0.03)
     thicken = spec.get("thicken", 5)
     red_gain = spec.get("red_gain", 1)
