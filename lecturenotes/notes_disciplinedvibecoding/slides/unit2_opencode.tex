@@ -326,5 +326,30 @@
   \end{sidebody}
 \end{frame}
 
+% ------------------------------------------------------------- the RPM
+% The machine from the Agro AI deck's Orbit rung: same parts, camera and pose as
+% the poster frame of notes_agrar/web/tools/rpm_root_clip.py, rendered as a still
+% at the 0.33 strip aspect. The block on the platform is illustrative and not in
+% the zip. The QR points at ../rpm_printables.zip as served by the course site,
+% black on white with a four module quiet zone so any phone reads it.
+\begin{frame}{Random Positioning Machine}
+  \sideimagecover[0.33]{rpm_machine}
+  \sidecaption{After Core Electronics,\\ CC BY-NC-SA 4.0.}
+  \begin{sidebody}
+    Two servos turn a sample about two crossing axes, so gravity averages out: simulated microgravity.
+    \vskip1.2em
+    \begin{minipage}[c]{36mm}
+      \setlength{\fboxsep}{3mm}%
+      \colorbox{white}{\color{black}\qrcode[height=30mm,level=M]{https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/rpm_printables.zip}}
+    \end{minipage}%
+    \hspace{4mm}%
+    \begin{minipage}[c]{48mm}\raggedright
+      Scan for the \alert{STL files} to print your own.
+      \vskip0.6em
+      \href{https://material.schutera.com/lecturenotes/notes_disciplinedvibecoding/rpm_printables.zip}{\texttt{rpm\_printables.zip}}
+    \end{minipage}
+  \end{sidebody}
+\end{frame}
+
 % References are collected in one shared package at the end of the deck
 % (see disciplined_vibe.tex), not per unit.
