@@ -1,0 +1,863 @@
+% !TEX root = intelligence_engineering.tex
+%% ch04_training_data.tex -- Intelligence Engineering, chapter 04 "Training
+%% Data".
+%% Spine transferred from Huyen, Designing Machine Learning Systems, chapter
+%% 4. The subchapters and the frame titles under them are the book's own
+%% section and subsection headings, in the book's order.
+%%
+%% STATE: every live frame is one of Mark's iPad sketches IE4a to IE4n, cut into
+%% stages by tools/sketch_stages.py from
+%% sketches/ch04_training_data/stages_spec.json. The spine's empty frames wait
+%% in an iffalse block at the end of each subchapter. Dividers follow the
+%% sketches: Data Augmentation has none yet, so it has no \subsection line and
+%% no outline entry until they land.
+%%
+%% Fragment of intelligence_engineering.tex. One chapter is one lecture and
+%% gets exactly ONE \lecturepage, at the top. Inside it every \subsection
+%% opens on the subchapter divider, which the master emits automatically via
+%% \AtBeginSubsection; do not write those divider frames by hand.
+
+\lecturepage{IV}{Training Data}{}
+\section[Training Data]{Training Data}
+
+% The sketches carry no \slidesources marker: they rest on Huyen's chapter 4.
+\nocite{Huyen2022}
+
+% This lecture in one slide. The card is rendered from lecture_outline.tex,
+% the same source ch00 renders the whole course from, so the two cannot drift.
+% Side strip: the overview figure placeholder, as on ch00's overview frame.
+\begin{frame}{This lecture in one slide}
+  \phimgside{overview_ch04}{Machine Learning Systems Overview}
+  \begin{sidebody}
+    \outlinecard{IV}
+  \end{sidebody}
+\end{frame}
+
+% IE4a1: let's move from a systems and infrastructure perspective to a more
+% data science perspective.
+\begin{frame}[plain]
+  \fulldrawing{IE4a1}{From systems to a data science perspective}
+\end{frame}
+
+% IE4a2: the same station, now machine learning data engineering.
+\begin{frame}[plain]
+  \fulldrawing{IE4a2}{Machine learning data engineering}
+\end{frame}
+
+% IE4a3: the loop to model development: what is moving, not how.
+\begin{frame}[plain]
+  \fulldrawing{IE4a3}{What is moving, not how}
+\end{frame}
+
+% IE4b1: Machine learning data.
+\begin{frame}[plain]
+  \fulldrawing{IE4b1}{Machine learning data}
+\end{frame}
+
+% IE4b2: Complex, messy, tricky, surprising.
+\begin{frame}[plain]
+  \fulldrawing{IE4b2}{Complex, messy, tricky, surprising}
+\end{frame}
+
+% IE4b3: but there are techniques to acquire or create good data.
+\begin{frame}[plain]
+  \fulldrawing{IE4b3}{Techniques to acquire or create good data}
+\end{frame}
+
+% IE4b4: Sampling, labeling, balancing, extending.
+\begin{frame}[plain]
+  \fulldrawing{IE4b4}{Sampling, labeling, balancing, extending}
+\end{frame}
+
+% ----------------------------------------------------------------------
+\subsection{Sampling}
+
+% IE4c1: Sampling from all possible real world data.
+\begin{frame}[plain]
+  \fulldrawing{IE4c1}{Sampling from all possible real world data}
+\end{frame}
+
+% IE4c2: Into different splits.
+\begin{frame}[plain]
+  \fulldrawing{IE4c2}{Into different splits}
+\end{frame}
+
+% IE4c3: Into batches.
+\begin{frame}[plain]
+  \fulldrawing{IE4c3}{Into batches}
+\end{frame}
+
+% IE4c4: the sketch is too tall for one page, so the top band leaves here.
+\begin{frame}[plain]
+  \fulldrawing{IE4c4}{Into individual samples}
+\end{frame}
+
+% IE4d1: sampling is necessary due to resource limitations, or it's plainly
+% beneficial to the objective.
+\begin{frame}[plain]
+  \fulldrawing{IE4d1}{Sampling is necessary or plainly beneficial}
+\end{frame}
+
+% IE4d2: Increase value per compute or memory.
+\begin{frame}[plain]
+  \fulldrawing{IE4d2}{Increase value per compute or memory}
+\end{frame}
+
+% IE4e1: sampling comes with the potential introduction of biases.
+\begin{frame}[plain]
+  \fulldrawing{IE4e1}{Sampling can introduce biases}
+\end{frame}
+
+% IE4f1: Non-probability sampling: so much selection bias.
+\begin{frame}[plain]
+  \fulldrawing{IE4f1}{Non-probability sampling: so much selection bias}
+\end{frame}
+
+% IE4f2: Convenience: take what is easily accessible.
+\begin{frame}[plain]
+  \fulldrawing{IE4f2}{Convenience: take what is easily accessible}
+\end{frame}
+
+% IE4f3: Snowball: select based on already selected.
+\begin{frame}[plain]
+  \fulldrawing{IE4f3}{Snowball: select based on already selected}
+\end{frame}
+
+% IE4f4: judgment: experts decide, don't confuse with cherry picking.
+\begin{frame}[plain]
+  \fulldrawing{IE4f4}{Judgment: experts decide, not cherry picking}
+\end{frame}
+
+% IE4f5: Quota: based on quotas for certain domains.
+\begin{frame}[plain]
+  \fulldrawing{IE4f5}{Quota: based on quotas for certain domains}
+\end{frame}
+
+% IE4f6: in yellow: do large language models suffer and deploy any of these?
+% What are the consequences?.
+\begin{frame}[plain]
+  \fulldrawing{IE4f6}{Do LLMs suffer and deploy any of these?}
+\end{frame}
+
+% IE4g1: Probability sampling.
+\begin{frame}[plain]
+  \fulldrawing{IE4g1}{Probability sampling}
+\end{frame}
+
+% IE4g2: Random: equal probabilities to be selected.
+\begin{frame}[plain]
+  \fulldrawing{IE4g2}{Random: equal probabilities to be selected}
+\end{frame}
+
+% IE4g3: rare events with magnitudes below the sampling probability might
+% drop.
+\begin{frame}[plain]
+  \fulldrawing{IE4g3}{Rare events might drop}
+\end{frame}
+
+% IE4g4: Stratified: groups, then random sampling.
+\begin{frame}[plain]
+  \fulldrawing{IE4g4}{Stratified: groups, then random sampling}
+\end{frame}
+
+% IE4g5: Clustering is a problem in its own right.
+\begin{frame}[plain]
+  \fulldrawing{IE4g5}{Clustering is a problem in its own right}
+\end{frame}
+
+% IE4g6: Weighted: configure selection probabilities.
+\begin{frame}[plain]
+  \fulldrawing{IE4g6}{Weighted: configure selection probabilities}
+\end{frame}
+
+% IE4g7: N unknown, especially for streaming data.
+\begin{frame}[plain]
+  \fulldrawing{IE4g7}{N unknown, especially for streaming data}
+\end{frame}
+
+% IE4g8: Reservoir: k samples, adjust the probabilities.
+\begin{frame}[plain]
+  \fulldrawing{IE4g8}{Reservoir: k samples, adjust the probabilities}
+\end{frame}
+
+% IE4g9: Replace if i is in 1 to k.
+\begin{frame}[plain]
+  \fulldrawing{IE4g9}{Replace if i is in 1 to k}
+\end{frame}
+
+% IE4gA: in yellow: further sampling methods, which are relevant to ML and
+% missing, let me know.
+\begin{frame}[plain]
+  \fulldrawing{IE4gA}{Further sampling methods: let me know}
+\end{frame}
+
+% Parked 2026-11-06: the spine's empty frames, the sketches above replace
+% them.
+\iffalse
+\begin{frame}{Nonprobability Sampling}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tddef}{Nonprobability sampling}
+      \end{tddef}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Simple Random Sampling}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=srs]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=srs]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Stratified Sampling}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Weighted Sampling}
+  \begin{tdcodet}{Weighted sampling}
+  \end{tdcodet}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Reservoir Sampling}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=resv]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=resv]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=resv]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Importance Sampling}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+\fi
+
+% ----------------------------------------------------------------------
+\subsection{Labeling}
+
+% IE4h1: Most models today are trained supervised.
+\begin{frame}[plain]
+  \fulldrawing{IE4h1}{Most models today are trained supervised}
+\end{frame}
+
+% IE4h2: the quality and quantity of labeled data is not to be underestimated.
+\begin{frame}[plain]
+  \fulldrawing{IE4h2}{Labeling is a core function, not an auxiliary task}
+\end{frame}
+
+% IE4i1: Labeling by hand.
+\begin{frame}[plain]
+  \fulldrawing{IE4i1}{Labeling by hand}
+\end{frame}
+
+% IE4i2: Humans with domain knowledge.
+\begin{frame}[plain]
+  \fulldrawing{IE4i2}{Humans with domain knowledge}
+\end{frame}
+
+% IE4i3: Motivation, time, data clearance.
+\begin{frame}[plain]
+  \fulldrawing{IE4i3}{Motivation, time, data clearance}
+\end{frame}
+
+% IE4i4: Difficult, slow and expensive.
+\begin{frame}[plain]
+  \fulldrawing{IE4i4}{Difficult, slow and expensive}
+\end{frame}
+
+% IE4i5: But we wanted to iterate fast, always.
+\begin{frame}[plain]
+  \fulldrawing{IE4i5}{But we wanted to iterate fast, always}
+\end{frame}
+
+% IE4i6: If your data or task changes, you are stuck.
+\begin{frame}[plain]
+  \fulldrawing{IE4i6}{If your data or task changes, you are stuck}
+\end{frame}
+
+% IE4i7: Relabeling, or even recollecting data.
+\begin{frame}[plain]
+  \fulldrawing{IE4i7}{Relabeling, or even recollecting data}
+\end{frame}
+
+% IE4j1: annotators A1 and A2 each label the same points.
+\begin{frame}[plain]
+  \fulldrawing{IE4j1}{Two annotators, two labels}
+\end{frame}
+
+% IE4j2: Different levels of annotator expertise.
+\begin{frame}[plain]
+  \fulldrawing{IE4j2}{Different levels of annotator expertise}
+\end{frame}
+
+% IE4j3: Annotator variability gives rise to.
+\begin{frame}[plain]
+  \fulldrawing{IE4j3}{Annotator variability gives rise to}
+\end{frame}
+
+% IE4j4: Ambiguity or multiplicity.
+\begin{frame}[plain]
+  \fulldrawing{IE4j4}{Ambiguity or multiplicity}
+\end{frame}
+
+% IE4j5: It's a nine.
+\begin{frame}[plain]
+  \fulldrawing{IE4j5}{It's a nine}
+\end{frame}
+
+% IE4j6: It's a six.
+\begin{frame}[plain]
+  \fulldrawing{IE4j6}{It's a six}
+\end{frame}
+
+% IE4j7: this is extremely common, and rises even with the complexity of the
+% task or domain.
+\begin{frame}[plain]
+  \fulldrawing{IE4j7}{Extremely common, rises with complexity}
+\end{frame}
+
+% IE4j8: What does ground truth even mean?.
+\begin{frame}[plain]
+  \fulldrawing{IE4j8}{What does ground truth even mean?}
+\end{frame}
+
+% IE4j9: should human level performance even be the gold standard?.
+\begin{frame}[plain]
+  \fulldrawing{IE4j9}{Is human level performance the gold standard?}
+\end{frame}
+
+% IE4jA: in yellow: talk to me, let's work on how to speed up robot operations
+% when first trained on human demonstrations.
+\begin{frame}[plain]
+  \fulldrawing{IE4jA}{Talk to me: speed up robot operations}
+\end{frame}
+
+% IE4jB: Label policies: a clear problem definition.
+\begin{frame}[plain]
+  \fulldrawing{IE4jB}{Label policies: a clear problem definition}
+\end{frame}
+
+% IE4jC: If you have not, write one today.
+\begin{frame}[plain]
+  \fulldrawing{IE4jC}{If you have not, write one today}
+\end{frame}
+
+% IE4jD: embrace the complexity and the distribution, report it and put your
+% model in context.
+\begin{frame}[plain]
+  \fulldrawing{IE4jD}{Annotator variability: embrace and report it}
+\end{frame}
+
+% IE4jE: some label noise has been shown to help generalization.
+\begin{frame}[plain]
+  \fulldrawing{IE4jE}{Some label noise has been shown to help}
+\end{frame}
+
+% IE4jF: Data lineage: we tap into multiple sources.
+\begin{frame}[plain]
+  \fulldrawing{IE4jF}{Data lineage: we tap into multiple sources}
+\end{frame}
+
+% IE4jG: Version our data, test sources separately.
+\begin{frame}[plain]
+  \fulldrawing{IE4jG}{Version our data, test sources separately}
+\end{frame}
+
+% IE4jH: They might have labelled different things.
+\begin{frame}[plain]
+  \fulldrawing{IE4jH}{They might have labelled different things}
+\end{frame}
+
+% IE4jI: in yellow: further reading, The frugal labeller and Poisoning
+% smolVLA. No bib entries yet, the sketch does not say which papers.
+\begin{frame}[plain]
+  \fulldrawing{IE4jI}{Further reading: frugal labeller, smolVLA}
+\end{frame}
+
+% IE4k1: Labeling by the nature of things.
+\begin{frame}[plain]
+  \fulldrawing{IE4k1}{Labeling by the nature of things}
+\end{frame}
+
+% IE4k2: simulation, predictions on time series and next token, user feedback,
+% reference sensors.
+\begin{frame}[plain]
+  \fulldrawing{IE4k2}{Labels inherent to the system you operate in}
+\end{frame}
+
+% IE4k3: in yellow, on next token prediction and recommender systems.
+\begin{frame}[plain]
+  \fulldrawing{IE4k3}{We all know how that went}
+\end{frame}
+
+% IE4k4: Framing: many things can collect feedback.
+\begin{frame}[plain]
+  \fulldrawing{IE4k4}{Framing: many things can collect feedback}
+\end{frame}
+
+% IE4k5: Press like if you agree.
+\begin{frame}[plain]
+  \fulldrawing{IE4k5}{Press like if you agree}
+\end{frame}
+
+% IE4k6: No feedback is an implicit label.
+\begin{frame}[plain]
+  \fulldrawing{IE4k6}{No feedback is an implicit label}
+\end{frame}
+
+% IE4k7: Feedback loop.
+\begin{frame}[plain]
+  \fulldrawing{IE4k7}{Feedback loop}
+\end{frame}
+
+% IE4k8: Systems give feedback not only for ML models.
+\begin{frame}[plain]
+  \fulldrawing{IE4k8}{Systems give feedback not only for ML models}
+\end{frame}
+
+% IE4k9: loop time can be from seconds to weeks and non configurable, for
+% others you can engineer it.
+\begin{frame}[plain]
+  \fulldrawing{IE4k9}{Loop time: from seconds to weeks}
+\end{frame}
+
+% IE4l1: Handling the lack of labels.
+\begin{frame}[plain]
+  \fulldrawing{IE4l1}{Handling the lack of labels}
+\end{frame}
+
+% IE4l2: Refresh those unsupervised learning skills.
+\begin{frame}[plain]
+  \fulldrawing{IE4l2}{Refresh those unsupervised learning skills}
+\end{frame}
+
+% IE4l3: Weak supervision: heuristics, noisy labels.
+\begin{frame}[plain]
+  \fulldrawing{IE4l3}{Weak supervision: heuristics, noisy labels}
+\end{frame}
+
+% IE4l4: Combine, denoise, reweight.
+\begin{frame}[plain]
+  \fulldrawing{IE4l4}{Combine, denoise, reweight}
+\end{frame}
+
+% IE4l5: with Snorkel, fast and adaptive, in yellow.
+\begin{frame}[plain]
+  \fulldrawing{IE4l5}{A few real labels guide development}
+\end{frame}
+
+% IE4l6: So why do we need an ML model anyways?.
+\begin{frame}[plain]
+  \fulldrawing{IE4l6}{So why do we need an ML model anyways?}
+\end{frame}
+
+% IE4l7: Semi supervision: structural assumptions.
+\begin{frame}[plain]
+  \fulldrawing{IE4l7}{Semi supervision: structural assumptions}
+\end{frame}
+
+% IE4l8: High probability predictions, smoothed, iterate.
+\begin{frame}[plain]
+  \fulldrawing{IE4l8}{High probability predictions, smoothed, iterate}
+\end{frame}
+
+% IE4l9: Clustering, self supervision.
+\begin{frame}[plain]
+  \fulldrawing{IE4l9}{Clustering, self supervision}
+\end{frame}
+
+% IE4lA: Transfer learning: train on auxiliary base task.
+\begin{frame}[plain]
+  \fulldrawing{IE4lA}{Transfer learning: train on auxiliary base task}
+\end{frame}
+
+% IE4lB: Anchor, inject, LoRA.
+\begin{frame}[plain]
+  \fulldrawing{IE4lB}{Anchor, inject, LoRA}
+\end{frame}
+
+% IE4lC: Foundation models: zero shot, distillation.
+\begin{frame}[plain]
+  \fulldrawing{IE4lC}{Foundation models: zero shot, distillation}
+\end{frame}
+
+% IE4lD: Active learning: samples near the boundary.
+\begin{frame}[plain]
+  \fulldrawing{IE4lD}{Active learning: samples near the boundary}
+\end{frame}
+
+% IE4lE: Increase label efficiency.
+\begin{frame}[plain]
+  \fulldrawing{IE4lE}{Increase label efficiency}
+\end{frame}
+
+% IE4lF: Cues are usually uncertainty measures.
+\begin{frame}[plain]
+  \fulldrawing{IE4lF}{Cues are usually uncertainty measures}
+\end{frame}
+
+% IE4lG: in yellow: read up on Monte Carlo Dropout and epistemic uncertainty.
+\begin{frame}[plain]
+  \fulldrawing{IE4lG}{Monte Carlo Dropout, epistemic uncertainty}
+\end{frame}
+
+% IE4lH: efficiency might seem irrelevant with foundation models and abundant
+% compute, but is handy for real time model adaptation.
+\begin{frame}[plain]
+  \fulldrawing{IE4lH}{Handy for real time model adaptation}
+\end{frame}
+
+% IE4lI: Embodied AI.
+\begin{frame}[plain]
+  \fulldrawing{IE4lI}{Embodied AI}
+\end{frame}
+
+% Parked 2026-11-06: the spine's empty frames, the sketches above replace
+% them.
+\iffalse
+\begin{frame}{Hand Labels}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=hand]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=hand]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=hand]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Label multiplicity}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Data lineage}
+  \begin{tddef}{Data lineage}
+  \end{tddef}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Natural Labels}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.38\textwidth}>{\raggedright\arraybackslash}p{0.50\textwidth}@{}}
+    \toprule
+    \textbf{Task} & \textbf{Natural label}\\
+    \midrule
+     & \\
+     & \\
+     & \\
+     & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Feedback loop length}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=fbl]{Short feedback loops}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=fbl]{Long feedback loops}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Handling the Lack of Labels}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=lack]{Weak supervision}
+      \end{tdblockt}
+      \vskip0.5em
+      \begin{tdblockt}[equal height group=lack2]{Transfer learning}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblockt}[equal height group=lack]{Semi-supervision}
+      \end{tdblockt}
+      \vskip0.5em
+      \begin{tdblockt}[equal height group=lack2]{Active learning}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Weak supervision}
+  \phimgside[0.33]{weak_supervision.png}{Weak supervision}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Semi-supervision}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=semi]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=semi]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblock}[equal height group=semi]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Transfer learning}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Active learning}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=actv]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=actv]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+\fi
+
+% ----------------------------------------------------------------------
+\subsection{Class Imbalance}
+
+% IE4m1: Class imbalance: difference in samples per domain.
+\begin{frame}[plain]
+  \fulldrawing{IE4m1}{Class imbalance: difference in samples per domain}
+\end{frame}
+
+% IE4m2: Domains A and B.
+\begin{frame}[plain]
+  \fulldrawing{IE4m2}{Domains A and B}
+\end{frame}
+
+% IE4m3: Poor sampling, probabilities, label errors.
+\begin{frame}[plain]
+  \fulldrawing{IE4m3}{Poor sampling, probabilities, label errors}
+\end{frame}
+
+% IE4m4: Reflect on the impact on overall metrics.
+\begin{frame}[plain]
+  \fulldrawing{IE4m4}{Reflect on the impact on overall metrics}
+\end{frame}
+
+% IE4m5: It also is a challenge to learning.
+\begin{frame}[plain]
+  \fulldrawing{IE4m5}{It also is a challenge to learning}
+\end{frame}
+
+% IE4m6: Due to weak or entirely missing signals.
+\begin{frame}[plain]
+  \fulldrawing{IE4m6}{Due to weak or entirely missing signals}
+\end{frame}
+
+% IE4m7: End up in a weak local optimum.
+\begin{frame}[plain]
+  \fulldrawing{IE4m7}{End up in a weak local optimum}
+\end{frame}
+
+% IE4m8: More likely with more complex problems.
+\begin{frame}[plain]
+  \fulldrawing{IE4m8}{More likely with more complex problems}
+\end{frame}
+
+% IE4n1: Handling class imbalance on data level.
+\begin{frame}[plain]
+  \fulldrawing{IE4n1}{Handling class imbalance on data level}
+\end{frame}
+
+% IE4n2: Evaluation metrics.
+\begin{frame}[plain]
+  \fulldrawing{IE4n2}{Evaluation metrics}
+\end{frame}
+
+% IE4n3: Class wise metrics.
+\begin{frame}[plain]
+  \fulldrawing{IE4n3}{Class wise metrics}
+\end{frame}
+
+% IE4n4: the sketch stops at this heading, IE4n is where the material ends for
+% now.
+\begin{frame}[plain]
+  \fulldrawing{IE4n4}{Resampling}
+\end{frame}
+
+% Parked 2026-11-06: the spine's empty frames, the sketches above replace
+% them.
+\iffalse
+\begin{frame}{Challenges of Class Imbalance}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \begin{takeaway}
+  \end{takeaway}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Handling Class Imbalance}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=hci]{Evaluation metrics}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=hci]{Data-level methods}
+      \end{tdblockt}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{tdblockt}[equal height group=hci]{Algorithm-level methods}
+      \end{tdblockt}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Using the right evaluation metrics}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+     & & & \\
+    \midrule
+     & & & \\
+     & & & \\
+    \bottomrule
+  \end{tabular}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Data-level methods: Resampling}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=rsmp]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=rsmp]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Algorithm-level methods}
+  \begin{withmargin}
+    \begin{tdmain}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+\fi
+
+% ----------------------------------------------------------------------
+% Parked 2026-11-06: the book's Data Augmentation. No sketches yet, and dividers
+% follow the sketches, so no \subsection or outline entry until they land.
+\iffalse
+\begin{frame}{Simple Label-Preserving Transformations}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=slpt]
+      \end{tdblock}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{tdblock}[equal height group=slpt]
+      \end{tdblock}
+    \end{column}
+  \end{columns}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Perturbation}
+  \phimgside[0.33]{perturbation.png}{Perturbation}
+  \begin{sidebody}
+  \end{sidebody}
+  \slidesources{Huyen2022}
+\end{frame}
+
+\begin{frame}{Data Synthesis}
+  \begin{withmargin}
+    \begin{tdmain}
+      \begin{tdcode}
+      \end{tdcode}
+    \end{tdmain}
+    \begin{tdmargin}
+    \end{tdmargin}
+  \end{withmargin}
+  \slidesources{Huyen2022}
+\end{frame}
+\fi
+
+% ----------------------------------------------------------------------
+% This chapter's references, printed only in this chapter's own PDF. The
+% full deck collects every chapter's sources in one References frame at its
+% very end instead; see \chapterreferences in the master.
+\chapterreferences
