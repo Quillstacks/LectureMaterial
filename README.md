@@ -203,8 +203,9 @@
 | :--: | :--- | :-: |
 | Full | Bambu Lab P1S · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/notes_3dprinting.pdf) |
 |  01  | Quickstart | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/01_quickstart.pdf) |
-|  02  | TPU | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/11_tpu.pdf) |
-|  03  | Inlays | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/07_sequenced.pdf) |
+|  02  | Multiple Filaments | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/12_multifilament.pdf) |
+|  03  | TPU | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/11_tpu.pdf) |
+|  04  | Inlays | [📄 PDF](https://material.schutera.com/lecturenotes/notes_3dprinting/chapter_pdfs/07_sequenced.pdf) |
 
 </details>
 <!-- END:lecture:notes_3dprinting -->
@@ -248,19 +249,18 @@
 ---
 ### Moneypenny
 
-<!-- BEGIN:lecture:notes_bizon -->
+<!-- BEGIN:lecture:notes_moneypenny -->
 <details markdown="1">
 <summary>📖 <b>Field Manual</b></summary>
 
 |   #  | Chapter | Download |
 | :--: | :--- | :-: |
-| Full | Moneypenny · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/notes_bizon.pdf) |
-|  01  | Quickstart. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/chapter_pdfs/01_quickstart.pdf) |
-|  02  | OpenCode. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/chapter_pdfs/02_opencode.pdf) |
-|  03  | Open WebUI. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_bizon/chapter_pdfs/03_openwebui.pdf) |
+| Full | Moneypenny · Field Manual | [📄 PDF](https://material.schutera.com/lecturenotes/notes_moneypenny/notes_moneypenny.pdf) |
+|  01  | Quickstart. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_moneypenny/chapter_pdfs/01_quickstart.pdf) |
+|  02  | OpenCode. | [📄 PDF](https://material.schutera.com/lecturenotes/notes_moneypenny/chapter_pdfs/02_opencode.pdf) |
 
 </details>
-<!-- END:lecture:notes_bizon -->
+<!-- END:lecture:notes_moneypenny -->
 
 <br>
 
