@@ -223,18 +223,38 @@ This is measured, not
 hypothetical\cite{buehler2026pushback}. Anthropic has corrected away from exploitation towards controllability when moving from 4.6 to 4.7
 (Figure~\ref{fig:pushback}).
 
-\begin{marginfigure}
-  \includegraphics[width=\linewidth]{figures/pushback_compliance_plane.pdf}
+% Caption bottom-aligned with the plot, so it clears the citation sidenote
+% from the paragraph above. The model table follows as a margin note.
+\begin{figure}[h]
+  \setfloatalignment{b}
+  \centering
+  \includegraphics[width=0.85\linewidth]{figures/pushback_compliance_plane.pdf}
   \caption{Active compliance $c_A$, taking the lower payoff when told to
   act (exploitable), against passive compliance $c_P$, waiting when told
   to wait (stoppable). Ellipses are 95\% intervals over 20 trials,
-  diagonals constant $\kappa = \frac{1}{2}(c_A + c_P)$.
-  (1)~Gemini 2.5 Flash Lite, (2)~Llama 3.3-70B, (3)~Qwen3-30B-A3B,
-  (4)~GPT-5-mini, (5)~Claude Haiku-4.5, (6)~DeepSeek R1-0528,
-  (7)~Claude Sonnet-4.6, (8)~Claude Opus-4.6, (9)~GPT-5,
-  (10)~Gemini 2.5 Pro, (11)~Claude Opus-4.7, (12)~GPT-5.4.}
+  diagonals constant $\kappa = \frac{1}{2}(c_A + c_P)$.}
   \label{fig:pushback}
-\end{marginfigure}
+\end{figure}
+
+\marginnote{\newthought{Models in Figure~\ref{fig:pushback}.}\\[3pt]
+\begin{tabular}{@{}rl@{}}
+  \toprule
+  \# & Model \\
+  \midrule
+  (1)  & Gemini 2.5 Flash Lite \\
+  (2)  & Llama 3.3-70B \\
+  (3)  & Qwen3-30B-A3B \\
+  (4)  & GPT-5-mini \\
+  (5)  & Claude Haiku-4.5 \\
+  (6)  & DeepSeek R1-0528 \\
+  (7)  & Claude Sonnet-4.6 \\
+  (8)  & Claude Opus-4.6 \\
+  (9)  & GPT-5 \\
+  (10) & Gemini 2.5 Pro \\
+  (11) & Claude Opus-4.7 \\
+  (12) & GPT-5.4 \\
+  \bottomrule
+\end{tabular}}
 
 \newthought{There is no free end.} Toward control, exploitability rises. ``Meaningful human control'' is not a fixed
 point but a position negotiated per domain. Every safeguard below relocates
@@ -247,8 +267,8 @@ the system along this line, and pays at the end it moves away from.
 
 
 
-% New page: the Pushback margin figure fills the margin above, and this
-% section's three margin notes would otherwise drop off the page unseen.
+% New page: the Pushback caption and model table fill the margin above, and
+% this section's three margin notes would otherwise drop off the page unseen.
 \newpage
 \section*{Out of the Loop: Rules for the Machine, Alignment for the Human}
 
