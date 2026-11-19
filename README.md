@@ -176,6 +176,7 @@
 |  04  | Embodiment | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/04_Embodiment.pdf) |
 |   A  | Session Preparation Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/aa_PreparationGuidance.pdf) |
 |   B  | Debate Format & Moderator Guide *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/ac_DebateProtocol.pdf) |
+|   C  | Further Reading & Watching *(Appendix)* | [📄 PDF](https://material.schutera.com/lecturenotes/notes_philosophyofai/chapter_pdfs/ad_FurtherReadingWatching.pdf) |
 
 </details>
 <!-- END:lecture:notes_philosophyofai -->
