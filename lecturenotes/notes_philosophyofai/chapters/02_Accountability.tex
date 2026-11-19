@@ -53,9 +53,15 @@ and in each the question ``who is accountable?'' had no clean answer.
 
 \vspace{2em}
 
+% Citation rendered as a margin note beside the reading row: a bare \cite inside
+% the tabular is deferred to the next page and overprints the margin there.
+% \bibentry issues an implicit \nocite, so the key still resolves.
+\marginnote{%
+    \bibentry{kafka1919strafkolonie}%
+}%
 \begin{tabular}{p{3.8cm} p{6.5cm}}
     \textbf{Required reading} &
-        \textit{In der Strafkolonie}\index{In der Strafkolonie}\index{Kafka, Franz}\cite{kafka1919strafkolonie} by Franz Kafka
+        \textit{In der Strafkolonie}\index{In der Strafkolonie}\index{Kafka, Franz} by Franz Kafka
         (1919; Reclam UB~9900) \\[3pt]
     \textbf{Preparation}      &
         Complete the Guided Reading Sheet individually before the session. \\
@@ -96,20 +102,126 @@ questions below individually, then bring your notes to the discussion.
     converge? Give an example where they do not.\\
 \end{enumerate}
 
+\newpage
+\section*{Opener: The Trolley Problem}\index{Trolley problem}
 
+\newthought{A toy problem first.} Philippa Foot gave the choice to the
+driver of a runaway tram\cite{foot1967abortion}; Judith Jarvis Thomson
+moved it to a bystander at a lever, who may also do
+nothing\cite{thomson1985trolley}. The Moral Machine\index{Moral Machine}
+at MIT recast it for self-driving cars and collected 40 million decisions
+in ten languages from 233 countries and territories\cite{awad2018moral}.
+In the three scenarios below the brakes of a self-driving car fail and you
+stand at the lever. Leave it and the car stays in its lane, which is
+passive; pull it and the car swerves, which is active. The room votes by
+hand before each reveal.
+
+\newthought{Scenario 1, five or one.} Leave the lever and five pedestrians
+ahead die; pull it and one pedestrian in the other lane dies.
+\begin{itemize}
+    \item \textbf{Utilitarianism}\index{Utilitarianism} pulls: one death is
+    fewer than five.
+    \item \textbf{Deontology}\index{Deontology} leaves it: pulling makes you
+    kill the one, leaving it lets the brakes kill the five, and the duty not
+    to kill is stricter than the duty to rescue.
+    \item \textbf{Double effect}\index{Double effect} permits the pull: the
+    one's death is foreseen, not intended, and is not the means that saves
+    the five.
+\end{itemize}
+
+\newthought{Accountability.} Leave the lever and the brakes killed five;
+pull it and you killed one.
+
+\newthought{Scenario 2, red or green.} Two pedestrians cross ahead against
+a red light, two cross the other lane on green. Leave the lever and the two
+on red die; pull it and the two on green die.
+\begin{itemize}
+    \item \textbf{Utilitarianism} has no preference: two deaths either way.
+    \item \textbf{Deontology} leaves it: the two on green did nothing to put
+    themselves at risk, and pulling turns the danger onto them.
+    \item \textbf{Contractualism}\index{Contractualism} leaves it too: the
+    rule everyone can accept in advance is that whoever crosses on green is
+    safe. Moral Machine respondents in every region spared the lawful.
+\end{itemize}
+
+\newthought{Accountability.} The two on red share the blame for the risk
+they took. Pull, and two who share none of it die, and the blame is all
+yours.
+
+\newthought{Scenario 3, you or three.} You ride in the car. Leave the lever
+and three pedestrians ahead die; pull it and the car swerves into a
+concrete barrier and you die.
+\begin{itemize}
+    \item \textbf{Utilitarianism} pulls: one death is fewer than three, and
+    your life counts no more than a stranger's.
+    \item \textbf{Deontology} does not demand the pull: there is no duty to
+    die for strangers.
+    \item \textbf{Virtue ethics}\index{Virtue ethics} calls the pull
+    courageous when you choose it; imposed on you by someone else, it is no
+    virtue at all.
+\end{itemize}
+
+\newthought{Accountability.} Self-sacrifice is supererogatory: praised when
+given, never owed. Leave the lever and no one holds you to account.
+
+\newthought{Now you write the code.} You no longer stand at the lever. You
+write the rule that pulls it, a year before the crash, for every car in the
+fleet. Four things change.
+\begin{itemize}
+    \item \textbf{No passive option.} Staying in lane is a line of code, just
+    as swerving is. The difference between killing and letting die, which
+    carried deontology in Scenario~1, is gone: whatever the car does, you
+    chose it. You are Foot's driver again, not Thomson's bystander.
+    \item \textbf{No panic to excuse you.} At the lever you had a second. At
+    the keyboard you have months, a code review, and a test suite. A choice
+    made in panic is excused; a choice made in advance is a policy.
+    \item \textbf{One rule, many deaths.} The rule runs in a million cars, and
+    Scenario~3 becomes a sales question. Buyers approve of cars that
+    sacrifice their passenger for the greater good and want others to buy
+    them, but would rather ride in one that protects
+    them\cite{bonnefon2016social}.
+    \item \textbf{Many hands.} The rule passes from you through your team
+    lead, the manufacturer, the regulator who approved it, and the buyer who
+    picked a setting. The Responsibility Budget below splits the blame among
+    them.
+\end{itemize}
+
+\newthought{The German Ethics Commission} answered in 2017 with rules a
+programmer can apply. In an unavoidable accident a car may not weigh people
+by age, gender, or physical or mental constitution, nor offset victims
+against one another; a general programming to reduce the number of injuries
+may be justifiable, and those who create a mobility risk may not sacrifice
+those who do not\cite{ethikkommission2017fahren}. Scenario~1 survives only
+as a general reduction of injuries. Sparing the young over the old, one of
+the three strongest Moral Machine preferences, may not be coded at all.
 
 \section*{In-Class Experiment: The Responsibility Budget}
 
-\noindent A short allocation exercise to anchor the debate in shared
-experience. Run before the Opinion Landscape, using one concrete incident
-drawn from the cases above.
+% The Tempe margin note is anchored inside the first paragraph: set before
+% the section, it can start on the previous page and the dashcam image runs
+% off the bottom of that page. Its two references sit inside the note as
+% \bibentry, because \cite sidenotes nearby overprint the image.
+\newthought{Real crashes rarely offer a lever.}%
+\marginnote{\newthought{Tempe, 18 March 2018.} Uber's self-driving car saw
+Elaine Herzberg 5.6\,s before impact, judged the crash imminent at 1.2\,s
+and left braking to its safety driver, who was watching a TV show on her
+phone. Police dashcam:\\[2pt]
+\includegraphics[width=\linewidth]{figures/tempe_dashcam.jpg}\par\medskip
+\noindent\bibentry{ntsb2019tempe}\par\medskip
+\noindent\bibentry{ap2023uber}}
+The toy problem asks whom the car should kill; this allocation exercise
+asks who answers once it has, on one real crash. Run it before the Opinion
+Landscape.
 
 \begin{itemize}
-    \item \textbf{Setup.} State one incident in three sentences, for
-    instance the hiring engine that filtered out a qualified applicant. On
-    the board, list the actors: builder, deployer, operator, the people
-    whose data trained the model, the regulator, the affected person, and
-    no one.
+    \item \textbf{Setup.} State the incident in three sentences. In Tempe in
+    2018 a self-driving Uber test car killed Elaine Herzberg as she pushed
+    her bicycle across the road, without facing any dilemma. Its software
+    did not account for pedestrians crossing outside a crosswalk. It left
+    the braking to a safety driver who was not watching the road. On the
+    board, list the actors: the engineers who wrote the software, Uber as
+    the operator of the test fleet, the safety driver, the State of Arizona
+    that permitted the tests, the pedestrian, and no one.
     \item \textbf{Allocation.} Each student silently distributes one
     hundred responsibility points across those actors and writes a single
     sentence justifying their largest share. Collect the slips anonymously.
@@ -121,6 +233,13 @@ drawn from the cases above.
     provider (builder and deployer) and the user. Name them as the two
     sides of the debate to come, and have each student defend the allocation
     they made.
+    \item \textbf{Reveal.} Set the official split beside the room's. The
+    NTSB named the safety driver's distraction the probable cause, and
+    Uber's safety culture, Arizona's oversight of the tests, and the
+    pedestrian crossing outside a crosswalk as contributing. Prosecutors
+    declined to charge Uber; in 2023 the safety driver pleaded guilty to
+    endangerment and got three years of supervised probation. The NTSB
+    spread the cause over four parties; the court convicted one.
 \end{itemize}
 
 \section*{The EU AI Act's Risk Tiers}
