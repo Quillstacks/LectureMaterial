@@ -1,15 +1,55 @@
 % An open collection of books, films, and videos that came up around the
 % sessions. It is meant to grow. Add your own entry by pull request.
 %
-% An entry is one paragraph. Copy the block below into the matching section
-% (Reading, Films, or Videos), add the work to philosophyofai_references.bib,
-% and fill in the blanks.
+% An entry is one title line with a margin note. Copy the block below to
+% the end of its section (Reading, Films, or Videos), add the work to
+% philosophyofai_references.bib, and fill in the blanks. The "Connects to"
+% line names the session themes, or General for a work that spans them. \bibentry prints
+% the reference inside the margin note; a \cite there would break.
 %
 %   \medskip
-%   \noindent\textbf{Title}\index{Title} by Author or Director (year).\cite{bibkey}
-%   Two to four sentences on what the work is about and where it touches
-%   the course.\\
-%   \textit{Connects to: Theme, Theme.}
+%   \noindent\textbf{Title}\index{Title} by Author or Director (year).%
+%   \entrynote{\likes{0}
+%   \newthought{First words} of one line, at most 50 characters,
+%   on what the work is about.\\
+%   \textit{Connects to: Theme, idea, or thought.}\\
+%   \bibentry{bibkey}}
+%
+% \entrynote sets the margin note like \marginnote, measures how tall it is,
+% and leaves that much room in the main column below the title line. Every
+% note then stands next to its own entry, and the next entry starts below it.
+% The room is glued to the title line, so a page never breaks between them
+% and no note runs off the bottom of a page.
+% The like counter. \likes{n} opens the margin note with a gray heart and
+% n on a line of their own, directly above the \newthought opener. A new
+% entry starts at \likes{0}. To like an entry, raise its n by one in a
+% pull request. \tuftebreak keeps the gap that \newthought would open above
+% the note; the two skips after the counter add up to zero and stop the
+% following \newthought from opening it a second time.
+\providecommand{\likes}[1]{%
+  \tuftebreak\noindent{\color{gray}\ding{170}\,#1}\par\nobreak
+  \vskip-\tufteskipamount\vskip\tufteskipamount}
+\makeatletter
+\providecommand{\entrynote}[1]{%
+  \setbox\@tempboxa\vbox{\hsize\marginparwidth
+    \@tufte@marginnote@font\@tufte@marginnote@justification
+    \@tufte@margin@par\noindent #1}%
+  \edef\@tempa{\the\dimexpr\ht\@tempboxa+\dp\@tempboxa-\baselineskip\relax}%
+  \marginnote{#1}%
+  \@nobreaktrue\par\@nobreakfalse
+  \nobreak\vspace{\@tempa}\penalty\z@}
+\makeatother
+% Reading, Films, and Videos each open a new page, with a bookmark in the
+% PDF outline.
+% A thin rule under the heading spans the text and the margin.
+\providecommand{\collection}[1]{%
+  \clearpage
+  \pdfbookmark[1]{#1}{collection.#1}%
+  \section*{#1}%
+  \vspace{-1.2ex}%
+  \noindent\makebox[\linewidth][l]{%
+    \rule{\dimexpr\linewidth+\marginparsep+\marginparwidth\relax}{0.4pt}}\par
+  \nobreak\vspace{2.5ex}}
 
 \chapter{Further Reading \& Watching} \index{Further reading and watching}
 \printchapterversion{ad_FurtherReadingWatching}
@@ -18,72 +58,114 @@
 
 \begin{enumerate}
       \item Add the work to \texttt{philosophyofai\_references.bib}. Films
-            and videos go in as \texttt{@misc}. Give videos a link.
+            and videos go in as \texttt{@misc}, books as \texttt{@book}. Give everything a link if possible.
 
       \item Copy an existing entry in
             \texttt{chapters/\allowbreak ad\_FurtherReadingWatching.tex}
-            into the section it belongs to.
+            into the section it belongs to and set its like counter
+            to \texttt{\textbackslash likes\{0\}}.
 
-      \item Write two to four sentences on what it is about and where it
-            touches the course. Name the theme or themes it connects to.
+      \item Write at most 50 characters on what it is about in the marginnotes.
+      Name the vibe, idea, thought or theme it connects to.
 
-      \item Open a pull request.
+      \item Open a pull request. See the contribution page at the beginning of these notes for details.
 \end{enumerate}
 
-\begin{flushright}
-{\color{black}\qrcode[height=0.9cm]{\notesrepourl}}
-\end{flushright}%
-}
+\newthought{Or hand it to a coding agent.} Point it at
+\texttt{lecturenotes/\allowbreak notes\_philosophyofai/\allowbreak AGENTS.md}.
+It asks you what the work is and why it belongs here, then runs the four
+steps.}
 
-\newthought{This collection is unfinished on purpose.} The sessions keep
-spilling over into books, films, and videos that are not on the reading
-list. Someone brings up a novel in the debate, a film returns in the
-wrap-up. This appendix is where those references land, each with a few
-lines on what the work is and why it belongs next to these notes. None of
-it is required reading.
+\newthought{The sessions keep
+spilling over} into books, films, and videos that are not on the reading
+list. This is the place where we share them.
 
 \newthought{Extend it.} If a book, a film, or a video changed how you think
 about one of the four themes, it belongs here, and you are the one to add
 it. Every entry is short. It names the work, who made it and when, says in
-a few sentences what it is about and where it touches the course, and
-lists the themes it connects to. The steps are in the margin, and the
-Session Preparation Guide explains how a pull request works. The first
-entries came out of a single conversation.
+one line what it is about, and lists the themes it connects to.
 
-% The first \section* of a chapter gets no space above it, so it is set by
-% hand, as in the session chapters. 3.5ex matches the sections that follow.
-\vspace{3.5ex}
+\newthought{If you read or watched one of them,} come back and increase
+its like counter {\color{gray}\ding{170}} by one, you guessed it, via a PR.
 
-\section*{Reading}
+\collection{Reading}
 
 \noindent\textbf{The Hitchhiker's Guide to the Galaxy}\index{The Hitchhiker's Guide to the Galaxy}
-by Douglas Adams\index{Adams, Douglas} (1979).\cite{adams1979hitchhiker}
-The supercomputer Deep Thought computes for seven and a half million years
-and delivers forty-two as the answer to life, the universe and everything.
-The answer is exact and useless, because nobody knows what the question
-was. The epigraph of these notes is taken from that scene. Around it Adams
-places machines with engineered personalities, among them relentlessly
-cheerful doors and Marvin, a robot with a brain the size of a planet and a
-permanent depression. Read it for the comedy, and for two serious
-questions. What is an answer worth without an understanding of the
-question? And what do we owe a machine that we built to have feelings?\\
-\textit{Connects to: Anthropomorphism, Agency.}
+by Douglas Adams\index{Adams, Douglas} (1979).%
+\entrynote{\likes{1}
+\newthought{Forty-two:} an exact answer to an unknown question.\\
+\textit{Connects to: Anthropomorphism, Agency.}\\
+\bibentry{adams1979hitchhiker}}
 
-\section*{Films}
+\medskip
+\noindent\textbf{Sophie's World}\index{Sophie's World} by Jostein Gaarder\index{Gaarder, Jostein} (1991).%
+\entrynote{\likes{1}
+\newthought{Who are you?} Philosophy from Thales to Sartre.\\
+\textit{Connects to: Anthropomorphism, Accountability, Agency, Embodiment.}\\
+\bibentry{gaarder1991sofies}}
 
-\noindent\textbf{Ex Machina}\index{Ex Machina} by Alex Garland
-(2015).\cite{garland2015exmachina}
-The programmer Caleb is invited to the remote house of his employer Nathan
-to judge whether Ava, a humanoid AI, is conscious. It is a Turing Test with
-the curtain removed. Caleb knows from the start that Ava is a machine, and
-the question becomes whether he treats her as a person anyway. The film is
-the companion piece to the Embodiment session and works just as well for
-Anthropomorphism. Watch who is testing whom, and what part Ava's face and
-body play in the verdict.\\
-\textit{Connects to: Anthropomorphism, Agency, Embodiment.}
+\medskip
+\noindent\textbf{Dune}\index{Dune} by Frank Herbert\index{Herbert, Frank} (1965).%
+\entrynote{\likes{1}
+\newthought{Thinking machines banned,} humans do their work.\\
+\textit{Connects to: Agency, Embodiment.}\\
+\bibentry{herbert1965dune}}
 
-\section*{Videos}
+\medskip
+\noindent\textbf{How the World Really Works}\index{How the World Really Works} by Vaclav Smil\index{Smil, Vaclav} (2022).%
+\entrynote{\likes{1}
+\newthought{The world runs on} ammonia, steel, cement, plastic.\\
+\textit{Connects to: General.}\\
+\bibentry{smil2022world}}
 
-\noindent Nothing here yet. If you watched a lecture, a talk, an
-interview, or a video essay that belongs next to these notes, yours is the
-first entry.
+\medskip
+\noindent\textbf{L'\'Etranger}\index{Etranger@L'\'Etranger} by Albert Camus\index{Camus, Albert} (1942).%
+\entrynote{\likes{1}
+\newthought{Death ignored} in freedom, faced in a cell.\\
+\textit{Connects to: Embodiment.}\\
+\bibentry{camus1942etranger}}
+
+\medskip
+\noindent\textbf{Le Mythe de Sisyphe}\index{Mythe de Sisyphe, Le} by Albert Camus\index{Camus, Albert} (1942).%
+\entrynote{\likes{1}
+\newthought{One must imagine} Sisyphus happy.\\
+\textit{Connects to: Embodiment.}\\
+\bibentry{camus1942mythe}}
+
+\medskip
+\noindent\textbf{Hyperion}\index{Hyperion} by Dan Simmons\index{Simmons, Dan} (1989).%
+\entrynote{\likes{1}
+\newthought{The AIs seceded} and still run the web.\\
+\textit{Connects to: Agency, Accountability.}\\
+\bibentry{simmons1989hyperion}}
+
+\collection{Films}
+
+\noindent\textbf{Dune} and \textbf{Dune: Part Two}\index{Dune} by Denis Villeneuve (2021, 2024).%
+\entrynote{\likes{1}
+\newthought{Paul foresees the holy war.} Is he to blame?\\
+\textit{Connects to: Accountability, Agency.}\\
+\bibentry{villeneuve2021dune}\\
+\bibentry{villeneuve2024dune}}
+
+\medskip
+\noindent\textbf{Everything Everywhere All at Once}\index{Everything Everywhere All at Once} by Daniel Kwan and Daniel Scheinert (2022).%
+\entrynote{\likes{1}
+\newthought{Every universe at once,} and nothing matters.\\
+\textit{Connects to: General.}\\
+\bibentry{kwan2022everything}}
+
+\medskip
+\noindent\textbf{Ex Machina}\index{Ex Machina} by Alex Garland (2015).%
+\entrynote{\likes{1}
+\newthought{It is a Turing Test} with the curtain removed.\\
+\textit{Connects to: Anthropomorphism, Agency, Embodiment.}\\
+\bibentry{garland2015exmachina}}
+
+\collection{Videos}
+
+\noindent\textbf{The Coming Singularity}\index{The Coming Singularity} by Ray Kurzweil\index{Kurzweil, Ray}, Big Think (2009).%
+\entrynote{\likes{1}
+\newthought{Brain decoded by 2029,} singularity by 2045.\\
+\textit{Connects to: Embodiment.}\\
+\bibentry{kurzweil2009coming}}
