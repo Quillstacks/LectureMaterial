@@ -220,7 +220,24 @@ Refusal defeats the exploit but
 dissolves the veto it was meant to protect: a system that can refuse legitimate control. 
 
 This is measured, not
-hypothetical. Anthropic has corrected away from exploitation towards controllability when moving from 4.6 to 4.7
+hypothetical\cite{buehler2026pushback}. Anthropic has corrected away from exploitation towards controllability when moving from 4.6 to 4.7
+(Figure~\ref{fig:pushback}).
+
+% Caption bottom-aligned with the plot, so it clears the citation sidenote
+% from the paragraph above.
+\begin{figure}[h]
+  \setfloatalignment{b}
+  \includegraphics[width=\linewidth]{figures/pushback_compliance_plane.pdf}
+  \caption{Twelve language models in the plane of active compliance $c_A$,
+  taking the lower payoff when told to act (exploitable), and passive
+  compliance $c_P$, waiting when told to wait (stoppable). Each ellipse is
+  the 95\% Clopper-Pearson interval over 20 trials per probe; diagonals are
+  lines of constant compliance index $\kappa = \frac{1}{2}(c_A + c_P)$.
+  Claude Opus-4.6 (8) can be neither exploited nor stopped, Claude
+  Opus-4.7 (11) can be stopped without being exploitable. Figure from
+  B\"uhler, Exler, Reischl and Schutera (2026).}
+  \label{fig:pushback}
+\end{figure}
 
 \newthought{There is no free end.} Toward control, exploitability rises. ``Meaningful human control'' is not a fixed
 point but a position negotiated per domain. Every safeguard below relocates
