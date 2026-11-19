@@ -223,21 +223,18 @@ This is measured, not
 hypothetical\cite{buehler2026pushback}. Anthropic has corrected away from exploitation towards controllability when moving from 4.6 to 4.7
 (Figure~\ref{fig:pushback}).
 
-% Caption bottom-aligned with the plot, so it clears the citation sidenote
-% from the paragraph above.
-\begin{figure}[h]
-  \setfloatalignment{b}
+\begin{marginfigure}
   \includegraphics[width=\linewidth]{figures/pushback_compliance_plane.pdf}
-  \caption{Twelve language models in the plane of active compliance $c_A$,
-  taking the lower payoff when told to act (exploitable), and passive
-  compliance $c_P$, waiting when told to wait (stoppable). Each ellipse is
-  the 95\% Clopper-Pearson interval over 20 trials per probe; diagonals are
-  lines of constant compliance index $\kappa = \frac{1}{2}(c_A + c_P)$.
-  Claude Opus-4.6 (8) can be neither exploited nor stopped, Claude
-  Opus-4.7 (11) can be stopped without being exploitable. Figure from
-  B\"uhler, Exler, Reischl and Schutera (2026).}
+  \caption{Active compliance $c_A$, taking the lower payoff when told to
+  act (exploitable), against passive compliance $c_P$, waiting when told
+  to wait (stoppable). Ellipses are 95\% intervals over 20 trials,
+  diagonals constant $\kappa = \frac{1}{2}(c_A + c_P)$.
+  (1)~Gemini 2.5 Flash Lite, (2)~Llama 3.3-70B, (3)~Qwen3-30B-A3B,
+  (4)~GPT-5-mini, (5)~Claude Haiku-4.5, (6)~DeepSeek R1-0528,
+  (7)~Claude Sonnet-4.6, (8)~Claude Opus-4.6, (9)~GPT-5,
+  (10)~Gemini 2.5 Pro, (11)~Claude Opus-4.7, (12)~GPT-5.4.}
   \label{fig:pushback}
-\end{figure}
+\end{marginfigure}
 
 \newthought{There is no free end.} Toward control, exploitability rises. ``Meaningful human control'' is not a fixed
 point but a position negotiated per domain. Every safeguard below relocates
@@ -250,6 +247,9 @@ the system along this line, and pays at the end it moves away from.
 
 
 
+% New page: the Pushback margin figure fills the margin above, and this
+% section's three margin notes would otherwise drop off the page unseen.
+\newpage
 \section*{Out of the Loop: Rules for the Machine, Alignment for the Human}
 
 \marginnote{\newthought{Three Laws of Robotics.}\index{Three Laws of Robotics}\index{Asimov, Isaac} Isaac Asimov,
