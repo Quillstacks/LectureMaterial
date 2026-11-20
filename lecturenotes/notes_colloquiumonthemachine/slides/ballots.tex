@@ -1,0 +1,46 @@
+%% Ballots for the Colloquium on the Machine book vote. A4, eight slips a
+%% page: page 1 is the commit (before the discussion, tick ONE book), page 2
+%% is the vote (after the discussion, rank all three; this one decides).
+%% Print one copy of both pages per eight students, cut along the lines.
+%% Anonymous: no name on a slip.
+%% Counting: 1st = 2 points, 2nd = 1, 3rd = 0, highest total wins.
+%% Build:  latexmk ballots.tex
+\documentclass[a4paper,11pt]{article}
+\usepackage[margin=0mm]{geometry}
+\usepackage{tikz}
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+% The three books of the round, in deck order.
+\newcommand{\bookA}{Hyperion}
+\newcommand{\bookB}{How the Mind Works}
+\newcommand{\bookC}{The Beautiful Risk of Education}
+
+% \slip{label}{instruction}
+\newcommand{\slip}[2]{%
+  \begin{minipage}[c][74.25mm][c]{105mm}\centering
+    \begin{minipage}{80mm}
+      {\small Colloquium on the Machine \hfill \textbf{#1}}\par\medskip
+      #2\par\bigskip
+      \newcommand{\row}[1]{\tikz[baseline=1.5mm]\draw (0,0) rectangle
+        (6mm,6mm);\hspace{3mm}##1\par\medskip}
+      \row{\bookA}\row{\bookB}\row{\bookC}
+    \end{minipage}
+  \end{minipage}}
+
+\newcommand{\slippage}[2]{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \draw[gray,dashed] (current page.north) -- (current page.south);
+    \foreach \k in {1,2,3}
+      \draw[gray,dashed] ([yshift=-\k*74.25mm]current page.north west) --
+        ([yshift=-\k*74.25mm]current page.north east);
+  \end{tikzpicture}%
+  \foreach \k in {1,2,3,4}{\slip{#1}{#2}\slip{#1}{#2}\par\nointerlineskip}%
+  \clearpage}
+
+\begin{document}
+\slippage{Commit}{Tick the one book you commit to.}
+\slippage{Vote}{Rank the books: 1 = I want to read this most.}
+\end{document}
