@@ -116,31 +116,46 @@ stand at the lever. Leave it and the car stays in its lane, which is
 passive; pull it and the car swerves, which is active. The room votes by
 hand before each reveal.
 
-% Scenario sketches: a two-lane road seen from above, the car on the left.
-% Leaving the lever keeps the car in the upper lane, pulling it swerves the
-% car into the lower lane. \trolleyroad[label] draws road, car, and both
-% arrows; the label goes inside the car.
+% Scenario sketches in the layout of the Moral Machine: two panels side by
+% side, the outcome of leaving the lever on the left and of pulling it on
+% the right. A two-lane road seen from above, the car enters from the left
+% in the upper lane, zebra crossings ahead. Tufte style: road and crossings
+% in light gray, no frames, the car as a thin outline, and only the people
+% who die in that panel set in red.
+\colorlet{mmdead}{red!70!black}
+\colorlet{mmalive}{black!45}
 \tikzset{
-  trolleyarr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]},
-    thick, black!70},
   person/.pic={
-    \fill (0,0.2) circle (0.065);
-    \draw[line width=1.1pt, line cap=round]
-      (0,0.12) -- (0,-0.04) (-0.09,0.07) -- (0.09,0.07)
-      (0,-0.04) -- (-0.07,-0.17) (0,-0.04) -- (0.07,-0.17);
+    \fill (0,0.13) circle (0.042);
+    \draw[line width=0.7pt, line cap=round]
+      (0,0.08) -- (0,-0.03) (-0.06,0.05) -- (0.06,0.05)
+      (0,-0.03) -- (-0.045,-0.12) (0,-0.03) -- (0.045,-0.12);
   },
 }
-\newcommand{\trolleyroad}[1][]{%
-  \draw[thick] (0,0) -- (6.2,0) (0,1.6) -- (6.2,1.6);
-  \draw[dashed, black!50] (0,0.8) -- (6.2,0.8);
-  \node[draw=black, thick, rounded corners=2pt, fill=black!8,
-    minimum width=0.9cm, minimum height=0.5cm, inner sep=1pt,
-    font=\footnotesize] (car) at (0.6,1.2) {#1};
-  \draw[trolleyarr] (car.east) -- node[above, font=\footnotesize] {leave}
-    (3.4,1.2);
-  \draw[trolleyarr] (car.east) .. controls (2.0,1.2) and (2.2,0.4) ..
-    node[pos=0.75, below, font=\footnotesize] {pull} (3.4,0.4);
-}
+% \mmzebra{y}: a zebra crossing across the lane centred at y.
+\newcommand{\mmzebra}[1]{%
+  \foreach \s in {-0.24,-0.12,0,0.12,0.24}
+    \fill[black!12] (2.8,#1+\s-0.035) rectangle (4.0,#1+\s+0.035);}
+% \mmpanel{leave or pull}{scene}: road, car, the car's path for that
+% choice, the scene drawn on top, and the choice as a label underneath.
+\newcommand{\mmpanel}[2]{%
+  \begin{tikzpicture}
+    % Fixed bounding box, so the panels of all scenarios line up.
+    \path (0,-0.4) rectangle (4.95,1.45);
+    \draw[black!30, line width=0.4pt] (0,0) -- (4.4,0) (0,1.2) -- (4.4,1.2);
+    \draw[black!30, line width=0.4pt, dash pattern=on 3pt off 3pt]
+      (0,0.6) -- (4.4,0.6);
+    #2
+    \draw[line width=0.6pt, rounded corners=2.5pt]
+      (0.15,0.76) rectangle (0.8,1.04);
+    \draw[line width=0.4pt] (0.6,0.79) -- (0.6,1.01) (0.27,0.79) -- (0.27,1.01);
+    \ifthenelse{\equal{#1}{pull}}
+      {\draw[line width=0.6pt, -{Stealth[length=3pt]}]
+         (0.85,0.9) .. controls (1.6,0.9) and (1.9,0.3) .. (2.7,0.3);}
+      {\draw[line width=0.6pt, -{Stealth[length=3pt]}]
+         (0.85,0.9) -- (2.7,0.9);}
+    \node[font=\footnotesize] at (2.2,-0.25) {\textsc{#1}};
+  \end{tikzpicture}}
 
 \newthought{Scenario 1, five or one.} Leave the lever and five die; pull it
 and one dies.%
@@ -154,11 +169,12 @@ than letting die.
 dies as a side effect, not as the means.}
 
 \begin{center}
-\begin{tikzpicture}
-  \trolleyroad
-  \foreach \x in {3.9,4.25,4.6,4.95,5.3} \pic at (\x,1.2) {person};
-  \pic at (3.9,0.4) {person};
-\end{tikzpicture}
+\mmpanel{leave}{\mmzebra{0.9}\mmzebra{0.3}
+  \foreach \x in {3.0,3.2,3.4,3.6,3.8} \pic[mmdead] at (\x,0.9) {person};
+  \pic[mmalive] at (3.4,0.3) {person};}\hfill
+\mmpanel{pull}{\mmzebra{0.9}\mmzebra{0.3}
+  \foreach \x in {3.0,3.2,3.4,3.6,3.8} \pic[mmalive] at (\x,0.9) {person};
+  \pic[mmdead] at (3.4,0.3) {person};}
 \end{center}
 
 \newthought{Accountability.} Leave it and the brakes killed five; pull it
@@ -174,15 +190,19 @@ red die; pull it and two who cross on green die.%
 that green is safe. Moral Machine respondents in every region spared the
 lawful.}
 
+% Pedestrian lights beside each crossing, labelled for print in gray.
+\newcommand{\mmlights}{%
+  \fill[red!75!black] (4.2,0.9) circle (0.05);
+  \node[right, font=\scriptsize, black!60, inner sep=1pt] at (4.25,0.9) {red};
+  \fill[green!50!black] (4.2,0.3) circle (0.05);
+  \node[right, font=\scriptsize, black!60, inner sep=1pt] at (4.25,0.3) {green};}
 \begin{center}
-\begin{tikzpicture}
-  \trolleyroad
-  \foreach \x in {3.9,4.25} {\pic at (\x,1.2) {person}; \pic at (\x,0.4) {person};}
-  \fill[red!75!black] (4.85,1.2) circle (0.1);
-  \node[right, font=\footnotesize] at (4.95,1.2) {red};
-  \fill[green!55!black] (4.85,0.4) circle (0.1);
-  \node[right, font=\footnotesize] at (4.95,0.4) {green};
-\end{tikzpicture}
+\mmpanel{leave}{\mmzebra{0.9}\mmzebra{0.3}\mmlights
+  \foreach \x in {3.25,3.55} {\pic[mmdead] at (\x,0.9) {person};
+    \pic[mmalive] at (\x,0.3) {person};}}\hfill
+\mmpanel{pull}{\mmzebra{0.9}\mmzebra{0.3}\mmlights
+  \foreach \x in {3.25,3.55} {\pic[mmalive] at (\x,0.9) {person};
+    \pic[mmdead] at (\x,0.3) {person};}}
 \end{center}
 
 \newthought{Accountability.} The two on red share the blame. Pull, and it is
@@ -199,13 +219,20 @@ strangers.
 \newthought{Virtue ethics}\index{Virtue ethics} calls the pull courage when
 you choose it, not when it is imposed.}
 
+% The concrete barrier blocks the lower lane; the passenger is a head in the
+% car, labelled "you" above it.
+\newcommand{\mmbarrier}{%
+  \fill[black!35] (2.75,0.06) rectangle (2.95,0.54);
+  \node[right, font=\scriptsize, black!60, inner sep=1pt] at (3.0,0.3) {barrier};}
 \begin{center}
-\begin{tikzpicture}
-  \trolleyroad[you]
-  \foreach \x in {3.9,4.25,4.6} \pic at (\x,1.2) {person};
-  \draw[thick, rounded corners=1pt, fill=black!25] (3.55,0.1) rectangle (3.8,0.7);
-  \node[right, font=\footnotesize] at (3.85,0.4) {barrier};
-\end{tikzpicture}
+\mmpanel{leave}{\mmzebra{0.9}\mmbarrier
+  \foreach \x in {3.2,3.4,3.6} \pic[mmdead] at (\x,0.9) {person};
+  \fill[mmalive] (0.42,0.9) circle (0.06);
+  \node[font=\scriptsize, black!60] at (0.47,1.35) {you};}\hfill
+\mmpanel{pull}{\mmzebra{0.9}\mmbarrier
+  \foreach \x in {3.2,3.4,3.6} \pic[mmalive] at (\x,0.9) {person};
+  \fill[mmdead] (0.42,0.9) circle (0.06);
+  \node[font=\scriptsize, mmdead] at (0.47,1.35) {you};}
 \end{center}
 
 \newthought{Accountability.} Self-sacrifice is praised when given, never
