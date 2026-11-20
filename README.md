@@ -182,6 +182,20 @@
 <!-- END:lecture:notes_philosophyofai -->
 
 <br>
+
+---
+### Colloquium on the Machine
+
+<details markdown="1">
+<summary>📑 <b>Lecture Slides</b></summary>
+
+|   #  | Unit | Download |
+| :--: | :--- | :-: |
+| Full | Colloquium on the Machine · Lecture Slides | [📄 PDF](https://material.schutera.com/lecturenotes/notes_colloquiumonthemachine/slides/colloquium_on_the_machine.pdf) |
+
+</details>
+
+<br>
 <br>
 
 ---

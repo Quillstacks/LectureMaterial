@@ -1,6 +1,156 @@
 \chapter{Accountability}\index{Accountability}
 \printchapterversion{02_Accountability}
 
+\newthought{The Responsibility Gap}\index{Responsibility gap}
+
+\marginnote{%
+    \begin{flushright}
+    \newthought{In der Strafkolonie}\\
+    Franz Kafka (1919)\\
+    {\color{black}\qrcode[height=0.9cm]{https://de.wikisource.org/wiki/In_der_Strafkolonie}}
+    \end{flushright}%
+    \medskip
+    \newthought{Minority Report}\index{Minority Report}\cite{spielberg2002minority} A
+    pre-crime unit arrests people before they offend, based on
+    algorithmic prediction. When the system targets its own chief, the
+    question of who holds the algorithm accountable becomes impossible
+    to avoid.%
+}
+
+% As a leading group, you are required to moderate this session. Add margin notes in this script in case you want to add any additional questions or points to the discussion.
+
+\newthought{A visiting traveller} witnesses a penal machine execute a condemned man for a
+sentence no living person can read or explain, and is invited to endorse the system.\\
+
+\newthought{Algorithmic governance}\index{Algorithmic governance} and black-box AI in high-stakes domains highlight
+opacity and accountability gaps: audits, explainability requirements, and governance mechanisms
+all attempt to close the distance between automated decision and human answerability.
+
+\medskip
+% Citation rendered as a margin note beside the reading row: a bare \cite inside
+% the tabular is deferred to the next page and overprints the margin there.
+% \bibentry issues an implicit \nocite, so the key still resolves.
+\marginnote{%
+    \bibentry{kafka1919strafkolonie}%
+}%
+\begin{tabular}{p{3.8cm} p{6.5cm}}
+    \textbf{Required reading} &
+        \textit{In der Strafkolonie}\index{In der Strafkolonie}\index{Kafka, Franz} by Franz Kafka
+        (1919; Reclam UB~9900) \\[3pt]
+    \textbf{Preparation}      &
+        Complete the Guided Reading Sheet individually before the session. \\
+\end{tabular}
+
+\vspace{3.5em}
+
+\section*{Guided Reading Sheet}
+
+\noindent Read \textit{In der Strafkolonie} before the session. Work through the
+questions below individually, then bring your notes to the discussion.
+
+\begin{enumerate}
+    \item The condemned man never learns what he is accused of or what
+    the machine will inscribe on his body. What does this tell us about
+    the relationship between legibility and legitimacy? Can a system be
+    just if it cannot explain itself to those it acts upon?
+
+    \item Three figures surround the machine: the officer who
+    understands and maintains it, the condemned man who cannot, and
+    the visiting traveller who is invited to endorse it. How does
+    responsibility shift across this triangle? Who, if anyone, is
+    morally culpable for what happens?
+
+    \item The story illustrates the idea of the \textbf{responsibility
+    gap}: when a complex system causes harm, no single human actor is
+    clearly at fault. Can you name a contemporary case (in law,
+    medicine, finance, or infrastructure) where this gap has appeared?
+
+    \item The EU AI Act (2024) requires human oversight for high-risk
+    AI systems. What does "oversight" mean in practice if the system's
+    decisions are too fast, too complex, or too numerous for humans to
+    review individually?
+
+    \item Compare \textbf{causal responsibility} (who caused the harm)
+    with \textbf{moral responsibility} (who is blameworthy) and
+    \textbf{legal liability} (who must compensate). Do these three always
+    converge? Give an example where they do not.\\
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Cases: when no one is answerable.} Kafka's machine is a
+fable; the responsibility gap is not. Each system below caused real harm,
+and in each the question ``who is accountable?'' had no clean answer.
+\begin{itemize}
+    \item \textbf{Amazon's hiring engine (2018).}\cite{dastin2018amazon}
+    A model trained on a decade of engineering hires learned to downgrade
+    r\'esum\'es containing the word ``women's'' and to reward male-coded
+    phrasing. No one wrote the rule; the bias was inherited from the data.
+    Amazon quietly scrapped the tool. Who answers for discrimination
+    nobody authored?
+    \item \textbf{Google Photos (2015).}\cite{simonite2018google} An image
+    classifier labelled photographs of Black users as ``gorillas''. The
+    remedy was not a corrected model but a deleted label: ``gorilla''
+    was removed from the product. The error was hidden, not fixed.
+    \item \textbf{Tesla Autopilot (2016).}\cite{ntsb2017tesla} A driver was
+    killed when the system failed to distinguish a crossing trailer from
+    bright sky and did not brake. Liability fractured three ways: the driver
+    who trusted a feature named ``Autopilot'', the manufacturer that named
+    it so, and the regulator that permitted the deployment.
+    \item \textbf{The Flash Crash (2010).} Automated trading erased roughly
+    a trillion dollars in minutes; no human decided to sell at scale and no
+    human decided to stop. Years later a single trader was charged.
+\end{itemize}
+
+% New page: the Tempe margin note with image and references needs the full
+% margin height, and from mid page it runs off the bottom unseen.
+\newpage
+\section*{In-Class Experiment: The Responsibility Budget}
+
+% The Tempe margin note is anchored inside the first paragraph: set before
+% the section, it can start on the previous page and the dashcam image runs
+% off the bottom of that page. Its two references sit inside the note as
+% \bibentry, because \cite sidenotes nearby overprint the image.
+\newthought{Real crashes rarely offer a lever.}%
+\marginnote{\newthought{Tempe, 18 March 2018.} Uber's self-driving car saw
+Elaine Herzberg 5.6\,s before impact, judged the crash imminent at 1.2\,s
+and left braking to its safety driver, who was watching a TV show on her
+phone. Police dashcam:\\[2pt]
+\includegraphics[width=\linewidth]{figures/tempe_dashcam.jpg}\par\medskip
+\noindent\bibentry{ntsb2019tempe}\par\medskip
+\noindent\bibentry{ap2023uber}}
+Where a toy dilemma asks whom the car should kill, this allocation exercise
+asks who answers once it has, on one real crash. Run it before the Opinion
+Landscape.
+
+\begin{itemize}
+    \item \textbf{Setup.} State the incident in three sentences: in 2018 a
+    self-driving Uber test car killed Elaine Herzberg as she pushed her
+    bicycle across the road, with no dilemma; its software did not expect
+    pedestrians outside a crosswalk; it left braking to a safety driver who
+    was not watching. List the actors on the board: the engineers, Uber as
+    fleet operator, the safety driver, the State of Arizona that permitted
+    the tests, the pedestrian, and no one.
+    \item \textbf{Allocation.} Each student silently distributes one
+    hundred responsibility points across those actors and writes a single
+    sentence justifying their largest share. Collect the slips anonymously.
+    \item \textbf{Tally.} Add the points on the board. The distribution
+    will not converge: it spreads across five or six actors, and a visible
+    share falls on no one. That spread is the responsibility gap, drawn from
+    the room's own intuitions.
+    \item \textbf{Debrief.} The two largest shares are almost always the
+    provider (builder and deployer) and the user. Name them as the two
+    sides of the debate to come, and have each student defend the allocation
+    they made.
+    \item \textbf{Reveal.} Set the official split beside the room's. The
+    NTSB named the safety driver's distraction the probable cause, and
+    Uber's safety culture, Arizona's oversight of the tests, and the
+    pedestrian crossing outside a crosswalk as contributing. Prosecutors
+    declined to charge Uber; in 2023 the safety driver pleaded guilty to
+    endangerment and got three years of supervised probation. The NTSB
+    spread the cause over four parties; the court convicted one.
+\end{itemize}
+
+\newpage
 \section*{Opener: The Trolley Problem}\index{Trolley problem}
 
 \newthought{A toy problem first.} Philippa Foot gave the choice to the
@@ -135,7 +285,7 @@ Four things change.
     them\cite{bonnefon2016social}.
     \item \textbf{Many hands.} The rule passes from you to your team lead, the
     manufacturer, the regulator, and the buyer who picked a setting. The
-    Responsibility Budget below splits the blame.
+    Responsibility Budget above splits the blame.
 \end{itemize}
 
 \newthought{The German Ethics Commission} answered in 2017 with rules a
@@ -146,157 +296,6 @@ justified, and those who create the risk may not sacrifice those who do
 not\cite{ethikkommission2017fahren}. Scenario~1 survives only as a general
 reduction of injuries; sparing the young over the old, one of the strongest
 Moral Machine preferences, may not be coded at all.
-
-\newpage
-\newthought{The Responsibility Gap}\index{Responsibility gap}
-
-\marginnote{%
-    \begin{flushright}
-    \newthought{In der Strafkolonie}\\
-    Franz Kafka (1919)\\
-    {\color{black}\qrcode[height=0.9cm]{https://de.wikisource.org/wiki/In_der_Strafkolonie}}
-    \end{flushright}%
-    \medskip
-    \newthought{Minority Report}\index{Minority Report}\cite{spielberg2002minority} A
-    pre-crime unit arrests people before they offend, based on
-    algorithmic prediction. When the system targets its own chief, the
-    question of who holds the algorithm accountable becomes impossible
-    to avoid.%
-}
-
-% As a leading group, you are required to moderate this session. Add margin notes in this script in case you want to add any additional questions or points to the discussion.
-
-\newthought{A visiting traveller} witnesses a penal machine execute a condemned man for a
-sentence no living person can read or explain, and is invited to endorse the system.\\
-
-\newthought{Algorithmic governance}\index{Algorithmic governance} and black-box AI in high-stakes domains highlight
-opacity and accountability gaps: audits, explainability requirements, and governance mechanisms
-all attempt to close the distance between automated decision and human answerability.
-
-\medskip
-\noindent\textbf{Cases: when no one is answerable.} Kafka's machine is a
-fable; the responsibility gap is not. Each system below caused real harm,
-and in each the question ``who is accountable?'' had no clean answer.
-\begin{itemize}
-    \item \textbf{Amazon's hiring engine (2018).}\cite{dastin2018amazon}
-    A model trained on a decade of engineering hires learned to downgrade
-    r\'esum\'es containing the word ``women's'' and to reward male-coded
-    phrasing. No one wrote the rule; the bias was inherited from the data.
-    Amazon quietly scrapped the tool. Who answers for discrimination
-    nobody authored?
-    \item \textbf{Google Photos (2015).}\cite{simonite2018google} An image
-    classifier labelled photographs of Black users as ``gorillas''. The
-    remedy was not a corrected model but a deleted label: ``gorilla''
-    was removed from the product. The error was hidden, not fixed.
-    \item \textbf{Tesla Autopilot (2016).}\cite{ntsb2017tesla} A driver was
-    killed when the system failed to distinguish a crossing trailer from
-    bright sky and did not brake. Liability fractured three ways: the driver
-    who trusted a feature named ``Autopilot'', the manufacturer that named
-    it so, and the regulator that permitted the deployment.
-    \item \textbf{The Flash Crash (2010).} Automated trading erased roughly
-    a trillion dollars in minutes; no human decided to sell at scale and no
-    human decided to stop. Years later a single trader was charged.
-\end{itemize}
-
-\vspace{2em}
-
-% Citation rendered as a margin note beside the reading row: a bare \cite inside
-% the tabular is deferred to the next page and overprints the margin there.
-% \bibentry issues an implicit \nocite, so the key still resolves.
-\marginnote{%
-    \bibentry{kafka1919strafkolonie}%
-}%
-\begin{tabular}{p{3.8cm} p{6.5cm}}
-    \textbf{Required reading} &
-        \textit{In der Strafkolonie}\index{In der Strafkolonie}\index{Kafka, Franz} by Franz Kafka
-        (1919; Reclam UB~9900) \\[3pt]
-    \textbf{Preparation}      &
-        Complete the Guided Reading Sheet individually before the session. \\
-\end{tabular}
-
-\vspace{3.5em}
-
-\section*{Guided Reading Sheet}
-
-\noindent Read \textit{In der Strafkolonie} before the session. Work through the
-questions below individually, then bring your notes to the discussion.
-
-\begin{enumerate}
-    \item The condemned man never learns what he is accused of or what
-    the machine will inscribe on his body. What does this tell us about
-    the relationship between legibility and legitimacy? Can a system be
-    just if it cannot explain itself to those it acts upon?
-
-    \item Three figures surround the machine: the officer who
-    understands and maintains it, the condemned man who cannot, and
-    the visiting traveller who is invited to endorse it. How does
-    responsibility shift across this triangle? Who, if anyone, is
-    morally culpable for what happens?
-
-    \item The story illustrates the idea of the \textbf{responsibility
-    gap}: when a complex system causes harm, no single human actor is
-    clearly at fault. Can you name a contemporary case (in law,
-    medicine, finance, or infrastructure) where this gap has appeared?
-
-    \item The EU AI Act (2024) requires human oversight for high-risk
-    AI systems. What does "oversight" mean in practice if the system's
-    decisions are too fast, too complex, or too numerous for humans to
-    review individually?
-
-    \item Compare \textbf{causal responsibility} (who caused the harm)
-    with \textbf{moral responsibility} (who is blameworthy) and
-    \textbf{legal liability} (who must compensate). Do these three always
-    converge? Give an example where they do not.\\
-\end{enumerate}
-
-% New page: the Tempe margin note with image and references needs the full
-% margin height, and from mid page it runs off the bottom unseen.
-\newpage
-\section*{In-Class Experiment: The Responsibility Budget}
-
-% The Tempe margin note is anchored inside the first paragraph: set before
-% the section, it can start on the previous page and the dashcam image runs
-% off the bottom of that page. Its two references sit inside the note as
-% \bibentry, because \cite sidenotes nearby overprint the image.
-\newthought{Real crashes rarely offer a lever.}%
-\marginnote{\newthought{Tempe, 18 March 2018.} Uber's self-driving car saw
-Elaine Herzberg 5.6\,s before impact, judged the crash imminent at 1.2\,s
-and left braking to its safety driver, who was watching a TV show on her
-phone. Police dashcam:\\[2pt]
-\includegraphics[width=\linewidth]{figures/tempe_dashcam.jpg}\par\medskip
-\noindent\bibentry{ntsb2019tempe}\par\medskip
-\noindent\bibentry{ap2023uber}}
-The toy problem asks whom the car should kill; this allocation exercise
-asks who answers once it has, on one real crash. Run it before the Opinion
-Landscape.
-
-\begin{itemize}
-    \item \textbf{Setup.} State the incident in three sentences: in 2018 a
-    self-driving Uber test car killed Elaine Herzberg as she pushed her
-    bicycle across the road, with no dilemma; its software did not expect
-    pedestrians outside a crosswalk; it left braking to a safety driver who
-    was not watching. List the actors on the board: the engineers, Uber as
-    fleet operator, the safety driver, the State of Arizona that permitted
-    the tests, the pedestrian, and no one.
-    \item \textbf{Allocation.} Each student silently distributes one
-    hundred responsibility points across those actors and writes a single
-    sentence justifying their largest share. Collect the slips anonymously.
-    \item \textbf{Tally.} Add the points on the board. The distribution
-    will not converge: it spreads across five or six actors, and a visible
-    share falls on no one. That spread is the responsibility gap, drawn from
-    the room's own intuitions.
-    \item \textbf{Debrief.} The two largest shares are almost always the
-    provider (builder and deployer) and the user. Name them as the two
-    sides of the debate to come, and have each student defend the allocation
-    they made.
-    \item \textbf{Reveal.} Set the official split beside the room's. The
-    NTSB named the safety driver's distraction the probable cause, and
-    Uber's safety culture, Arizona's oversight of the tests, and the
-    pedestrian crossing outside a crosswalk as contributing. Prosecutors
-    declined to charge Uber; in 2023 the safety driver pleaded guilty to
-    endangerment and got three years of supervised probation. The NTSB
-    spread the cause over four parties; the court convicted one.
-\end{itemize}
 
 \section*{The EU AI Act's Risk Tiers}
 
