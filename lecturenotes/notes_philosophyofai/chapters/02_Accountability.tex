@@ -116,53 +116,100 @@ stand at the lever. Leave it and the car stays in its lane, which is
 passive; pull it and the car swerves, which is active. The room votes by
 hand before each reveal.
 
-\newthought{Scenario 1, five or one.} Leave the lever and five pedestrians
-ahead die; pull it and one pedestrian in the other lane dies.
-\begin{itemize}
-    \item \textbf{Utilitarianism}\index{Utilitarianism} pulls: one death is
-    fewer than five.
-    \item \textbf{Deontology}\index{Deontology} leaves it: pulling makes you
-    kill the one, leaving it lets the brakes kill the five, and the duty not
-    to kill is stricter than the duty to rescue.
-    \item \textbf{Double effect}\index{Double effect} permits the pull: the
-    one's death is foreseen, not intended, and is not the means that saves
-    the five.
-\end{itemize}
+% Scenario sketches: a two-lane road seen from above, the car on the left.
+% Leaving the lever keeps the car in the upper lane, pulling it swerves the
+% car into the lower lane. \trolleyroad[label] draws road, car, and both
+% arrows; the label goes inside the car.
+\tikzset{
+  trolleyarr/.style={-{Triangle[length=4pt, width=4pt, fill=black!70]},
+    thick, black!70},
+  person/.pic={
+    \fill (0,0.2) circle (0.065);
+    \draw[line width=1.1pt, line cap=round]
+      (0,0.12) -- (0,-0.04) (-0.09,0.07) -- (0.09,0.07)
+      (0,-0.04) -- (-0.07,-0.17) (0,-0.04) -- (0.07,-0.17);
+  },
+}
+\newcommand{\trolleyroad}[1][]{%
+  \draw[thick] (0,0) -- (6.2,0) (0,1.6) -- (6.2,1.6);
+  \draw[dashed, black!50] (0,0.8) -- (6.2,0.8);
+  \node[draw=black, thick, rounded corners=2pt, fill=black!8,
+    minimum width=0.9cm, minimum height=0.5cm, inner sep=1pt,
+    font=\footnotesize] (car) at (0.6,1.2) {#1};
+  \draw[trolleyarr] (car.east) -- node[above, font=\footnotesize] {leave}
+    (3.4,1.2);
+  \draw[trolleyarr] (car.east) .. controls (2.0,1.2) and (2.2,0.4) ..
+    node[pos=0.75, below, font=\footnotesize] {pull} (3.4,0.4);
+}
 
-\newthought{Accountability.} Leave the lever and the brakes killed five;
-pull it and you killed one.
+\newthought{Scenario 1, five or one.} Leave the lever and five die; pull it
+and one dies.%
+\marginnote{\newthought{Utilitarianism}\index{Utilitarianism} pulls: one
+is fewer than five.
 
-\newthought{Scenario 2, red or green.} Two pedestrians cross ahead against
-a red light, two cross the other lane on green. Leave the lever and the two
-on red die; pull it and the two on green die.
-\begin{itemize}
-    \item \textbf{Utilitarianism} has no preference: two deaths either way.
-    \item \textbf{Deontology} leaves it: the two on green did nothing to put
-    themselves at risk, and pulling turns the danger onto them.
-    \item \textbf{Contractualism}\index{Contractualism} leaves it too: the
-    rule everyone can accept in advance is that whoever crosses on green is
-    safe. Moral Machine respondents in every region spared the lawful.
-\end{itemize}
+\newthought{Deontology}\index{Deontology} leaves it: killing weighs more
+than letting die.
 
-\newthought{Accountability.} The two on red share the blame for the risk
-they took. Pull, and two who share none of it die, and the blame is all
-yours.
+\newthought{Double effect}\index{Double effect} allows the pull: the one
+dies as a side effect, not as the means.}
+
+\begin{center}
+\begin{tikzpicture}
+  \trolleyroad
+  \foreach \x in {3.9,4.25,4.6,4.95,5.3} \pic at (\x,1.2) {person};
+  \pic at (3.9,0.4) {person};
+\end{tikzpicture}
+\end{center}
+
+\newthought{Accountability.} Leave it and the brakes killed five; pull it
+and you killed one.
+
+\newthought{Scenario 2, red or green.} Leave the lever and two who cross on
+red die; pull it and two who cross on green die.%
+\marginnote{\newthought{Utilitarianism} is indifferent: two against two.
+
+\newthought{Deontology} leaves it: the two on green took no risk.
+
+\newthought{Contractualism}\index{Contractualism} leaves it: all can accept
+that green is safe. Moral Machine respondents in every region spared the
+lawful.}
+
+\begin{center}
+\begin{tikzpicture}
+  \trolleyroad
+  \foreach \x in {3.9,4.25} {\pic at (\x,1.2) {person}; \pic at (\x,0.4) {person};}
+  \fill[red!75!black] (4.85,1.2) circle (0.1);
+  \node[right, font=\footnotesize] at (4.95,1.2) {red};
+  \fill[green!55!black] (4.85,0.4) circle (0.1);
+  \node[right, font=\footnotesize] at (4.95,0.4) {green};
+\end{tikzpicture}
+\end{center}
+
+\newthought{Accountability.} The two on red share the blame. Pull, and it is
+all yours.
 
 \newthought{Scenario 3, you or three.} You ride in the car. Leave the lever
-and three pedestrians ahead die; pull it and the car swerves into a
-concrete barrier and you die.
-\begin{itemize}
-    \item \textbf{Utilitarianism} pulls: one death is fewer than three, and
-    your life counts no more than a stranger's.
-    \item \textbf{Deontology} does not demand the pull: there is no duty to
-    die for strangers.
-    \item \textbf{Virtue ethics}\index{Virtue ethics} calls the pull
-    courageous when you choose it; imposed on you by someone else, it is no
-    virtue at all.
-\end{itemize}
+and three die; pull it and you hit the barrier and die.%
+\marginnote{\newthought{Utilitarianism} pulls: your life counts no more
+than a stranger's.
 
-\newthought{Accountability.} Self-sacrifice is supererogatory: praised when
-given, never owed. Leave the lever and no one holds you to account.
+\newthought{Deontology} does not demand it: there is no duty to die for
+strangers.
+
+\newthought{Virtue ethics}\index{Virtue ethics} calls the pull courage when
+you choose it, not when it is imposed.}
+
+\begin{center}
+\begin{tikzpicture}
+  \trolleyroad[you]
+  \foreach \x in {3.9,4.25,4.6} \pic at (\x,1.2) {person};
+  \draw[thick, rounded corners=1pt, fill=black!25] (3.55,0.1) rectangle (3.8,0.7);
+  \node[right, font=\footnotesize] at (3.85,0.4) {barrier};
+\end{tikzpicture}
+\end{center}
+
+\newthought{Accountability.} Self-sacrifice is praised when given, never
+owed.
 
 \newthought{Now you write the code.} You no longer stand at the lever. You
 write the rule that pulls it, a year before the crash, for every car in the
@@ -195,6 +242,9 @@ those who do not\cite{ethikkommission2017fahren}. Scenario~1 survives only
 as a general reduction of injuries. Sparing the young over the old, one of
 the three strongest Moral Machine preferences, may not be coded at all.
 
+% New page: the Tempe margin note with image and references needs the full
+% margin height, and from mid page it runs off the bottom unseen.
+\newpage
 \section*{In-Class Experiment: The Responsibility Budget}
 
 % The Tempe margin note is anchored inside the first paragraph: set before
