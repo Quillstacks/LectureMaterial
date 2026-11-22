@@ -603,7 +603,7 @@ The silhouette score combines both into a single value per point:
 \end{align*}
 
 $s(i)$ ranges from $-1$; inter $<$ intra: point fits better in a neighbouring cluster. 
-To $+1$; intra $\ll$ inter: point is tightly placed and well-separated
+To $+1$; intra $\ll$ inter: point is tightly placed and well-separated.
 The mean silhouette over all points is a quality score for the full clustering.
 Choose $K$ that maximizes it.
 
@@ -683,8 +683,8 @@ it will split the data along a straight boundary through the centre instead.}\in
     \node[font=\small, anchor=south west] at (axis cs:10.8,-0.1) {$C_2$};
     \end{axis}
 \end{tikzpicture}
-\caption{$C_1$ has four tightly packed points near $x=1$; $C_2$ has thirteen points spread from $x=5$ to $x=17$,
-pulling its centroid to $x\approx10.8$. The decision boundary falls near $x\approx6$, so the point at $x=4.5$
+\caption{$C_1$ has four tightly packed points near $x^{(1)}=1$; $C_2$ has thirteen points spread from $x^{(1)}=5$ to $x^{(1)}=17$,
+pulling its centroid to $x^{(1)}\approx10.8$. The decision boundary falls near $x^{(1)}\approx6$, so the point at $x^{(1)}=4.5$
 is assigned to $C_1$ even though it sits at $C_2$'s left edge---a direct consequence of K-Means optimising
 inertia rather than visual proximity.}
 \label{fig:kmeans_fail_sizes}
