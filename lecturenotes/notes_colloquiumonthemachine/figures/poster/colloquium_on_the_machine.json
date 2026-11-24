@@ -1,0 +1,17 @@
+{
+  "cutout": "statue.jpeg",
+  "white_point": 243,
+  "theme": "light",
+  "masthead": "Colloquium on the Machine",
+  "tagline": "Prof. Dr.-Ing. Mark Schutera",
+  "issue": "Jetzt für den Kurs im nächsten Quartal anmelden",
+  "headline": "Anmelden",
+  "dek": "ZDI Kurse auf Moodle",
+  "cta": ["Offen für alle Studierenden aller Fakultäten und Studiengänge"],
+  "credit": "Bild erstellt mit Google Gemini",
+  "subject_w": 0.5,
+  "subject_fill": 0.62,
+  "subject_x": 0.54,
+  "subject_level": 0.9,
+  "subject_max_scale": 6
+}

@@ -114,9 +114,7 @@
 
 \begin{document}
 
-\begin{frame}[plain]
-  \titlepage
-\end{frame}
+\input{titlepage_poster}% the poster's statue on white
 
 % ======================================================================
 \section{Three Books}
@@ -138,15 +136,15 @@
     \draw[tdarr] (research) -- (commit);
     \draw[tdarr] (commit) -- (discuss);
     \draw[tdarr] (discuss) -- (vote);
-    \node[gloss, below=3mm of pitch] {three books, one slide each};
+    \node[gloss, below=3mm of pitch] {three books};
     \node[gloss, below=3mm of research] {look into them yourself};
-    \node[gloss, below=3mm of commit] {tick one book on a slip};
+    \node[gloss, below=3mm of commit] {make up your mind};
     \node[gloss, below=3mm of discuss] {argue for your book};
-    \node[gloss, below=3mm of vote] {rank all three, anonymous};
+    \node[gloss, below=3mm of vote] {everyones opinion counts};
   \end{tikzpicture}
   \par\bigskip\bigskip
-  One book, three months of reading, 135 minutes of discussion.
-\end{frame}
+  “When you read, don’t just consider what the author thinks,
+  consider what you think.”\end{frame}
 
 \begin{frame}{Hyperion}
   \bookfacts{Dan Simmons \textperiodcentered{} 1989 \textperiodcentered{}
@@ -156,8 +154,8 @@
     \pitchtext
     % Own pitch (Mark's pick, 2026-11-20), on the AI side of the novel.
     Humanity lives on hundreds of worlds linked by portals it did not
-    build. The \alertbf{AIs of the TechnoCore} run them, advise the
-    government, and keep their own plans to themselves.
+    build itself. The \alertbf{AIs} run them, advise the
+    government, and keep their own plans to themselves. When tech advances to mix with religious fundamentalism, belief systems and doubts.
   \end{sidebody}
 \end{frame}
 
@@ -170,7 +168,7 @@
     % Pinker's own statement of the book's key idea, verbatim.
     The mind is a system of \alertbf{organs of computation}, designed by
     natural selection to solve the kinds of problems our ancestors faced
-    in their foraging way of life.
+    in their foraging way of life. The human mind from an organic compute substrate.
   \end{sidebody}
 \end{frame}
 
@@ -182,7 +180,8 @@
     \pitchtext
     % Goodreads description, second sentence verbatim.
     The risk is there because, as W. B. Yeats has put it, education is not
-    about filling a bucket but about \alertbf{lighting a fire}.
+    about filling a bucket but about \alertbf{lighting a fire}. Sometimes it's worth looking at ones own role 
+    from a different angle. So what is a student? How is education done right? 
   \end{sidebody}
 \end{frame}
 
@@ -196,13 +195,41 @@
 %             more first places. The vote decides; the commit
 %             shows how the discussion moved the room.
 % Slips for commit and vote: ballots.tex.
+
+
+\begin{frame}{How We Choose}
+  \centering
+  \begin{tikzpicture}[td, node distance=7mm,
+      gloss/.style={text=tddim, font=\scriptsize, align=center,
+        text width=23mm, inner sep=0pt}]
+    \node[tdbox] (pitch) {\_};
+    \node[tdbox, right=of pitch] (research) {Research};
+    \node[tdbox, right=of research] (commit) {Commit};
+    \node[tdbox, right=of commit] (discuss) {Discuss};
+    \node[tdboxhi, right=of discuss] (vote) {Vote};
+    \draw[tdarr] (pitch) -- (research);
+    \draw[tdarr] (research) -- (commit);
+    \draw[tdarr] (commit) -- (discuss);
+    \draw[tdarr] (discuss) -- (vote);
+    \node[gloss, below=3mm of pitch] {\_\_};
+    \node[gloss, below=3mm of research] {look into them yourself};
+    \node[gloss, below=3mm of commit] {make up your mind};
+    \node[gloss, below=3mm of discuss] {argue for your book};
+    \node[gloss, below=3mm of vote] {everyones opinion counts};
+  \end{tikzpicture}
+  \par\bigskip\bigskip
+  “When you read, don’t just consider what the author thinks,
+  consider what you think.”\end{frame}
+
+
+
 \newcommand{\tdstep}{{\color{tddim}$\rightarrow$}}
-\begin{frame}{Three Books, One Choice}
-  Research the three books \tdstep{} commit to one \tdstep{} discuss
-  \tdstep{} \alertbf{vote}.
+\begin{frame}{Let's Vote}
+  
   \par\smallskip
   Rank all three on your slip, no name: First place 2 points, second 1,
-  third 0. Most points wins, a tie goes to the book with more first places.
+  third 0. Most points wins, a tie goes to the book with more second places. If you cast a vote you are commited to read the book and prepare for the discussion at the end of the semester.
+  
   \par\medskip
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.31\textwidth}\centering
@@ -230,6 +257,7 @@
   \begin{takeaway}
     See you at the end of the semester, when
     \alertbf{everyone has read the book}.
+    Not showing up potentially kills this format.
   \end{takeaway}
 \end{frame}
 

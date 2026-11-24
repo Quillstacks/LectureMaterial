@@ -249,10 +249,14 @@ def build(spec_path):
         wp = spec.get("white_point")
         if wp:
             rgb = rgb.point(lambda v: min(255, round(v * 255 / wp)))
-        content = rgb.convert("L").point(lambda v: 255 if v < 236 else 0).getbbox()
+        # trim: the solid content sets the height, anything off white sets the
+        # width, so a ground shadow running sideways stays whole
+        L = rgb.convert("L")
+        solid = L.point(lambda v: 255 if v < 236 else 0).getbbox()
+        faint = L.point(lambda v: 255 if v < 253 else 0).getbbox()
         pad = int(0.03 * max(rgb.size))
-        rgb = rgb.crop((max(0, content[0] - pad), max(0, content[1] - pad),
-                        min(rgb.width, content[2] + pad), min(rgb.height, content[3] + pad)))
+        rgb = rgb.crop((max(0, faint[0] - pad), max(0, solid[1] - pad),
+                        min(rgb.width, faint[2] + pad), min(rgb.height, solid[3] + pad)))
         cut = rgb.convert("RGBA")
     if spec.get("mirror"):
         cut = cut.transpose(Image.FLIP_LEFT_RIGHT)
